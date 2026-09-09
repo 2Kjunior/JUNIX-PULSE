@@ -54,16 +54,15 @@ export default function RootLayout() {
     'Inter-Bold': Inter_700Bold,
   });
 
+  const appReady = fontsLoaded || !!fontError;
+
   useEffect(() => {
-    // Attendre que les fonts soient prêtes avant d'initialiser la DB
-    if (!fontsLoaded && !fontError) return;
+    // Démarrer l'initialisation dès que les fonts sont prêtes (ou en échec)
+    if (!appReady) return;
 
     async function initialize() {
       try {
-        // Initialiser SQLite et appliquer les migrations
         await getDatabase();
-
-        // Lire les paramètres utilisateur
         const settings = await SettingsRepository.get();
         setOnboardingComplete(settings.onboardingCompleted);
         setUserTimezone(settings.timezone);
@@ -73,16 +72,18 @@ export default function RootLayout() {
           error instanceof Error ? error.message : 'Erreur base de données';
         setDbError(message);
       } finally {
-        // Masquer le splash screen dans tous les cas
         await SplashScreen.hideAsync();
       }
     }
 
     initialize();
-  }, [fontsLoaded, fontError]);
+  }, [appReady]);
 
-  // Pendant l'initialisation : écran vide (splash screen visible)
-  if (!dbReady && !dbError) {
+  // Pendant l'initialisation : laisser Expo Router rendre la Stack
+  // mais bloquer la navigation effective en attendant dbReady
+  // (les écrans individuels gèrent leur propre état de chargement)
+  if (!appReady || (!dbReady && !dbError)) {
+    // SplashScreen est encore visible - pas besoin d'UI ici
     return null;
   }
 
@@ -113,19 +114,26 @@ export default function RootLayout() {
             options={{ animation: 'fade' }}
             redirect={!onboardingComplete}
           />
-          {/* Routes de détail */}
+          {/* Routes de détail — Rappels */}
+          <Stack.Screen name="reminders/index" options={{ presentation: 'card' }} />
           <Stack.Screen name="reminders/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="reminders/new" options={{ presentation: 'modal' }} />
+          {/* Tâches */}
           <Stack.Screen name="tasks/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="tasks/new" options={{ presentation: 'modal' }} />
+          {/* Personnes */}
           <Stack.Screen name="people/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="people/new" options={{ presentation: 'modal' }} />
+          {/* Événements */}
           <Stack.Screen name="events/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="events/new" options={{ presentation: 'modal' }} />
+          {/* Habitudes */}
           <Stack.Screen name="habits/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="habits/new" options={{ presentation: 'modal' }} />
+          {/* Objectifs */}
           <Stack.Screen name="goals/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="goals/new" options={{ presentation: 'modal' }} />
+          {/* Paramètres */}
           <Stack.Screen name="settings/index" options={{ presentation: 'card' }} />
         </Stack>
         {/* Snackbar global (au-dessus de tout le contenu) */}
