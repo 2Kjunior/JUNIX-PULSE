@@ -1,0 +1,211 @@
+/**
+ * Onboarding — Étape 5 : Permissions
+ * Demande les permissions utiles au bon moment (BR-019).
+ * Les permissions sont demandées ici, après que l'utilisateur comprend leur utilité.
+ * Si refusées, l'application continue de fonctionner.
+ */
+import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { router } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import {
+  Surface,
+  Primary,
+  Tertiary,
+  OnSurface,
+  Outline,
+  Success,
+  Spacing,
+  Radius,
+  Typography,
+} from '@/constants/theme';
+import { Button } from '@/components/ui/Button';
+import { SettingsRepository } from '@/repositories/settings-repository';
+import { useAppStore } from '@/store/app-store';
+
+export default function OnboardingPermissions() {
+  const { setOnboardingComplete } = useAppStore();
+  const [notifStatus, setNotifStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
+  const [finishing, setFinishing] = useState(false);
+
+  async function requestNotifications() {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      setNotifStatus(status === 'granted' ? 'granted' : 'denied');
+      await SettingsRepository.update({
+        notificationsEnabled: status === 'granted',
+        updatedAt: new Date().toISOString(),
+      });
+    } catch {
+      setNotifStatus('denied');
+    }
+  }
+
+  async function finish() {
+    setFinishing(true);
+    try {
+      await SettingsRepository.markOnboardingComplete(new Date().toISOString());
+      setOnboardingComplete(true);
+      // La navigation vers (tabs) est gérée par le redirect dans _layout.tsx
+    } finally {
+      setFinishing(false);
+    }
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Indicateur d'étape — toutes complètes */}
+      <View style={styles.stepIndicator}>
+        {[0, 1, 2, 3].map(i => (
+          <View key={i} style={[styles.step, styles.stepDone]} />
+        ))}
+      </View>
+
+      <Text style={styles.title}>Dernière étape</Text>
+      <Text style={styles.subtitle}>
+        Ces autorisations permettent à Junix Pulse de fonctionner pleinement.
+        Elles peuvent être modifiées dans les paramètres de votre téléphone.
+      </Text>
+
+      {/* Notification */}
+      <View style={styles.permCard}>
+        <View style={styles.permHeader}>
+          <View style={[styles.permIcon, { backgroundColor: 'rgba(208, 188, 255, 0.12)' }]}>
+            <Text style={styles.permEmoji}>🔔</Text>
+          </View>
+          <View style={styles.permInfo}>
+            <Text style={styles.permTitle}>Notifications</Text>
+            <Text style={styles.permDesc}>
+              Indispensable pour recevoir vos rappels même quand l&apos;application est fermée.
+            </Text>
+          </View>
+        </View>
+
+        {notifStatus === 'idle' ? (
+          <Button
+            label="Autoriser les notifications"
+            onPress={requestNotifications}
+            variant="secondary"
+            size="md"
+            style={styles.permBtn}
+            testID="onboarding-notif-btn"
+          />
+        ) : notifStatus === 'granted' ? (
+          <View style={styles.permGranted}>
+            <Text style={styles.permGrantedText}>✓ Autorisées</Text>
+          </View>
+        ) : (
+          <View style={styles.permDenied}>
+            <Text style={styles.permDeniedText}>
+              Non autorisées — vous pouvez les activer plus tard dans les paramètres de votre téléphone.
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Note contacts (pour plus tard dans l'app) */}
+      <View style={styles.noteCard}>
+        <Text style={styles.noteTitle}>📱 Contacts</Text>
+        <Text style={styles.noteDesc}>
+          L&apos;accès aux contacts sera demandé uniquement si vous souhaitez importer
+          des personnes depuis votre répertoire. Ce n&apos;est pas requis maintenant.
+        </Text>
+      </View>
+
+      <View style={styles.ready}>
+        <Text style={styles.readyTitle}>Vous êtes prêt·e !</Text>
+        <Text style={styles.readyDesc}>
+          Junix Pulse est configuré pour vous. Commencez par créer votre premier rappel
+          ou explorez librement.
+        </Text>
+      </View>
+
+      <Button
+        label="Commencer à utiliser Junix Pulse"
+        onPress={finish}
+        variant="primary"
+        size="lg"
+        loading={finishing}
+        style={styles.btnFinish}
+        testID="onboarding-finish-btn"
+      />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Surface.base },
+  content: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xxxl,
+  },
+  stepIndicator: { flexDirection: 'row', gap: 6, marginBottom: Spacing.xl },
+  step: { height: 4, flex: 1, borderRadius: 2, backgroundColor: Outline.variant },
+  stepDone: { backgroundColor: Primary.default },
+  title: { ...Typography.displayMedium, color: OnSurface.primary, marginBottom: Spacing.sm },
+  subtitle: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+    lineHeight: 22,
+    marginBottom: Spacing.xxl,
+  },
+  permCard: {
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  permHeader: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
+  permIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  permEmoji: { fontSize: 22 },
+  permInfo: { flex: 1 },
+  permTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
+  permDesc: { ...Typography.bodySmall, color: OnSurface.variant, lineHeight: 18 },
+  permBtn: { width: '100%' },
+  permGranted: {
+    backgroundColor: 'rgba(109, 213, 140, 0.12)',
+    borderRadius: Radius.sm,
+    padding: Spacing.sm,
+    alignItems: 'center',
+  },
+  permGrantedText: { ...Typography.labelMedium, color: Success.default },
+  permDenied: {
+    backgroundColor: Surface.high,
+    borderRadius: Radius.sm,
+    padding: Spacing.sm,
+  },
+  permDeniedText: { ...Typography.bodySmall, color: OnSurface.disabled, lineHeight: 18 },
+  noteCard: {
+    backgroundColor: Surface.high,
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  noteTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
+  noteDesc: { ...Typography.bodySmall, color: OnSurface.variant, lineHeight: 18 },
+  ready: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    padding: Spacing.xl,
+  },
+  readyTitle: {
+    ...Typography.headlineMedium,
+    color: Primary.default,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  readyDesc: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  btnFinish: { width: '100%' },
+});

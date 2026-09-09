@@ -1,42 +1,37 @@
-import { SymbolView } from 'expo-symbols';
+/**
+ * Composant Collapsible — section repliable.
+ * Adapté au design system Junix Pulse.
+ */
 import { PropsWithChildren, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { Surface, OnSurface, Spacing, Radius, Typography } from '@/constants/theme';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+interface CollapsibleProps {
+  title: string;
+}
 
-export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
+export function Collapsible({ children, title }: PropsWithChildren<CollapsibleProps>) {
   const [isOpen, setIsOpen] = useState(false);
-  const theme = useTheme();
 
   return (
-    <ThemedView>
+    <View>
       <Pressable
-        style={({ pressed }) => [styles.heading, pressed && styles.pressedHeading]}
-        onPress={() => setIsOpen((value) => !value)}>
-        <ThemedView type="backgroundElement" style={styles.button}>
-          <SymbolView
-            name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-            size={14}
-            weight="bold"
-            tintColor={theme.text}
-            style={{ transform: [{ rotate: isOpen ? '-90deg' : '90deg' }] }}
-          />
-        </ThemedView>
-
-        <ThemedText type="small">{title}</ThemedText>
+        style={({ pressed }) => [styles.heading, pressed && styles.pressed]}
+        onPress={() => setIsOpen(v => !v)}
+      >
+        <View style={styles.chevronContainer}>
+          <Text style={[styles.chevron, isOpen && styles.chevronOpen]}>›</Text>
+        </View>
+        <Text style={styles.title}>{title}</Text>
       </Pressable>
+
       {isOpen && (
         <Animated.View entering={FadeIn.duration(200)}>
-          <ThemedView type="backgroundElement" style={styles.content}>
-            {children}
-          </ThemedView>
+          <View style={styles.content}>{children}</View>
         </Animated.View>
       )}
-    </ThemedView>
+    </View>
   );
 }
 
@@ -44,22 +39,35 @@ const styles = StyleSheet.create({
   heading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
-  pressedHeading: {
-    opacity: 0.7,
-  },
-  button: {
-    width: Spacing.four,
-    height: Spacing.four,
-    borderRadius: 12,
+  pressed: { opacity: 0.7 },
+  chevronContainer: {
+    width: Spacing.lg,
+    height: Spacing.lg,
+    borderRadius: Radius.sm,
+    backgroundColor: Surface.high,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  chevron: {
+    color: OnSurface.variant,
+    fontSize: 14,
+    transform: [{ rotate: '90deg' }],
+  },
+  chevronOpen: {
+    transform: [{ rotate: '-90deg' }],
+  },
+  title: {
+    ...Typography.bodyMedium,
+    color: OnSurface.primary,
+  },
   content: {
-    marginTop: Spacing.three,
-    borderRadius: Spacing.three,
-    marginLeft: Spacing.four,
-    padding: Spacing.four,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+    marginLeft: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: Surface.container,
   },
 });
