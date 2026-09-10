@@ -5,23 +5,14 @@
  * BR-005 : la notification doit déclencher une action accessible depuis l'app.
  * BR-019 : les permissions sont demandées au bon moment, pas au démarrage.
  * BR-018 : l'état des notifications survit au redémarrage.
+ *
+ * IMPORTANT : aucun code natif ne doit s'exécuter au niveau module.
+ * Toute initialisation passe par NotificationService.initialize(),
+ * appelée explicitement depuis le root layout APRÈS que le bridge est prêt.
  */
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-
-// ─── Configuration du comportement des notifications ─────────────────────────
-// Ces options définissent comment les notifications sont affichées quand l'app
-// est au premier plan (foreground).
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,32 +24,46 @@ export interface ScheduleReminderParams {
   data?: Record<string, unknown>;
 }
 
-// ─── Notifications de rappels ─────────────────────────────────────────────────
+// ─── Service ─────────────────────────────────────────────────────────────────
 
 export const NotificationService = {
   /**
-   * Configure le canal de notification Android (requis pour Android 8+).
-   * À appeler au démarrage de l'app, une seule fois.
+   * Initialise le handler de notifications et le canal Android.
+   * DOIT être appelé depuis le root layout, après que le bridge est prêt.
+   * Ne jamais appeler à l'import du module.
    */
-  async setupAndroidChannel(): Promise<void> {
-    if (Platform.OS !== 'android') return;
-    await Notifications.setNotificationChannelAsync('reminders', {
-      name: 'Rappels',
-      description: 'Notifications pour vos rappels Junix Pulse',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#D0BCFF',
-      enableVibrate: true,
-      showBadge: false,
+  async initialize(): Promise<void> {
+    // Handler foreground : afficher les notifs même quand l'app est active
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
     });
+
+    // Canal Android (requis pour Android 8+)
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('reminders', {
+        name: 'Rappels',
+        description: 'Notifications pour vos rappels Junix Pulse',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#D0BCFF',
+        enableVibrate: true,
+        showBadge: false,
+      });
+    }
   },
 
   /**
    * Planifie une notification locale pour un rappel.
    * Retourne l'identifiant système de la notification (pour pouvoir l'annuler).
    *
-   * Si la date est dans le passé (< 10 secondes), la notification est décalée
-   * de 5 secondes pour éviter un échec silencieux.
+   * Si la date est dans le passé, la notification est décalée
+   * de 10 secondes pour éviter un échec silencieux.
    */
   async scheduleReminder(params: ScheduleReminderParams): Promise<string> {
     const triggerDate = params.scheduledAt;
@@ -94,14 +99,13 @@ export const NotificationService = {
 
   /**
    * Annule une notification planifiée par son identifiant système.
-   * Utilisé lors de la suppression ou modification d'un rappel.
    */
   async cancelReminder(notificationId: string): Promise<void> {
     await Notifications.cancelScheduledNotificationAsync(notificationId);
   },
 
   /**
-   * Annule toutes les notifications planifiées (utile pour reset app).
+   * Annule toutes les notifications planifiées.
    */
   async cancelAll(): Promise<void> {
     await Notifications.cancelAllScheduledNotificationsAsync();
@@ -136,7 +140,6 @@ export const NotificationService = {
   /**
    * Enregistre un listener pour les interactions sur notification (tap).
    * Utilisé pour naviguer vers le rappel concerné.
-   * Retourne une fonction de cleanup.
    */
   addResponseListener(
     handler: (response: Notifications.NotificationResponse) => void

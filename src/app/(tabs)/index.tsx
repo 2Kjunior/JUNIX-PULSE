@@ -116,7 +116,7 @@ export default function TodayScreen() {
         </View>
         <TouchableOpacity
           style={styles.settingsBtn}
-          onPress={() => router.push('/settings/index')}
+          onPress={() => router.push('/settings')}
           accessibilityLabel="Paramètres"
         >
           <Ionicons name="settings-outline" size={22} color={OnSurface.variant} />

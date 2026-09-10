@@ -29,6 +29,7 @@ import {
 
 import { getDatabase } from '@/database/sqlite';
 import { SettingsRepository } from '@/repositories/settings-repository';
+import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { Snackbar } from '@/components/feedback/Snackbar';
 import { Surface, OnSurface } from '@/constants/theme';
@@ -62,10 +63,18 @@ export default function RootLayout() {
 
     async function initialize() {
       try {
+        // 1. Initialiser SQLite et appliquer les migrations
         await getDatabase();
+
+        // 2. Lire les paramètres utilisateur
         const settings = await SettingsRepository.get();
         setOnboardingComplete(settings.onboardingCompleted);
         setUserTimezone(settings.timezone);
+
+        // 3. Initialiser les notifications (handler + canal Android)
+        //    Appelé ici pour garantir que le bridge natif est prêt
+        await NotificationService.initialize();
+
         setDbReady(true);
       } catch (error) {
         const message =
