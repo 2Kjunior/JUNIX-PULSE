@@ -16,8 +16,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { router, useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
