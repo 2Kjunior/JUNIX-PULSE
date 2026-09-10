@@ -19,10 +19,10 @@ try {
   if (!isExpoGo) {
     Notifications = require('expo-notifications');
   } else {
-    console.warn('[NotificationService] Exécution dans Expo Go : notifications locales en mode simulation (Dev Build requis pour les notifications Android).');
+    console.log('[NotificationService] Exécution dans Expo Go : notifications locales en mode simulation (Dev Build requis pour les notifications Android).');
   }
 } catch (e) {
-  console.warn('[NotificationService] expo-notifications non disponible:', e);
+  console.log('[NotificationService] expo-notifications non disponible:', e);
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export const NotificationService = {
         });
       }
     } catch (err) {
-      console.warn('[NotificationService] Initialisation des notifications ignorée:', err);
+      console.log('[NotificationService] Initialisation des notifications ignorée:', err);
     }
   },
 
@@ -110,7 +110,7 @@ export const NotificationService = {
         } as import('expo-notifications').DateTriggerInput,
       });
     } catch (err) {
-      console.warn('[NotificationService] Erreur lors de scheduleReminder:', err);
+      console.log('[NotificationService] Erreur lors de scheduleReminder:', err);
       return `fallback-notif-${params.id}`;
     }
   },
@@ -123,7 +123,7 @@ export const NotificationService = {
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
     } catch (err) {
-      console.warn('[NotificationService] Erreur cancelReminder:', err);
+      console.log('[NotificationService] Erreur cancelReminder:', err);
     }
   },
 
@@ -135,7 +135,7 @@ export const NotificationService = {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
     } catch (err) {
-      console.warn('[NotificationService] Erreur cancelAll:', err);
+      console.log('[NotificationService] Erreur cancelAll:', err);
     }
   },
 
