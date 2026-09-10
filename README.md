@@ -1,56 +1,96 @@
-# Welcome to your Expo app 👋
+# ⚡ Junix Pulse V1.0 — Personal Life OS (Offline-First)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Junix Pulse** est une application mobile personnelle de gestion quotidienne développée avec **React Native**, **Expo SDK 57** et **SQLite**. 
+Elle est conçue selon le principe **Local-First / Offline-First** : 100% de vos données restent stockées localement sur votre téléphone avec un chiffrement local et zéro dépendance à des serveurs tiers.
 
-## Get started
+---
 
-1. Install dependencies
+## 🌟 Vision Produit & Principes Directeurs
 
-   ```bash
-   npm install
-   ```
+- **🔒 100% Local & Confidentiel** : Pas de compte obligatoire, pas de synchronisation cloud opaque. Vos données vous appartiennent.
+- **⚡ Moteur de Suggestions Intelligentes (BR-001)** : Analyse vos activités (contacts non relancés, rappels manqués, séries d'habitudes en danger) et formule des propositions explicatives sans jamais imposer de décision automatique.
+- **🔥 Streaks & Pauses Légitimes (BR-011)** : Suivez vos séries d'habitudes quotidiennes. Mettez une habitude en pause pendant les vacances sans briser votre streak cumulé.
+- **🎯 Objectifs & Progression Automatique (BR-012)** : La progression d'un objectif est calculée en temps réel d'après le taux d'achèvement des tâches qui lui sont liées.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🚀 Fonctionnalités & Modules
 
-In the output, you'll find options to open the app in a
+### 1. 📍 Aujourd'hui (Dashboard Central)
+- Vue synthétique des 4 pôles du jour : Rappels, Tâches, Agenda et Habitudes.
+- Chips de comptage interactifs avec filtres rapides.
+- Validation d'une habitude d'un simple tap direct.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 2. 🔔 Rappels & In-App Snooze
+- Définition d'échéances avec priorités (Urgent, Haute, Normale, Faible).
+- Actions associées (Appeler, Message, Email, Rencontrer, Faire).
+- Bottom sheet **Snooze** pour reporter un rappel (15 min, 1h, 3h, Demain matin).
+- Annulation 30 secondes en cas d'erreur de suppression.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 3. ✅ Tâches & Sous-tâches
+- Inbox pour capturer les idées à la volée.
+- Planification par date et estimation de durée en minutes.
+- Sous-tâches ordonnées avec coche de complétion.
+- Filtres : Inbox, Aujourd'hui, Toutes les tâches.
 
-## Get a fresh project
+### 4. 👥 Personnes & Contacts
+- Carnet de contacts personnels avec historique des interactions (Appels, SMS, Rencontres).
+- **Détection des contacts oubliés** (Alerte si aucune interaction depuis le seuil défini).
 
-When you're ready, run:
+### 5. 📅 Calendrier & Agenda
+- Bandeau hebdomadaire défilant avec sélection de date.
+- Agenda combiné des événements et tâches du jour.
 
+### 6. 🔥 Habitudes & Streaks
+- Habitudes quotidiennes ou hebdomadaires avec sélecteur de couleurs.
+- Compteur de séries en cours (Streak actuel) et meilleur streak historique.
+- Gestion des pauses pour geler une habitude pendant les congés.
+
+### 7. 🎯 Objectifs
+- Création d'objectifs avec vision et date limite (Deadline).
+- Association dynamique de tâches existantes.
+- Progression calculée automatiquement (0–100%).
+
+### 8. 🕒 Planning Personnel & Blocs
+- Emploi du temps type hebdomadaire structuré par blocs récurrents (Travail, Études, Repos, Sport, Maison).
+
+### 9. 💡 Pulse & Suggestions
+- Moteur pro-actif de suggestions d'actions.
+- Validation explicite "Accepter" / "Refuser" par l'utilisateur.
+
+---
+
+## 🛠️ Stack Technique
+
+| Élément | Technologie |
+|---|---|
+| **Framework** | React Native (Expo SDK 57) |
+| **Routing** | Expo Router v4 (File-based navigation) |
+| **Language** | TypeScript (Strict mode) |
+| **Base de données** | SQLite via `expo-sqlite` (WAL Mode, Migrations versionnées 001-019) |
+| **State Management** | Zustand (Store UI & Snackbar) |
+| **Design System** | Tokens MD3 personnalisés sombre (`src/constants/theme.ts`) |
+
+---
+
+## 💻 Lancement en Développement
+
+### 1. Installation des dépendances
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Démarrage du serveur Metro
+```bash
+npx expo start --clear
+```
 
-### Other setup steps
+### 3. Vérification du typage TypeScript
+```bash
+npx tsc --noEmit
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+---
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 📄 Licence
+Développé dans le cadre du projet **Junix Pulse V1.0**.
