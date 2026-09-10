@@ -16,7 +16,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
@@ -33,6 +33,12 @@ import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { Snackbar } from '@/components/feedback/Snackbar';
 import { Surface, OnSurface } from '@/constants/theme';
+
+// Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
+LogBox.ignoreLogs([
+  'Cannot connect to Expo CLI',
+  'DateTimePicker: `onChange` is deprecated',
+]);
 
 // Garder le splash screen visible pendant l'initialisation
 SplashScreen.preventAutoHideAsync();
