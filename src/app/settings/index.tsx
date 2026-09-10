@@ -3,7 +3,7 @@
  * Étape 16 construira l'écran complet.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -80,6 +80,13 @@ export default function SettingsScreen() {
       {/* Planning */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Planning</Text>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => router.push('/settings/schedule')}
+        >
+          <Text style={styles.rowLabel}>Emploi du temps type (Blocs)</Text>
+          <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
+        </TouchableOpacity>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Résumé matin</Text>
           <Text style={styles.rowValue}>{settings.morningBriefingHour}h00</Text>

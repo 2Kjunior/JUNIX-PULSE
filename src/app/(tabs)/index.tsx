@@ -1,6 +1,6 @@
 /**
  * Écran Aujourd'hui — Centre opérationnel de Junix Pulse.
- * Agrège rappels, tâches, événements et personnes du jour.
+ * Agrège les 4 pôles du jour : Rappels, Tâches, Événements, Habitudes.
  *
  * Utilise useFocusEffect pour mettre à jour instantanément les statistiques
  * et les compteurs à chaque fois que l'écran devient actif.
@@ -13,6 +13,7 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -23,8 +24,12 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
+import { EventRepository } from '@/repositories/event-repository';
+import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
+import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { SettingsRepository } from '@/repositories/settings-repository';
-import { Reminder, Task } from '@/domain/entities';
+import { Reminder, Task, Event } from '@/domain/entities';
+import { useAppStore } from '@/store/app-store';
 import {
   Surface,
   Primary,
@@ -35,15 +40,19 @@ import {
   Radius,
   Typography,
 } from '@/constants/theme';
-import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { LoadingState, ErrorState } from '@/components/feedback/States';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
+  const { showSnackbar } = useAppStore();
+
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [habits, setHabits] = useState<HabitStats[]>([]);
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -54,13 +63,17 @@ export default function TodayScreen() {
 
   const load = useCallback(async () => {
     try {
-      const [rems, tks, settings] = await Promise.all([
+      const [rems, tks, evts, habStats, settings] = await Promise.all([
         ReminderRepository.findForDate(todayStr),
         TaskRepository.findForDate(todayStr),
+        EventRepository.findForDate(todayStr),
+        HabitUseCases.getAllHabitsWithStats(),
         SettingsRepository.get(),
       ]);
       setReminders(rems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED'));
       setTasks(tks);
+      setEvents(evts);
+      setHabits(habStats.filter(h => h.habit.status === 'ACTIVE'));
       setDisplayName(settings.displayName ?? '');
       setState('content');
     } catch (e) {
@@ -69,7 +82,6 @@ export default function TodayScreen() {
     }
   }, [todayStr]);
 
-  // Rechargement automatique à chaque fois que l'écran prend le focus
   useFocusEffect(
     useCallback(() => {
       load();
@@ -82,7 +94,31 @@ export default function TodayScreen() {
     setRefreshing(false);
   }, [load]);
 
-  if (state === 'loading') return <LoadingState />;
+  const handleToggleHabit = async (habitItem: HabitStats) => {
+    try {
+      const isDone = await HabitUseCases.toggleHabitCompletion(habitItem.habit.id);
+      showSnackbar(
+        isDone
+          ? `Habitude "${habitItem.habit.title}" validée ! 🔥`
+          : `Validation retirée pour "${habitItem.habit.title}".`
+      );
+      load();
+    } catch (e: any) {
+      Alert.alert('Erreur', e.message);
+    }
+  };
+
+  const handleCompleteTask = async (task: Task) => {
+    try {
+      await TaskUseCases.toggleComplete(task.id);
+      showSnackbar(`Tâche "${task.title}" mise à jour !`);
+      load();
+    } catch (e: any) {
+      Alert.alert('Erreur', e.message);
+    }
+  };
+
+  if (state === 'loading') return <LoadingState message="Préparation de votre journée..." />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
 
   const dateLabel = format(today, 'EEEE d MMMM', { locale: fr });
@@ -107,7 +143,7 @@ export default function TodayScreen() {
       }
       showsVerticalScrollIndicator={false}
     >
-      {/* En-tête */}
+      {/* En-tête avec message de bienvenue */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>
@@ -124,8 +160,8 @@ export default function TodayScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Résumé rapide interactif */}
-      <View style={styles.summaryRow}>
+      {/* Chips Résumé du Jour */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryRow}>
         <SummaryChip
           count={upcomingReminders.length}
           label="rappels"
@@ -140,18 +176,23 @@ export default function TodayScreen() {
           icon="checkmark-circle-outline"
           onPress={() => router.push('/(tabs)/tasks')}
         />
-        {missedReminders.length > 0 && (
-          <SummaryChip
-            count={missedReminders.length}
-            label="manqués"
-            color="#FFB4AB"
-            icon="alert-circle-outline"
-            onPress={() => router.push('/reminders')}
-          />
-        )}
-      </View>
+        <SummaryChip
+          count={events.length}
+          label="événements"
+          color="#4CAF50"
+          icon="calendar-outline"
+          onPress={() => router.push('/(tabs)/calendar')}
+        />
+        <SummaryChip
+          count={habits.filter(h => h.completedToday).length}
+          label={`/ ${habits.length} habitudes`}
+          color="#FF9800"
+          icon="flame-outline"
+          onPress={() => router.push('/habits/index')}
+        />
+      </ScrollView>
 
-      {/* Rappels manqués — priorité d'affichage */}
+      {/* Rappels manqués (Alertes prioritaires) */}
       {missedReminders.length > 0 && (
         <Section
           title="À rattraper"
@@ -165,36 +206,106 @@ export default function TodayScreen() {
         </Section>
       )}
 
+      {/* Habitudes du Jour (Check-off direct 1-tap) */}
+      {habits.length > 0 && (
+        <Section
+          title="Habitudes du jour"
+          icon="repeat-outline"
+          iconColor="#FF9800"
+          action={{ label: 'Streaks', onPress: () => router.push('/habits/index') }}
+        >
+          {habits.map(item => (
+            <TouchableOpacity
+              key={item.habit.id}
+              style={[
+                styles.card,
+                item.completedToday && { borderColor: Tertiary.default + '60', borderWidth: 1 },
+              ]}
+              onPress={() => handleToggleHabit(item)}
+            >
+              <Ionicons
+                name={item.completedToday ? 'checkmark-circle' : 'ellipse-outline'}
+                size={22}
+                color={item.completedToday ? Tertiary.default : OnSurface.disabled}
+              />
+              <View style={styles.cardBody}>
+                <Text
+                  style={[
+                    styles.cardTitle,
+                    item.completedToday && { textDecorationLine: 'line-through', opacity: 0.7 },
+                  ]}
+                >
+                  {item.habit.title}
+                </Text>
+                <Text style={styles.cardSubtitle}>
+                  Série actuelle : 🔥 {item.currentStreak} jours
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </Section>
+      )}
+
+      {/* Événements d'aujourd'hui */}
+      {events.length > 0 && (
+        <Section
+          title="Agenda & Événements"
+          icon="calendar-outline"
+          iconColor="#4CAF50"
+          action={{ label: 'Calendrier', onPress: () => router.push('/(tabs)/calendar') }}
+        >
+          {events.map(evt => (
+            <TouchableOpacity
+              key={evt.id}
+              style={styles.card}
+              onPress={() => router.push(`/events/${evt.id}`)}
+            >
+              <View style={[styles.cardTime, { backgroundColor: '#4CAF5020' }]}>
+                <Text style={[styles.timeText, { color: '#4CAF50' }]}>
+                  {format(new Date(evt.startAt), 'HH:mm')}
+                </Text>
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle} numberOfLines={1}>{evt.title}</Text>
+                {evt.location && <Text style={styles.cardSubtitle}>📍 {evt.location}</Text>}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </Section>
+      )}
+
       {/* Rappels du jour */}
       <Section
         title="Rappels"
         icon="notifications-outline"
         iconColor={Primary.default}
-        action={{ label: 'Voir tout', onPress: () => router.push('/reminders') }}
+        action={{ label: '+ Nouveau', onPress: () => router.push('/reminders/new') }}
       >
         {upcomingReminders.length > 0 ? (
           upcomingReminders.map(r => <ReminderCard key={r.id} reminder={r} />)
         ) : (
           <EmptySection
-            text="Aucun rappel pour aujourd'hui"
+            text="Aucun rappel prévu pour aujourd'hui"
             action="Créer un rappel"
             onAction={() => router.push('/reminders/new')}
           />
         )}
       </Section>
 
-      {/* Tâches du jour */}
+      {/* Tâches planifiées */}
       <Section
-        title="Tâches planifiées"
+        title="Tâches du jour"
         icon="checkmark-circle-outline"
         iconColor={Tertiary.default}
         action={{ label: '+ Nouvelle', onPress: () => router.push('/tasks/new') }}
       >
         {tasks.length > 0 ? (
-          tasks.map(t => <TaskCard key={t.id} task={t} />)
+          tasks.map(t => (
+            <TaskCard key={t.id} task={t} onComplete={() => handleCompleteTask(t)} />
+          ))
         ) : (
           <EmptySection
-            text="Aucune tâche pour aujourd'hui"
+            text="Aucune tâche planifiée aujourd'hui"
             action="Voir l'Inbox"
             onAction={() => router.push('/(tabs)/tasks')}
           />
@@ -227,11 +338,11 @@ function SummaryChip({
 }) {
   return (
     <TouchableOpacity
-      style={[styles.chip, { borderColor: color + '30' }]}
+      style={[styles.chip, { borderColor: color + '40' }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Ionicons name={icon} size={14} color={color} />
+      <Ionicons name={icon} size={16} color={color} />
       <Text style={[styles.chipCount, { color }]}>{count}</Text>
       <Text style={styles.chipLabel}>{label}</Text>
     </TouchableOpacity>
@@ -314,27 +425,35 @@ function ReminderCard({ reminder }: { reminder: Reminder }) {
   );
 }
 
-function TaskCard({ task }: { task: Task }) {
+function TaskCard({ task, onComplete }: { task: Task; onComplete: () => void }) {
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/tasks/${task.id}` as any)}
-    >
-      <Ionicons
-        name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
-        size={20}
-        color={task.status === 'COMPLETED' ? Tertiary.default : OnSurface.disabled}
-      />
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={1}>
+    <View style={styles.card}>
+      <TouchableOpacity onPress={onComplete}>
+        <Ionicons
+          name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
+          size={22}
+          color={task.status === 'COMPLETED' ? Tertiary.default : OnSurface.disabled}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.cardBody}
+        onPress={() => router.push(`/tasks/${task.id}` as any)}
+      >
+        <Text
+          style={[
+            styles.cardTitle,
+            task.status === 'COMPLETED' && { textDecorationLine: 'line-through', opacity: 0.6 },
+          ]}
+          numberOfLines={1}
+        >
           {task.title}
         </Text>
         {task.estimatedMinutes && (
           <Text style={styles.cardSubtitle}>⏱️ {task.estimatedMinutes} min</Text>
         )}
-      </View>
+      </TouchableOpacity>
       <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -356,19 +475,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  summaryRow: { flexDirection: 'row', gap: Spacing.sm },
+  summaryRow: { flexDirection: 'row', gap: Spacing.xs },
   chip: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Surface.container,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
+    marginRight: Spacing.xs,
     gap: 6,
     borderWidth: 1,
   },
-  chipCount: { ...Typography.titleMedium },
+  chipCount: { ...Typography.titleMedium, fontWeight: '700' },
   chipLabel: { ...Typography.bodySmall, color: OnSurface.variant },
   section: { gap: Spacing.md },
   sectionHeader: {
