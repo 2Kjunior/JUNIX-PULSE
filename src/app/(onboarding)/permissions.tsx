@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { router } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import { NotificationService } from '@/services/notification-service';
 import {
   Surface,
   Primary,
@@ -30,10 +30,10 @@ export default function OnboardingPermissions() {
 
   async function requestNotifications() {
     try {
-      const { status } = await Notifications.requestPermissionsAsync();
-      setNotifStatus(status === 'granted' ? 'granted' : 'denied');
+      const granted = await NotificationService.requestPermissions();
+      setNotifStatus(granted ? 'granted' : 'denied');
       await SettingsRepository.update({
-        notificationsEnabled: status === 'granted',
+        notificationsEnabled: granted,
         updatedAt: new Date().toISOString(),
       });
     } catch {
