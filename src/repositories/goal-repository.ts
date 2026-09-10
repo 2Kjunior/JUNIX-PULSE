@@ -22,12 +22,12 @@ function rowToTask(row: Record<string, unknown>): Task {
   return {
     id: row.id as string,
     title: row.title as string,
-    notes: (row.notes as string | null) ?? undefined,
-    dueDate: (row.due_date as string | null) ?? undefined,
-    priority: row.priority as Task['priority'],
+    description: (row.description as string | null) ?? undefined,
     status: row.status as Task['status'],
-    parentTaskId: (row.parent_task_id as string | null) ?? undefined,
+    scheduledDate: (row.scheduled_date as string | null) ?? undefined,
     estimatedMinutes: (row.estimated_minutes as number | null) ?? undefined,
+    priority: row.priority as Task['priority'],
+    goalId: (row.goal_id as string | null) ?? undefined,
     personId: (row.person_id as string | null) ?? undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
@@ -37,7 +37,7 @@ function rowToTask(row: Record<string, unknown>): Task {
 }
 
 export const GoalRepository = {
-  async create(goal: Goal): Promise<void> {
+  create: async (goal: Goal): Promise<void> => {
     const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO goals (id, title, description, status, deadline, created_at, updated_at)
@@ -52,10 +52,10 @@ export const GoalRepository = {
     );
   },
 
-  async update(params: Partial<Goal> & { id: string; updatedAt: string }): Promise<void> {
+  update: async (params: Partial<Goal> & { id: string; updatedAt: string }): Promise<void> => {
     const db = await getDatabase();
     const fields: string[] = [];
-    const values: unknown[] = [];
+    const values: (string | number | null)[] = [];
 
     if (params.title !== undefined) { fields.push('title = ?'); values.push(params.title); }
     if (params.description !== undefined) { fields.push('description = ?'); values.push(params.description ?? null); }

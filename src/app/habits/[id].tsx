@@ -87,7 +87,7 @@ export default function HabitDetailScreen() {
           style: 'default',
           onPress: async () => {
             await HabitUseCases.pauseHabit(id, todayStr, undefined, 'Pause utilisateur');
-            showSnackbar({ message: 'Habitude mise en pause' });
+            showSnackbar('Habitude mise en pause');
             loadData();
           },
         },
@@ -99,7 +99,7 @@ export default function HabitDetailScreen() {
     if (!id) return;
     try {
       await HabitUseCases.resumeHabit(id);
-      showSnackbar({ message: 'Habitude reprise avec succès !' });
+      showSnackbar('Habitude reprise avec succès !');
       loadData();
     } catch (e: any) {
       Alert.alert('Erreur', e.message);
@@ -118,7 +118,7 @@ export default function HabitDetailScreen() {
           style: 'destructive',
           onPress: async () => {
             await HabitUseCases.deleteHabit(id);
-            showSnackbar({ message: 'Habitude supprimée' });
+            showSnackbar('Habitude supprimée');
             router.back();
           },
         },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   desc: { ...Typography.bodyMedium, color: OnSurface.variant, marginTop: Spacing.xs },
   badgeRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
   statusBadge: {
-    backgroundColor: Surface.elevated,
+    backgroundColor: Surface.high,
     paddingHorizontal: Spacing.md,
     paddingVertical: 4,
     borderRadius: Radius.full,

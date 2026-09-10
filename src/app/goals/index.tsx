@@ -120,7 +120,7 @@ export default function GoalsListScreen() {
           <EmptyState
             icon="flag-outline"
             title="Aucun objectif en cours"
-            message="Définissez de grands objectifs et associez-y vos tâches quotidiennes pour mesurer votre progression !"
+            description="Définissez de grands objectifs et associez-y vos tâches quotidiennes pour mesurer votre progression !"
             actionLabel="Créer un objectif"
             onAction={() => router.push('/goals/new')}
           />
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   deadlineText: { ...Typography.labelSmall, color: Primary.default },
   track: {
     height: 8,
-    backgroundColor: Surface.elevated,
+    backgroundColor: Surface.high,
     borderRadius: Radius.full,
     overflow: 'hidden',
   },

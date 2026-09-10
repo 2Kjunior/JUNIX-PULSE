@@ -74,12 +74,11 @@ export default function HabitsListScreen() {
   const handleToggleToday = async (item: HabitStats) => {
     try {
       const nowCompleted = await HabitUseCases.toggleHabitCompletion(item.habit.id);
-      showSnackbar({
-        message: nowCompleted
+      showSnackbar(
+        nowCompleted
           ? `Habitude "${item.habit.title}" validée ! 🔥`
-          : `Validation retirée pour "${item.habit.title}".`,
-        variant: 'success',
-      });
+          : `Validation retirée pour "${item.habit.title}".`
+      );
       loadData();
     } catch (e: any) {
       Alert.alert('Erreur', e.message || 'Impossible de mettre à jour l\'habitude');
@@ -89,7 +88,7 @@ export default function HabitsListScreen() {
   const handleResume = async (habitId: string, title: string) => {
     try {
       await HabitUseCases.resumeHabit(habitId);
-      showSnackbar({ message: `Habitude "${title}" reprise !` });
+      showSnackbar(`Habitude "${title}" reprise !`);
       loadData();
     } catch (e: any) {
       Alert.alert('Erreur', e.message);
@@ -163,7 +162,7 @@ export default function HabitsListScreen() {
           <EmptyState
             icon="repeat-outline"
             title="Aucune habitude active"
-            message="Créez des habitudes quotidiennes pour suivre vos routines et séries !"
+            description="Créez des habitudes quotidiennes pour suivre vos routines et séries !"
             actionLabel="Créer une habitude"
             onAction={() => router.push('/habits/new')}
           />
@@ -324,7 +323,7 @@ const styles = StyleSheet.create({
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.elevated,
+    backgroundColor: Surface.high,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,

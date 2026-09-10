@@ -61,7 +61,7 @@ export const HabitRepository = {
   async update(params: Partial<Habit> & { id: string; updatedAt: string }): Promise<void> {
     const db = await getDatabase();
     const fields: string[] = [];
-    const values: unknown[] = [];
+    const values: (string | number | null)[] = [];
 
     if (params.title !== undefined) { fields.push('title = ?'); values.push(params.title); }
     if (params.description !== undefined) { fields.push('description = ?'); values.push(params.description ?? null); }

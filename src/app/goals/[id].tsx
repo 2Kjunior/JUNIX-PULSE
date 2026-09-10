@@ -75,7 +75,7 @@ export default function GoalDetailScreen() {
     if (!id) return;
     try {
       await GoalUseCases.linkTask(id, taskId);
-      showSnackbar({ message: 'Tâche associée à l\'objectif !' });
+      showSnackbar('Tâche associée à l\'objectif !');
       setShowTaskPicker(false);
       loadData();
     } catch (e: any) {
@@ -87,7 +87,7 @@ export default function GoalDetailScreen() {
     if (!id) return;
     try {
       await GoalUseCases.unlinkTask(id, taskId);
-      showSnackbar({ message: `Tâche "${title}" dissociée.` });
+      showSnackbar(`Tâche "${title}" dissociée.`);
       loadData();
     } catch (e: any) {
       Alert.alert('Erreur', e.message);
@@ -106,7 +106,7 @@ export default function GoalDetailScreen() {
           style: 'destructive',
           onPress: async () => {
             await GoalUseCases.deleteGoal(id);
-            showSnackbar({ message: 'Objectif supprimé' });
+            showSnackbar('Objectif supprimé');
             router.back();
           },
         },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs },
   progressTitle: { ...Typography.titleMedium, color: OnSurface.primary },
   progressPercent: { ...Typography.titleLarge, color: Primary.default },
-  track: { height: 10, backgroundColor: Surface.elevated, borderRadius: Radius.full, overflow: 'hidden', marginVertical: Spacing.xs },
+  track: { height: 10, backgroundColor: Surface.high, borderRadius: Radius.full, overflow: 'hidden', marginVertical: Spacing.xs },
   fill: { height: '100%', borderRadius: Radius.full },
   progressSub: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: Spacing.xs },
   section: { marginBottom: Spacing.xl },

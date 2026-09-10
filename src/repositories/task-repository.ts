@@ -142,6 +142,14 @@ export const TaskRepository = {
     return rows.map(rowToTask);
   },
 
+  async findAllActive(): Promise<Task[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM tasks WHERE deleted_at IS NULL AND status != 'COMPLETED' ORDER BY created_at DESC`
+    );
+    return rows.map(rowToTask);
+  },
+
   // ─── Sous-tâches ───────────────────────────────────────────────────────────
 
   async createSubtask(subtask: Subtask): Promise<void> {
