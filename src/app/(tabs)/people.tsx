@@ -1,72 +1,85 @@
 /**
- * Onglet Personnes — Liste des contacts Junix Pulse.
- * Étape 12 construira le détail, les interactions et l'import.
+ * Onglet Personnes — Vue principale avec filtres Toutes et À recontacter.
+ * Permet de suivre ses relations d'un coup d'œil et d'éviter d'oublier des proches.
  */
+
 import { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, RefreshControl,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getDatabase } from '@/database/sqlite';
+import { format, differenceInDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+import { PersonRepository } from '@/repositories/person-repository';
 import { Person } from '@/domain/entities';
 import {
-  Surface, Primary, OnSurface, Outline, Spacing, Radius, Typography,
+  Surface,
+  Primary,
+  Tertiary,
+  OnSurface,
+  Outline,
+  Error as ErrorColors,
+  Success,
+  Spacing,
+  Radius,
+  Typography,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 
+type FilterTab = 'all' | 'forgotten';
 type ScreenState = 'loading' | 'content' | 'error';
 
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
-  const [state, setState] = useState<ScreenState>('loading');
-  const [people, setPeople] = useState<Person[]>([]);
-  const [search, setSearch] = useState('');
+
+  const [screenState, setScreenState] = useState<ScreenState>('loading');
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [persons, setPersons] = useState<Person[]>([]);
+  const [forgottenCount, setForgottenCount] = useState(0);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const db = await getDatabase();
-      const rows = await db.getAllAsync<Record<string, unknown>>(
-        `SELECT * FROM persons WHERE deleted_at IS NULL ORDER BY display_name ASC`
-      );
-      setPeople(rows.map(r => ({
-        id: r.id as string,
-        displayName: r.display_name as string,
-        relationship: (r.relationship as string | null) ?? undefined,
-        phone: (r.phone as string | null) ?? undefined,
-        email: (r.email as string | null) ?? undefined,
-        birthDate: (r.birth_date as string | null) ?? undefined,
-        notes: (r.notes as string | null) ?? undefined,
-        lastInteractionAt: (r.last_interaction_at as string | null) ?? undefined,
-        forgottenThresholdDays: (r.forgotten_threshold_days as number) ?? 30,
-        importedFromContacts: (r.imported_from_contacts as number) === 1,
-        createdAt: r.created_at as string,
-        updatedAt: r.updated_at as string,
-      })));
-      setState('content');
+      const [allPersons, forgotten] = await Promise.all([
+        PersonRepository.findAll(),
+        PersonRepository.findForgotten(),
+      ]);
+
+      setForgottenCount(forgotten.length);
+      setPersons(activeTab === 'all' ? allPersons : forgotten);
+      setScreenState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur');
-      setState('error');
+      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setScreenState('error');
     }
-  }, []);
+  }, [activeTab]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const filtered = search.trim()
-    ? people.filter(p =>
-        p.displayName.toLowerCase().includes(search.toLowerCase()) ||
-        p.relationship?.toLowerCase().includes(search.toLowerCase())
-      )
-    : people;
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
-  if (state === 'loading') return <LoadingState />;
-  if (state === 'error') return <ErrorState message={error} onRetry={load} />;
+  if (screenState === 'loading') return <LoadingState />;
+  if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.title}>Personnes</Text>
         <TouchableOpacity
@@ -74,64 +87,127 @@ export default function PeopleScreen() {
           onPress={() => router.push('/people/new')}
           accessibilityLabel="Ajouter une personne"
         >
-          <Ionicons name="add" size={22} color={Primary.on} />
+          <Ionicons name="person-add-outline" size={20} color={Primary.on} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={16} color={OnSurface.disabled} />
-        <TextInput
-          style={styles.searchInput}
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Rechercher..."
-          placeholderTextColor={OnSurface.disabled}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color={OnSurface.disabled} />
-          </TouchableOpacity>
+      {/* Tabs Toutes / À recontacter */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tabItem, activeTab === 'all' && styles.tabItemActive]}
+          onPress={() => setActiveTab('all')}
+        >
+          <Text style={[styles.tabLabel, activeTab === 'all' && styles.tabLabelActive]}>
+            Toutes
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabItem, activeTab === 'forgotten' && styles.tabItemActive]}
+          onPress={() => setActiveTab('forgotten')}
+        >
+          <Text style={[styles.tabLabel, activeTab === 'forgotten' && styles.tabLabelActive]}>
+            À recontacter ({forgottenCount})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Liste principale */}
+      <ScrollView
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {persons.length === 0 ? (
+          <EmptyState
+            icon={activeTab === 'all' ? '👥' : '🎉'}
+            title={
+              activeTab === 'all'
+                ? 'Aucun contact enregistré'
+                : 'Tous vos proches sont à jour !'
+            }
+            description={
+              activeTab === 'all'
+                ? 'Ajoutez des amis, membres de la famille ou collègues pour garder le fil de vos échanges.'
+                : 'Aucune personne n’a dépassé le délai de relance conseillé.'
+            }
+            actionLabel="+ Ajouter une personne"
+            onAction={() => router.push('/people/new')}
+          />
+        ) : (
+          persons.map(person => <PersonCard key={person.id} person={person} />)
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+function PersonCard({ person }: { person: Person }) {
+  const daysSinceLast = person.lastInteractionAt
+    ? differenceInDays(new Date(), new Date(person.lastInteractionAt))
+    : null;
+
+  const isForgotten =
+    daysSinceLast === null || daysSinceLast >= (person.forgottenThresholdDays || 30);
+
+  const initials = person.displayName
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/people/${person.id}` as any)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>{initials}</Text>
+      </View>
+
+      <View style={styles.cardContent}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.displayName}>{person.displayName}</Text>
+          {!!person.relationship && (
+            <View style={styles.relationshipBadge}>
+              <Text style={styles.relationshipText}>{person.relationship}</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.lastContactText}>
+          {daysSinceLast === null
+            ? 'Jamais contacté'
+            : daysSinceLast === 0
+            ? 'Dernier contact : aujourd’hui'
+            : `Dernier contact : il y a ${daysSinceLast}j`}
+        </Text>
+
+        {isForgotten && (
+          <View style={styles.forgottenBadge}>
+            <Ionicons name="alert-circle" size={12} color={ErrorColors.default} />
+            <Text style={styles.forgottenText}>Relance conseillée</Text>
+          </View>
         )}
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={p => p.id}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={Primary.default} />
-        }
-        ListEmptyComponent={
-          <EmptyState
-            icon="👥"
-            title={search ? 'Aucun résultat' : 'Aucune personne'}
-            description={search ? 'Essayez un autre terme.' : "Ajoutez des personnes pour relier vos rappels et tâches à des contacts."}
-            actionLabel={search ? undefined : '+ Ajouter une personne'}
-            onAction={search ? undefined : () => router.push('/people/new')}
-          />
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.personRow}
-            onPress={() => router.push(`/people/${item.id}` as any)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {item.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.personBody}>
-              <Text style={styles.personName}>{item.displayName}</Text>
-              {item.relationship && (
-                <Text style={styles.personRelation}>{item.relationship}</Text>
-              )}
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-          </TouchableOpacity>
-        )}
-      />
-    </View>
+      {/* Bouton d'action rapide si numéro de téléphone */}
+      {!!person.phone && (
+        <TouchableOpacity
+          style={styles.callBtn}
+          onPress={() => Linking.openURL(`tel:${person.phone}`)}
+          accessibilityLabel="Appeler"
+        >
+          <Ionicons name="call-outline" size={18} color={Primary.default} />
+        </TouchableOpacity>
+      )}
+
+      <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} style={styles.chevron} />
+    </TouchableOpacity>
   );
 }
 
@@ -153,24 +229,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchBar: {
+  tabBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
-    height: 44,
+    marginBottom: Spacing.md,
   },
-  searchInput: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
+  tabItem: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.container,
   },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100, flexGrow: 1 },
-  personRow: {
+  tabItemActive: { backgroundColor: Primary.container },
+  tabLabel: { ...Typography.labelMedium, color: OnSurface.variant },
+  tabLabelActive: { color: Primary.onContainer },
+  list: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 100,
+    flexGrow: 1,
+  },
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Surface.container,
@@ -180,15 +259,37 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Primary.container,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: { ...Typography.titleMedium, color: Primary.onContainer },
-  personBody: { flex: 1 },
-  personName: { ...Typography.bodyMedium, color: OnSurface.primary },
-  personRelation: { ...Typography.labelSmall, color: OnSurface.variant, marginTop: 2 },
+  cardContent: { flex: 1, gap: 2 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  displayName: { ...Typography.bodyMedium, color: OnSurface.primary },
+  relationshipBadge: {
+    backgroundColor: Surface.high,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+  },
+  relationshipText: { ...Typography.labelSmall, color: OnSurface.variant, fontSize: 10 },
+  lastContactText: { ...Typography.labelSmall, color: OnSurface.variant },
+  forgottenBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+  forgottenText: { ...Typography.labelSmall, color: ErrorColors.default, fontSize: 10 },
+  callBtn: {
+    padding: Spacing.xs,
+    backgroundColor: Surface.high,
+    borderRadius: Radius.full,
+  },
+  chevron: { marginLeft: 2 },
 });
