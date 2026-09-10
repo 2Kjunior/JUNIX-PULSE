@@ -1,116 +1,276 @@
 /**
- * Onglet Calendrier — Vue mensuelle par défaut.
- * Étape 10 construira les vues jour/semaine/mois complètes.
+ * Onglet Calendrier — Agenda synthétique quotidien et hebdomadaire.
+ * Combine événements, rappels et tâches planifiées pour le jour sélectionné.
  */
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+
+import { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
-import { Surface, Primary, Tertiary, OnSurface, Outline, Spacing, Radius, Typography } from '@/constants/theme';
+import {
+  format,
+  addDays,
+  startOfWeek,
+  isSameDay,
+  isToday,
+} from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+import { EventRepository } from '@/repositories/event-repository';
+import { ReminderRepository } from '@/repositories/reminder-repository';
+import { TaskRepository } from '@/repositories/task-repository';
+import { Event, Reminder, Task } from '@/domain/entities';
+import {
+  Surface,
+  Primary,
+  Tertiary,
+  OnSurface,
+  Outline,
+  Spacing,
+  Radius,
+  Typography,
+} from '@/constants/theme';
+import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+
+type ScreenState = 'loading' | 'content' | 'error';
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selected, setSelected] = useState(new Date());
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startPad = getDay(monthStart); // jours vides au début (0=dim)
+  const [screenState, setScreenState] = useState<ScreenState>('loading');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [events, setEvents] = useState<Event[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  // Génération des 7 jours de la semaine courante
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  const dateYmd = format(selectedDate, 'yyyy-MM-dd');
+
+  const load = useCallback(async () => {
+    try {
+      const [evts, rems, tsks] = await Promise.all([
+        EventRepository.findForDate(dateYmd),
+        ReminderRepository.findForDate(dateYmd),
+        TaskRepository.findForDate(dateYmd),
+      ]);
+
+      setEvents(evts);
+      setReminders(rems);
+      setTasks(tsks);
+      setScreenState('content');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setScreenState('error');
+    }
+  }, [dateYmd]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
+
+  if (screenState === 'loading') return <LoadingState />;
+  if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
+
+  const hasItems = events.length > 0 || reminders.length > 0 || tasks.length > 0;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* En-tête */}
+      {/* En-tête avec Mois/Année */}
       <View style={styles.header}>
-        <View style={styles.monthNav}>
-          <TouchableOpacity
-            onPress={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            style={styles.navBtn}
-          >
-            <Ionicons name="chevron-back" size={20} color={OnSurface.variant} />
-          </TouchableOpacity>
-          <Text style={styles.monthLabel}>
-            {format(currentMonth, 'MMMM yyyy', { locale: fr })}
+        <View>
+          <Text style={styles.title}>Calendrier</Text>
+          <Text style={styles.subtitle}>
+            {format(selectedDate, 'MMMM yyyy', { locale: fr })}
           </Text>
-          <TouchableOpacity
-            onPress={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            style={styles.navBtn}
-          >
-            <Ionicons name="chevron-forward" size={20} color={OnSurface.variant} />
-          </TouchableOpacity>
         </View>
         <TouchableOpacity
           style={styles.addBtn}
-          onPress={() => router.push('/events/new' as any)}
+          onPress={() => router.push('/events/new')}
           accessibilityLabel="Nouvel événement"
         >
-          <Ionicons name="add" size={22} color={Primary.on} />
+          <Ionicons name="calendar-number-outline" size={20} color={Primary.on} />
         </TouchableOpacity>
       </View>
 
-      {/* Jours de la semaine */}
-      <View style={styles.dayLabels}>
-        {DAY_LABELS.map(d => (
-          <Text key={d} style={styles.dayLabel}>{d}</Text>
-        ))}
-      </View>
+      {/* Bandeau des jours de la semaine */}
+      <View style={styles.weekStrip}>
+        {weekDays.map((d, index) => {
+          const isSelected = isSameDay(d, selectedDate);
+          const isCurrentDay = isToday(d);
 
-      {/* Grille */}
-      <View style={styles.grid}>
-        {/* Cases vides pour aligner le premier jour */}
-        {Array.from({ length: startPad }).map((_, i) => (
-          <View key={`pad-${i}`} style={styles.dayCell} />
-        ))}
-
-        {days.map(day => {
-          const isSelected = isSameDay(day, selected);
-          const isT = isToday(day);
           return (
             <TouchableOpacity
-              key={day.toISOString()}
+              key={index}
               style={[
                 styles.dayCell,
                 isSelected && styles.dayCellSelected,
-                isT && !isSelected && styles.dayCellToday,
+                isCurrentDay && !isSelected && styles.dayCellToday,
               ]}
-              onPress={() => setSelected(day)}
+              onPress={() => setSelectedDate(d)}
             >
               <Text
                 style={[
-                  styles.dayNumber,
-                  isSelected && styles.dayNumberSelected,
-                  isT && !isSelected && styles.dayNumberToday,
+                  styles.dayName,
+                  isSelected && styles.dayTextSelected,
                 ]}
               >
-                {format(day, 'd')}
+                {format(d, 'EEE', { locale: fr }).toUpperCase()}
+              </Text>
+              <Text
+                style={[
+                  styles.dayNumber,
+                  isSelected && styles.dayTextSelected,
+                ]}
+              >
+                {format(d, 'd')}
               </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Journée sélectionnée */}
-      <View style={styles.selectedDay}>
-        <Text style={styles.selectedDayTitle}>
-          {format(selected, 'EEEE d MMMM', { locale: fr })}
-        </Text>
-        <View style={styles.emptyDay}>
-          <Text style={styles.emptyDayText}>Aucun événement</Text>
-          <TouchableOpacity onPress={() => router.push('/events/new' as any)}>
-            <Text style={styles.emptyDayAction}>+ Créer un événement</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Agenda synthétique */}
+      <ScrollView
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {!hasItems ? (
+          <EmptyState
+            icon="📅"
+            title="Journée libre"
+            description="Aucun événement, rappel ou tâche planifié pour cette date."
+            actionLabel="+ Nouvel événement"
+            onAction={() => router.push('/events/new')}
+          />
+        ) : (
+          <>
+            {/* Événements */}
+            {events.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  Événements ({events.length})
+                </Text>
+                {events.map(e => (
+                  <TouchableOpacity
+                    key={e.id}
+                    style={styles.eventCard}
+                    onPress={() => router.push(`/events/${e.id}` as any)}
+                  >
+                    <View style={styles.eventTimeCol}>
+                      <Text style={styles.eventTimeText}>
+                        {format(new Date(e.startAt), 'HH:mm')}
+                      </Text>
+                      <Text style={styles.eventDurationText}>
+                        {format(new Date(e.endAt), 'HH:mm')}
+                      </Text>
+                    </View>
+
+                    <View style={styles.eventBody}>
+                      <Text style={styles.eventTitle}>{e.title}</Text>
+                      {!!e.location && (
+                        <Text style={styles.eventLocation} numberOfLines={1}>
+                          📍 {e.location}
+                        </Text>
+                      )}
+                      {!!e.travelBufferMinutes && e.travelBufferMinutes > 0 && (
+                        <Text style={styles.eventBufferText}>
+                          🚗 Trajet : {e.travelBufferMinutes}m avant
+                        </Text>
+                      )}
+                    </View>
+
+                    <View
+                      style={[
+                        styles.typeBadge,
+                        e.type === 'BUSY' ? styles.typeBadgeBusy : styles.typeBadgeFree,
+                      ]}
+                    >
+                      <Text style={styles.typeBadgeText}>
+                        {e.type === 'BUSY' ? 'Occupé' : 'Libre'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Rappels */}
+            {reminders.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  Rappels ({reminders.length})
+                </Text>
+                {reminders.map(r => (
+                  <TouchableOpacity
+                    key={r.id}
+                    style={styles.itemCard}
+                    onPress={() => router.push(`/reminders/${r.id}` as any)}
+                  >
+                    <Ionicons name="notifications" size={18} color={Primary.default} />
+                    <View style={styles.itemBody}>
+                      <Text style={styles.itemTitle}>{r.title}</Text>
+                      <Text style={styles.itemTime}>
+                        {format(new Date(r.scheduledAt), 'HH:mm')}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Tâches */}
+            {tasks.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  Tâches planifiées ({tasks.length})
+                </Text>
+                {tasks.map(t => (
+                  <TouchableOpacity
+                    key={t.id}
+                    style={styles.itemCard}
+                    onPress={() => router.push(`/tasks/${t.id}` as any)}
+                  >
+                    <Ionicons name="checkbox-outline" size={18} color={Tertiary.default} />
+                    <View style={styles.itemBody}>
+                      <Text style={styles.itemTitle}>{t.title}</Text>
+                      {t.estimatedMinutes && (
+                        <Text style={styles.itemTime}>⏱️ {t.estimatedMinutes} min</Text>
+                      )}
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 }
-
-const CELL_SIZE = 40;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Surface.base },
@@ -119,86 +279,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
-  monthNav: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  navBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Surface.container,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monthLabel: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    textTransform: 'capitalize',
-    minWidth: 140,
-    textAlign: 'center',
-  },
+  title: { ...Typography.headlineLarge, color: OnSurface.primary },
+  subtitle: { ...Typography.labelMedium, color: OnSurface.variant, textTransform: 'capitalize' },
   addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Primary.default,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayLabels: {
+  weekStrip: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  dayLabel: {
-    flex: 1,
-    textAlign: 'center',
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Surface.container,
+    marginBottom: Spacing.md,
   },
   dayCell: {
-    width: `${100 / 7}%`,
-    aspectRatio: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.md,
+    width: 44,
   },
-  dayCellSelected: {
-    backgroundColor: Primary.default,
-    borderRadius: Radius.full,
-  },
-  dayCellToday: {
-    borderWidth: 1,
-    borderColor: Primary.default,
-    borderRadius: Radius.full,
-  },
-  dayNumber: { ...Typography.bodyMedium, color: OnSurface.primary },
-  dayNumberSelected: { color: Primary.on, fontWeight: '700' },
-  dayNumberToday: { color: Primary.default },
-  selectedDay: {
-    flex: 1,
+  dayCellSelected: { backgroundColor: Primary.default },
+  dayCellToday: { backgroundColor: Surface.high, borderWidth: 1, borderColor: Primary.default },
+  dayName: { ...Typography.labelSmall, color: OnSurface.variant, fontSize: 10 },
+  dayNumber: { ...Typography.titleMedium, color: OnSurface.primary, marginTop: 2 },
+  dayTextSelected: { color: Primary.on },
+  list: {
     paddingHorizontal: Spacing.lg,
+    paddingBottom: 100,
+    flexGrow: 1,
+    gap: Spacing.lg,
   },
-  selectedDayTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    marginBottom: Spacing.md,
-    textTransform: 'capitalize',
-  },
-  emptyDay: {
-    flex: 1,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
+  section: { gap: Spacing.xs },
+  sectionTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: 4 },
+  eventCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    padding: Spacing.xl,
+    backgroundColor: Surface.container,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.xs,
+    gap: Spacing.md,
   },
-  emptyDayText: { ...Typography.bodySmall, color: OnSurface.disabled },
-  emptyDayAction: { ...Typography.labelMedium, color: Primary.default },
+  eventTimeCol: { alignItems: 'center', minWidth: 44 },
+  eventTimeText: { ...Typography.titleMedium, color: Primary.default },
+  eventDurationText: { ...Typography.labelSmall, color: OnSurface.disabled, fontSize: 10 },
+  eventBody: { flex: 1, gap: 2 },
+  eventTitle: { ...Typography.bodyMedium, color: OnSurface.primary },
+  eventLocation: { ...Typography.labelSmall, color: OnSurface.variant },
+  eventBufferText: { ...Typography.labelSmall, color: Tertiary.default, fontSize: 10 },
+  typeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+  },
+  typeBadgeBusy: { backgroundColor: Primary.container },
+  typeBadgeFree: { backgroundColor: Surface.high },
+  typeBadgeText: { ...Typography.labelSmall, color: OnSurface.variant, fontSize: 10 },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Surface.container,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.xs,
+    gap: Spacing.md,
+  },
+  itemBody: { flex: 1 },
+  itemTitle: { ...Typography.bodyMedium, color: OnSurface.primary },
+  itemTime: { ...Typography.labelSmall, color: OnSurface.variant, marginTop: 2 },
 });
