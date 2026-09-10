@@ -1,39 +1,68 @@
 /**
- * Onglet Pulse — Suggestions, habitudes, objectifs et insights.
- * Étapes 13–15 construiront les modules complets.
+ * Onglet Pulse — Tableau de bord central : Habitudes, Objectifs et Suggestions.
+ * Affiche un aperçu dynamique des habitudes actives et des objectifs.
  */
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Surface, Primary, Tertiary, OnSurface, Outline, Spacing, Radius, Typography,
 } from '@/constants/theme';
+import { HabitUseCases } from '@/use-cases/habit-use-cases';
+import { GoalUseCases } from '@/use-cases/goal-use-cases';
 
 export default function PulseScreen() {
   const insets = useSafeAreaInsets();
 
+  const [refreshing, setRefreshing] = useState(false);
+  const [habitCount, setHabitCount] = useState<number | null>(null);
+  const [goalCount, setGoalCount] = useState<number | null>(null);
+
+  const loadCounts = useCallback(async () => {
+    try {
+      const [habits, goals] = await Promise.all([
+        HabitUseCases.getAllHabitsWithStats(),
+        GoalUseCases.getAllGoalsWithDetails(),
+      ]);
+      setHabitCount(habits.filter(h => h.habit.status === 'ACTIVE').length);
+      setGoalCount(goals.filter(g => g.goal.status === 'ACTIVE').length);
+    } catch {
+      // Ignorer silencieusement en cas d'erreur temporaire
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCounts();
+    }, [loadCounts])
+  );
+
   const SECTIONS = [
     {
-      icon: 'bulb-outline' as const,
-      label: 'Suggestions',
-      desc: 'Propositions basées sur votre activité.',
-      color: Primary.default,
-      route: null, // Étape 15
-    },
-    {
       icon: 'repeat-outline' as const,
-      label: 'Habitudes',
-      desc: 'Suivez vos pratiques quotidiennes.',
+      label: 'Habitudes & Streaks',
+      desc: habitCount !== null ? `${habitCount} habitudes actives` : 'Suivez vos pratiques quotidiennes.',
       color: Tertiary.default,
       route: '/habits/index',
     },
     {
       icon: 'flag-outline' as const,
-      label: 'Objectifs',
-      desc: 'Progression liée à vos tâches.',
+      label: 'Objectifs & Progression',
+      desc: goalCount !== null ? `${goalCount} objectifs en cours` : 'Progression liée à vos tâches.',
       color: '#6DD58C',
       route: '/goals/index',
+    },
+    {
+      icon: 'bulb-outline' as const,
+      label: 'Suggestions intelligentes',
+      desc: 'Propositions basées sur votre activité.',
+      color: Primary.default,
+      route: null,
     },
   ];
 
@@ -41,10 +70,20 @@ export default function PulseScreen() {
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.lg }]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            loadCounts();
+          }}
+          tintColor={Primary.default}
+        />
+      }
     >
       <Text style={styles.title}>Pulse</Text>
       <Text style={styles.subtitle}>
-        Votre tableau de bord personnel.
+        Votre centre de croissance et de suivi personnel.
       </Text>
 
       {SECTIONS.map(s => (
@@ -72,10 +111,10 @@ export default function PulseScreen() {
       ))}
 
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderTitle}>✦ Suggestions intelligentes</Text>
+        <Text style={styles.placeholderTitle}>✦ Dynamic Pulse Insights</Text>
         <Text style={styles.placeholderDesc}>
-          Le moteur de suggestions analysera vos rappels, tâches, habitudes et personnes
-          pour vous proposer des actions pertinentes — jamais des décisions automatiques.
+          Consultez régulièrement vos séries d'habitudes et l'avancement de vos objectifs
+          pour alimenter votre quotidien en énergie et en régularité.
         </Text>
       </View>
     </ScrollView>
