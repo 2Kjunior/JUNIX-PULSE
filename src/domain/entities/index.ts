@@ -4,6 +4,8 @@
  * Les repositories traduisent entre ces types et les lignes de base de données.
  */
 
+export * from '../enums';
+
 import {
   ReminderStatus,
   ReminderPriority,

@@ -1,7 +1,9 @@
 /**
- * Onglet Tâches — Vue principale avec Inbox et tâches planifiées.
- * Étape 6 viendra étoffer cet écran avec la création, le détail et les sous-tâches.
+ * Onglet Tâches — Vue principale avec filtres Inbox, Aujourd'hui et Toutes.
+ * Implémentation complète V1.0 avec complétion instantanée (Undo 30s)
+ * et sous-tâches.
  */
+
 import { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -18,48 +20,72 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { TaskRepository } from '@/repositories/task-repository';
-import { Task } from '@/domain/entities';
+import { TaskUseCases } from '@/use-cases/task-use-cases';
+import { Task, Subtask } from '@/domain/entities';
+import { useAppStore } from '@/store/app-store';
 import {
   Surface,
   Primary,
   Tertiary,
   OnSurface,
   Outline,
+  Success,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 
+type FilterTab = 'inbox' | 'today' | 'all';
 type ScreenState = 'loading' | 'content' | 'error';
+
+interface TaskWithSubtasks {
+  task: Task;
+  subtasks: Subtask[];
+}
 
 export default function TasksScreen() {
   const insets = useSafeAreaInsets();
-  const [state, setState] = useState<ScreenState>('loading');
-  const [inbox, setInbox] = useState<Task[]>([]);
-  const [todayTasks, setTodayTasks] = useState<Task[]>([]);
+  const { showSnackbar } = useAppStore();
+
+  const [screenState, setScreenState] = useState<ScreenState>('loading');
+  const [activeTab, setActiveTab] = useState<FilterTab>('inbox');
+  const [items, setItems] = useState<TaskWithSubtasks[]>([]);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'inbox' | 'planned'>('inbox');
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const load = useCallback(async () => {
     try {
-      const [inboxTasks, planned] = await Promise.all([
-        TaskRepository.findInbox(),
-        TaskRepository.findForDate(todayStr),
-      ]);
-      setInbox(inboxTasks);
-      setTodayTasks(planned);
-      setState('content');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur');
-      setState('error');
-    }
-  }, [todayStr]);
+      let rawTasks: Task[] = [];
+      if (activeTab === 'inbox') {
+        rawTasks = await TaskRepository.findInbox();
+      } else if (activeTab === 'today') {
+        rawTasks = await TaskRepository.findForDate(todayStr);
+      } else {
+        rawTasks = await TaskRepository.findAll();
+      }
 
-  useEffect(() => { load(); }, [load]);
+      // Chargement des sous-tâches pour chaque tâche
+      const tasksWithSubs = await Promise.all(
+        rawTasks.map(async t => {
+          const subs = await TaskRepository.findSubtasks(t.id);
+          return { task: t, subtasks: subs };
+        })
+      );
+
+      setItems(tasksWithSubs);
+      setScreenState('content');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setScreenState('error');
+    }
+  }, [activeTab, todayStr]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -67,10 +93,37 @@ export default function TasksScreen() {
     setRefreshing(false);
   }, [load]);
 
-  if (state === 'loading') return <LoadingState />;
-  if (state === 'error') return <ErrorState message={error} onRetry={load} />;
+  // ─── Complétion Rapide ──────────────────────────────────────────────────────
 
-  const currentList = activeTab === 'inbox' ? inbox : todayTasks;
+  async function handleToggleComplete(task: Task) {
+    try {
+      const newStatus = await TaskUseCases.toggleComplete(task.id);
+      const isCompleted = newStatus === 'COMPLETED';
+
+      // Mise à jour optimiste de l'UI
+      setItems(prev =>
+        prev.map(item =>
+          item.task.id === task.id
+            ? { ...item, task: { ...item.task, status: newStatus } }
+            : item
+        )
+      );
+
+      showSnackbar(isCompleted ? 'Tâche terminée ✓' : 'Tâche réouverte', {
+        actionLabel: 'Annuler (30s)',
+        onAction: async () => {
+          await TaskUseCases.toggleComplete(task.id);
+          load();
+        },
+      });
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : 'Erreur');
+      load();
+    }
+  }
+
+  if (screenState === 'loading') return <LoadingState />;
+  if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -86,27 +139,26 @@ export default function TasksScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Tabs Inbox / Planifiées */}
+      {/* Tabs Inbox / Aujourd'hui / Toutes */}
       <View style={styles.tabBar}>
         {[
-          { key: 'inbox', label: `Inbox (${inbox.length})` },
-          { key: 'planned', label: `Aujourd'hui (${todayTasks.length})` },
+          { key: 'inbox', label: 'Inbox' },
+          { key: 'today', label: "Aujourd'hui" },
+          { key: 'all', label: 'Toutes' },
         ].map(tab => (
           <TouchableOpacity
             key={tab.key}
             style={[styles.tabItem, activeTab === tab.key && styles.tabItemActive]}
-            onPress={() => setActiveTab(tab.key as 'inbox' | 'planned')}
+            onPress={() => setActiveTab(tab.key as FilterTab)}
           >
-            <Text
-              style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
-            >
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Liste */}
+      {/* Liste principale */}
       <ScrollView
         contentContainerStyle={styles.list}
         refreshControl={
@@ -114,21 +166,32 @@ export default function TasksScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {currentList.length === 0 ? (
+        {items.length === 0 ? (
           <EmptyState
-            icon={activeTab === 'inbox' ? '✓' : '📅'}
-            title={activeTab === 'inbox' ? 'Inbox vide' : 'Aucune tâche planifiée aujourd\'hui'}
+            icon={activeTab === 'inbox' ? '📥' : activeTab === 'today' ? '📅' : '✓'}
+            title={
+              activeTab === 'inbox'
+                ? 'Votre Inbox est vide'
+                : activeTab === 'today'
+                ? 'Aucune tâche planifiée aujourd’hui'
+                : 'Aucune tâche pour le moment'
+            }
             description={
               activeTab === 'inbox'
-                ? "Créez une tâche sans date. Elle apparaîtra ici jusqu'à ce que vous la planifiiez."
-                : "Planifiez une tâche depuis l'Inbox ou créez-en une nouvelle."
+                ? 'Créez une tâche sans date pour la stocker ici avant de la planifier.'
+                : 'Planifiez vos journées pour rester concentré sur l’essentiel.'
             }
             actionLabel="+ Nouvelle tâche"
             onAction={() => router.push('/tasks/new')}
           />
         ) : (
-          currentList.map(task => (
-            <TaskRow key={task.id} task={task} />
+          items.map(({ task, subtasks }) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              subtasks={subtasks}
+              onToggleComplete={() => handleToggleComplete(task)}
+            />
           ))
         )}
       </ScrollView>
@@ -136,37 +199,93 @@ export default function TasksScreen() {
   );
 }
 
-function TaskRow({ task }: { task: Task }) {
+function TaskCard({
+  task,
+  subtasks,
+  onToggleComplete,
+}: {
+  task: Task;
+  subtasks: Subtask[];
+  onToggleComplete: () => void;
+}) {
+  const isCompleted = task.status === 'COMPLETED';
+  const completedSubsCount = subtasks.filter(s => s.isCompleted).length;
+
+  const priorityColors: Record<string, string> = {
+    URGENT: '#FF5252',
+    HIGH: '#FFB74D',
+    NORMAL: Primary.default,
+    LOW: OnSurface.disabled,
+  };
+  const accentColor = priorityColors[task.priority] ?? Primary.default;
+
   return (
     <TouchableOpacity
-      style={styles.taskRow}
+      style={styles.card}
       onPress={() => router.push(`/tasks/${task.id}` as any)}
       activeOpacity={0.8}
     >
-      <Ionicons
-        name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
-        size={22}
-        color={task.status === 'COMPLETED' ? Tertiary.default : OnSurface.disabled}
-        style={styles.taskCheck}
-      />
-      <View style={styles.taskBody}>
-        <Text
-          style={[styles.taskTitle, task.status === 'COMPLETED' && styles.taskTitleDone]}
-          numberOfLines={2}
-        >
+      {/* Barre verticale de priorité */}
+      <View style={[styles.priorityIndicator, { backgroundColor: accentColor }]} />
+
+      {/* Checkbox */}
+      <TouchableOpacity
+        style={styles.checkBtn}
+        onPress={onToggleComplete}
+        accessibilityLabel={isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
+      >
+        <Ionicons
+          name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
+          size={22}
+          color={isCompleted ? Success.default : OnSurface.disabled}
+        />
+      </TouchableOpacity>
+
+      {/* Contenu principal */}
+      <View style={styles.cardContent}>
+        <Text style={[styles.cardTitle, isCompleted && styles.cardTitleDone]} numberOfLines={2}>
           {task.title}
         </Text>
-        {task.scheduledDate && (
-          <Text style={styles.taskDate}>
-            {format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
+
+        {!!task.description && (
+          <Text style={styles.cardDesc} numberOfLines={1}>
+            {task.description}
           </Text>
         )}
-      </View>
-      {task.status === 'IN_PROGRESS' && (
-        <View style={styles.inProgressBadge}>
-          <Text style={styles.inProgressText}>En cours</Text>
+
+        {/* Badges (Date, Sous-tâches, Durée) */}
+        <View style={styles.metaRow}>
+          {task.scheduledDate && (
+            <View style={styles.metaBadge}>
+              <Ionicons name="calendar-outline" size={12} color={OnSurface.variant} />
+              <Text style={styles.metaText}>
+                {format(new Date(task.scheduledDate + 'T12:00:00'), 'd MMM', { locale: fr })}
+              </Text>
+            </View>
+          )}
+
+          {subtasks.length > 0 && (
+            <View style={styles.metaBadge}>
+              <Ionicons name="checkbox-outline" size={12} color={Primary.default} />
+              <Text style={[styles.metaText, { color: Primary.default }]}>
+                {completedSubsCount}/{subtasks.length}
+              </Text>
+            </View>
+          )}
+
+          {task.estimatedMinutes && (
+            <View style={styles.metaBadge}>
+              <Ionicons name="time-outline" size={12} color={Tertiary.default} />
+              <Text style={[styles.metaText, { color: Tertiary.default }]}>
+                {task.estimatedMinutes >= 60
+                  ? `${Math.floor(task.estimatedMinutes / 60)}h`
+                  : `${task.estimatedMinutes}m`}
+              </Text>
+            </View>
+          )}
         </View>
-      )}
+      </View>
+
       <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
     </TouchableOpacity>
   );
@@ -210,25 +329,37 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     flexGrow: 1,
   },
-  taskRow: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Surface.container,
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
-    gap: Spacing.sm,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  taskCheck: { paddingHorizontal: 2 },
-  taskBody: { flex: 1 },
-  taskTitle: { ...Typography.bodyMedium, color: OnSurface.primary },
-  taskTitleDone: { textDecorationLine: 'line-through', color: OnSurface.disabled },
-  taskDate: { ...Typography.labelSmall, color: OnSurface.variant, marginTop: 2 },
-  inProgressBadge: {
-    backgroundColor: 'rgba(123, 208, 255, 0.15)',
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.sm,
+  priorityIndicator: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+  },
+  checkBtn: { paddingRight: Spacing.sm, paddingLeft: Spacing.xs },
+  cardContent: { flex: 1, gap: 2 },
+  cardTitle: { ...Typography.bodyMedium, color: OnSurface.primary },
+  cardTitleDone: { textDecorationLine: 'line-through', color: OnSurface.disabled },
+  cardDesc: { ...Typography.bodySmall, color: OnSurface.variant },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: 4 },
+  metaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Surface.high,
+    paddingHorizontal: 6,
     paddingVertical: 2,
+    borderRadius: Radius.sm,
   },
-  inProgressText: { ...Typography.labelSmall, color: Tertiary.default, fontSize: 10 },
+  metaText: { ...Typography.labelSmall, color: OnSurface.variant, fontSize: 10 },
 });
