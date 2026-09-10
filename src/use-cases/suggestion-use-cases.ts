@@ -7,6 +7,7 @@
 import { SuggestionRepository } from '../repositories/suggestion-repository';
 import { PersonRepository } from '../repositories/person-repository';
 import { ReminderRepository } from '../repositories/reminder-repository';
+import { PersonUseCases } from './person-use-cases';
 import { HabitUseCases } from './habit-use-cases';
 import { Suggestion } from '../domain/entities';
 
@@ -35,6 +36,7 @@ export const SuggestionUseCases = {
             targetId: person.id,
             targetType: 'person',
             generatedAt: now,
+            createdAt: now,
           };
           await SuggestionRepository.create(sugg);
           newSuggestions.push(sugg);
@@ -58,6 +60,7 @@ export const SuggestionUseCases = {
             targetId: rem.id,
             targetType: 'reminder',
             generatedAt: now,
+            createdAt: now,
           };
           await SuggestionRepository.create(sugg);
           newSuggestions.push(sugg);
@@ -86,6 +89,7 @@ export const SuggestionUseCases = {
             targetId: item.habit.id,
             targetType: 'habit',
             generatedAt: now,
+            createdAt: now,
           };
           await SuggestionRepository.create(sugg);
           newSuggestions.push(sugg);
@@ -106,10 +110,9 @@ export const SuggestionUseCases = {
     if (sugg) {
       // Exécuter l'action associée si nécessaire
       if (sugg.type === 'FORGOTTEN_CONTACT' && sugg.targetId) {
-        await PersonRepository.logInteraction({
+        await PersonUseCases.logInteraction({
           personId: sugg.targetId,
           type: 'SMS',
-          occurredAt: now,
           notes: 'Interaction initiée suite à suggestion',
         });
       } else if (sugg.type === 'HABIT_REMINDER' && sugg.targetId) {

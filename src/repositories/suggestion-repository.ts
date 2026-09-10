@@ -17,6 +17,7 @@ function rowToSuggestion(row: Record<string, unknown>): Suggestion {
     targetType: (row.target_type as string | null) ?? undefined,
     proposedData: (row.proposed_data as string | null) ?? undefined,
     generatedAt: row.generated_at as string,
+    createdAt: (row.generated_at as string) ?? new Date().toISOString(),
     expiresAt: (row.expires_at as string | null) ?? undefined,
     decidedAt: (row.decided_at as string | null) ?? undefined,
   };
