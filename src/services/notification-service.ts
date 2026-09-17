@@ -2,25 +2,22 @@
  * Service de notifications push locales pour Junix Pulse.
  * Encapsule l'interaction avec expo-notifications.
  *
- * Compatible Expo Go (SDK 53/54/55/56/57) et Development Builds (EAS).
- * En Expo Go sur Android, les APIs natifs d'expo-notifications sont désactivées par Expo SDK 53+.
- * Le service bascule automatiquement en mode simulation transparente sans crasher l'application.
+ * Compatible Expo Go (SDK 53+) et Development Builds (EAS).
+ * Les notifications LOCALES fonctionnent dans Expo Go depuis le SDK 53.
+ * Seules les notifications PUSH (serveur distant) nécessitent un Development Build.
  */
 
 import { Platform } from 'react-native';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import Constants from 'expo-constants';
 
 type NotificationsType = typeof import('expo-notifications');
 
 let Notifications: NotificationsType | null = null;
 
 try {
-  const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-  if (!isExpoGo) {
-    Notifications = require('expo-notifications');
-  } else {
-    console.log('[NotificationService] Exécution dans Expo Go : notifications locales en mode simulation (Dev Build requis pour les notifications Android).');
-  }
+  // Les notifications locales fonctionnent dans Expo Go depuis SDK 53.
+  // Seul le push distant est bloqué — mais Junix Pulse n'utilise pas de push.
+  Notifications = require('expo-notifications');
 } catch (e) {
   console.log('[NotificationService] expo-notifications non disponible:', e);
 }
