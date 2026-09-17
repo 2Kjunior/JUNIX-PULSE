@@ -173,14 +173,6 @@ export type SnoozeOption = (typeof SNOOZE_OPTIONS_MINUTES)[number];
  * Calcule la nouvelle date d'échéance après un snooze.
  * BR-003 : un snooze crée une nouvelle échéance pour l'occurrence concernée.
  */
-export function calculateSnoozeUntil(minutes: SnoozeOption, now: Date = new Date()): string {
-  return addDays(now, 0) // clone
-    [Symbol.toPrimitive]
-    ? new Date(now.getTime() + minutes * 60 * 1000).toISOString()
-    : new Date(now.getTime() + minutes * 60 * 1000).toISOString();
-}
-
-// Version correcte sans Symbol trick
 export function computeSnoozeUntil(minutes: number, now: Date = new Date()): string {
   return new Date(now.getTime() + minutes * 60 * 1000).toISOString();
 }
