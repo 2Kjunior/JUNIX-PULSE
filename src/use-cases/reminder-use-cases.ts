@@ -8,7 +8,7 @@
  */
 
 import { randomUUID } from 'expo-crypto';
-import { ReminderRepository, CreateReminderParams } from '../repositories/reminder-repository';
+import { ReminderRepository } from '../repositories/reminder-repository';
 import { NotificationService } from '../services/notification-service';
 import { getNextOccurrence, computeSnoozeUntil, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
 import { Reminder, RecurrenceRule } from '../domain/entities';
