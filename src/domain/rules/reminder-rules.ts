@@ -166,7 +166,7 @@ function getNthWeekdayOfMonth(
 /**
  * Retourne la durée de snooze en minutes selon les options standard Junix Pulse.
  */
-export const SNOOZE_OPTIONS_MINUTES = [10, 30, 60, 120] as const;
+export const SNOOZE_OPTIONS_MINUTES = [15, 30, 60] as const;
 export type SnoozeOption = (typeof SNOOZE_OPTIONS_MINUTES)[number];
 
 /**
@@ -175,6 +175,17 @@ export type SnoozeOption = (typeof SNOOZE_OPTIONS_MINUTES)[number];
  */
 export function computeSnoozeUntil(minutes: number, now: Date = new Date()): string {
   return new Date(now.getTime() + minutes * 60 * 1000).toISOString();
+}
+
+/**
+ * Calcule "demain à la même heure" à partir de l'heure d'origine du rappel.
+ * BR-003b : "lendemain même heure" repart de scheduledAt, pas de now.
+ * Ex : rappel à 9h00, snooze à 23h55 → résultat = demain à 9h00 (pas 23h55).
+ */
+export function computeSnoozeTomorrowSameTime(scheduledAt: string): string {
+  const original = parseISO(scheduledAt); // lit la date d'origine du rappel
+  const tomorrow = addDays(original, 1);  // ajoute exactement 1 jour (+24h)
+  return tomorrow.toISOString();          // retourne en texte ISO
 }
 
 /**

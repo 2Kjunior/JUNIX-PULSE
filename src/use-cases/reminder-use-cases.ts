@@ -10,7 +10,7 @@
 import { randomUUID } from 'expo-crypto';
 import { ReminderRepository } from '../repositories/reminder-repository';
 import { NotificationService } from '../services/notification-service';
-import { getNextOccurrence, computeSnoozeUntil, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
+import { getNextOccurrence, computeSnoozeUntil, computeSnoozeTomorrowSameTime, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
 import { Reminder, RecurrenceRule } from '../domain/entities';
 
 // ─── Création ────────────────────────────────────────────────────────────────
@@ -201,12 +201,36 @@ export async function completeReminder(
 
 // ─── Snooze ───────────────────────────────────────────────────────────────────
 
+/**
+ * Décrit les 3 formes métier de report (BR-003).
+ * - quick    : durée rapide depuis maintenant (15, 30, 60 min)
+ * - tomorrow : demain à la même heure que le rappel d'origine
+ * - custom   : date/heure choisie librement par l'utilisateur
+ */
+export type SnoozeInput =
+  | { kind: 'quick';   minutes: number }
+  | { kind: 'tomorrow' }
+  | { kind: 'custom';  until: Date };
+
 export async function snoozeReminder(
   reminder: Reminder,
-  minutes: number,
+  input: SnoozeInput,
   notificationsEnabled: boolean
 ): Promise<void> {
-  const snoozedUntil = computeSnoozeUntil(minutes);
+  // Calcule la nouvelle échéance selon la forme choisie
+  let snoozedUntil: string;
+  switch (input.kind) {
+    case 'quick':
+      snoozedUntil = computeSnoozeUntil(input.minutes);
+      break;
+    case 'tomorrow':
+      snoozedUntil = computeSnoozeTomorrowSameTime(reminder.scheduledAt);
+      break;
+    case 'custom':
+      snoozedUntil = input.until.toISOString();
+      break;
+  }
+
   const snoozedUntilDate = new Date(snoozedUntil);
   const now = new Date().toISOString();
 

@@ -4,18 +4,19 @@
  */
 import { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import {
-  completeReminder, snoozeReminder, deleteReminder,
+  completeReminder, snoozeReminder, deleteReminder, SnoozeInput,
 } from '@/use-cases/reminder-use-cases';
 import { Reminder, ReminderChecklistItem } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
@@ -27,6 +28,7 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { SNOOZE_OPTIONS_MINUTES } from '@/domain/rules/reminder-rules';
 
 type ScreenState = 'loading' | 'content' | 'error';
+type SnoozeSheet = 'hidden' | 'picker';
 
 const PRIORITY_LABELS: Record<string, string> = {
   URGENT: '🔴 Urgent', HIGH: '🟠 Haute', NORMAL: '🔵 Normal', LOW: '⚪ Faible',
@@ -48,6 +50,8 @@ export default function ReminderDetailScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [error, setError] = useState('');
   const [showSnoozeSheet, setShowSnoozeSheet] = useState(false);
+  const [snoozeSheet, setSnoozeSheet] = useState<SnoozeSheet>('hidden');
+  const [customDate, setCustomDate] = useState<Date>(new Date());
 
   const load = useCallback(async () => {
     if (!id) { setError('ID manquant'); setState('error'); return; }
@@ -77,11 +81,20 @@ export default function ReminderDetailScreen() {
     router.back();
   }
 
-  async function handleSnooze(minutes: number) {
+  async function handleSnooze(input: SnoozeInput) {
     if (!reminder) return;
     setShowSnoozeSheet(false);
-    await snoozeReminder(reminder, minutes, notificationsEnabled);
-    showSnackbar(`Rappel reporté de ${minutes} min`);
+    setSnoozeSheet('hidden');
+
+    let label: string;
+    switch (input.kind) {
+      case 'quick':   label = `${input.minutes} min`; break;
+      case 'tomorrow': label = 'demain même heure'; break;
+      case 'custom':  label = format(input.until, "d MMM 'à' HH:mm", { locale: fr }); break;
+    }
+
+    await snoozeReminder(reminder, input, notificationsEnabled);
+    showSnackbar(`Rappel reporté — ${label}`);
     router.back();
   }
 
@@ -248,22 +261,80 @@ export default function ReminderDetailScreen() {
         <View style={styles.snoozeOverlay}>
           <TouchableOpacity
             style={styles.snoozeBackdrop}
-            onPress={() => setShowSnoozeSheet(false)}
+            onPress={() => { setShowSnoozeSheet(false); setSnoozeSheet('hidden'); }}
           />
           <View style={[styles.snoozeSheet, { paddingBottom: insets.bottom + Spacing.lg }]}>
-            <Text style={styles.snoozeTitle}>Reporter de…</Text>
-            {SNOOZE_OPTIONS_MINUTES.map(minutes => (
+            <Text style={styles.snoozeTitle}>Reporter ce rappel</Text>
+
+            {/* Chips rapides */}
+            <Text style={styles.snoozeSection}>Dans…</Text>
+            <View style={styles.snoozeChips}>
+              {SNOOZE_OPTIONS_MINUTES.map(minutes => (
+                <TouchableOpacity
+                  key={minutes}
+                  style={styles.snoozeChip}
+                  onPress={() => handleSnooze({ kind: 'quick', minutes })}
+                >
+                  <Text style={styles.snoozeChipLabel}>
+                    {minutes < 60 ? `${minutes} min` : `${minutes / 60}h`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Demain même heure */}
+            <TouchableOpacity
+              style={styles.snoozeOption}
+              onPress={() => handleSnooze({ kind: 'tomorrow' })}
+            >
+              <View style={styles.snoozeOptionLeft}>
+                <Ionicons name="moon-outline" size={18} color={Tertiary.default} />
+                <Text style={styles.snoozeOptionLabel}>Demain même heure</Text>
+              </View>
+              <Text style={styles.snoozeOptionHint}>
+                {format(addDays(new Date(reminder.scheduledAt), 1), "EEE d MMM 'à' HH:mm", { locale: fr })}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Date personnalisée */}
+            <TouchableOpacity
+              style={styles.snoozeOption}
+              onPress={() => { setSnoozeSheet('picker'); setCustomDate(new Date()); }}
+            >
+              <View style={styles.snoozeOptionLeft}>
+                <Ionicons name="calendar-outline" size={18} color={Primary.default} />
+                <Text style={styles.snoozeOptionLabel}>Choisir une date…</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+            </TouchableOpacity>
+
+            {/* DateTimePicker inline (Android) ou modal (iOS) */}
+            {snoozeSheet === 'picker' && (
+              <DateTimePicker
+                value={customDate}
+                mode="datetime"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                minimumDate={new Date()}
+                onChange={(_event, date) => {
+                  if (!date) { setSnoozeSheet('hidden'); return; }
+                  setCustomDate(date);
+                  if (Platform.OS === 'android') {
+                    setSnoozeSheet('hidden');
+                    handleSnooze({ kind: 'custom', until: date });
+                  }
+                }}
+              />
+            )}
+
+            {/* Confirmer la date custom sur iOS */}
+            {snoozeSheet === 'picker' && Platform.OS === 'ios' && (
               <TouchableOpacity
-                key={minutes}
-                style={styles.snoozeOption}
-                onPress={() => handleSnooze(minutes)}
+                style={styles.snoozeConfirmBtn}
+                onPress={() => { setSnoozeSheet('hidden'); handleSnooze({ kind: 'custom', until: customDate }); }}
               >
-                <Text style={styles.snoozeOptionLabel}>
-                  {minutes < 60 ? `${minutes} minutes` : `${minutes / 60} heure${minutes >= 120 ? 's' : ''}`}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+                <Text style={styles.snoozeConfirmLabel}>Confirmer</Text>
               </TouchableOpacity>
-            ))}
+            )}
           </View>
         </View>
       )}
@@ -356,7 +427,20 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     gap: Spacing.sm,
   },
-  snoozeTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.sm },
+  snoozeTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
+  snoozeSection: { ...Typography.labelSmall, color: OnSurface.disabled, textTransform: 'uppercase', letterSpacing: 0.5 },
+  snoozeChips: { flexDirection: 'row', gap: Spacing.sm },
+  snoozeChip: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Tertiary.container + '30',
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: Tertiary.default + '30',
+  },
+  snoozeChipLabel: { ...Typography.labelMedium, color: Tertiary.default },
   snoozeOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -364,7 +448,17 @@ const styles = StyleSheet.create({
     backgroundColor: Surface.container,
     borderRadius: Radius.md,
     padding: Spacing.md,
-    minHeight: 48,
+    minHeight: 52,
   },
+  snoozeOptionLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   snoozeOptionLabel: { ...Typography.bodyMedium, color: OnSurface.primary },
+  snoozeOptionHint: { ...Typography.bodySmall, color: OnSurface.disabled },
+  snoozeConfirmBtn: {
+    backgroundColor: Primary.default,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+  },
+  snoozeConfirmLabel: { ...Typography.labelMedium, color: '#fff' },
 });
