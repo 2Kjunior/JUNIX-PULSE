@@ -134,9 +134,11 @@ export const EventRepository = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(
       `SELECT * FROM events
-       WHERE deleted_at IS NULL AND start_at LIKE ?
+       WHERE deleted_at IS NULL
+         AND DATE(start_at) <= ?
+         AND DATE(end_at)   >= ?
        ORDER BY start_at ASC`,
-      `${dateYmd}%`
+      dateYmd, dateYmd
     );
     return rows.map(rowToEvent);
   },

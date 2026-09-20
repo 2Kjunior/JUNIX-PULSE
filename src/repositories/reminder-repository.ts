@@ -191,6 +191,7 @@ export const ReminderRepository = {
     const rows = await db.getAllAsync<Record<string, unknown>>(
       `SELECT * FROM reminders
        WHERE deleted_at IS NULL
+         AND status NOT IN ('COMPLETED', 'DELETED')
          AND scheduled_at >= ? AND scheduled_at <= ?
        ORDER BY scheduled_at ASC`,
       dayStart, dayEnd
