@@ -1,11 +1,15 @@
 /**
- * Liste de tous les rappels (actifs).
- * Groupés par : Manqués → Aujourd'hui → Cette semaine → Plus tard.
- * Swipe left pour supprimer, swipe right pour compléter.
+ * Liste des rappels — Référence R-04 du Master Prompt Junix Pulse.
+ * Groupement temporel : En retard → Ce soir → Demain → À venir.
+ * Filtres de période (Tous / Ce soir / Demain / En retard).
+ * Actions rapides : complétion inline, quick-snooze (+2h), suppression avec Undo (30s).
+ * Bouton flottant CTA dégradé : + Nouveau rappel.
  *
- * Étape 2 : implémentation complète.
+ * Règle A.1 : Zéro emoji dans tout le composant.
+ * Règle A.2 : Cartes rayon 16px (Radius.lg), 1 seul dégradé (CTA flottant), palette theme.ts.
  */
-import { useEffect, useState, useCallback } from 'react';
+
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,65 +17,65 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Alert,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { format, isToday, isThisWeek, isPast } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, isToday, isTomorrow, isPast, addHours } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
-import { deleteReminder, completeReminder } from '@/use-cases/reminder-use-cases';
+import { deleteReminder, completeReminder, snoozeReminder } from '@/use-cases/reminder-use-cases';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface, Primary, Tertiary, OnSurface, Outline, Error as ErrorColors,
-  Spacing, Radius, Typography, Priority as PriorityColors,
+  Surface,
+  Primary,
+  Tertiary,
+  OnSurface,
+  Outline,
+  Error as ErrorColors,
+  Spacing,
+  Radius,
+  Typography,
+  Priority as PriorityColors,
+  Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 
 type ScreenState = 'loading' | 'content' | 'error';
+type FilterTab = 'ALL' | 'TONIGHT' | 'TOMORROW' | 'MISSED';
 
-interface Section {
+interface ReminderSection {
   title: string;
+  subtitle?: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
   key: string;
   data: Reminder[];
 }
 
-function groupReminders(reminders: Reminder[]): Section[] {
-  const missed: Reminder[] = [];
-  const today: Reminder[] = [];
-  const thisWeek: Reminder[] = [];
-  const later: Reminder[] = [];
-
-  for (const r of reminders) {
-    if (r.status === 'MISSED') { missed.push(r); continue; }
-    const d = new Date(r.scheduledAt);
-    if (isToday(d)) { today.push(r); continue; }
-    if (isPast(d)) { missed.push(r); continue; }
-    if (isThisWeek(d, { locale: fr })) { thisWeek.push(r); continue; }
-    later.push(r);
-  }
-
-  const sections: Section[] = [];
-  if (missed.length > 0) sections.push({ title: '⚠ À rattraper', key: 'missed', data: missed });
-  if (today.length > 0) sections.push({ title: "Aujourd'hui", key: 'today', data: today });
-  if (thisWeek.length > 0) sections.push({ title: 'Cette semaine', key: 'week', data: thisWeek });
-  if (later.length > 0) sections.push({ title: 'Plus tard', key: 'later', data: later });
-
-  return sections;
-}
+const ACTION_LABELS: Record<string, string> = {
+  CALL: 'Appeler',
+  MESSAGE: 'Message',
+  EMAIL: 'Email',
+  MEET: 'Rencontre',
+  TASK: 'Faire',
+  NONE: '',
+};
 
 export default function RemindersListScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('ALL');
 
   const load = useCallback(async () => {
     try {
@@ -95,14 +99,11 @@ export default function RemindersListScreen() {
   );
 
   const handleDelete = useCallback(async (reminder: Reminder) => {
-    const result = await deleteReminder(reminder, () => {
-      // Undo expiré — pas besoin d'action supplémentaire en V1
-    });
-
+    const result = await deleteReminder(reminder);
     setReminders(prev => prev.filter(r => r.id !== reminder.id));
 
     showSnackbar('Rappel supprimé', {
-      actionLabel: 'Annuler',
+      actionLabel: 'Annuler (30s)',
       onAction: async () => {
         await result.undo();
         load();
@@ -114,35 +115,163 @@ export default function RemindersListScreen() {
   const handleComplete = useCallback(async (reminder: Reminder) => {
     await completeReminder(reminder, notificationsEnabled);
     setReminders(prev => prev.filter(r => r.id !== reminder.id));
-    showSnackbar('Rappel complété ✓');
+    showSnackbar('Rappel complété.');
   }, [notificationsEnabled, showSnackbar]);
+
+  const handleQuickSnooze = useCallback(async (reminder: Reminder) => {
+    const twoHoursLater = addHours(new Date(), 2);
+    await snoozeReminder(reminder, { kind: 'custom', until: twoHoursLater }, notificationsEnabled);
+    showSnackbar('Rappel reporté de 2h.');
+    load();
+  }, [notificationsEnabled, showSnackbar, load]);
+
+  // Regroupement temporel selon les spécifications R-04
+  const { sections, counts } = useMemo(() => {
+    const missed: Reminder[] = [];
+    const tonight: Reminder[] = [];
+    const tomorrow: Reminder[] = [];
+    const upcoming: Reminder[] = [];
+
+    for (const r of reminders) {
+      if (r.status === 'MISSED') {
+        missed.push(r);
+        continue;
+      }
+      const d = new Date(r.scheduledAt);
+      if (isPast(d) && r.status === 'UPCOMING') {
+        missed.push(r);
+      } else if (isToday(d)) {
+        tonight.push(r);
+      } else if (isTomorrow(d)) {
+        tomorrow.push(r);
+      } else {
+        upcoming.push(r);
+      }
+    }
+
+    const countsMap = {
+      all: reminders.length,
+      tonight: tonight.length,
+      tomorrow: tomorrow.length,
+      missed: missed.length,
+    };
+
+    const sectionList: ReminderSection[] = [];
+
+    if ((activeFilter === 'ALL' || activeFilter === 'MISSED') && missed.length > 0) {
+      sectionList.push({
+        title: 'En retard',
+        subtitle: 'À traiter en priorité',
+        icon: 'alert-circle',
+        iconColor: ErrorColors.default,
+        key: 'missed',
+        data: missed,
+      });
+    }
+
+    if ((activeFilter === 'ALL' || activeFilter === 'TONIGHT') && tonight.length > 0) {
+      sectionList.push({
+        title: 'Ce soir',
+        subtitle: 'Avant 23:00',
+        icon: 'moon-outline',
+        iconColor: Tertiary.default,
+        key: 'tonight',
+        data: tonight,
+      });
+    }
+
+    if ((activeFilter === 'ALL' || activeFilter === 'TOMORROW') && tomorrow.length > 0) {
+      sectionList.push({
+        title: 'Demain',
+        subtitle: 'Matinée',
+        icon: 'sunny-outline',
+        iconColor: '#F59E0B',
+        key: 'tomorrow',
+        data: tomorrow,
+      });
+    }
+
+    if (activeFilter === 'ALL' && upcoming.length > 0) {
+      sectionList.push({
+        title: 'À venir',
+        subtitle: 'Prochains jours',
+        icon: 'calendar-outline',
+        iconColor: Primary.default,
+        key: 'upcoming',
+        data: upcoming,
+      });
+    }
+
+    return { sections: sectionList, counts: countsMap };
+  }, [reminders, activeFilter]);
 
   if (state === 'loading') return <LoadingState />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
 
-  const sections = groupReminders(reminders);
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* En-tête */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Rappels</Text>
+      {/* ─── En-tête R-04 ──────────────────────────────────────────────────────── */}
+      <View style={styles.topBar}>
         <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/reminders/new' as any)}
-          accessibilityLabel="Nouveau rappel"
-          testID="reminders-add-btn"
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityLabel="Retour"
         >
-          <Ionicons name="add" size={24} color={Primary.on} />
+          <Ionicons name="chevron-back" size={22} color={OnSurface.primary} />
+        </TouchableOpacity>
+
+        <View style={styles.titleCol}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Rappels</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{counts.all} actifs</Text>
+            </View>
+          </View>
+          <Text style={styles.subtitle}>Rythme quotidien • Sanctuaire</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.actionIconBtn}
+          onPress={() => router.push('/settings')}
+          accessibilityLabel="Paramètres"
+        >
+          <Ionicons name="options-outline" size={20} color={OnSurface.variant} />
         </TouchableOpacity>
       </View>
 
-      {/* Liste */}
+      {/* ─── Filtres horizontaux R-04 ─────────────────────────────────────────── */}
+      <View style={styles.filtersWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContainer}>
+          <FilterChip
+            label={`Tous • ${counts.all}`}
+            active={activeFilter === 'ALL'}
+            onPress={() => setActiveFilter('ALL')}
+          />
+          <FilterChip
+            label={`Ce soir ${counts.tonight}`}
+            active={activeFilter === 'TONIGHT'}
+            onPress={() => setActiveFilter('TONIGHT')}
+          />
+          <FilterChip
+            label={`Demain ${counts.tomorrow}`}
+            active={activeFilter === 'TOMORROW'}
+            onPress={() => setActiveFilter('TOMORROW')}
+          />
+          <FilterChip
+            label={`En retard ${counts.missed}`}
+            active={activeFilter === 'MISSED'}
+            badgeColor={counts.missed > 0 ? ErrorColors.default : undefined}
+            onPress={() => setActiveFilter('MISSED')}
+          />
+        </ScrollView>
+      </View>
+
+      {/* ─── Liste groupée ────────────────────────────────────────────────────── */}
       {sections.length === 0 ? (
         <EmptyState
-          icon="🔔"
+          icon="✦"
           title="Aucun rappel actif"
-          description="Créez votre premier rappel pour ne rien oublier."
+          description="Tous vos rappels programmés apparaîtront ici avec leur échéance."
           actionLabel="+ Créer un rappel"
           onAction={() => router.push('/reminders/new' as any)}
         />
@@ -150,200 +279,441 @@ export default function RemindersListScreen() {
         <SectionList
           sections={sections}
           keyExtractor={item => item.id}
-          contentContainerStyle={[styles.list, { paddingBottom: 100 }]}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 90 }]}
           stickySectionHeadersEnabled={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }}
+              onRefresh={async () => {
+                setRefreshing(true);
+                await load();
+                setRefreshing(false);
+              }}
               tintColor={Primary.default}
             />
           }
           renderSectionHeader={({ section }) => (
-            <Text style={styles.sectionHeader}>{section.title}</Text>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionHeaderLeft}>
+                <Ionicons name={section.icon} size={16} color={section.iconColor} />
+                <Text style={styles.sectionHeaderTitle}>{section.title}</Text>
+              </View>
+              {section.subtitle ? (
+                <Text style={styles.sectionHeaderSubtitle}>{section.subtitle}</Text>
+              ) : null}
+            </View>
           )}
           renderItem={({ item }) => (
-            <ReminderRow
+            <ReminderCardR04
               reminder={item}
               onComplete={() => handleComplete(item)}
+              onQuickSnooze={() => handleQuickSnooze(item)}
               onDelete={() => handleDelete(item)}
             />
           )}
+          ListFooterComponent={
+            <View style={styles.nightModeCard}>
+              <Ionicons name="bed-outline" size={20} color={Tertiary.default} />
+              <View style={styles.nightModeTextCol}>
+                <Text style={styles.nightModeTitle}>Mode Nuit activé dès 22h30</Text>
+                <Text style={styles.nightModeDesc}>
+                  Les rappels non urgents basculent automatiquement au réveil.
+                </Text>
+              </View>
+            </View>
+          }
         />
       )}
-    </View>
-  );
-}
 
-// ─── Ligne de rappel ──────────────────────────────────────────────────────────
-
-function ReminderRow({
-  reminder,
-  onComplete,
-  onDelete,
-}: {
-  reminder: Reminder;
-  onComplete: () => void;
-  onDelete: () => void;
-}) {
-  const priorityColor = PriorityColors[reminder.priority];
-  const d = new Date(reminder.scheduledAt);
-  const timeStr = format(d, 'HH:mm');
-  const dateStr = isToday(d) ? "Aujourd'hui" : format(d, 'EEE d MMM', { locale: fr });
-  const isMissed = reminder.status === 'MISSED' || (isPast(d) && reminder.status === 'UPCOMING');
-
-  return (
-    <View style={[styles.row, isMissed && styles.rowMissed]}>
-      {/* Indicateur priorité */}
-      <View style={[styles.priorityBar, { backgroundColor: priorityColor }]} />
-
-      {/* Contenu principal */}
-      <TouchableOpacity
-        style={styles.rowContent}
-        onPress={() => router.push(`/reminders/${reminder.id}` as any)}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.rowTitle} numberOfLines={2}>{reminder.title}</Text>
-        <View style={styles.rowMeta}>
-          <Ionicons name="time-outline" size={12} color={OnSurface.variant} />
-          <Text style={styles.rowMetaText}>{dateStr} à {timeStr}</Text>
-          {reminder.personId && (
-            <>
-              <View style={styles.metaDot} />
-              <Ionicons name="person-outline" size={12} color={OnSurface.variant} />
-            </>
-          )}
-          {reminder.recurrenceRuleId && (
-            <>
-              <View style={styles.metaDot} />
-              <Ionicons name="repeat-outline" size={12} color={OnSurface.variant} />
-            </>
-          )}
-          {reminder.status === 'SNOOZED' && (
-            <View style={styles.badge}>
-              <Text style={[styles.badgeText, { color: Tertiary.default }]}>Reporté</Text>
-            </View>
-          )}
-          {isMissed && (
-            <View style={[styles.badge, { backgroundColor: ErrorColors.container }]}>
-              <Text style={[styles.badgeText, { color: ErrorColors.default }]}>Manqué</Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-
-      {/* Actions rapides */}
-      <View style={styles.rowActions}>
+      {/* ─── Bouton Flottant Dégradé (Unique CTA R-04) ─────────────────────────── */}
+      <View style={[styles.floatingCtaContainer, { bottom: insets.bottom + 20 }]}>
         <TouchableOpacity
-          style={[styles.actionBtn, styles.actionComplete]}
-          onPress={onComplete}
-          accessibilityLabel="Marquer complété"
+          onPress={() => router.push('/reminders/new' as any)}
+          activeOpacity={0.85}
+          accessibilityLabel="Créer un nouveau rappel"
         >
-          <Ionicons name="checkmark" size={16} color="#6DD58C" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.actionDelete]}
-          onPress={onDelete}
-          accessibilityLabel="Supprimer"
-        >
-          <Ionicons name="trash-outline" size={16} color={ErrorColors.default} />
+          <LinearGradient
+            colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.floatingCta}
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Text style={styles.floatingCtaText}>Nouveau rappel</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
+// ─── Composants locaux ─────────────────────────────────────────────────────────
+
+function FilterChip({
+  label,
+  active,
+  badgeColor,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  badgeColor?: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.filterChip,
+        active && styles.filterChipActive,
+        badgeColor ? { borderColor: badgeColor } : null,
+      ]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Text
+        style={[
+          styles.filterChipText,
+          active && styles.filterChipTextActive,
+          badgeColor ? { color: badgeColor } : null,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function ReminderCardR04({
+  reminder,
+  onComplete,
+  onQuickSnooze,
+  onDelete,
+}: {
+  reminder: Reminder;
+  onComplete: () => void;
+  onQuickSnooze: () => void;
+  onDelete: () => void;
+}) {
+  const priorityColor = PriorityColors[reminder.priority];
+  const d = new Date(reminder.scheduledAt);
+  const timeStr = format(d, 'HH:mm');
+  const actionLabel = reminder.actionType && ACTION_LABELS[reminder.actionType];
+
+  return (
+    <View style={styles.cardWrapper}>
+      <TouchableOpacity
+        style={styles.cardMain}
+        onPress={() => router.push(`/reminders/${reminder.id}` as any)}
+        activeOpacity={0.8}
+      >
+        {/* Checkmark bouton */}
+        <TouchableOpacity
+          style={styles.checkCircle}
+          onPress={onComplete}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Marquer le rappel comme terminé"
+        >
+          <Ionicons name="ellipse-outline" size={22} color={OnSurface.variant} />
+        </TouchableOpacity>
+
+        {/* Détails du rappel */}
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {reminder.title}
+          </Text>
+
+          {/* Badges / Métadonnées en pills */}
+          <View style={styles.metaRow}>
+            {/* Heure */}
+            <View style={styles.metaPill}>
+              <Ionicons name="time-outline" size={12} color={Primary.default} />
+              <Text style={styles.metaPillText}>{timeStr}</Text>
+            </View>
+
+            {/* Action / Sphère */}
+            {actionLabel ? (
+              <View style={styles.metaPill}>
+                <Text style={styles.metaPillText}>{actionLabel}</Text>
+              </View>
+            ) : null}
+
+            {/* Priorité discrète */}
+            {reminder.priority === 'URGENT' || reminder.priority === 'HIGH' ? (
+              <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
+                <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+                <Text style={[styles.metaPillText, { color: priorityColor }]}>
+                  {reminder.priority === 'URGENT' ? 'Urgent' : 'Haute'}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Récurrence */}
+            {reminder.recurrenceRuleId ? (
+              <View style={styles.metaPill}>
+                <Ionicons name="repeat-outline" size={12} color={Tertiary.default} />
+              </View>
+            ) : null}
+          </View>
+        </View>
+
+        {/* Bouton Quick Snooze (+2h) */}
+        <TouchableOpacity
+          style={styles.quickSnoozeBtn}
+          onPress={onQuickSnooze}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityLabel="Reporter de 2 heures"
+        >
+          <Text style={styles.quickSnoozeText}>+2h</Text>
+        </TouchableOpacity>
+
+        {/* Menu contextuel / Détails */}
+        <TouchableOpacity
+          style={styles.moreBtn}
+          onPress={onDelete}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityLabel="Supprimer le rappel"
+        >
+          <Ionicons name="ellipsis-vertical" size={18} color={OnSurface.variant} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: Surface.base,
+  },
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
   },
-  title: { ...Typography.headlineLarge, color: OnSurface.primary },
-  addBtn: {
+  backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: Primary.default,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.container,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  list: {
-    paddingHorizontal: Spacing.lg,
+  titleCol: {
+    flex: 1,
   },
-  sectionHeader: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  title: {
+    ...Typography.headlineLarge,
+    color: OnSurface.primary,
+  },
+  countBadge: {
+    backgroundColor: Surface.high,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+  },
+  countBadgeText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    fontWeight: '600',
+  },
+  subtitle: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
+  actionIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.container,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filtersWrapper: {
+    paddingVertical: Spacing.xs,
+  },
+  filtersContainer: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.xs,
+  },
+  filterChip: {
+    backgroundColor: Surface.container,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+  },
+  filterChipActive: {
+    backgroundColor: Surface.high,
+    borderColor: Primary.default,
+  },
+  filterChipText: {
     ...Typography.labelMedium,
     color: OnSurface.variant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
   },
-  row: {
+  filterChipTextActive: {
+    color: Primary.default,
+    fontWeight: '700',
+  },
+  listContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    gap: Spacing.md,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.sm,
-    overflow: 'hidden',
-  },
-  rowMissed: {
-    borderWidth: 1,
-    borderColor: ErrorColors.container,
-  },
-  priorityBar: {
-    width: 4,
-  },
-  rowContent: {
-    flex: 1,
-    padding: Spacing.md,
-  },
-  rowTitle: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
-  rowMeta: {
+  sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    flexWrap: 'wrap',
+    gap: 6,
   },
-  rowMetaText: {
+  sectionHeaderTitle: {
+    ...Typography.titleMedium,
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
+  sectionHeaderSubtitle: {
     ...Typography.labelSmall,
     color: OnSurface.variant,
   },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: OnSurface.disabled,
+  cardWrapper: {
+    marginBottom: Spacing.xs,
   },
-  badge: {
-    backgroundColor: 'rgba(123, 208, 255, 0.12)',
-    borderRadius: Radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+  cardMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: Spacing.sm,
   },
-  badgeText: {
-    ...Typography.labelSmall,
-    fontSize: 9,
-  },
-  rowActions: {
-    flexDirection: 'column',
-    width: 44,
-  },
-  actionBtn: {
-    flex: 1,
+  checkCircle: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionComplete: {
-    backgroundColor: 'rgba(109, 213, 140, 0.08)',
+  cardContent: {
+    flex: 1,
+    gap: 6,
   },
-  actionDelete: {
-    backgroundColor: 'rgba(147, 0, 10, 0.08)',
+  cardTitle: {
+    ...Typography.bodyMedium,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Surface.base,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: 4,
+  },
+  metaPillText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    fontSize: 11,
+  },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  quickSnoozeBtn: {
+    backgroundColor: Tertiary.container,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Tertiary.default + '40',
+  },
+  quickSnoozeText: {
+    ...Typography.labelSmall,
+    color: Tertiary.default,
+    fontWeight: '700',
+  },
+  moreBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nightModeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginTop: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: Spacing.md,
+  },
+  nightModeTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  nightModeTitle: {
+    ...Typography.labelLarge,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
+  nightModeDesc: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    lineHeight: 16,
+  },
+  floatingCtaContainer: {
+    position: 'absolute',
+    right: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  floatingCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    gap: 6,
+  },
+  floatingCtaText: {
+    ...Typography.labelLarge,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });
