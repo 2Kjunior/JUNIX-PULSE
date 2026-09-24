@@ -31,6 +31,7 @@ import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
 import { EventRepository } from '@/repositories/event-repository';
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
+import { GoalUseCases, GoalDetails } from '@/use-cases/goal-use-cases';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { SuggestionUseCases } from '@/use-cases/suggestion-use-cases';
 import { SettingsRepository } from '@/repositories/settings-repository';
@@ -62,6 +63,7 @@ export default function TodayScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [habits, setHabits] = useState<HabitStats[]>([]);
+  const [goals, setGoals] = useState<GoalDetails[]>([]);
   const [topSuggestion, setTopSuggestion] = useState<Suggestion | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
@@ -73,19 +75,21 @@ export default function TodayScreen() {
   const load = useCallback(async () => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     try {
-      const [rems, tks, evts, habStats, suggs, settings] = await Promise.all([
+      const [rems, tks, evts, habStats, suggs, settings, goalsData] = await Promise.all([
         ReminderRepository.findForDate(todayStr),
         TaskRepository.findForDate(todayStr),
         EventRepository.findForDate(todayStr),
         HabitUseCases.getAllHabitsWithStats(),
         SuggestionUseCases.generateSuggestions(),
         SettingsRepository.get(),
+        GoalUseCases.getAllGoalsWithDetails(),
       ]);
 
       setReminders(rems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED'));
       setTasks(tks);
       setEvents(evts);
       setHabits(habStats.filter(h => h.habit.status === 'ACTIVE'));
+      setGoals(goalsData.filter(g => g.goal.status === 'ACTIVE'));
       setTopSuggestion(suggs.length > 0 ? suggs[0] : null);
       setDisplayName(settings.displayName ?? '');
       setState('content');
@@ -228,7 +232,14 @@ export default function TodayScreen() {
           label={`/ ${habits.length} habitudes`}
           color="#F59E0B"
           icon="flame-outline"
-          onPress={() => router.push('/habits/index')}
+          onPress={() => router.push('/habits' as any)}
+        />
+        <SummaryChip
+          count={goals.length}
+          label="objectifs"
+          color="#6DD58C"
+          icon="flag-outline"
+          onPress={() => router.push('/goals' as any)}
         />
       </ScrollView>
 
@@ -417,16 +428,16 @@ export default function TodayScreen() {
         </View>
 
         {/* Habitudes du jour (1-tap completion) */}
-        {habits.length > 0 && (
-          <View style={styles.subBlock}>
-            <View style={styles.subHeader}>
-              <Text style={styles.subTitle}>Habitudes & Streaks</Text>
-              <TouchableOpacity onPress={() => router.push('/habits/index')}>
-                <Text style={styles.subAction}>Voir tout</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.subBlock}>
+          <View style={styles.subHeader}>
+            <Text style={styles.subTitle}>Habitudes & Streaks ({habits.length})</Text>
+            <TouchableOpacity onPress={() => router.push('/habits' as any)}>
+              <Text style={styles.subAction}>Gérer</Text>
+            </TouchableOpacity>
+          </View>
 
-            {habits.map(item => (
+          {habits.length > 0 ? (
+            habits.map(item => (
               <TouchableOpacity
                 key={item.habit.id}
                 style={[
@@ -458,9 +469,62 @@ export default function TodayScreen() {
                   </View>
                 </View>
               </TouchableOpacity>
-            ))}
+            ))
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>Aucune habitude active pour le moment</Text>
+              <TouchableOpacity onPress={() => router.push('/habits/new' as any)}>
+                <Text style={styles.emptyAction}>+ Créer une habitude</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Objectifs & Progression */}
+        <View style={styles.subBlock}>
+          <View style={styles.subHeader}>
+            <Text style={styles.subTitle}>Objectifs & Progression ({goals.length})</Text>
+            <TouchableOpacity onPress={() => router.push('/goals' as any)}>
+              <Text style={styles.subAction}>Voir tout</Text>
+            </TouchableOpacity>
           </View>
-        )}
+
+          {goals.length > 0 ? (
+            goals.map(item => (
+              <TouchableOpacity
+                key={item.goal.id}
+                style={styles.goalRowCard}
+                onPress={() => router.push(`/goals/${item.goal.id}` as any)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.goalHeaderRow}>
+                  <Text style={styles.goalCardTitle} numberOfLines={1}>{item.goal.title}</Text>
+                  <Text style={styles.goalCardPercent}>
+                    {item.progress !== null ? `${item.progress}%` : '0%'}
+                  </Text>
+                </View>
+                <View style={styles.progressBarTrack}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${item.progress ?? 0}%`,
+                        backgroundColor: '#6DD58C',
+                      },
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>Aucun objectif défini</Text>
+              <TouchableOpacity onPress={() => router.push('/goals/new' as any)}>
+                <Text style={styles.emptyAction}>+ Définir un objectif</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
     </ScrollView>
   );
@@ -906,5 +970,30 @@ const styles = StyleSheet.create({
   emptyAction: {
     ...Typography.labelSmall,
     color: Primary.default,
+  },
+  goalRowCard: {
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  goalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  goalCardTitle: {
+    ...Typography.bodyMedium,
+    color: OnSurface.primary,
+    fontWeight: '600',
+    flex: 1,
+  },
+  goalCardPercent: {
+    ...Typography.labelSmall,
+    color: '#6DD58C',
+    fontWeight: '700',
   },
 });

@@ -76,14 +76,14 @@ export default function PulseScreen() {
       label: 'Habitudes & Streaks',
       desc: habitCount !== null ? `${habitCount} habitudes actives` : 'Suivez vos pratiques quotidiennes.',
       color: Tertiary.default,
-      route: '/habits/index',
+      route: '/habits',
     },
     {
       icon: 'flag-outline' as const,
       label: 'Objectifs & Progression',
       desc: goalCount !== null ? `${goalCount} objectifs en cours` : 'Progression liée à vos tâches.',
       color: '#6DD58C',
-      route: '/goals/index',
+      route: '/goals',
     },
   ];
 
