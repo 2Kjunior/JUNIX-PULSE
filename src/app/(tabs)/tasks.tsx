@@ -1,10 +1,14 @@
 /**
- * Onglet Tâches — Vue principale avec filtres Inbox, Aujourd'hui et Toutes.
- * Implémentation complète V1.0 avec complétion instantanée (Undo 30s)
- * et sous-tâches.
+ * Onglet Tâches — Référence R-08 du Master Prompt Junix Pulse.
+ * Séparation claire : Inbox (sans date) → Aujourd'hui → Toutes.
+ * Cartes action-first avec case à cocher, sous-tâches, durée estimée et tags.
+ * Bouton flottant CTA dégradé : + Nouvelle tâche.
+ *
+ * Règle A.1 : Zéro emoji dans tout le composant.
+ * Règle A.2 : Cartes rayon 16px (Radius.lg), 1 seul dégradé CTA, palette theme.ts.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +22,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
@@ -33,6 +38,8 @@ import {
   Spacing,
   Radius,
   Typography,
+  Priority as PriorityColors,
+  Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 
@@ -51,6 +58,7 @@ export default function TasksScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [activeTab, setActiveTab] = useState<FilterTab>('inbox');
   const [items, setItems] = useState<TaskWithSubtasks[]>([]);
+  const [counts, setCounts] = useState({ inbox: 0, today: 0, all: 0 });
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -58,18 +66,29 @@ export default function TasksScreen() {
 
   const load = useCallback(async () => {
     try {
-      let rawTasks: Task[] = [];
+      const [inboxTasks, todayTasks, allTasks] = await Promise.all([
+        TaskRepository.findInbox(),
+        TaskRepository.findForDate(todayStr),
+        TaskRepository.findAll(),
+      ]);
+
+      setCounts({
+        inbox: inboxTasks.filter(t => t.status !== 'COMPLETED').length,
+        today: todayTasks.filter(t => t.status !== 'COMPLETED').length,
+        all: allTasks.filter(t => t.status !== 'COMPLETED').length,
+      });
+
+      let selectedTasks: Task[] = [];
       if (activeTab === 'inbox') {
-        rawTasks = await TaskRepository.findInbox();
+        selectedTasks = inboxTasks;
       } else if (activeTab === 'today') {
-        rawTasks = await TaskRepository.findForDate(todayStr);
+        selectedTasks = todayTasks;
       } else {
-        rawTasks = await TaskRepository.findAll();
+        selectedTasks = allTasks;
       }
 
-      // Chargement des sous-tâches pour chaque tâche
       const tasksWithSubs = await Promise.all(
-        rawTasks.map(async t => {
+        selectedTasks.map(async t => {
           const subs = await TaskRepository.findSubtasks(t.id);
           return { task: t, subtasks: subs };
         })
@@ -95,14 +114,12 @@ export default function TasksScreen() {
     setRefreshing(false);
   }, [load]);
 
-  // ─── Complétion Rapide ──────────────────────────────────────────────────────
-
   async function handleToggleComplete(task: Task) {
     try {
       const newStatus = await TaskUseCases.toggleComplete(task.id);
       const isCompleted = newStatus === 'COMPLETED';
 
-      // Mise à jour optimiste de l'UI
+      // Mise à jour optimiste
       setItems(prev =>
         prev.map(item =>
           item.task.id === task.id
@@ -111,7 +128,7 @@ export default function TasksScreen() {
         )
       );
 
-      showSnackbar(isCompleted ? 'Tâche terminée ✓' : 'Tâche réouverte', {
+      showSnackbar(isCompleted ? 'Tâche terminée.' : 'Tâche réouverte.', {
         actionLabel: 'Annuler (30s)',
         onAction: async () => {
           await TaskUseCases.toggleComplete(task.id);
@@ -129,40 +146,60 @@ export default function TasksScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* En-tête */}
+      {/* ─── En-tête R-08 ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
-        <Text style={styles.title}>Tâches</Text>
+        <View>
+          <Text style={styles.title}>Tâches</Text>
+          <Text style={styles.subtitle}>Gestion d'action • Focus</Text>
+        </View>
+
         <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/tasks/new')}
-          accessibilityLabel="Nouvelle tâche"
+          style={styles.settingsBtn}
+          onPress={() => router.push('/settings')}
+          accessibilityLabel="Paramètres"
         >
-          <Ionicons name="add" size={24} color={Primary.on} />
+          <Ionicons name="options-outline" size={20} color={OnSurface.variant} />
         </TouchableOpacity>
       </View>
 
-      {/* Tabs Inbox / Aujourd'hui / Toutes */}
-      <View style={styles.tabBar}>
-        {[
-          { key: 'inbox', label: 'Inbox' },
-          { key: 'today', label: "Aujourd'hui" },
-          { key: 'all', label: 'Toutes' },
-        ].map(tab => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tabItem, activeTab === tab.key && styles.tabItemActive]}
-            onPress={() => setActiveTab(tab.key as FilterTab)}
-          >
-            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* ─── Segmented Control R-08 ────────────────────────────────────────────── */}
+      <View style={styles.tabBarWrapper}>
+        <View style={styles.tabBar}>
+          {[
+            { key: 'inbox', label: 'Inbox', count: counts.inbox, icon: 'file-tray-outline' as const },
+            { key: 'today', label: "Aujourd'hui", count: counts.today, icon: 'today-outline' as const },
+            { key: 'all', label: 'Toutes', count: counts.all, icon: 'list-outline' as const },
+          ].map(tab => {
+            const isActive = activeTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[styles.tabItem, isActive && styles.tabItemActive]}
+                onPress={() => setActiveTab(tab.key as FilterTab)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={14}
+                  color={isActive ? Primary.default : OnSurface.variant}
+                />
+                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                  {tab.label}
+                </Text>
+                <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                  <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
+                    {tab.count}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
-      {/* Liste principale */}
+      {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
         }
@@ -170,25 +207,25 @@ export default function TasksScreen() {
       >
         {items.length === 0 ? (
           <EmptyState
-            icon={activeTab === 'inbox' ? '📥' : activeTab === 'today' ? '📅' : '✓'}
+            icon="✦"
             title={
               activeTab === 'inbox'
                 ? 'Votre Inbox est vide'
                 : activeTab === 'today'
-                ? 'Aucune tâche planifiée aujourd’hui'
-                : 'Aucune tâche pour le moment'
+                ? 'Aucune tâche pour aujourd’hui'
+                : 'Aucune tâche active'
             }
             description={
               activeTab === 'inbox'
-                ? 'Créez une tâche sans date pour la stocker ici avant de la planifier.'
-                : 'Planifiez vos journées pour rester concentré sur l’essentiel.'
+                ? 'Capturez rapidement vos intentions sans contrainte de date.'
+                : 'Concentrez-vous sur ce qui compte maintenant ou planifiez depuis l’Inbox.'
             }
             actionLabel="+ Nouvelle tâche"
             onAction={() => router.push('/tasks/new')}
           />
         ) : (
           items.map(({ task, subtasks }) => (
-            <TaskCard
+            <TaskCardR08
               key={task.id}
               task={task}
               subtasks={subtasks}
@@ -197,11 +234,32 @@ export default function TasksScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* ─── Bouton Flottant Dégradé (Unique CTA R-08) ─────────────────────────── */}
+      <View style={[styles.floatingCtaContainer, { bottom: insets.bottom + 20 }]}>
+        <TouchableOpacity
+          onPress={() => router.push('/tasks/new')}
+          activeOpacity={0.85}
+          accessibilityLabel="Créer une nouvelle tâche"
+        >
+          <LinearGradient
+            colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.floatingCta}
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Text style={styles.floatingCtaText}>Nouvelle tâche</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
-function TaskCard({
+// ─── Composants locaux ─────────────────────────────────────────────────────────
+
+function TaskCardR08({
   task,
   subtasks,
   onToggleComplete,
@@ -211,80 +269,83 @@ function TaskCard({
   onToggleComplete: () => void;
 }) {
   const isCompleted = task.status === 'COMPLETED';
-  const completedSubsCount = subtasks.filter(s => s.isCompleted).length;
-
-  const priorityColors: Record<string, string> = {
-    URGENT: '#FF5252',
-    HIGH: '#FFB74D',
-    NORMAL: Primary.default,
-    LOW: OnSurface.disabled,
-  };
-  const accentColor = priorityColors[task.priority] ?? Primary.default;
+  const completedSubs = subtasks.filter(s => s.isCompleted).length;
+  const totalSubs = subtasks.length;
+  const priorityColor = PriorityColors[task.priority] ?? Primary.default;
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.taskCard, isCompleted && styles.taskCardCompleted]}
       onPress={() => router.push(`/tasks/${task.id}` as any)}
       activeOpacity={0.8}
     >
-      {/* Barre verticale de priorité */}
-      <View style={[styles.priorityIndicator, { backgroundColor: accentColor }]} />
-
-      {/* Checkbox */}
+      {/* Case à cocher tactile */}
       <TouchableOpacity
         style={styles.checkBtn}
         onPress={onToggleComplete}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityLabel={isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
       >
         <Ionicons
           name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
           size={22}
-          color={isCompleted ? Success.default : OnSurface.disabled}
+          color={isCompleted ? Success.default : OnSurface.variant}
         />
       </TouchableOpacity>
 
-      {/* Contenu principal */}
+      {/* Corps de la tâche */}
       <View style={styles.cardContent}>
-        <Text style={[styles.cardTitle, isCompleted && styles.cardTitleDone]} numberOfLines={2}>
+        <Text
+          style={[styles.taskTitle, isCompleted && styles.taskTitleCompleted]}
+          numberOfLines={2}
+        >
           {task.title}
         </Text>
 
-        {!!task.description && (
-          <Text style={styles.cardDesc} numberOfLines={1}>
-            {task.description}
-          </Text>
-        )}
-
-        {/* Badges (Date, Sous-tâches, Durée) */}
+        {/* Ligne des badges d'information (Action-first) */}
         <View style={styles.metaRow}>
-          {task.scheduledDate && (
-            <View style={styles.metaBadge}>
-              <Ionicons name="calendar-outline" size={12} color={OnSurface.variant} />
-              <Text style={styles.metaText}>
-                {format(new Date(task.scheduledDate + 'T12:00:00'), 'd MMM', { locale: fr })}
+          {/* Tag de statut/date */}
+          {task.scheduledDate ? (
+            <View style={styles.metaPill}>
+              <Ionicons name="calendar-outline" size={11} color={Tertiary.default} />
+              <Text style={styles.metaPillText}>
+                {format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.metaPill}>
+              <Ionicons name="file-tray-outline" size={11} color={OnSurface.variant} />
+              <Text style={styles.metaPillText}>Inbox</Text>
+            </View>
+          )}
+
+          {/* Sous-tâches */}
+          {totalSubs > 0 && (
+            <View style={styles.metaPill}>
+              <Ionicons name="checkbox-outline" size={11} color={Primary.default} />
+              <Text style={styles.metaPillText}>
+                {completedSubs}/{totalSubs}
               </Text>
             </View>
           )}
 
-          {subtasks.length > 0 && (
-            <View style={styles.metaBadge}>
-              <Ionicons name="checkbox-outline" size={12} color={Primary.default} />
-              <Text style={[styles.metaText, { color: Primary.default }]}>
-                {completedSubsCount}/{subtasks.length}
-              </Text>
+          {/* Durée estimée */}
+          {task.estimatedMinutes ? (
+            <View style={styles.metaPill}>
+              <Ionicons name="time-outline" size={11} color={OnSurface.variant} />
+              <Text style={styles.metaPillText}>{task.estimatedMinutes} min</Text>
             </View>
-          )}
+          ) : null}
 
-          {task.estimatedMinutes && (
-            <View style={styles.metaBadge}>
-              <Ionicons name="time-outline" size={12} color={Tertiary.default} />
-              <Text style={[styles.metaText, { color: Tertiary.default }]}>
-                {task.estimatedMinutes >= 60
-                  ? `${Math.floor(task.estimatedMinutes / 60)}h`
-                  : `${task.estimatedMinutes}m`}
+          {/* Priorité haute/urgente */}
+          {task.priority === 'URGENT' || task.priority === 'HIGH' ? (
+            <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
+              <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+              <Text style={[styles.metaPillText, { color: priorityColor }]}>
+                {task.priority === 'URGENT' ? 'Urgent' : 'Haute'}
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
 
@@ -294,74 +355,171 @@ function TaskCard({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
+  container: {
+    flex: 1,
+    backgroundColor: Surface.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
-  title: { ...Typography.headlineLarge, color: OnSurface.primary },
-  addBtn: {
+  title: {
+    ...Typography.headlineLarge,
+    color: OnSurface.primary,
+  },
+  subtitle: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
+  settingsBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: Primary.default,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.container,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabBar: {
-    flexDirection: 'row',
+  tabBarWrapper: {
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
-  tabItem: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+  tabBar: {
+    flexDirection: 'row',
     backgroundColor: Surface.container,
+    borderRadius: Radius.full,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  tabItemActive: { backgroundColor: Primary.container },
-  tabLabel: { ...Typography.labelMedium, color: OnSurface.variant },
-  tabLabelActive: { color: Primary.onContainer },
+  tabItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    gap: 5,
+  },
+  tabItemActive: {
+    backgroundColor: Surface.high,
+  },
+  tabLabel: {
+    ...Typography.labelMedium,
+    color: OnSurface.variant,
+  },
+  tabLabelActive: {
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
+  tabBadge: {
+    backgroundColor: Surface.base,
+    borderRadius: Radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+  },
+  tabBadgeActive: {
+    borderColor: Primary.default,
+  },
+  tabBadgeText: {
+    ...Typography.labelSmall,
+    fontSize: 10,
+    color: OnSurface.variant,
+  },
+  tabBadgeTextActive: {
+    color: Primary.default,
+    fontWeight: '700',
+  },
   list: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 100,
-    flexGrow: 1,
+    gap: Spacing.sm,
   },
-  card: {
+  taskCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Surface.container,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    overflow: 'hidden',
-    position: 'relative',
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: Spacing.sm,
   },
-  priorityIndicator: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
+  taskCardCompleted: {
+    opacity: 0.65,
   },
-  checkBtn: { paddingRight: Spacing.sm, paddingLeft: Spacing.xs },
-  cardContent: { flex: 1, gap: 2 },
-  cardTitle: { ...Typography.bodyMedium, color: OnSurface.primary },
-  cardTitleDone: { textDecorationLine: 'line-through', color: OnSurface.disabled },
-  cardDesc: { ...Typography.bodySmall, color: OnSurface.variant },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: 4 },
-  metaBadge: {
+  checkBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardContent: {
+    flex: 1,
+    gap: 6,
+  },
+  taskTitle: {
+    ...Typography.bodyMedium,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
+  taskTitleCompleted: {
+    textDecorationLine: 'line-through',
+    opacity: 0.6,
+  },
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: Surface.high,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.sm,
+    flexWrap: 'wrap',
+    gap: 6,
   },
-  metaText: { ...Typography.labelSmall, color: OnSurface.variant, fontSize: 10 },
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Surface.base,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: 4,
+  },
+  metaPillText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    fontSize: 11,
+  },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  floatingCtaContainer: {
+    position: 'absolute',
+    right: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  floatingCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    gap: 6,
+  },
+  floatingCtaText: {
+    ...Typography.labelLarge,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
 });
