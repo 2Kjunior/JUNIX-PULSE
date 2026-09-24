@@ -5,8 +5,9 @@
  * Si refusées, l'application continue de fonctionner.
  */
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { NotificationService } from '@/services/notification-service';
 import {
   Surface,
@@ -20,6 +21,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 
@@ -55,11 +57,7 @@ export default function OnboardingPermissions() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Indicateur d'étape — toutes complètes */}
-      <View style={styles.stepIndicator}>
-        {[0, 1, 2, 3].map(i => (
-          <View key={i} style={[styles.step, styles.stepDone]} />
-        ))}
-      </View>
+      <StepIndicator total={5} current={5} />
 
       <Text style={styles.title}>Dernière étape</Text>
       <Text style={styles.subtitle}>
@@ -70,8 +68,8 @@ export default function OnboardingPermissions() {
       {/* Notification */}
       <View style={styles.permCard}>
         <View style={styles.permHeader}>
-          <View style={[styles.permIcon, { backgroundColor: 'rgba(208, 188, 255, 0.12)' }]}>
-            <Text style={styles.permEmoji}>🔔</Text>
+          <View style={[styles.permIcon, { backgroundColor: 'rgba(208, 188, 255, 0.10)' }]}>
+            <Ionicons name="notifications-outline" size={22} color={Primary.default} />
           </View>
           <View style={styles.permInfo}>
             <Text style={styles.permTitle}>Notifications</Text>
@@ -92,7 +90,8 @@ export default function OnboardingPermissions() {
           />
         ) : notifStatus === 'granted' ? (
           <View style={styles.permGranted}>
-            <Text style={styles.permGrantedText}>✓ Autorisées</Text>
+            <Ionicons name="checkmark-circle" size={16} color={Success.default} style={{ marginRight: 6 }} />
+            <Text style={styles.permGrantedText}>Autorisées</Text>
           </View>
         ) : (
           <View style={styles.permDenied}>
@@ -105,7 +104,10 @@ export default function OnboardingPermissions() {
 
       {/* Note contacts (pour plus tard dans l'app) */}
       <View style={styles.noteCard}>
-        <Text style={styles.noteTitle}>📱 Contacts</Text>
+        <View style={styles.noteTitleRow}>
+          <Ionicons name="people-outline" size={18} color={Tertiary.default} style={{ marginRight: 6 }} />
+          <Text style={styles.noteTitle}>Contacts</Text>
+        </View>
         <Text style={styles.noteDesc}>
           L&apos;accès aux contacts sera demandé uniquement si vous souhaitez importer
           des personnes depuis votre répertoire. Ce n&apos;est pas requis maintenant.
@@ -140,10 +142,13 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xxxl,
   },
-  stepIndicator: { flexDirection: 'row', gap: 6, marginBottom: Spacing.xl },
-  step: { height: 4, flex: 1, borderRadius: 2, backgroundColor: Outline.variant },
-  stepDone: { backgroundColor: Primary.default },
-  title: { ...Typography.displayMedium, color: OnSurface.primary, marginBottom: Spacing.sm },
+  title: {
+    fontSize: 26,
+    fontFamily: 'Outfit-Bold',
+    color: OnSurface.primary,
+    marginBottom: Spacing.sm,
+    lineHeight: 34,
+  },
   subtitle: {
     ...Typography.bodyMedium,
     color: OnSurface.variant,
@@ -164,7 +169,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  permEmoji: { fontSize: 22 },
   permInfo: { flex: 1 },
   permTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
   permDesc: { ...Typography.bodySmall, color: OnSurface.variant, lineHeight: 18 },
@@ -173,6 +177,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(109, 213, 140, 0.12)',
     borderRadius: Radius.sm,
     padding: Spacing.sm,
+    flexDirection: 'row',
     alignItems: 'center',
   },
   permGrantedText: { ...Typography.labelMedium, color: Success.default },
@@ -187,6 +192,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.xl,
+  },
+  noteTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
   noteTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
   noteDesc: { ...Typography.bodySmall, color: OnSurface.variant, lineHeight: 18 },

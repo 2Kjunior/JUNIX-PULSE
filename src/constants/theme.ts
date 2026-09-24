@@ -125,6 +125,37 @@ export const FontFamily = Platform.select({
   },
 });
 
+// ─── Typographie titres (Outfit — réservé aux titres et onboarding) ──────────
+export const TitleFontFamily = Platform.select({
+  ios: { bold: 'Outfit-Bold', semiBold: 'Outfit-SemiBold' },
+  android: { bold: 'Outfit-Bold', semiBold: 'Outfit-SemiBold' },
+  default: { bold: 'Outfit-Bold', semiBold: 'Outfit-SemiBold' },
+});
+
+// ─── Dégradé principal (CTA + logo) ──────────────────────────────────────────
+// Utilisé sur UN SEUL élément par écran — jamais sur les cartes de liste
+export const Gradient = {
+  primary: ['#D0BCFF', '#A078FF', '#4CD7F6'] as const,
+  primaryStart: { x: 0, y: 0 } as const,
+  primaryEnd: { x: 1, y: 0 } as const,
+} as const;
+
+// ─── Glassmorphism — deux niveaux, hiérarchie stricte ────────────────────────
+// glass-card : cartes de contenu standard
+// glass-nav  : navigation flottante, modales (niveau élevé)
+export const Glass = {
+  card: {
+    backgroundColor: 'rgba(17, 19, 26, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+  },
+  nav: {
+    backgroundColor: 'rgba(12, 14, 21, 0.88)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+} as const;
+
 // ─── Ombres (légères, performantes) ─────────────────────────────────────────
 export const Shadow = {
   sm: {

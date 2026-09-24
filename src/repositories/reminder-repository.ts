@@ -182,19 +182,17 @@ export const ReminderRepository = {
   },
 
   /**
-   * Rappels du jour : prévus entre minuit et 23h59 du jour donné.
+   * Rappels du jour : prévus pour la date donnée (comparaison en date locale).
    */
   async findForDate(dateIso: string): Promise<Reminder[]> {
     const db = await getDatabase();
-    const dayStart = `${dateIso}T00:00:00.000Z`;
-    const dayEnd = `${dateIso}T23:59:59.999Z`;
     const rows = await db.getAllAsync<Record<string, unknown>>(
       `SELECT * FROM reminders
        WHERE deleted_at IS NULL
          AND status NOT IN ('COMPLETED', 'DELETED')
-         AND scheduled_at >= ? AND scheduled_at <= ?
+         AND (DATE(scheduled_at, 'localtime') = ? OR DATE(scheduled_at) = ?)
        ORDER BY scheduled_at ASC`,
-      dayStart, dayEnd
+      dateIso, dateIso
     );
     return rows.map(rowToReminder);
   },

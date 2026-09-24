@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
 
 const END_OF_DAY_OPTIONS = [17, 18, 19, 20, 21, 22];
@@ -45,18 +46,7 @@ export default function OnboardingSchedule() {
       contentContainerStyle={styles.content}
     >
       {/* Indicateur d'étape */}
-      <View style={styles.stepIndicator}>
-        {[0, 1, 2, 3].map(i => (
-          <View
-            key={i}
-            style={[
-              styles.step,
-              i < 3 && styles.stepDone,
-              i === 3 && styles.stepActive,
-            ]}
-          />
-        ))}
-      </View>
+      <StepIndicator total={5} current={4} />
 
       <Text style={styles.title}>Votre rythme</Text>
       <Text style={styles.subtitle}>
@@ -134,11 +124,13 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xxxl,
   },
-  stepIndicator: { flexDirection: 'row', gap: 6, marginBottom: Spacing.xl },
-  step: { height: 4, flex: 1, borderRadius: 2, backgroundColor: Outline.variant },
-  stepDone: { backgroundColor: Primary.default, opacity: 0.6 },
-  stepActive: { backgroundColor: Primary.default },
-  title: { ...Typography.displayMedium, color: OnSurface.primary, marginBottom: Spacing.sm },
+  title: {
+    fontSize: 26,
+    fontFamily: 'Outfit-Bold',
+    color: OnSurface.primary,
+    marginBottom: Spacing.sm,
+    lineHeight: 34,
+  },
   subtitle: {
     ...Typography.bodyLarge,
     color: OnSurface.variant,

@@ -57,10 +57,10 @@ export default function TodayScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const today = new Date();
-  const todayStr = format(today, 'yyyy-MM-dd');
   const greeting = getGreeting(today.getHours());
 
   const load = useCallback(async () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     try {
       const [rems, tks, evts, habStats, settings] = await Promise.all([
         ReminderRepository.findForDate(todayStr),
@@ -79,7 +79,7 @@ export default function TodayScreen() {
       setError(e instanceof Error ? e.message : 'Erreur de chargement');
       setState('error');
     }
-  }, [todayStr]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

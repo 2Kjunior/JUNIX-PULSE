@@ -26,12 +26,17 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import {
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from '@expo-google-fonts/outfit';
 
 import { getDatabase } from '@/database/sqlite';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { Snackbar } from '@/components/feedback/Snackbar';
+import { SplashAnimated } from '@/components/ui/SplashAnimated';
 import { Surface, OnSurface } from '@/constants/theme';
 
 // Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
@@ -59,13 +64,19 @@ export default function RootLayout() {
     'Inter-Medium': Inter_500Medium,
     'Inter-SemiBold': Inter_600SemiBold,
     'Inter-Bold': Inter_700Bold,
+    'Outfit-SemiBold': Outfit_600SemiBold,
+    'Outfit-Bold': Outfit_700Bold,
   });
 
   const appReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
-    // Démarrer l'initialisation dès que les fonts sont prêtes (ou en échec)
+    // Masquer le splash natif dès que les fonts sont prêtes,
+    // puis afficher SplashAnimated à la place pendant l'init DB
     if (!appReady) return;
+
+    // Masquer immédiatement le splash natif Expo
+    SplashScreen.hideAsync();
 
     async function initialize() {
       try {
@@ -86,19 +97,14 @@ export default function RootLayout() {
         const message =
           error instanceof Error ? error.message : 'Erreur base de données';
         setDbError(message);
-      } finally {
-        await SplashScreen.hideAsync();
       }
     }
 
     initialize();
   }, [appReady]);
 
-  // Pendant l'initialisation : laisser Expo Router rendre la Stack
-  // mais bloquer la navigation effective en attendant dbReady
-  // (les écrans individuels gèrent leur propre état de chargement)
-  if (!appReady || (!dbReady && !dbError)) {
-    // SplashScreen est encore visible - pas besoin d'UI ici
+  // Fonts pas encore prêtes : laisser le splash natif visible
+  if (!appReady) {
     return null;
   }
 
@@ -133,6 +139,7 @@ export default function RootLayout() {
           <Stack.Screen name="reminders/index" options={{ presentation: 'card' }} />
           <Stack.Screen name="reminders/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="reminders/new" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="reminders/edit/[id]" options={{ presentation: 'modal' }} />
           {/* Tâches */}
           <Stack.Screen name="tasks/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="tasks/new" options={{ presentation: 'modal' }} />
@@ -143,16 +150,21 @@ export default function RootLayout() {
           <Stack.Screen name="events/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="events/new" options={{ presentation: 'modal' }} />
           {/* Habitudes */}
+          <Stack.Screen name="habits/index" options={{ presentation: 'card' }} />
           <Stack.Screen name="habits/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="habits/new" options={{ presentation: 'modal' }} />
           {/* Objectifs */}
+          <Stack.Screen name="goals/index" options={{ presentation: 'card' }} />
           <Stack.Screen name="goals/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="goals/new" options={{ presentation: 'modal' }} />
           {/* Paramètres */}
           <Stack.Screen name="settings/index" options={{ presentation: 'card' }} />
+          <Stack.Screen name="settings/schedule" options={{ presentation: 'card' }} />
         </Stack>
         {/* Snackbar global (au-dessus de tout le contenu) */}
         <Snackbar />
+        {/* Splash animé (par-dessus l'app, fondu sortant quand prêt) */}
+        <SplashAnimated isReady={dbReady} />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

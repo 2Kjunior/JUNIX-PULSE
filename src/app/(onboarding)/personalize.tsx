@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { getLocales, getCalendars } from 'expo-localization';
 import {
   Surface,
@@ -25,6 +26,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
 
 // Fuseaux les plus courants — simplification V1
@@ -84,18 +86,7 @@ export default function OnboardingPersonalize() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Indicateur d'étape */}
-        <View style={styles.stepIndicator}>
-          {[0, 1, 2, 3].map(i => (
-            <View
-              key={i}
-              style={[
-                styles.step,
-                i < 2 && styles.stepDone,
-                i === 2 && styles.stepActive,
-              ]}
-            />
-          ))}
-        </View>
+        <StepIndicator total={5} current={3} />
 
         <Text style={styles.title}>Quelques préférences</Text>
         <Text style={styles.subtitle}>
@@ -126,9 +117,15 @@ export default function OnboardingPersonalize() {
             style={styles.tzSelector}
             onPress={() => setShowTzPicker(!showTzPicker)}
             testID="onboarding-tz-selector"
+            accessibilityRole="button"
+            accessibilityLabel="Sélectionner le fuseau horaire"
           >
             <Text style={styles.tzValue}>{displayTz}</Text>
-            <Text style={styles.tzChevron}>{showTzPicker ? '▲' : '▼'}</Text>
+            <Ionicons
+              name={showTzPicker ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={OnSurface.variant}
+            />
           </TouchableOpacity>
 
           {showTzPicker && (
@@ -154,7 +151,7 @@ export default function OnboardingPersonalize() {
                     {tz.label}
                   </Text>
                   {tz.value === timezone && (
-                    <Text style={styles.tzCheck}>✓</Text>
+                    <Ionicons name="checkmark" size={16} color={Primary.default} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -194,28 +191,12 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xxxl,
   },
-  stepIndicator: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: Spacing.xl,
-  },
-  step: {
-    height: 4,
-    flex: 1,
-    borderRadius: 2,
-    backgroundColor: Outline.variant,
-  },
-  stepDone: {
-    backgroundColor: Primary.default,
-    opacity: 0.6,
-  },
-  stepActive: {
-    backgroundColor: Primary.default,
-  },
   title: {
-    ...Typography.displayMedium,
+    fontSize: 26,
+    fontFamily: 'Outfit-Bold',
     color: OnSurface.primary,
     marginBottom: Spacing.sm,
+    lineHeight: 34,
   },
   subtitle: {
     ...Typography.bodyLarge,
@@ -263,10 +244,6 @@ const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: OnSurface.primary,
     flex: 1,
-  },
-  tzChevron: {
-    color: OnSurface.variant,
-    fontSize: 12,
   },
   tzList: {
     backgroundColor: Surface.high,

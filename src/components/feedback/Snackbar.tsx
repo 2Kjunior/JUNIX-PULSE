@@ -19,8 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function Snackbar() {
   const { snackbar, hideSnackbar } = useAppStore();
-  const translateY = useRef(new Animated.Value(100)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const [translateY] = useState(() => new Animated.Value(100));
+  const [opacity] = useState(() => new Animated.Value(0));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
 

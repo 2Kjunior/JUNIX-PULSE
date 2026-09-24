@@ -1,20 +1,31 @@
 /**
- * Composant Button — Design system Junix Pulse.
- * Variants : primary, secondary, ghost, destructive.
- * Taille des zones tactiles respecte les guidelines d'accessibilité (min 44pt).
+ * Button — Design system Junix Pulse.
+ * Variant primary : dégradé linéaire violet→cyan (règle : 1 seul dégradé par écran).
+ * Autres variants : secondary, ghost, destructive (surfaces plates, sans dégradé).
+ * Zones tactiles min 44pt (accessibilité).
  */
 
 import React from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   ActivityIndicator,
   View,
   ViewStyle,
-  TextStyle,
 } from 'react-native';
-import { Surface, Primary, Error, OnSurface, Outline, Radius, Spacing, Typography } from '@/constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Surface,
+  Primary,
+  Error,
+  OnSurface,
+  Outline,
+  Radius,
+  Spacing,
+  Typography,
+  Gradient,
+} from '@/constants/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -46,42 +57,69 @@ export function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
+  const content = loading ? (
+    <ActivityIndicator
+      size="small"
+      color={variant === 'primary' ? Surface.base : Primary.default}
+    />
+  ) : (
+    <View style={styles.content}>
+      {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{icon}</View>}
+      <Text style={[styles.label, styles[`label_${variant}`], styles[`labelSize_${size}`]]}>
+        {label}
+      </Text>
+      {icon && iconPosition === 'right' && <View style={styles.iconRight}>{icon}</View>}
+    </View>
+  );
+
+  if (variant === 'primary') {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          styles.base,
+          styles[`size_${size}`],
+          isDisabled && styles.disabled,
+          style,
+          pressed && !isDisabled && styles.pressed,
+        ]}
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: isDisabled }}
+      >
+        <LinearGradient
+          colors={Gradient.primary}
+          start={Gradient.primaryStart}
+          end={Gradient.primaryEnd}
+          style={[styles.gradient, styles[`size_${size}`]]}
+        >
+          {content}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.75}
-      style={[
+      style={({ pressed }) => [
         styles.base,
         styles[`size_${size}`],
         styles[`variant_${variant}`],
         isDisabled && styles.disabled,
         style,
+        pressed && !isDisabled && styles.pressed,
       ]}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled }}
     >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'primary' ? Surface.base : Primary.default}
-        />
-      ) : (
-        <View style={styles.content}>
-          {icon && iconPosition === 'left' && (
-            <View style={styles.iconLeft}>{icon}</View>
-          )}
-          <Text style={[styles.label, styles[`label_${variant}`], styles[`labelSize_${size}`]]}>
-            {label}
-          </Text>
-          {icon && iconPosition === 'right' && (
-            <View style={styles.iconRight}>{icon}</View>
-          )}
-        </View>
-      )}
-    </TouchableOpacity>
+      {content}
+    </Pressable>
   );
 }
 
@@ -90,7 +128,20 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,  // Accessibilité : zone tactile minimale
+    minHeight: 44, // Accessibilité : zone tactile minimale
+    overflow: 'hidden',
+  },
+
+  pressed: {
+    transform: [{ scale: 0.97 }],
+  },
+
+  // ─── Gradient wrapper (primary seulement) ──────────────────────────────────
+  gradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.md,
+    width: '100%',
   },
 
   // ─── Sizes ─────────────────────────────────────────────────────────────────
@@ -108,10 +159,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
 
-  // ─── Variants ──────────────────────────────────────────────────────────────
-  variant_primary: {
-    backgroundColor: Primary.default,
-  },
+  // ─── Variants (non-primary) ─────────────────────────────────────────────────
   variant_secondary: {
     backgroundColor: Surface.high,
     borderWidth: 1,
@@ -136,7 +184,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   label_primary: {
-    color: Primary.on,
+    color: '#0D0B12', // texte sombre sur dégradé clair
+    fontWeight: '600',
   },
   label_secondary: {
     color: OnSurface.primary,
