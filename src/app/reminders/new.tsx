@@ -1,9 +1,10 @@
 /**
- * Formulaire de création d'un rappel.
+ * Formulaire de création d'un rappel — Référence R-05 du Master Prompt Junix Pulse.
  * Présenté comme une modale (presentation: 'modal' dans _layout.tsx).
  *
- * Champs : titre, date/heure, priorité, action, note, récurrence, personne liée.
- * La récurrence avancée est simplifiée en V1 : Quotidien / Hebdomadaire / Mensuel / Custom.
+ * Champs : titre, date/heure, priorité, action vectorielle, note, récurrence.
+ * Règle A.1 : Zéro emoji (icônes vectorielles exclusives).
+ * Règle A.2 : 1 seul bouton dégradé par écran (CTA Créer le rappel).
  */
 import { useState } from 'react';
 import {
@@ -21,18 +22,27 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { format, addHours, setHours, setMinutes } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { createReminder } from '@/use-cases/reminder-use-cases';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { Reminder } from '@/domain/entities';
 import {
-  Surface, Primary, Tertiary, OnSurface, Outline, Error as ErrorColors,
-  Spacing, Radius, Typography, Priority as PriorityColors,
+  Surface,
+  Primary,
+  Tertiary,
+  OnSurface,
+  Outline,
+  Error as ErrorColors,
+  Spacing,
+  Radius,
+  Typography,
+  Priority as PriorityColors,
+  Gradient,
 } from '@/constants/theme';
-import { Button } from '@/components/ui/Button';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 type PriorityKey = Reminder['priority'];
 type ActionType = Reminder['actionType'];
@@ -44,18 +54,18 @@ const PRIORITY_OPTIONS: { key: PriorityKey; label: string }[] = [
   { key: 'URGENT', label: 'Urgent' },
 ];
 
-const ACTION_OPTIONS: { key: ActionType; label: string; icon: string }[] = [
-  { key: 'NONE', label: 'Aucune', icon: '—' },
-  { key: 'CALL', label: 'Appeler', icon: '📞' },
-  { key: 'MESSAGE', label: 'Message', icon: '💬' },
-  { key: 'EMAIL', label: 'Email', icon: '📧' },
-  { key: 'MEET', label: 'Rencontrer', icon: '🤝' },
-  { key: 'TASK', label: 'Faire', icon: '✓' },
+const ACTION_OPTIONS: { key: ActionType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'NONE', label: 'Aucune', icon: 'remove-outline' },
+  { key: 'CALL', label: 'Appeler', icon: 'call-outline' },
+  { key: 'MESSAGE', label: 'Message', icon: 'chatbubble-outline' },
+  { key: 'EMAIL', label: 'Email', icon: 'mail-outline' },
+  { key: 'MEET', label: 'Rencontrer', icon: 'people-outline' },
+  { key: 'TASK', label: 'Faire', icon: 'checkmark-outline' },
 ];
 
 export default function NewReminderScreen() {
   const insets = useSafeAreaInsets();
-  const { showSnackbar, userTimezone } = useAppStore();
+  const { showSnackbar } = useAppStore();
 
   // Champs du formulaire
   const [title, setTitle] = useState('');
@@ -102,7 +112,7 @@ export default function NewReminderScreen() {
           : undefined,
         notificationsEnabled: settings.notificationsEnabled,
       });
-      showSnackbar('Rappel créé ✓');
+      showSnackbar('Rappel créé avec succès.');
       router.back();
     } catch (e) {
       showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
@@ -111,25 +121,41 @@ export default function NewReminderScreen() {
     }
   }
 
-  const dateLabel = format(scheduledAt, "EEEE d MMM 'à' HH:mm", { locale: fr });
+  // Raccourcis temporels pour la commodité (R-05)
+  const setQuickTime = (type: 'tonight' | 'tomorrow') => {
+    const now = new Date();
+    if (type === 'tonight') {
+      const tonight = setMinutes(setHours(now, 20), 30);
+      setScheduledAt(tonight > now ? tonight : addHours(now, 2));
+    } else {
+      const tomorrow = setMinutes(setHours(new Date(now.getTime() + 24 * 3600 * 1000), 8), 30);
+      setScheduledAt(tomorrow);
+    }
+  };
+
+  const dateLabel = format(scheduledAt, "EEEE d MMMM 'à' HH:mm", { locale: fr });
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: Surface.base }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* Barre d'outils modale */}
+        {/* ─── Barre d'outils R-05 ──────────────────────────────────────────────── */}
         <View style={styles.toolbar}>
           <TouchableOpacity onPress={() => router.back()} style={styles.toolbarBtn}>
             <Text style={styles.toolbarCancel}>Annuler</Text>
           </TouchableOpacity>
-          <Text style={styles.toolbarTitle}>Nouveau rappel</Text>
+
+          <View style={styles.toolbarCenter}>
+            <Text style={styles.toolbarTitle}>Nouveau Rappel</Text>
+            <Text style={styles.toolbarSubtitle}>Sas temporel</Text>
+          </View>
+
           <TouchableOpacity
             onPress={handleSave}
             style={styles.toolbarBtn}
             disabled={saving}
-            testID="reminder-save-btn"
           >
             <Text style={[styles.toolbarSave, saving && styles.toolbarSaveDisabled]}>
               {saving ? '...' : 'Créer'}
@@ -139,232 +165,499 @@ export default function NewReminderScreen() {
 
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {/* Titre */}
-          <View style={styles.field}>
+          {/* ─── Titre & Notes (Groupe 1) ────────────────────────────────────────── */}
+          <View style={styles.cardGroup}>
             <TextInput
               style={[styles.titleInput, titleError && styles.inputError]}
               value={title}
               onChangeText={t => { setTitle(t); if (t.trim()) setTitleError(''); }}
               placeholder="Intitulé du rappel"
               placeholderTextColor={OnSurface.disabled}
-              maxLength={100}
+              maxLength={120}
               autoFocus
-              testID="reminder-title-input"
             />
             {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+
+            <View style={styles.notesRow}>
+              <Ionicons name="menu-outline" size={18} color={OnSurface.variant} style={styles.notesIcon} />
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Précisions, liens, contexte (optionnel)"
+                placeholderTextColor={OnSurface.disabled}
+                multiline
+                numberOfLines={3}
+                maxLength={500}
+              />
+            </View>
           </View>
 
-          {/* Notes */}
-          <View style={styles.field}>
-            <TextInput
-              style={styles.notesInput}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Notes (optionnel)"
-              placeholderTextColor={OnSurface.disabled}
-              multiline
-              numberOfLines={3}
-              maxLength={500}
-              testID="reminder-notes-input"
-            />
+          {/* ─── Échéance & Moment (Groupe 2 - R-05) ──────────────────────────────── */}
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="moon-outline" size={16} color={Tertiary.default} />
+            <Text style={styles.sectionHeaderTitle}>Échéance & Moment</Text>
           </View>
 
-          {/* Date & heure */}
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Date et heure</Text>
+          <View style={styles.cardGroup}>
+            {/* Chips rapides */}
+            <View style={styles.quickTimesRow}>
+              <TouchableOpacity
+                style={styles.quickTimeChip}
+                onPress={() => setQuickTime('tonight')}
+              >
+                <Ionicons name="time-outline" size={12} color={OnSurface.variant} />
+                <Text style={styles.quickTimeText}>Ce soir (20:30)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickTimeChip}
+                onPress={() => setQuickTime('tomorrow')}
+              >
+                <Ionicons name="sunny-outline" size={12} color={OnSurface.variant} />
+                <Text style={styles.quickTimeText}>Demain matin (08:30)</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Sélecteur complet de date/heure */}
             <TouchableOpacity
               style={styles.dateSelector}
               onPress={() => setShowDatePicker(true)}
-              testID="reminder-date-btn"
             >
-              <Ionicons name="calendar-outline" size={18} color={Primary.default} />
-              <Text style={styles.dateValue}>{dateLabel}</Text>
+              <View style={styles.dateSelectorLeft}>
+                <Ionicons name="calendar-outline" size={18} color={Primary.default} />
+                <Text style={styles.dateValue}>{dateLabel}</Text>
+              </View>
               <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
             </TouchableOpacity>
           </View>
 
-          {/* Priorité */}
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Priorité</Text>
-            <View style={styles.chipRow}>
-              {PRIORITY_OPTIONS.map(opt => (
+          {/* ─── Sphère d'Intention / Action (Groupe 3 - R-05) ────────────────────── */}
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="shapes-outline" size={16} color={OnSurface.variant} />
+            <Text style={styles.sectionHeaderTitle}>Sphère d'Intention & Action</Text>
+          </View>
+
+          <View style={styles.actionGrid}>
+            {ACTION_OPTIONS.map(opt => {
+              const isSelected = actionType === opt.key;
+              return (
                 <TouchableOpacity
                   key={opt.key}
                   style={[
-                    styles.chip,
-                    priority === opt.key && {
-                      backgroundColor: PriorityColors[opt.key] + '25',
-                      borderColor: PriorityColors[opt.key],
-                    },
+                    styles.actionTile,
+                    isSelected && styles.actionTileSelected,
                   ]}
-                  onPress={() => setPriority(opt.key)}
+                  onPress={() => setActionType(opt.key)}
+                  activeOpacity={0.7}
                 >
-                  <View
-                    style={[
-                      styles.chipDot,
-                      { backgroundColor: PriorityColors[opt.key] },
-                    ]}
+                  <Ionicons
+                    name={opt.icon}
+                    size={18}
+                    color={isSelected ? Primary.default : OnSurface.variant}
                   />
                   <Text
                     style={[
-                      styles.chipLabel,
-                      priority === opt.key && { color: OnSurface.primary },
+                      styles.actionTileLabel,
+                      isSelected && styles.actionTileLabelSelected,
                     ]}
                   >
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+              );
+            })}
           </View>
 
-          {/* Action */}
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Type d'action</Text>
-            <View style={styles.chipRow}>
-              {ACTION_OPTIONS.map(opt => (
+          {/* ─── Priorité (Groupe 4 - R-05) ───────────────────────────────────────── */}
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="flash-outline" size={16} color={Primary.default} />
+            <Text style={styles.sectionHeaderTitle}>Exigence & Priorité</Text>
+          </View>
+
+          <View style={styles.priorityRow}>
+            {PRIORITY_OPTIONS.map(opt => {
+              const isSelected = priority === opt.key;
+              const chipColor = PriorityColors[opt.key];
+              return (
                 <TouchableOpacity
                   key={opt.key}
                   style={[
-                    styles.chip,
-                    actionType === opt.key && styles.chipActive,
+                    styles.priorityTile,
+                    isSelected && {
+                      backgroundColor: Surface.high,
+                      borderColor: chipColor,
+                    },
                   ]}
-                  onPress={() => setActionType(opt.key)}
+                  onPress={() => setPriority(opt.key)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.chipIcon}>{opt.icon}</Text>
+                  <View style={[styles.priorityDot, { backgroundColor: chipColor }]} />
                   <Text
                     style={[
-                      styles.chipLabel,
-                      actionType === opt.key && { color: Primary.onContainer },
+                      styles.priorityLabel,
+                      isSelected && { color: chipColor, fontWeight: '700' },
                     ]}
                   >
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+              );
+            })}
           </View>
 
-          {/* Récurrence */}
-          <View style={styles.field}>
+          {/* ─── Récurrence & Cadence (Groupe 5) ──────────────────────────────────── */}
+          <View style={styles.sectionHeaderRow}>
+            <Ionicons name="repeat-outline" size={16} color={Tertiary.default} />
+            <Text style={styles.sectionHeaderTitle}>Fréquence & Cadence</Text>
+          </View>
+
+          <View style={styles.cardGroup}>
             <View style={styles.rowBetween}>
-              <Text style={styles.fieldLabel}>Récurrent</Text>
+              <View>
+                <Text style={styles.fieldLabel}>Répéter ce rappel</Text>
+                <Text style={styles.fieldHelper}>Recréé automatiquement à la complétion</Text>
+              </View>
               <Switch
                 value={hasRecurrence}
                 onValueChange={setHasRecurrence}
-                trackColor={{ false: Outline.variant, true: Primary.container }}
-                thumbColor={hasRecurrence ? Primary.default : OnSurface.disabled}
-                testID="reminder-recurrence-switch"
+                trackColor={{ false: Outline.variant, true: Primary.default }}
+                thumbColor={hasRecurrence ? '#FFFFFF' : OnSurface.disabled}
               />
             </View>
+
             {hasRecurrence && (
-              <View style={styles.chipRow}>
-                {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map(type => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.chip, recurrenceType === type && styles.chipActive]}
-                    onPress={() => setRecurrenceType(type)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipLabel,
-                        recurrenceType === type && { color: Primary.onContainer },
-                      ]}
+              <View style={styles.recurrenceOptionsRow}>
+                {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map(type => {
+                  const labels = { DAILY: 'Tous les jours', WEEKLY: 'Chaque semaine', MONTHLY: 'Chaque mois' };
+                  const isSel = recurrenceType === type;
+                  return (
+                    <TouchableOpacity
+                      key={type}
+                      style={[styles.recurrenceChip, isSel && styles.recurrenceChipSelected]}
+                      onPress={() => setRecurrenceType(type)}
                     >
-                      {type === 'DAILY' ? 'Quotidien'
-                        : type === 'WEEKLY' ? 'Hebdomadaire' : 'Mensuel'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text style={[styles.recurrenceText, isSel && styles.recurrenceTextSelected]}>
+                        {labels[type]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
           </View>
-        </ScrollView>
-      </View>
 
-      {/* Date picker natif */}
-      <DateTimePickerModal
-        isVisible={showDatePicker}
-        mode="datetime"
-        date={scheduledAt}
-        minimumDate={new Date()}
-        locale="fr"
-        onConfirm={date => {
-          setScheduledAt(date);
-          setShowDatePicker(false);
-        }}
-        onCancel={() => setShowDatePicker(false)}
-      />
+          {/* ─── CTA Principal Dégradé (Unique dégradé R-05) ───────────────────────── */}
+          <View style={styles.ctaContainer}>
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={saving}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientBtn}
+              >
+                <Ionicons name="add" size={20} color="#FFFFFF" />
+                <Text style={styles.gradientBtnText}>
+                  {saving ? 'Création en cours...' : 'Créer le rappel'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.footerNoteRow}>
+              <Ionicons name="shield-checkmark-outline" size={13} color={OnSurface.disabled} />
+              <Text style={styles.footerNote}>Rappel stocké localement • Hors-ligne</Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Modal sélecteur de date/heure natif */}
+        <DateTimePickerModal
+          isVisible={showDatePicker}
+          mode="datetime"
+          date={scheduledAt}
+          onConfirm={d => {
+            setShowDatePicker(false);
+            setScheduledAt(d);
+          }}
+          onCancel={() => setShowDatePicker(false)}
+          locale="fr-FR"
+          confirmTextIOS="Confirmer"
+          cancelTextIOS="Annuler"
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
+  container: {
+    flex: 1,
+    backgroundColor: Surface.base,
+  },
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: Outline.variant,
   },
-  toolbarBtn: { minWidth: 60 },
-  toolbarTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  toolbarCancel: { ...Typography.bodyMedium, color: OnSurface.variant },
-  toolbarSave: { ...Typography.labelLarge, color: Primary.default, textAlign: 'right' },
-  toolbarSaveDisabled: { opacity: 0.4 },
-  scroll: { flex: 1 },
-  scrollContent: { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xxxl },
-  field: { gap: Spacing.sm },
-  fieldLabel: { ...Typography.labelMedium, color: OnSurface.variant, textTransform: 'uppercase', letterSpacing: 0.5 },
+  toolbarBtn: {
+    minWidth: 64,
+  },
+  toolbarCenter: {
+    alignItems: 'center',
+  },
+  toolbarTitle: {
+    ...Typography.titleMedium,
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
+  toolbarSubtitle: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontSize: 9,
+  },
+  toolbarCancel: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+  },
+  toolbarSave: {
+    ...Typography.labelLarge,
+    color: Primary.default,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  toolbarSaveDisabled: {
+    opacity: 0.4,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  cardGroup: {
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: Spacing.sm,
+  },
   titleInput: {
     ...Typography.headlineMedium,
     color: OnSurface.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Outline.variant,
+    paddingTop: Spacing.sm,
+  },
+  notesIcon: {
+    marginTop: 2,
   },
   notesInput: {
     ...Typography.bodyMedium,
     color: OnSurface.primary,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    minHeight: 80,
+    flex: 1,
+    minHeight: 50,
     textAlignVertical: 'top',
   },
-  inputError: { borderBottomColor: ErrorColors.default },
-  errorText: { ...Typography.bodySmall, color: ErrorColors.default },
-  dateSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    minHeight: 48,
+  inputError: {
+    borderBottomWidth: 1,
+    borderBottomColor: ErrorColors.default,
   },
-  dateValue: { ...Typography.bodyMedium, color: OnSurface.primary, flex: 1, textTransform: 'capitalize' },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
+  errorText: {
+    ...Typography.bodySmall,
+    color: ErrorColors.default,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  sectionHeaderTitle: {
+    ...Typography.labelMedium,
+    color: OnSurface.variant,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  quickTimesRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  quickTimeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Surface.base,
     borderRadius: Radius.full,
-    backgroundColor: Surface.container,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: 4,
+  },
+  quickTimeText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+  },
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Surface.base,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
     borderWidth: 1,
     borderColor: Outline.variant,
   },
-  chipActive: { backgroundColor: Primary.container, borderColor: Primary.default },
-  chipDot: { width: 8, height: 8, borderRadius: 4 },
-  chipIcon: { fontSize: 14 },
-  chipLabel: { ...Typography.labelMedium, color: OnSurface.variant },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dateSelectorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  dateValue: {
+    ...Typography.bodyMedium,
+    color: OnSurface.primary,
+    textTransform: 'capitalize',
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  actionTile: {
+    flexBasis: '31%',
+    flexGrow: 1,
+    alignItems: 'center',
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: 4,
+  },
+  actionTileSelected: {
+    backgroundColor: Surface.high,
+    borderColor: Primary.default,
+  },
+  actionTileLabel: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+  },
+  actionTileLabelSelected: {
+    color: Primary.default,
+    fontWeight: '700',
+  },
+  priorityRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  priorityTile: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    gap: 6,
+  },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  priorityLabel: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  fieldLabel: {
+    ...Typography.bodyMedium,
+    color: OnSurface.primary,
+  },
+  fieldHelper: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+  },
+  recurrenceOptionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  recurrenceChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.base,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+  },
+  recurrenceChipSelected: {
+    borderColor: Tertiary.default,
+    backgroundColor: Surface.high,
+  },
+  recurrenceText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+  },
+  recurrenceTextSelected: {
+    color: Tertiary.default,
+    fontWeight: '700',
+  },
+  ctaContainer: {
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  gradientBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    gap: Spacing.xs,
+  },
+  gradientBtnText: {
+    ...Typography.labelLarge,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  footerNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  footerNote: {
+    ...Typography.bodySmall,
+    color: OnSurface.disabled,
+    fontSize: 11,
+  },
 });
