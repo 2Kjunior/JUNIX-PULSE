@@ -35,6 +35,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { LoadingState } from '@/components/feedback/States';
 import { getDatabase } from '@/database/sqlite';
+import { seedDatabase, clearAllData, isSeedAlreadyLoaded } from '@/database/seed';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -160,6 +161,58 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleLoadSeed = () => {
+    Alert.alert(
+      'Charger les données de démo',
+      'Cela va ajouter des personnes, rappels, tâches, habitudes et objectifs exemples pour tester l\'app. Continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Charger',
+          onPress: async () => {
+            try {
+              const already = await isSeedAlreadyLoaded();
+              if (already) {
+                Alert.alert(
+                  'Données existantes',
+                  'Des données sont déjà présentes. Vider d\'abord via "Effacer toutes les données" puis réessayer.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              await seedDatabase();
+              showSnackbar('Données de démo chargées avec succès !');
+            } catch (e: any) {
+              Alert.alert('Erreur', e.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearAllData = () => {
+    Alert.alert(
+      'Effacer toutes les données',
+      'ATTENTION : Cette action efface TOUTES les données locales (rappels, tâches, personnes, habitudes, objectifs). Irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Effacer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearAllData();
+              showSnackbar('Toutes les données effacées.');
+            } catch (e: any) {
+              Alert.alert('Erreur', e.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -276,6 +329,28 @@ export default function SettingsScreen() {
             thumbColor={settings.notificationsEnabled ? Primary.default : OnSurface.disabled}
           />
         </View>
+      </View>
+
+      {/* Section Données de démo */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Données de démonstration</Text>
+        <TouchableOpacity style={styles.row} onPress={handleLoadSeed}>
+          <View>
+            <Text style={styles.rowLabel}>Charger les données exemples</Text>
+            <Text style={styles.rowSub}>Personnes, rappels, habitudes, objectifs</Text>
+          </View>
+          <Ionicons name="sparkles-outline" size={20} color={Primary.default} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.row} onPress={handleClearAllData}>
+          <View>
+            <Text style={[styles.rowLabel, { color: ErrorColors.default }]}>
+              Effacer toutes les données
+            </Text>
+            <Text style={styles.rowSub}>Repart à zéro (irréversible)</Text>
+          </View>
+          <Ionicons name="trash-outline" size={20} color={ErrorColors.default} />
+        </TouchableOpacity>
       </View>
 
       {/* Section Données & Confidentialité */}
