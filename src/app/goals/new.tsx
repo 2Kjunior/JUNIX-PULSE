@@ -55,7 +55,7 @@ export default function NewGoalScreen() {
         deadline: deadline ? deadline.toISOString() : undefined,
       });
 
-      showSnackbar(`Objectif "${title.trim()}" créé avec succès ! 🎯`);
+      showSnackbar(`Objectif "${title.trim()}" créé avec succès`);
       router.back();
     } catch (e: any) {
       Alert.alert('Erreur', e.message || 'Impossible de créer l\'objectif.');
