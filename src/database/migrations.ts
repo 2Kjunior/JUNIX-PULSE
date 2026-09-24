@@ -392,4 +392,15 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_planning_blocks_day_of_week ON planning_blocks(day_of_week);
     `,
   },
+  {
+    version: 20,
+    name: 'create_sanctum_notes',
+    sql: `
+      CREATE TABLE IF NOT EXISTS sanctum_notes (
+        id TEXT PRIMARY KEY NOT NULL,
+        content TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `,
+  },
 ];

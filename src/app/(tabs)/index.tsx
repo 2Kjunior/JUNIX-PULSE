@@ -195,13 +195,29 @@ export default function TodayScreen() {
           </Text>
           <Text style={styles.date}>{dateLabel}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => router.push('/settings')}
-          accessibilityLabel="Paramètres"
-        >
-          <Ionicons name="settings-outline" size={20} color={OnSurface.variant} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => router.push('/capture' as any)}
+            accessibilityLabel="Capture rapide"
+          >
+            <Ionicons name="flash-outline" size={20} color={Primary.default} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => router.push('/search' as any)}
+            accessibilityLabel="Recherche globale"
+          >
+            <Ionicons name="search-outline" size={20} color={OnSurface.variant} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => router.push('/settings')}
+            accessibilityLabel="Paramètres"
+          >
+            <Ionicons name="settings-outline" size={20} color={OnSurface.variant} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ─── Synthèse rapide (Pill Counters) ─────────────────────────────────── */}
@@ -631,6 +647,11 @@ const styles = StyleSheet.create({
     color: OnSurface.variant,
     textTransform: 'capitalize',
     marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   headerBtn: {
     width: 44,

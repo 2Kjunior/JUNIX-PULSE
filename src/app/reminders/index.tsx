@@ -269,7 +269,7 @@ export default function RemindersListScreen() {
       {/* ─── Liste groupée ────────────────────────────────────────────────────── */}
       {sections.length === 0 ? (
         <EmptyState
-          icon="✦"
+          iconName="notifications-outline"
           title="Aucun rappel actif"
           description="Tous vos rappels programmés apparaîtront ici avec leur échéance."
           actionLabel="+ Créer un rappel"

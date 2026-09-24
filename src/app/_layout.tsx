@@ -160,6 +160,10 @@ export default function RootLayout() {
           {/* Paramètres */}
           <Stack.Screen name="settings/index" options={{ presentation: 'card' }} />
           <Stack.Screen name="settings/schedule" options={{ presentation: 'card' }} />
+          {/* Modules transversaux (Vague 9) */}
+          <Stack.Screen name="capture" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="sanctum" options={{ presentation: 'card' }} />
+          <Stack.Screen name="search" options={{ presentation: 'card' }} />
         </Stack>
         {/* Snackbar global (au-dessus de tout le contenu) */}
         <Snackbar />

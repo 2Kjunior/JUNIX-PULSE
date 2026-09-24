@@ -281,6 +281,17 @@ export default function SettingsScreen() {
       {/* Section Données & Confidentialité */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Données & Confidentialité</Text>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => router.push('/sanctum' as any)}
+        >
+          <View>
+            <Text style={styles.rowLabel}>Sanctum — Espace Privé</Text>
+            <Text style={styles.rowSub}>Notes protégées par biométrie native</Text>
+          </View>
+          <Ionicons name="lock-closed-outline" size={20} color={Primary.default} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.row} onPress={handleExportData}>
           <View>
             <Text style={styles.rowLabel}>Sauvegarder les données</Text>

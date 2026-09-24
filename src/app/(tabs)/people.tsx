@@ -169,7 +169,7 @@ export default function PeopleScreen() {
       >
         {persons.length === 0 ? (
           <EmptyState
-            icon="✦"
+            iconName="people-outline"
             title={
               activeTab === 'all'
                 ? 'Aucun contact enregistré'

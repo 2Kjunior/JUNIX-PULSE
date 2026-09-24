@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Surface, OnSurface, Primary, Error, Spacing, Typography, Radius } from '@/constants/theme';
 import { Button } from '../ui/Button';
 
@@ -12,6 +13,7 @@ import { Button } from '../ui/Button';
 
 interface EmptyStateProps {
   icon?: string;
+  iconName?: keyof typeof Ionicons.glyphMap;
   title: string;
   description?: string;
   actionLabel?: string;
@@ -21,7 +23,8 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon = '✦',
+  icon,
+  iconName,
   title,
   description,
   actionLabel,
@@ -31,9 +34,17 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View style={[styles.centered, style]} testID={testID}>
-      <Text style={styles.emptyIcon} accessibilityElementsHidden>
-        {icon}
-      </Text>
+      <View style={styles.emptyIconContainer}>
+        {iconName ? (
+          <Ionicons name={iconName} size={36} color={OnSurface.disabled} />
+        ) : icon && icon !== '✦' ? (
+          <Text style={styles.emptyIcon} accessibilityElementsHidden>
+            {icon}
+          </Text>
+        ) : (
+          <Ionicons name="sparkles-outline" size={36} color={OnSurface.disabled} />
+        )}
+      </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       {description && (
         <Text style={styles.emptyDescription}>{description}</Text>
@@ -91,7 +102,7 @@ export function ErrorState({
   return (
     <View style={[styles.centered, style]} testID={testID}>
       <View style={styles.errorIconContainer}>
-        <Text style={styles.errorIcon}>⚠</Text>
+        <Ionicons name="alert-circle-outline" size={28} color={Error.default} />
       </View>
       <Text style={styles.errorTitle}>{title}</Text>
       <Text style={styles.errorMessage}>{message}</Text>
@@ -135,6 +146,11 @@ const styles = StyleSheet.create({
   },
 
   // Vide
+  emptyIconContainer: {
+    marginBottom: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyIcon: {
     fontSize: 40,
     marginBottom: Spacing.md,

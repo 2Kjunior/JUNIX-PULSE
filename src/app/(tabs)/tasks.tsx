@@ -207,7 +207,7 @@ export default function TasksScreen() {
       >
         {items.length === 0 ? (
           <EmptyState
-            icon="✦"
+            iconName="checkmark-circle-outline"
             title={
               activeTab === 'inbox'
                 ? 'Votre Inbox est vide'
