@@ -31,12 +31,12 @@ import {
 import { Button } from '@/components/ui/Button';
 
 const COLOR_OPTIONS = [
-  { id: 'primary', label: 'Violet', value: Primary.default },
-  { id: 'tertiary', label: 'Rose', value: Tertiary.default },
-  { id: 'green', label: 'Vert', value: '#4CAF50' },
-  { id: 'orange', label: 'Orange', value: '#FF9800' },
-  { id: 'purple', label: 'Pourpre', value: '#9C27B0' },
-  { id: 'cyan', label: 'Cyan', value: '#00BCD4' },
+  { id: 'primary', label: 'Violet', hex: Primary.default },
+  { id: 'tertiary', label: 'Rose', hex: Tertiary.default },
+  { id: 'green', label: 'Vert', hex: '#4CAF50' },
+  { id: 'orange', label: 'Orange', hex: '#FF9800' },
+  { id: 'purple', label: 'Pourpre', hex: '#9C27B0' },
+  { id: 'cyan', label: 'Cyan', hex: '#00BCD4' },
 ];
 
 export default function NewHabitScreen() {
@@ -201,7 +201,7 @@ export default function NewHabitScreen() {
                 key={c.id}
                 style={[
                   styles.colorCircle,
-                  { backgroundColor: c.value },
+                  { backgroundColor: c.hex },
                   color === c.id && styles.colorCircleSelected,
                 ]}
                 onPress={() => setColor(c.id)}
@@ -215,9 +215,10 @@ export default function NewHabitScreen() {
         </View>
 
         <Button
-          label={saving ? 'Création...' : 'Créer l\'habitude'}
+          label="Créer l'habitude"
           onPress={handleSave}
-          disabled={saving}
+          variant="primary"
+          loading={saving}
           style={{ marginTop: Spacing.xl }}
         />
       </ScrollView>
