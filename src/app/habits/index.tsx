@@ -2,8 +2,10 @@
  * Liste des Habitudes — Suivi quotidien & Streaks.
  * Permet de valider rapidement une habitude aujourd'hui,
  * de voir les séries en cours (streaks) et de gérer les pauses.
+ * Respect strict du design Midnight, zéro emoji, dégradé unique sur le FAB.
  */
-import { useEffect, useState, useCallback } from 'react';
+
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,8 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
 import { useAppStore } from '@/store/app-store';
@@ -30,8 +31,9 @@ import {
   Spacing,
   Radius,
   Typography,
+  Gradient,
 } from '@/constants/theme';
-import { LoadingState, EmptyState, ErrorState } from '@/components/feedback/States';
+import { LoadingState, ErrorState } from '@/components/feedback/States';
 
 const COLOR_PRESETS: Record<string, string> = {
   primary: Primary.default,
@@ -75,8 +77,8 @@ export default function HabitsListScreen() {
       const nowCompleted = await HabitUseCases.toggleHabitCompletion(item.habit.id);
       showSnackbar(
         nowCompleted
-          ? `Habitude "${item.habit.title}" validée ! 🔥`
-          : `Validation retirée pour "${item.habit.title}".`
+          ? `Habitude "${item.habit.title}" validée`
+          : `Validation retirée pour "${item.habit.title}"`
       );
       loadData();
     } catch (e: any) {
@@ -87,7 +89,7 @@ export default function HabitsListScreen() {
   const handleResume = async (habitId: string, title: string) => {
     try {
       await HabitUseCases.resumeHabit(habitId);
-      showSnackbar(`Habitude "${title}" reprise !`);
+      showSnackbar(`Habitude "${title}" reprise`);
       loadData();
     } catch (e: any) {
       Alert.alert('Erreur', e.message);
@@ -108,21 +110,20 @@ export default function HabitsListScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          accessibilityLabel="Retour"
+        >
           <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Habitudes & Streaks</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/habits/new')}
-        >
-          <Ionicons name="add" size={24} color={Surface.base} />
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 88 }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -133,6 +134,7 @@ export default function HabitsListScreen() {
             tintColor={Primary.default}
           />
         }
+        showsVerticalScrollIndicator={false}
       >
         {/* Résumé rapide */}
         <View style={styles.summaryBar}>
@@ -158,16 +160,20 @@ export default function HabitsListScreen() {
         </Text>
 
         {activeHabits.length === 0 ? (
-          <EmptyState
-            icon="repeat-outline"
-            title="Aucune habitude active"
-            description="Créez des habitudes quotidiennes pour suivre vos routines et séries !"
-            actionLabel="Créer une habitude"
-            onAction={() => router.push('/habits/new')}
-          />
+          <View style={styles.emptyCard}>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="repeat-outline" size={32} color={Primary.default} />
+            </View>
+            <Text style={styles.emptyTitle}>Aucune habitude active</Text>
+            <Text style={styles.emptyDescription}>
+              Créez des habitudes quotidiennes pour suivre vos routines et séries.
+            </Text>
+          </View>
         ) : (
           activeHabits.map(item => {
-            const habitColor = item.habit.color ? (COLOR_PRESETS[item.habit.color] || item.habit.color) : Tertiary.default;
+            const habitColor = item.habit.color
+              ? (COLOR_PRESETS[item.habit.color] || item.habit.color)
+              : Tertiary.default;
             return (
               <TouchableOpacity
                 key={item.habit.id}
@@ -233,6 +239,7 @@ export default function HabitsListScreen() {
                 <TouchableOpacity
                   style={styles.resumeBtn}
                   onPress={() => handleResume(item.habit.id, item.habit.title)}
+                  activeOpacity={0.7}
                 >
                   <Ionicons name="play" size={16} color={Primary.default} />
                   <Text style={styles.resumeText}>Reprendre</Text>
@@ -242,12 +249,33 @@ export default function HabitsListScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* FAB avec dégradé unique */}
+      <TouchableOpacity
+        style={[styles.fabContainer, { bottom: insets.bottom + 16 }]}
+        onPress={() => router.push('/habits/new')}
+        activeOpacity={0.85}
+        accessibilityLabel="Nouvelle habitude"
+      >
+        <LinearGradient
+          colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fabGradient}
+        >
+          <Ionicons name="add" size={24} color="#141317" />
+          <Text style={styles.fabText}>Habitude</Text>
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
+  container: {
+    flex: 1,
+    backgroundColor: Surface.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -258,17 +286,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Outline.variant,
   },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleLarge, color: OnSurface.primary },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    backgroundColor: Primary.default,
-    alignItems: 'center',
-    justifyContent: 'center',
+  backBtn: {
+    padding: Spacing.xs,
   },
-  scrollContent: { padding: Spacing.lg, paddingBottom: 100 },
+  headerTitle: {
+    ...Typography.titleLarge,
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
+  scrollContent: {
+    padding: Spacing.lg,
+  },
   summaryBar: {
     flexDirection: 'row',
     gap: Spacing.md,
@@ -287,6 +315,7 @@ const styles = StyleSheet.create({
     ...Typography.headlineMedium,
     color: OnSurface.primary,
     marginTop: Spacing.xs,
+    fontWeight: '700',
   },
   summarySub: {
     ...Typography.bodySmall,
@@ -297,6 +326,37 @@ const styles = StyleSheet.create({
     ...Typography.titleMedium,
     color: OnSurface.primary,
     marginBottom: Spacing.md,
+    fontWeight: '600',
+  },
+  emptyCard: {
+    backgroundColor: Surface.container,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.md,
+  },
+  emptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.high,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xs,
+  },
+  emptyTitle: {
+    ...Typography.titleLarge,
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
+  emptyDescription: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+    textAlign: 'center',
   },
   habitCard: {
     flexDirection: 'row',
@@ -305,6 +365,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     gap: Spacing.md,
   },
   checkCircle: {
@@ -315,10 +377,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  habitInfo: { flex: 1 },
-  habitTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  habitDesc: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-  habitFreq: { ...Typography.labelSmall, color: OnSurface.disabled, marginTop: 4 },
+  habitInfo: {
+    flex: 1,
+  },
+  habitTitle: {
+    ...Typography.titleMedium,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
+  habitDesc: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
+  habitFreq: {
+    ...Typography.labelSmall,
+    color: OnSurface.disabled,
+    marginTop: 4,
+  },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,9 +402,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     gap: 4,
   },
-  streakText: { ...Typography.labelLarge, color: OnSurface.primary, fontWeight: '700' },
+  streakText: {
+    ...Typography.labelLarge,
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
   pausedCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -336,17 +418,50 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     opacity: 0.8,
   },
-  pausedSub: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
+  pausedSub: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
   resumeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Primary.default + '15',
+    backgroundColor: Primary.container,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
     gap: 4,
   },
-  resumeText: { ...Typography.labelMedium, color: Primary.default, fontWeight: '600' },
+  resumeText: {
+    ...Typography.labelMedium,
+    color: Primary.onContainer,
+    fontWeight: '600',
+  },
+  fabContainer: {
+    position: 'absolute',
+    right: Spacing.lg,
+    borderRadius: Radius.full,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full,
+    gap: 6,
+  },
+  fabText: {
+    ...Typography.titleMedium,
+    color: '#141317',
+    fontWeight: '700',
+  },
 });

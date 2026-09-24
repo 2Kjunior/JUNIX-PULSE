@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { format, subDays, isSameDay, parseISO } from 'date-fns';
+import { format, subDays, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
@@ -23,7 +23,6 @@ import { useAppStore } from '@/store/app-store';
 import {
   Surface,
   Primary,
-  Tertiary,
   OnSurface,
   Outline,
   Error as ErrorColors,
@@ -175,7 +174,7 @@ export default function HabitDetailScreen() {
           <View style={styles.badgeRow}>
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>
-                {stats.habit.status === 'PAUSED' ? '⏸️ En pause' : '⚡ Active'}
+                {stats.habit.status === 'PAUSED' ? 'En pause' : 'Active'}
               </Text>
             </View>
             <Text style={styles.freqTag}>
