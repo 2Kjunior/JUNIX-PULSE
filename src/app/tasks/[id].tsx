@@ -20,7 +20,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { TaskRepository } from '@/repositories/task-repository';
@@ -82,7 +82,6 @@ export default function TaskDetailScreen() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-  const nextWeekStr = format(addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1), 'yyyy-MM-dd');
 
   const load = useCallback(async () => {
     if (!id) {
@@ -333,8 +332,13 @@ export default function TaskDetailScreen() {
               style={[styles.chip, !scheduledDateStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(undefined)}
             >
+              <Ionicons
+                name="file-tray-outline"
+                size={14}
+                color={!scheduledDateStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, !scheduledDateStr && styles.chipTextActive]}>
-                📥 Inbox
+                Inbox
               </Text>
             </TouchableOpacity>
 
@@ -342,8 +346,13 @@ export default function TaskDetailScreen() {
               style={[styles.chip, scheduledDateStr === todayStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(todayStr)}
             >
+              <Ionicons
+                name="today-outline"
+                size={14}
+                color={scheduledDateStr === todayStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, scheduledDateStr === todayStr && styles.chipTextActive]}>
-                📅 Aujourd&apos;hui
+                Aujourd&apos;hui
               </Text>
             </TouchableOpacity>
 
@@ -351,8 +360,13 @@ export default function TaskDetailScreen() {
               style={[styles.chip, scheduledDateStr === tomorrowStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(tomorrowStr)}
             >
+              <Ionicons
+                name="arrow-forward-outline"
+                size={14}
+                color={scheduledDateStr === tomorrowStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, scheduledDateStr === tomorrowStr && styles.chipTextActive]}>
-                ➡️ Demain
+                Demain
               </Text>
             </TouchableOpacity>
 

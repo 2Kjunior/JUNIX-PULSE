@@ -50,13 +50,13 @@ const PRIORITY_OPTIONS: { key: PriorityKey; label: string }[] = [
   { key: 'URGENT', label: 'Urgent' },
 ];
 
-const ACTION_OPTIONS: { key: ActionType; label: string; icon: string }[] = [
-  { key: 'NONE', label: 'Aucune', icon: '—' },
-  { key: 'CALL', label: 'Appeler', icon: '📞' },
-  { key: 'MESSAGE', label: 'Message', icon: '💬' },
-  { key: 'EMAIL', label: 'Email', icon: '📧' },
-  { key: 'MEET', label: 'Rencontrer', icon: '🤝' },
-  { key: 'TASK', label: 'Faire', icon: '✓' },
+const ACTION_OPTIONS: { key: ActionType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'NONE', label: 'Aucune', icon: 'remove-outline' },
+  { key: 'CALL', label: 'Appeler', icon: 'call-outline' },
+  { key: 'MESSAGE', label: 'Message', icon: 'chatbubble-outline' },
+  { key: 'EMAIL', label: 'Email', icon: 'mail-outline' },
+  { key: 'MEET', label: 'Rencontrer', icon: 'people-outline' },
+  { key: 'TASK', label: 'Faire', icon: 'checkbox-outline' },
 ];
 
 export default function EditReminderScreen() {
@@ -255,7 +255,11 @@ export default function EditReminderScreen() {
                     ]}
                     onPress={() => setActionType(opt.key)}
                   >
-                    <Text style={styles.actionIcon}>{opt.icon}</Text>
+                    <Ionicons
+                      name={opt.icon}
+                      size={20}
+                      color={isSelected ? Primary.default : OnSurface.variant}
+                    />
                     <Text
                       style={[
                         styles.actionLabel,

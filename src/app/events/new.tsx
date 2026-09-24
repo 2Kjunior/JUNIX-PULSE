@@ -2,7 +2,7 @@
  * Formulaire de création d'un événement dans l'agenda.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -266,8 +266,15 @@ export default function NewEventScreen() {
                   style={[styles.chip, isSelected && styles.chipActive]}
                   onPress={() => setTravelBufferMinutes(opt.minutes)}
                 >
+                  {opt.minutes > 0 && (
+                    <Ionicons
+                      name="car-outline"
+                      size={14}
+                      color={isSelected ? Primary.onContainer : OnSurface.variant}
+                    />
+                  )}
                   <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
-                    {opt.minutes > 0 ? `🚗 ${opt.label}` : opt.label}
+                    {opt.label}
                   </Text>
                 </TouchableOpacity>
               );

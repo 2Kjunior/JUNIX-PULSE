@@ -28,7 +28,6 @@ import { ReminderPriority } from '@/domain/entities';
 import {
   Surface,
   Primary,
-  Tertiary,
   OnSurface,
   Outline,
   Error as ErrorColors,
@@ -219,8 +218,13 @@ export default function NewTaskScreen() {
               style={[styles.chip, !scheduledDateStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(undefined)}
             >
+              <Ionicons
+                name="file-tray-outline"
+                size={14}
+                color={!scheduledDateStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, !scheduledDateStr && styles.chipTextActive]}>
-                📥 Inbox (sans date)
+                Inbox (sans date)
               </Text>
             </TouchableOpacity>
 
@@ -228,8 +232,13 @@ export default function NewTaskScreen() {
               style={[styles.chip, scheduledDateStr === todayStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(todayStr)}
             >
+              <Ionicons
+                name="today-outline"
+                size={14}
+                color={scheduledDateStr === todayStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, scheduledDateStr === todayStr && styles.chipTextActive]}>
-                📅 Aujourd&apos;hui
+                Aujourd&apos;hui
               </Text>
             </TouchableOpacity>
 
@@ -237,8 +246,13 @@ export default function NewTaskScreen() {
               style={[styles.chip, scheduledDateStr === tomorrowStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(tomorrowStr)}
             >
+              <Ionicons
+                name="arrow-forward-outline"
+                size={14}
+                color={scheduledDateStr === tomorrowStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, scheduledDateStr === tomorrowStr && styles.chipTextActive]}>
-                ➡️ Demain
+                Demain
               </Text>
             </TouchableOpacity>
 
@@ -246,8 +260,13 @@ export default function NewTaskScreen() {
               style={[styles.chip, scheduledDateStr === nextWeekStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(nextWeekStr)}
             >
+              <Ionicons
+                name="calendar-outline"
+                size={14}
+                color={scheduledDateStr === nextWeekStr ? Primary.onContainer : OnSurface.variant}
+              />
               <Text style={[styles.chipText, scheduledDateStr === nextWeekStr && styles.chipTextActive]}>
-                📆 Lundi prochain
+                Lundi prochain
               </Text>
             </TouchableOpacity>
 
