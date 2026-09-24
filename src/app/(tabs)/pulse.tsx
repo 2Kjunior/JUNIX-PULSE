@@ -16,6 +16,8 @@ import { SuggestionUseCases } from '@/use-cases/suggestion-use-cases';
 import { Suggestion } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 
+import { PulseLogo } from '@/components/ui/PulseLogo';
+
 export default function PulseScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -100,10 +102,15 @@ export default function PulseScreen() {
         />
       }
     >
-      <Text style={styles.title}>Pulse</Text>
-      <Text style={styles.subtitle}>
-        Votre centre de croissance et de suivi personnel.
-      </Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerTextCol}>
+          <Text style={styles.title}>Pulse</Text>
+          <Text style={styles.subtitle}>
+            Votre centre d'intelligence et de progression.
+          </Text>
+        </View>
+        <PulseLogo size={52} mode="idle" />
+      </View>
 
       {/* Raccourcis Modules */}
       {SECTIONS.map(s => (
@@ -179,8 +186,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: 100,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xl,
+  },
+  headerTextCol: {
+    flex: 1,
+    paddingRight: Spacing.md,
+  },
   title: { ...Typography.headlineLarge, color: OnSurface.primary, marginBottom: Spacing.xs },
-  subtitle: { ...Typography.bodyMedium, color: OnSurface.variant, marginBottom: Spacing.xl },
+  subtitle: { ...Typography.bodyMedium, color: OnSurface.variant },
   sectionCard: {
     flexDirection: 'row',
     alignItems: 'center',
