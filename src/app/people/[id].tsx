@@ -1,5 +1,6 @@
 /**
- * Détail d'une personne et journal d'interactions (Timeline).
+ * Détail d'une personne et journal d'interactions (Timeline) — R-10.
+ * Design Midnight, dégradé unique sur le bouton d'action principal, zéro emoji.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -42,7 +43,13 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
-const INTERACTION_TYPES: { type: InteractionType; label: string; icon: string }[] = [
+interface InteractionTypeConfig {
+  type: InteractionType;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}
+
+const INTERACTION_TYPES: InteractionTypeConfig[] = [
   { type: 'CALL', label: 'Appel', icon: 'call-outline' },
   { type: 'SMS', label: 'SMS', icon: 'chatbubble-outline' },
   { type: 'WHATSAPP', label: 'WhatsApp', icon: 'logo-whatsapp' },
@@ -108,7 +115,7 @@ export default function PersonDetailScreen() {
       });
 
       setLogNotes('');
-      showSnackbar('Interaction enregistrée ✓');
+      showSnackbar('Interaction enregistrée');
       await load();
     } catch (e) {
       showSnackbar(e instanceof Error ? e.message : 'Erreur');
@@ -167,6 +174,7 @@ export default function PersonDetailScreen() {
 
   const initials = person.displayName
     .split(' ')
+    .filter(Boolean)
     .map(w => w[0])
     .join('')
     .substring(0, 2)
@@ -206,7 +214,7 @@ export default function PersonDetailScreen() {
         {/* Carte de Profil */}
         <View style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <View style={styles.avatar}>
+            <View style={[styles.avatar, isForgotten && styles.avatarForgotten]}>
               <Text style={styles.avatarText}>{initials}</Text>
             </View>
             <View style={styles.profileInfo}>
@@ -227,56 +235,70 @@ export default function PersonDetailScreen() {
             ]}
           >
             <Ionicons
-              name={isForgotten ? 'alert-circle-outline' : 'checkmark-circle-outline'}
+              name={isForgotten ? 'time-outline' : 'checkmark-circle-outline'}
               size={18}
-              color={isForgotten ? ErrorColors.default : Success.default}
+              color={isForgotten ? '#F59E0B' : Success.default}
             />
             <Text
               style={[
                 styles.statusBannerText,
-                { color: isForgotten ? ErrorColors.default : Success.default },
+                { color: isForgotten ? '#F59E0B' : Success.default },
               ]}
             >
               {daysSinceLast === null
-                ? 'Aucun contact enregistré'
+                ? 'Aucun contact enregistré (Relance conseillée)'
                 : isForgotten
-                ? `Dernier contact il y a ${daysSinceLast} jours (Relance conseillée !)`
+                ? `Dernier contact il y a ${daysSinceLast} jours (Relance conseillée)`
                 : `Dernier contact il y a ${daysSinceLast} jours (À jour)`}
             </Text>
           </View>
 
-          {/* Boutons d'action directes (Appeler / SMS) */}
-          <View style={styles.actionRow}>
-            {!!person.phone && (
-              <>
+          {/* Boutons d'action directes */}
+          {(!!person.phone || !!person.email) && (
+            <View style={styles.actionRow}>
+              {!!person.phone && (
+                <>
+                  <TouchableOpacity
+                    style={styles.quickActionBtn}
+                    onPress={() => Linking.openURL(`tel:${person.phone}`)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="call-outline" size={18} color={Primary.default} />
+                    <Text style={styles.quickActionText}>Appeler</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.quickActionBtn}
+                    onPress={() => Linking.openURL(`sms:${person.phone}`)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chatbubble-outline" size={18} color={Primary.default} />
+                    <Text style={styles.quickActionText}>SMS</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.quickActionBtn}
+                    onPress={() => Linking.openURL(`https://wa.me/${person.phone?.replace(/[^0-9]/g, '')}`)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                    <Text style={styles.quickActionText}>WhatsApp</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {!!person.email && (
                 <TouchableOpacity
                   style={styles.quickActionBtn}
-                  onPress={() => Linking.openURL(`tel:${person.phone}`)}
+                  onPress={() => Linking.openURL(`mailto:${person.email}`)}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="call-outline" size={18} color={Primary.default} />
-                  <Text style={styles.quickActionText}>Appeler</Text>
+                  <Ionicons name="mail-outline" size={18} color={Primary.default} />
+                  <Text style={styles.quickActionText}>Email</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.quickActionBtn}
-                  onPress={() => Linking.openURL(`sms:${person.phone}`)}
-                >
-                  <Ionicons name="chatbubble-outline" size={18} color={Primary.default} />
-                  <Text style={styles.quickActionText}>SMS</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {!!person.email && (
-              <TouchableOpacity
-                style={styles.quickActionBtn}
-                onPress={() => Linking.openURL(`mailto:${person.email}`)}
-              >
-                <Ionicons name="mail-outline" size={18} color={Primary.default} />
-                <Text style={styles.quickActionText}>Email</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              )}
+            </View>
+          )}
 
           {/* Détails supplémentaires (Anniversaire, Notes) */}
           {!!person.birthDate && (
@@ -311,9 +333,10 @@ export default function PersonDetailScreen() {
                       key={item.type}
                       style={[styles.typeChip, isSelected && styles.typeChipActive]}
                       onPress={() => setSelectedType(item.type)}
+                      activeOpacity={0.7}
                     >
                       <Ionicons
-                        name={item.icon as any}
+                        name={item.icon}
                         size={16}
                         color={isSelected ? Primary.onContainer : OnSurface.variant}
                       />
@@ -333,16 +356,17 @@ export default function PersonDetailScreen() {
               style={styles.logInput}
               value={logNotes}
               onChangeText={setLogNotes}
-              placeholder="Notes sur la conversation (ex: pris des nouvelles, café ensemble...)"
+              placeholder="Notes sur l'échange (ex: nouvelles prises, café ensemble...)"
               placeholderTextColor={OnSurface.disabled}
               multiline
               numberOfLines={2}
             />
 
+            {/* Bouton avec dégradé unique */}
             <Button
               label="Enregistrer l'interaction"
               onPress={handleLogInteraction}
-              variant="secondary"
+              variant="primary"
               size="md"
               loading={logging}
             />
@@ -357,7 +381,11 @@ export default function PersonDetailScreen() {
 
           {interactions.length === 0 ? (
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>Aucune interaction enregistrée pour le moment.</Text>
+              <Ionicons name="chatbubbles-outline" size={32} color={OnSurface.disabled} />
+              <Text style={styles.emptyTitle}>Aucune interaction</Text>
+              <Text style={styles.emptyText}>
+                Enregistrez vos échanges pour maintenir le lien dans la durée.
+              </Text>
             </View>
           ) : (
             interactions.map(item => {
@@ -367,7 +395,7 @@ export default function PersonDetailScreen() {
               return (
                 <View key={item.id} style={styles.timelineItem}>
                   <View style={styles.timelineIcon}>
-                    <Ionicons name={typeConfig.icon as any} size={18} color={Primary.default} />
+                    <Ionicons name={typeConfig.icon} size={18} color={Primary.default} />
                   </View>
                   <View style={styles.timelineBody}>
                     <View style={styles.timelineHeader}>
@@ -381,6 +409,7 @@ export default function PersonDetailScreen() {
                   <TouchableOpacity
                     onPress={() => handleDeleteInteraction(item.id)}
                     style={styles.timelineDelete}
+                    accessibilityLabel="Supprimer interaction"
                   >
                     <Ionicons name="close" size={16} color={OnSurface.disabled} />
                   </TouchableOpacity>
@@ -395,7 +424,10 @@ export default function PersonDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
+  container: {
+    flex: 1,
+    backgroundColor: Surface.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -405,46 +437,98 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Outline.variant,
   },
-  headerBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleMedium, color: OnSurface.primary, flex: 1, textAlign: 'center' },
-  content: { padding: Spacing.lg, gap: Spacing.xl },
+  headerBtn: {
+    padding: Spacing.xs,
+  },
+  headerTitle: {
+    ...Typography.titleMedium,
+    color: OnSurface.primary,
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  content: {
+    padding: Spacing.lg,
+    gap: Spacing.xl,
+  },
   profileCard: {
     backgroundColor: Surface.container,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     gap: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Primary.container,
+    width: 60,
+    height: 60,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.high,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Outline.variant,
   },
-  avatarText: { ...Typography.headlineMedium, color: Primary.onContainer },
-  profileInfo: { flex: 1, gap: 4 },
-  displayName: { ...Typography.headlineMedium, color: OnSurface.primary },
+  avatarForgotten: {
+    borderColor: '#F59E0B',
+  },
+  avatarText: {
+    ...Typography.headlineMedium,
+    color: Primary.default,
+    fontWeight: '700',
+  },
+  profileInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  displayName: {
+    ...Typography.headlineMedium,
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
   relationshipBadge: {
     alignSelf: 'flex-start',
     backgroundColor: Surface.high,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  relationshipText: { ...Typography.labelSmall, color: OnSurface.variant },
+  relationshipText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    fontSize: 11,
+  },
   statusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.md,
     borderRadius: Radius.md,
+    borderWidth: 1,
     gap: Spacing.sm,
   },
-  statusBannerOk: { backgroundColor: 'rgba(109, 213, 140, 0.12)' },
-  statusBannerAlert: { backgroundColor: 'rgba(255, 82, 82, 0.12)' },
-  statusBannerText: { ...Typography.labelMedium, flex: 1 },
-  actionRow: { flexDirection: 'row', gap: Spacing.sm },
+  statusBannerOk: {
+    backgroundColor: 'rgba(109, 213, 140, 0.08)',
+    borderColor: 'rgba(109, 213, 140, 0.2)',
+  },
+  statusBannerAlert: {
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+  },
+  statusBannerText: {
+    ...Typography.labelMedium,
+    flex: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
   quickActionBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -453,29 +537,63 @@ const styles = StyleSheet.create({
     backgroundColor: Surface.high,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     gap: 6,
   },
-  quickActionText: { ...Typography.labelMedium, color: Primary.default },
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  detailText: { ...Typography.bodyMedium, color: OnSurface.variant },
+  quickActionText: {
+    ...Typography.labelMedium,
+    color: OnSurface.primary,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  detailText: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+  },
   notesBox: {
     backgroundColor: Surface.high,
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginTop: 4,
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  notesTitle: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: 2 },
-  notesText: { ...Typography.bodySmall, color: OnSurface.primary },
-  section: { gap: Spacing.md },
-  sectionTitle: { ...Typography.titleMedium, color: OnSurface.primary },
+  notesTitle: {
+    ...Typography.labelMedium,
+    color: OnSurface.variant,
+    marginBottom: 2,
+  },
+  notesText: {
+    ...Typography.bodySmall,
+    color: OnSurface.primary,
+  },
+  section: {
+    gap: Spacing.md,
+  },
+  sectionTitle: {
+    ...Typography.titleMedium,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
   logCard: {
     backgroundColor: Surface.container,
     borderRadius: Radius.lg,
     padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     gap: Spacing.md,
   },
-  typeScroll: { flexGrow: 0 },
-  typeRow: { flexDirection: 'row', gap: Spacing.xs },
+  typeScroll: {
+    flexGrow: 0,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
   typeChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -483,32 +601,59 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
     backgroundColor: Surface.high,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     gap: 6,
   },
-  typeChipActive: { backgroundColor: Primary.container },
-  typeChipText: { ...Typography.labelSmall, color: OnSurface.variant },
-  typeChipTextActive: { color: Primary.onContainer },
+  typeChipActive: {
+    backgroundColor: Primary.container,
+    borderColor: Primary.default,
+  },
+  typeChipText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+  },
+  typeChipTextActive: {
+    color: Primary.onContainer,
+    fontWeight: '600',
+  },
   logInput: {
     backgroundColor: Surface.high,
     borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     color: OnSurface.primary,
     ...Typography.bodySmall,
-    minHeight: 60,
+    minHeight: 64,
   },
   emptyBox: {
     backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+    padding: Spacing.xl,
     alignItems: 'center',
+    gap: Spacing.xs,
   },
-  emptyText: { ...Typography.bodyMedium, color: OnSurface.variant },
+  emptyTitle: {
+    ...Typography.titleMedium,
+    color: OnSurface.primary,
+    marginTop: Spacing.xs,
+  },
+  emptyText: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+    textAlign: 'center',
+  },
   timelineItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: Surface.container,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     padding: Spacing.md,
     marginBottom: Spacing.xs,
     gap: Spacing.md,
@@ -516,15 +661,38 @@ const styles = StyleSheet.create({
   timelineIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: Radius.full,
     backgroundColor: Surface.high,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  timelineBody: { flex: 1, gap: 2 },
-  timelineHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  timelineType: { ...Typography.labelMedium, color: OnSurface.primary },
-  timelineDate: { ...Typography.labelSmall, color: OnSurface.disabled, fontSize: 10 },
-  timelineNotes: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-  timelineDelete: { padding: 4 },
+  timelineBody: {
+    flex: 1,
+    gap: 2,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timelineType: {
+    ...Typography.labelMedium,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
+  timelineDate: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    fontSize: 10,
+  },
+  timelineNotes: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
+  timelineDelete: {
+    padding: 4,
+  },
 });
