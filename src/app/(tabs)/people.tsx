@@ -1,9 +1,14 @@
 /**
- * Onglet Personnes — Vue principale avec filtres Toutes et À recontacter.
- * Permet de suivre ses relations d'un coup d'œil et d'éviter d'oublier des proches.
+ * Onglet Personnes — Référence R-09 du Master Prompt Junix Pulse.
+ * Suivi des relations personnelles, filtre « À recontacter ».
+ * Actions rapides directes sur la carte (Appeler / Message).
+ * Bouton flottant CTA dégradé : + Nouveau contact.
+ *
+ * Règle A.1 : Zéro emoji dans tout le composant.
+ * Règle A.2 : Cartes rayon 16px (Radius.lg), 1 seul dégradé CTA, palette theme.ts.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,8 +21,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { format, differenceInDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { differenceInDays } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person } from '@/domain/entities';
@@ -27,11 +32,10 @@ import {
   Tertiary,
   OnSurface,
   Outline,
-  Error as ErrorColors,
-  Success,
   Spacing,
   Radius,
   Typography,
+  Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 
@@ -44,6 +48,7 @@ export default function PeopleScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [persons, setPersons] = useState<Person[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [forgottenCount, setForgottenCount] = useState(0);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -55,6 +60,7 @@ export default function PeopleScreen() {
         PersonRepository.findForgotten(),
       ]);
 
+      setTotalCount(allPersons.length);
       setForgottenCount(forgotten.length);
       setPersons(activeTab === 'all' ? allPersons : forgotten);
       setScreenState('content');
@@ -81,42 +87,81 @@ export default function PeopleScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* En-tête */}
+      {/* ─── En-tête R-09 ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
-        <Text style={styles.title}>Personnes</Text>
+        <View>
+          <Text style={styles.title}>Personnes</Text>
+          <Text style={styles.subtitle}>Cercle relationnel • Liens</Text>
+        </View>
+
         <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/people/new')}
-          accessibilityLabel="Ajouter une personne"
+          style={styles.settingsBtn}
+          onPress={() => router.push('/settings')}
+          accessibilityLabel="Paramètres"
         >
-          <Ionicons name="person-add-outline" size={20} color={Primary.on} />
+          <Ionicons name="options-outline" size={20} color={OnSurface.variant} />
         </TouchableOpacity>
       </View>
 
-      {/* Tabs Toutes / À recontacter */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'all' && styles.tabItemActive]}
-          onPress={() => setActiveTab('all')}
-        >
-          <Text style={[styles.tabLabel, activeTab === 'all' && styles.tabLabelActive]}>
-            Toutes
-          </Text>
-        </TouchableOpacity>
+      {/* ─── Segmented Control R-09 ────────────────────────────────────────────── */}
+      <View style={styles.tabBarWrapper}>
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'all' && styles.tabItemActive]}
+            onPress={() => setActiveTab('all')}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="people-outline"
+              size={14}
+              color={activeTab === 'all' ? Primary.default : OnSurface.variant}
+            />
+            <Text style={[styles.tabLabel, activeTab === 'all' && styles.tabLabelActive]}>
+              Toutes
+            </Text>
+            <View style={[styles.tabBadge, activeTab === 'all' && styles.tabBadgeActive]}>
+              <Text style={[styles.tabBadgeText, activeTab === 'all' && styles.tabBadgeTextActive]}>
+                {totalCount}
+              </Text>
+            </View>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'forgotten' && styles.tabItemActive]}
-          onPress={() => setActiveTab('forgotten')}
-        >
-          <Text style={[styles.tabLabel, activeTab === 'forgotten' && styles.tabLabelActive]}>
-            À recontacter ({forgottenCount})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'forgotten' && styles.tabItemActive]}
+            onPress={() => setActiveTab('forgotten')}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={activeTab === 'forgotten' ? '#F59E0B' : OnSurface.variant}
+            />
+            <Text style={[styles.tabLabel, activeTab === 'forgotten' && styles.tabLabelActive]}>
+              À recontacter
+            </Text>
+            <View
+              style={[
+                styles.tabBadge,
+                activeTab === 'forgotten' && styles.tabBadgeActive,
+                forgottenCount > 0 && { borderColor: '#F59E0B' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tabBadgeText,
+                  activeTab === 'forgotten' && { color: '#F59E0B', fontWeight: '700' },
+                ]}
+              >
+                {forgottenCount}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Liste principale */}
+      {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
         }
@@ -124,29 +169,50 @@ export default function PeopleScreen() {
       >
         {persons.length === 0 ? (
           <EmptyState
-            icon={activeTab === 'all' ? '👥' : '🎉'}
+            icon="✦"
             title={
               activeTab === 'all'
                 ? 'Aucun contact enregistré'
-                : 'Tous vos proches sont à jour !'
+                : 'Tous vos proches sont à jour'
             }
             description={
               activeTab === 'all'
-                ? 'Ajoutez des amis, membres de la famille ou collègues pour garder le fil de vos échanges.'
-                : 'Aucune personne n’a dépassé le délai de relance conseillé.'
+                ? 'Ajoutez vos proches pour ne plus jamais perdre le fil de vos relations.'
+                : 'Aucune personne n’a dépassé son délai de contact conseillé.'
             }
             actionLabel="+ Ajouter une personne"
             onAction={() => router.push('/people/new')}
           />
         ) : (
-          persons.map(person => <PersonCard key={person.id} person={person} />)
+          persons.map(person => <PersonCardR09 key={person.id} person={person} />)
         )}
       </ScrollView>
+
+      {/* ─── Bouton Flottant Dégradé (Unique CTA R-09) ─────────────────────────── */}
+      <View style={[styles.floatingCtaContainer, { bottom: insets.bottom + 20 }]}>
+        <TouchableOpacity
+          onPress={() => router.push('/people/new')}
+          activeOpacity={0.85}
+          accessibilityLabel="Ajouter un contact"
+        >
+          <LinearGradient
+            colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.floatingCta}
+          >
+            <Ionicons name="person-add" size={18} color="#FFFFFF" />
+            <Text style={styles.floatingCtaText}>Nouveau contact</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
-function PersonCard({ person }: { person: Person }) {
+// ─── Composants locaux ─────────────────────────────────────────────────────────
+
+function PersonCardR09({ person }: { person: Person }) {
   const daysSinceLast = person.lastInteractionAt
     ? differenceInDays(new Date(), new Date(person.lastInteractionAt))
     : null;
@@ -161,19 +227,31 @@ function PersonCard({ person }: { person: Person }) {
     .substring(0, 2)
     .toUpperCase();
 
+  const handleCall = (e: any) => {
+    e.stopPropagation();
+    if (person.phone) Linking.openURL(`tel:${person.phone}`);
+  };
+
+  const handleMessage = (e: any) => {
+    e.stopPropagation();
+    if (person.phone) Linking.openURL(`sms:${person.phone}`);
+  };
+
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, isForgotten && styles.cardForgotten]}
       onPress={() => router.push(`/people/${person.id}` as any)}
       activeOpacity={0.8}
     >
-      <View style={styles.avatar}>
+      {/* Avatar / Initiales */}
+      <View style={[styles.avatar, isForgotten && styles.avatarForgotten]}>
         <Text style={styles.avatarText}>{initials}</Text>
       </View>
 
+      {/* Contenu textuel */}
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
-          <Text style={styles.displayName}>{person.displayName}</Text>
+          <Text style={styles.displayName} numberOfLines={1}>{person.displayName}</Text>
           {!!person.relationship && (
             <View style={styles.relationshipBadge}>
               <Text style={styles.relationshipText}>{person.relationship}</Text>
@@ -185,113 +263,248 @@ function PersonCard({ person }: { person: Person }) {
           {daysSinceLast === null
             ? 'Jamais contacté'
             : daysSinceLast === 0
-            ? 'Dernier contact : aujourd’hui'
-            : `Dernier contact : il y a ${daysSinceLast}j`}
+            ? 'Contact : aujourd’hui'
+            : `Contact : il y a ${daysSinceLast}j`}
         </Text>
 
         {isForgotten && (
           <View style={styles.forgottenBadge}>
-            <Ionicons name="alert-circle" size={12} color={ErrorColors.default} />
+            <Ionicons name="alert-circle-outline" size={12} color="#F59E0B" />
             <Text style={styles.forgottenText}>Relance conseillée</Text>
           </View>
         )}
       </View>
 
-      {/* Bouton d'action rapide si numéro de téléphone */}
-      {!!person.phone && (
-        <TouchableOpacity
-          style={styles.callBtn}
-          onPress={() => Linking.openURL(`tel:${person.phone}`)}
-          accessibilityLabel="Appeler"
-        >
-          <Ionicons name="call-outline" size={18} color={Primary.default} />
-        </TouchableOpacity>
-      )}
+      {/* Actions rapides inline (Appeler & Message - R-09) */}
+      <View style={styles.actionsCol}>
+        {person.phone ? (
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity
+              style={styles.actionIconBtn}
+              onPress={handleCall}
+              accessibilityLabel="Appeler"
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons name="call-outline" size={16} color={Primary.default} />
+            </TouchableOpacity>
 
-      <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} style={styles.chevron} />
+            <TouchableOpacity
+              style={styles.actionIconBtn}
+              onPress={handleMessage}
+              accessibilityLabel="Envoyer un message"
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons name="chatbubble-outline" size={16} color={Tertiary.default} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
+  container: {
+    flex: 1,
+    backgroundColor: Surface.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
-  title: { ...Typography.headlineLarge, color: OnSurface.primary },
-  addBtn: {
+  title: {
+    ...Typography.headlineLarge,
+    color: OnSurface.primary,
+  },
+  subtitle: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
+  settingsBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: Primary.default,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.container,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabBar: {
-    flexDirection: 'row',
+  tabBarWrapper: {
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
-  tabItem: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+  tabBar: {
+    flexDirection: 'row',
     backgroundColor: Surface.container,
+    borderRadius: Radius.full,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  tabItemActive: { backgroundColor: Primary.container },
-  tabLabel: { ...Typography.labelMedium, color: OnSurface.variant },
-  tabLabelActive: { color: Primary.onContainer },
+  tabItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    gap: 6,
+  },
+  tabItemActive: {
+    backgroundColor: Surface.high,
+  },
+  tabLabel: {
+    ...Typography.labelMedium,
+    color: OnSurface.variant,
+  },
+  tabLabelActive: {
+    color: OnSurface.primary,
+    fontWeight: '700',
+  },
+  tabBadge: {
+    backgroundColor: Surface.base,
+    borderRadius: Radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderWidth: 1,
+    borderColor: Outline.variant,
+  },
+  tabBadgeActive: {
+    borderColor: Primary.default,
+  },
+  tabBadgeText: {
+    ...Typography.labelSmall,
+    fontSize: 10,
+    color: OnSurface.variant,
+  },
+  tabBadgeTextActive: {
+    color: Primary.default,
+  },
   list: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 100,
-    flexGrow: 1,
+    gap: Spacing.sm,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Surface.container,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     padding: Spacing.md,
-    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Outline.variant,
     gap: Spacing.md,
+  },
+  cardForgotten: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: Primary.container,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.high,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  avatarText: { ...Typography.titleMedium, color: Primary.onContainer },
-  cardContent: { flex: 1, gap: 2 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  displayName: { ...Typography.bodyMedium, color: OnSurface.primary },
+  avatarForgotten: {
+    borderColor: '#F59E0B' + '50',
+  },
+  avatarText: {
+    ...Typography.titleMedium,
+    color: Primary.default,
+    fontWeight: '700',
+  },
+  cardContent: {
+    flex: 1,
+    gap: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  displayName: {
+    ...Typography.bodyLarge,
+    color: OnSurface.primary,
+    fontWeight: '600',
+  },
   relationshipBadge: {
-    backgroundColor: Surface.high,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.sm,
+    backgroundColor: Surface.base,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+    borderWidth: 1,
+    borderColor: Outline.variant,
   },
-  relationshipText: { ...Typography.labelSmall, color: OnSurface.variant, fontSize: 10 },
-  lastContactText: { ...Typography.labelSmall, color: OnSurface.variant },
+  relationshipText: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    fontSize: 10,
+  },
+  lastContactText: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+  },
   forgottenBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    alignSelf: 'flex-start',
     marginTop: 2,
   },
-  forgottenText: { ...Typography.labelSmall, color: ErrorColors.default, fontSize: 10 },
-  callBtn: {
-    padding: Spacing.xs,
-    backgroundColor: Surface.high,
-    borderRadius: Radius.full,
+  forgottenText: {
+    ...Typography.labelSmall,
+    color: '#F59E0B',
+    fontWeight: '600',
   },
-  chevron: { marginLeft: 2 },
+  actionsCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Surface.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Outline.variant,
+  },
+  floatingCtaContainer: {
+    position: 'absolute',
+    right: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  floatingCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    gap: 6,
+  },
+  floatingCtaText: {
+    ...Typography.labelLarge,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
 });
