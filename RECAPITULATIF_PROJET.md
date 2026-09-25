@@ -1,6 +1,7 @@
 # 📑 Junix Pulse — Récapitulatif Exhaustif du Projet & État des Lieux Technique
 
-> **Date du document :** 24 septembre 2026  
+> **Date du document :** 25 septembre 2026  
+
 > **Version cible :** 1.0.0 (Production Offline-First)  
 > **Statut global :** V1 fonctionnelle, Typage strict TypeScript validé (`tsc --noEmit` : **0 erreur**), Design System & Onboarding unifiés.
 
@@ -60,13 +61,16 @@ junix-pulse/
 │   │   │   ├── calendar.tsx      # Onglet 3 : Calendrier & Agenda combiné 7 jours
 │   │   │   ├── people.tsx        # Onglet 4 : Personnes & Contacts oubliés
 │   │   │   └── pulse.tsx         # Onglet 5 : Pulse (Moteur IA, Streaks, Objectifs)
-│   │   ├── reminders/            # Routes dédiées Rappels ([id].tsx, new.tsx, index.tsx)
+│   │   ├── reminders/            # Routes dédiées Rappels (index, new, [id], edit/[id])
 │   │   ├── tasks/                # Routes dédiées Tâches ([id].tsx, new.tsx)
 │   │   ├── people/               # Routes dédiées Personnes ([id].tsx, new.tsx)
 │   │   ├── events/               # Routes dédiées Événements ([id].tsx, new.tsx)
 │   │   ├── habits/               # Routes dédiées Habitudes ([id].tsx, new.tsx, index.tsx)
 │   │   ├── goals/                # Routes dédiées Objectifs ([id].tsx, new.tsx, index.tsx)
-│   │   └── settings/             # Paramètres système & Emploi du temps type
+│   │   ├── settings/             # Paramètres système & Emploi du temps type
+│   │   ├── capture.tsx           # Capture rapide (R-11)
+│   │   ├── sanctum.tsx           # Coffre-fort biométrique (R-12)
+│   │   └── search.tsx            # Recherche globale (R-13)
 │   ├── components/               # Composants UI réutilisables
 │   │   ├── feedback/             # Snackbar global, LoadingState, ErrorState, EmptyState
 │   │   └── ui/                   # Button dégradé, PulseLogo SVG, StepIndicator, ValueBadge, Collapsible
@@ -74,7 +78,7 @@ junix-pulse/
 │   │   └── theme.ts              # Design tokens (Midnight, Electric Violet, Digital Cyan, Glass, Radius)
 │   ├── database/                 # Couche de persistance SQLite
 │   │   ├── sqlite.ts             # Initialisation SQLite, PRAGMA WAL, exécuteur de migrations
-│   │   └── migrations.ts         # Définition des 19 migrations incrémentales immuables
+│   │   └── migrations.ts         # Définition des 20 migrations incrémentales immuables
 │   ├── domain/                   # Coeur Métier pur (indépendant de React et SQLite)
 │   │   ├── entities/             # Types TypeScript de toutes les entités
 │   │   ├── enums/                # Énumérations strictes (statuts, types, priorités)
@@ -87,7 +91,7 @@ junix-pulse/
 
 ---
 
-## 4. 🗄️ Persistance : Schéma SQLite & Migrations (001 à 019)
+## 4. 🗄️ Persistance : Schéma SQLite & Migrations (001 à 020)
 
 Toutes les migrations sont versionnées dans `src/database/migrations.ts` et appliquées séquentiellement dans une transaction avec table de suivi `_migrations`.
 
@@ -110,6 +114,7 @@ Toutes les migrations sont versionnées dans `src/database/migrations.ts` et app
 17. **`017_create_suggestions`** : Propositions du moteur IA (`type`, `status`, `explanation`, `target_id`, `expires_at`).
 18. **`018_create_settings`** : Configuration unique utilisateur (`timezone`, `onboarding_completed`, `morning_briefing_hour`, `end_of_day_hour`).
 19. **`019_create_indexes`** : Index de performance pour les requêtes fréquentes (dates, statuts, clés étrangères).
+20. **`020_create_sanctum_notes`** : Note privée du coffre-fort Sanctum (`content`, `updated_at`).
 
 ---
 
@@ -200,15 +205,8 @@ Conformément à la spécification produit issue de l'audit Stitch :
 - `fcfc324` : *chore: supprimer client.ts et schema.ts obsolètes au profit de sqlite.ts + migrations.ts*
 - `4593652` : *feat: finalisation V1.0 - Settings, Documentation, and App Config*
 
-### Modifications actuellement dans l'espace de travail (Staging / Working Copy) :
-- Refonte complète du module d'onboarding selon les règles Stitch :
-  - Création de `PulseLogo.tsx` (SVG animé, halo, pulsation cardiaque).
-  - Création de `SplashAnimated.tsx` (splash de transition par-dessus l'init DB).
-  - Création de `StepIndicator.tsx` (barre de progression horizontale d'onboarding).
-  - Création de `ValueBadge.tsx` (badges de valeur sans emojis).
-  - Harmonisation de `Button.tsx` (gestion du dégradé linéaire, feedback tactile).
-  - Écrans `(onboarding)/*` mis à niveau avec police Outfit et composants unifiés.
-  - Enrichissement de `src/constants/theme.ts` avec les tokens de dégradé, glassmorphism et typographie.
+### Onboarding & branding (désormais sur `master`)
+La refonte Stitch (PulseLogo, SplashAnimated, StepIndicator, ValueBadge, onboarding 5 étapes, tokens glass) est **commitée**. Ne plus la traiter comme un travail en attente.
 
 ---
 
@@ -223,33 +221,27 @@ Toutes les entités, use cases, repositories, composants et écrans respectent r
 
 ---
 
-## 10. 🎯 Feuille de Route : Ce qu'il reste à faire
+## 10. 🎯 Feuille de Route
 
-Pour tout développeur ou agent IA reprenant le projet, voici les tâches résiduelles et pistes d'évolution prioritaires :
-
-### Priorité Haute (Finitions V1.0)
-1. **Écran d'édition des rappels (`reminders/edit/[id]`)** :
-   - *Constat* : `src/app/reminders/[id].tsx` contient un bouton "Modifier" qui tente de naviguer vers `/reminders/edit/${reminder.id}`. Cette sous-route n'existe pas encore sous cette forme (seul `reminders/new.tsx` existe).
-   - *Action* : Créer la route d'édition ou unifier la création et l'édition dans un formulaire partagé `ReminderForm`.
-2. **Commit des fichiers de refonte d'onboarding** :
-   - *Constat* : Les nouveaux composants UI (`PulseLogo`, `SplashAnimated`, etc.) et la refonte des 5 étapes d'onboarding sont validés par TypeScript mais non encore commités dans Git.
-   - *Action* : Préparer un commit propre après revue utilisateur.
+### Déjà en place (vérifié dans le code, 25 septembre 2026)
+1. **Édition des rappels** : la route `src/app/reminders/edit/[id].tsx` existe et appelle `updateReminder`.
+2. **Onboarding Stitch** : composants `PulseLogo`, `SplashAnimated`, `StepIndicator`, `ValueBadge` et les 5 étapes sont sur `master`.
+3. **Modules transversaux V1** : Capture rapide (`capture.tsx`), Sanctum (`sanctum.tsx` + migration 020), Recherche (`search.tsx`).
 
 ### Priorité Moyenne (Consolidation & Robustesse)
-3. **Tests Unitaires Automatisés des Règles Métier** :
-   - *Constat* : Les règles pures (`reminder-rules.ts`, `habit-rules.ts`, `goal-rules.ts`) sont déterministes et découplées, mais aucun runner de tests (Jest / Vitest) n'est configuré dans `package.json`.
-   - *Action* : Installer et configurer un harnais de test unitaire pour valider mathématiquement les cas limites (bissextile, changements d'heure, pauses d'habitudes qui chevauchent les fins de mois).
-4. **Import Natif des Contacts du Répertoire Téléphonique** :
-   - *Constat* : Le champ `importedFromContacts` existe en base SQLite, mais l'import natif via `expo-contacts` n'a pas encore été branché sur l'écran `people/new.tsx`.
-   - *Action* : Ajouter l'option "Importer depuis le carnet d'adresses" dans `people/new.tsx` avec demande de permission contextuelle.
+1. **Tests Unitaires Automatisés des Règles Métier** :
+   - *Constat* : les règles pures (`reminder-rules.ts`, `habit-rules.ts`, `goal-rules.ts`) n'ont pas de runner (Jest / Vitest absent de `package.json`).
+   - *Action* : couvrir les cas limites (année bissextile, pauses d'habitudes en fin de mois, snooze « lendemain » basé sur `scheduledAt`).
+2. **Import Natif des Contacts du Répertoire Téléphonique** :
+   - *Constat* : le champ `importedFromContacts` existe en SQLite ; `expo-contacts` n'est pas importé dans `people/new.tsx`.
+   - *Action* : option « Importer depuis le carnet d'adresses » avec permission contextuelle.
 
 ### Priorité Basse / Roadmap V2
-5. **Flux de Restauration de Sauvegarde (Backup Restore)** :
-   - L'export JSON de la base SQLite est déjà fonctionnel dans `settings/index.tsx`.
-   - Il reste à implémenter le flux inverse : importer un fichier JSON de sauvegarde pour écraser ou fusionner la base locale.
-6. **Focus Timer / Pomodoro (V2)** :
-   - Intégrer un minuteur circulaire de session de travail profond lié aux blocs du planning personnel.
+3. **Flux de Restauration de Sauvegarde** :
+   - L'export JSON existe dans `settings/index.tsx`. L'import n'est pas implémenté ; le lien d'onboarding doit rester un état « bientôt disponible », pas un bouton mort.
+4. **Focus Timer / Pomodoro (V2)** :
+   - Aucun écran ni module minuteur n'existe dans `src/` (vérifié par recherche). À relier plus tard aux blocs du planning personnel.
 
 ---
 
-*Ce document fait foi de l'état exact du codebase au 24 septembre 2026. Toute nouvelle IA ou développeur peut s'appuyer sur cette spécification pour poursuivre le développement en parfaite continuité architecturale.*
+*Ce document reflète l'état du codebase au 25 septembre 2026. Les items restants correspondent à une absence vérifiée dans le code, pas à une supposition.*
