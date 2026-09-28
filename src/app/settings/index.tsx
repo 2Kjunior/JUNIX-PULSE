@@ -14,6 +14,7 @@ import {
   TextInput,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,9 +34,13 @@ import {
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { LoadingState } from '@/components/feedback/States';
 import { getDatabase } from '@/database/sqlite';
 import { seedDatabase, clearAllData, isSeedAlreadyLoaded } from '@/database/seed';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { createBackup, encryptBackup } from '@/services/backup-service';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -45,6 +50,7 @@ export default function SettingsScreen() {
   const [editingName, setEditingName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
 
   const loadSettings = useCallback(async () => {
     const s = await SettingsRepository.get();
@@ -115,31 +121,39 @@ export default function SettingsScreen() {
   };
 
   const handleExportData = async () => {
-    try {
-      const db = await getDatabase();
-      const [reminders, tasks, persons, habits, goals] = await Promise.all([
-        db.getAllAsync('SELECT * FROM reminders WHERE deleted_at IS NULL'),
-        db.getAllAsync('SELECT * FROM tasks WHERE deleted_at IS NULL'),
-        db.getAllAsync('SELECT * FROM persons WHERE deleted_at IS NULL'),
-        db.getAllAsync('SELECT * FROM habits WHERE deleted_at IS NULL'),
-        db.getAllAsync('SELECT * FROM goals WHERE deleted_at IS NULL'),
-      ]);
+    Alert.alert(
+      'Créer une sauvegarde complète ?',
+      'Le fichier inclura toutes vos données, y compris les notes Sanctum. Il sera chiffré avec un mot de passe que vous seul connaissez.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Continuer',
+          onPress: () => setBackupPasswordVisible(true),
+        },
+      ]
+    );
+  };
 
-      const backup = {
-        app: 'Junix Pulse',
-        version: '1.0.0',
-        exportedAt: new Date().toISOString(),
-        data: { reminders, tasks, persons, habits, goals },
-      };
-
-      Alert.alert(
-        'Sauvegarde locale générée',
-        `Vos données SQLite ont été exportées en JSON (${reminders.length} rappels, ${tasks.length} tâches, ${persons.length} personnes, ${habits.length} habitudes, ${goals.length} objectifs).\n\nToutes les données sont 100% enregistrées localement sur votre téléphone.`,
-        [{ text: 'Super !', style: 'default' }]
-      );
-    } catch (e: any) {
-      Alert.alert('Erreur lors de la sauvegarde', e.message);
+  const handleCreateEncryptedBackup = async (password: string) => {
+    if (Platform.OS === 'web') {
+      throw new Error('La création de sauvegarde est disponible dans l’application mobile.');
     }
+
+    const contents = await createBackup(await getDatabase());
+    const encryptedContents = await encryptBackup(contents, password);
+    const file = new File(Paths.cache, `junix-pulse-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+    file.create({ overwrite: true });
+    file.write(encryptedContents);
+
+    if (!(await Sharing.isAvailableAsync())) {
+      throw new Error('Le fichier chiffré a été créé, mais le partage n’est pas disponible sur cet appareil.');
+    }
+
+    await Sharing.shareAsync(file.uri, {
+      mimeType: 'application/json',
+      dialogTitle: 'Partager la sauvegarde chiffrée Junix Pulse',
+    });
+    setBackupPasswordVisible(false);
   };
 
   const handleResetApp = () => {
@@ -425,6 +439,14 @@ export default function SettingsScreen() {
       </Modal>
 
       <Text style={styles.version}>Junix Pulse v1.0.0 — Offline-First SQLite</Text>
+      <BackupPasswordModal
+        visible={backupPasswordVisible}
+        title="Protéger la sauvegarde"
+        confirmLabel="Chiffrer et partager"
+        confirmPassword
+        onCancel={() => setBackupPasswordVisible(false)}
+        onSubmit={handleCreateEncryptedBackup}
+      />
     </ScrollView>
   );
 }

@@ -9,19 +9,109 @@
  * - Badges pill avec icônes vectorielles (pas d'emojis)
  * - Navigation 5 destinations inchangée
  */
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { Alert, Platform, View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
 import { router } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
+import { File } from 'expo-file-system';
 import { Surface, Primary, Tertiary, OnSurface, Spacing, Radius, Typography } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { PulseLogo } from '@/components/ui/PulseLogo';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { ValueBadge } from '@/components/ui/ValueBadge';
+import { getDatabase } from '@/database/sqlite';
+import { SettingsRepository } from '@/repositories/settings-repository';
+import { useAppStore } from '@/store/app-store';
+import { decryptBackup, importBackup, parseBackup } from '@/services/backup-service';
 
 const { height } = Dimensions.get('window');
 
 export default function OnboardingWelcome() {
+  const setOnboardingComplete = useAppStore(state => state.setOnboardingComplete);
+  const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
+  const [pendingBackupContents, setPendingBackupContents] = useState<string | null>(null);
+
+  const handleRestoreBackup = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        Alert.alert('Indisponible', 'La restauration de sauvegarde est disponible dans l’application mobile.');
+        return;
+      }
+
+      const selection = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      if (selection.canceled) return;
+
+      setPendingBackupContents(await new File(selection.assets[0].uri).text());
+      setBackupPasswordVisible(true);
+    } catch (error) {
+      Alert.alert(
+        'Fichier invalide',
+        error instanceof Error ? error.message : 'Impossible de lire la sauvegarde sélectionnée.'
+      );
+    }
+  };
+
+  const handleDecryptBackup = async (password: string) => {
+    if (!pendingBackupContents) {
+      throw new Error('Sélectionnez à nouveau le fichier de sauvegarde.');
+    }
+
+    const plaintext = await decryptBackup(pendingBackupContents, password);
+    const backupData = parseBackup(plaintext);
+    const rowCount = Object.values(backupData).reduce((total, rows) => total + rows.length, 0);
+    setBackupPasswordVisible(false);
+    setPendingBackupContents(null);
+
+    Alert.alert(
+      'Fusionner cette sauvegarde ?',
+      `${rowCount} enregistrements validés seront examinés. Les éléments dont l’identifiant existe déjà seront conservés sans être remplacés.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Importer',
+          onPress: async () => {
+            try {
+              const result = await importBackup(await getDatabase(), backupData);
+              Alert.alert(
+                'Restauration terminée',
+                `${result.inserted} enregistrements ajoutés, ${result.skipped} ignorés car ils existaient déjà.`,
+                [{
+                  text: 'Continuer',
+                  onPress: async () => {
+                    await SettingsRepository.markOnboardingComplete(new Date().toISOString());
+                    setOnboardingComplete(true);
+                    router.replace('/(tabs)');
+                  },
+                }]
+              );
+            } catch (error) {
+              Alert.alert(
+                'Échec de la restauration',
+                error instanceof Error ? error.message : 'Aucune donnée n’a été importée.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
+      <BackupPasswordModal
+        visible={backupPasswordVisible}
+        title="Déverrouiller la sauvegarde"
+        confirmLabel="Déchiffrer"
+        onCancel={() => {
+          setBackupPasswordVisible(false);
+          setPendingBackupContents(null);
+        }}
+        onSubmit={handleDecryptBackup}
+      />
       {/* En-tête : étape + bouton passer */}
       <View style={styles.topRow}>
         <StepIndicator total={5} current={1} showLabel={true} />
@@ -90,7 +180,7 @@ export default function OnboardingWelcome() {
           icon={undefined}
         />
         <TouchableOpacity
-          onPress={() => {/* TODO : flux restauration V2 */}}
+          onPress={handleRestoreBackup}
           accessibilityRole="button"
           accessibilityLabel="Restaurer une sauvegarde"
           style={styles.restoreBtn}

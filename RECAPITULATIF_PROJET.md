@@ -1,6 +1,6 @@
 # 📑 Junix Pulse — Récapitulatif Exhaustif du Projet & État des Lieux Technique
 
-> **Date du document :** 25 septembre 2026  
+> **Date du document :** 28 septembre 2026
 
 > **Version cible :** 1.0.0 (Production Offline-First)  
 > **Statut global :** V1 fonctionnelle, Typage strict TypeScript validé (`tsc --noEmit` : **0 erreur**), Design System & Onboarding unifiés.
@@ -227,6 +227,7 @@ Toutes les entités, use cases, repositories, composants et écrans respectent r
 1. **Édition des rappels** : la route `src/app/reminders/edit/[id].tsx` existe et appelle `updateReminder`.
 2. **Onboarding Stitch** : composants `PulseLogo`, `SplashAnimated`, `StepIndicator`, `ValueBadge` et les 5 étapes sont sur `master`.
 3. **Modules transversaux V1** : Capture rapide (`capture.tsx`), Sanctum (`sanctum.tsx` + migration 020), Recherche (`search.tsx`).
+4. **Sauvegarde et restauration** : export complet chiffré par mot de passe (XChaCha20-Poly1305 + scrypt, 64 Mio) et partageable depuis les paramètres ; import déchiffré et validé avant écriture, fusion sans écrasement et transaction SQLite depuis l'onboarding.
 
 ### Priorité Moyenne (Consolidation & Robustesse)
 1. **Tests Unitaires Automatisés des Règles Métier** :
@@ -237,11 +238,10 @@ Toutes les entités, use cases, repositories, composants et écrans respectent r
    - *Action* : option « Importer depuis le carnet d'adresses » avec permission contextuelle.
 
 ### Priorité Basse / Roadmap V2
-3. **Flux de Restauration de Sauvegarde** :
-    - Le handler de `settings/index.tsx` construit un objet en mémoire contenant cinq entités, puis affiche une alerte ; il ne crée ni fichier JSON partageable ni sauvegarde exploitable. L'import est absent et le lien d'onboarding est actuellement un bouton sans action. Créer d'abord un véritable format de sauvegarde, puis son import validé avant écriture, avec confirmation explicite avant remplacement des données.
-4. **Focus Timer / Pomodoro (V2)** :
+
+3. **Focus Timer / Pomodoro (V2)** :
    - Aucun écran ni module minuteur n'existe dans `src/` (vérifié par recherche). À relier plus tard aux blocs du planning personnel.
 
 ---
 
-*Ce document reflète l'état du codebase au 25 septembre 2026. Les items restants correspondent à une absence vérifiée dans le code, pas à une supposition.*
+_Ce document reflète l'état du codebase au 28 septembre 2026. Les items restants correspondent à une absence vérifiée dans le code, pas à une supposition._
