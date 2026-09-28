@@ -20,7 +20,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
+import { useEffect, type ComponentProps } from 'react';
 import {
   Surface,
   Primary,
@@ -135,10 +135,7 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
 
 // ─── Tab Bar custom ────────────────────────────────────────────────────────────
 
-interface CustomTabBarProps {
-  state: { index: number };
-  navigation: { navigate: (name: string) => void };
-}
+type CustomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 function CustomTabBar({ state, navigation }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -180,7 +177,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
-      tabBar={(props) => <CustomTabBar {...(props as any)} />}
+      tabBar={(props) => <CustomTabBar {...props} />}
     >
       {TABS.map(tab => (
         <Tabs.Screen
