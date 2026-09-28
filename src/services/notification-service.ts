@@ -9,6 +9,7 @@
 
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { logger } from '@/utils/logger';
 
 type NotificationsType = typeof import('expo-notifications');
 
@@ -18,8 +19,8 @@ try {
   // Les notifications locales fonctionnent dans Expo Go depuis SDK 53.
   // Seul le push distant est bloqué — mais Junix Pulse n'utilise pas de push.
   Notifications = require('expo-notifications');
-} catch (e) {
-  console.log('[NotificationService] expo-notifications non disponible:', e);
+} catch {
+  logger.error('[NotificationService] expo-notifications non disponible');
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -70,8 +71,8 @@ export const NotificationService = {
           showBadge: false,
         });
       }
-    } catch (err) {
-      console.log('[NotificationService] Initialisation des notifications ignorée:', err);
+    } catch {
+      logger.error('[NotificationService] Initialisation des notifications ignorée');
     }
   },
 
@@ -106,8 +107,8 @@ export const NotificationService = {
           channelId: Platform.OS === 'android' ? 'reminders' : undefined,
         } as import('expo-notifications').DateTriggerInput,
       });
-    } catch (err) {
-      console.log('[NotificationService] Erreur lors de scheduleReminder:', err);
+    } catch {
+      logger.error('[NotificationService] Erreur lors de scheduleReminder');
       return `fallback-notif-${params.id}`;
     }
   },
@@ -119,8 +120,8 @@ export const NotificationService = {
     if (!Notifications || notificationId.startsWith('mock-') || notificationId.startsWith('fallback-')) return;
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
-    } catch (err) {
-      console.log('[NotificationService] Erreur cancelReminder:', err);
+    } catch {
+      logger.error('[NotificationService] Erreur cancelReminder');
     }
   },
 
@@ -131,8 +132,8 @@ export const NotificationService = {
     if (!Notifications) return;
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
-    } catch (err) {
-      console.log('[NotificationService] Erreur cancelAll:', err);
+    } catch {
+      logger.error('[NotificationService] Erreur cancelAll');
     }
   },
 

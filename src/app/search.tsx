@@ -25,6 +25,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { logger } from '@/utils/logger';
 
 import { getDatabase } from '@/database/sqlite';
 import {
@@ -230,8 +231,8 @@ export default function SearchScreen() {
         });
 
         setResults(found);
-      } catch (err) {
-        console.error('Erreur lors de la recherche SQLite:', err);
+      } catch {
+        logger.error('Erreur lors de la recherche SQLite');
       } finally {
         setLoading(false);
       }
