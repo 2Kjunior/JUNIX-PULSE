@@ -238,7 +238,7 @@ Toutes les entités, use cases, repositories, composants et écrans respectent r
 
 ### Priorité Basse / Roadmap V2
 3. **Flux de Restauration de Sauvegarde** :
-   - L'export JSON existe dans `settings/index.tsx`. L'import n'est pas implémenté ; le lien d'onboarding doit rester un état « bientôt disponible », pas un bouton mort.
+    - Le handler de `settings/index.tsx` construit un objet en mémoire contenant cinq entités, puis affiche une alerte ; il ne crée ni fichier JSON partageable ni sauvegarde exploitable. L'import est absent et le lien d'onboarding est actuellement un bouton sans action. Créer d'abord un véritable format de sauvegarde, puis son import validé avant écriture, avec confirmation explicite avant remplacement des données.
 4. **Focus Timer / Pomodoro (V2)** :
    - Aucun écran ni module minuteur n'existe dans `src/` (vérifié par recherche). À relier plus tard aux blocs du planning personnel.
 
