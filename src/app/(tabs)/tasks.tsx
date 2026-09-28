@@ -276,7 +276,7 @@ function TaskCardR08({
   return (
     <TouchableOpacity
       style={[styles.taskCard, isCompleted && styles.taskCardCompleted]}
-      onPress={() => router.push(`/tasks/${task.id}` as any)}
+      onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
       activeOpacity={0.8}
     >
       {/* Case à cocher tactile */}
