@@ -273,7 +273,7 @@ export default function RemindersListScreen() {
           title="Aucun rappel actif"
           description="Tous vos rappels programmés apparaîtront ici avec leur échéance."
           actionLabel="+ Créer un rappel"
-          onAction={() => router.push('/reminders/new' as any)}
+          onAction={() => router.push('/reminders/new')}
         />
       ) : (
         <SectionList
@@ -328,7 +328,7 @@ export default function RemindersListScreen() {
       {/* ─── Bouton Flottant Dégradé (Unique CTA R-04) ─────────────────────────── */}
       <View style={[styles.floatingCtaContainer, { bottom: insets.bottom + 20 }]}>
         <TouchableOpacity
-          onPress={() => router.push('/reminders/new' as any)}
+          onPress={() => router.push('/reminders/new')}
           activeOpacity={0.85}
           accessibilityLabel="Créer un nouveau rappel"
         >
@@ -403,7 +403,7 @@ function ReminderCardR04({
     <View style={styles.cardWrapper}>
       <TouchableOpacity
         style={styles.cardMain}
-        onPress={() => router.push(`/reminders/${reminder.id}` as any)}
+        onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: reminder.id } })}
         activeOpacity={0.8}
       >
         {/* Checkmark bouton */}
