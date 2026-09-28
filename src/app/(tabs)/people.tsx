@@ -240,7 +240,7 @@ function PersonCardR09({ person }: { person: Person }) {
   return (
     <TouchableOpacity
       style={[styles.card, isForgotten && styles.cardForgotten]}
-      onPress={() => router.push(`/people/${person.id}` as any)}
+      onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
       activeOpacity={0.8}
     >
       {/* Avatar / Initiales */}
