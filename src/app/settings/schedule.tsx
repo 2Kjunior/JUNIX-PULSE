@@ -45,7 +45,9 @@ const DAYS_OF_WEEK = [
   { num: 0, label: 'Dim', full: 'Dimanche' },
 ];
 
-const BLOCK_TYPES: { type: PlanningBlockType; label: string; icon: string; color: string }[] = [
+type IoniconName = keyof typeof Ionicons.glyphMap;
+
+const BLOCK_TYPES: { type: PlanningBlockType; label: string; icon: IoniconName; color: string }[] = [
   { type: 'WORK', label: 'Travail', icon: 'briefcase', color: Primary.default },
   { type: 'STUDY', label: 'Études', icon: 'book', color: Tertiary.default },
   { type: 'REST', label: 'Repos / Loisirs', icon: 'cafe', color: '#4CAF50' },
@@ -77,8 +79,8 @@ export default function PersonalScheduleScreen() {
       setError('');
       const blocks = await ScheduleUseCases.getActiveScheduleBlocks();
       setAllBlocks(blocks);
-    } catch (e: any) {
-      setError(e.message || 'Erreur lors du chargement du planning.');
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Erreur lors du chargement du planning.');
     } finally {
       setLoading(false);
     }
@@ -110,8 +112,8 @@ export default function PersonalScheduleScreen() {
       setShowModal(false);
       setBlockLabel('');
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (error: unknown) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible d’ajouter le bloc planning.');
     } finally {
       setSaving(false);
     }
@@ -213,7 +215,7 @@ export default function PersonalScheduleScreen() {
                     { backgroundColor: typeConfig.color + '20' },
                   ]}
                 >
-                  <Ionicons name={typeConfig.icon as any} size={20} color={typeConfig.color} />
+                  <Ionicons name={typeConfig.icon} size={20} color={typeConfig.color} />
                 </View>
 
                 <View style={styles.blockInfo}>
@@ -291,7 +293,7 @@ export default function PersonalScheduleScreen() {
                     onPress={() => setBlockType(t.type)}
                   >
                     <Ionicons
-                      name={t.icon as any}
+                      name={t.icon}
                       size={16}
                       color={blockType === t.type ? Surface.base : OnSurface.primary}
                     />
