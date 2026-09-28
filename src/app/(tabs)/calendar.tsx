@@ -223,7 +223,7 @@ export default function CalendarScreen() {
                   <TouchableOpacity
                     key={e.id}
                     style={styles.eventCard}
-                    onPress={() => router.push(`/events/${e.id}` as any)}
+                    onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
                     activeOpacity={0.7}
                   >
                     <View style={styles.eventTimeCol}>
@@ -283,7 +283,7 @@ export default function CalendarScreen() {
                   <TouchableOpacity
                     key={r.id}
                     style={styles.reminderCard}
-                    onPress={() => router.push(`/reminders/${r.id}` as any)}
+                    onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
                     activeOpacity={0.7}
                   >
                     <View style={styles.reminderIconCircle}>
@@ -314,7 +314,7 @@ export default function CalendarScreen() {
                   <TouchableOpacity
                     key={t.id}
                     style={styles.taskCard}
-                    onPress={() => router.push(`/tasks/${t.id}` as any)}
+                    onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}
                     activeOpacity={0.7}
                   >
                     <View style={styles.taskIconCircle}>
