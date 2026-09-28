@@ -120,8 +120,8 @@ export default function TodayScreen() {
           : `Validation retirée pour "${habitItem.habit.title}".`
       );
       load();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (error: unknown) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de mettre à jour l’habitude.');
     }
   };
 
@@ -130,8 +130,8 @@ export default function TodayScreen() {
       await TaskUseCases.toggleComplete(task.id);
       showSnackbar(`Tâche "${task.title}" mise à jour.`);
       load();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (error: unknown) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de mettre à jour la tâche.');
     }
   };
 
@@ -140,8 +140,8 @@ export default function TodayScreen() {
       await SuggestionUseCases.acceptSuggestion(sugg.id);
       showSnackbar(`Action appliquée : ${sugg.title}`);
       load();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (error: unknown) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible d’accepter la suggestion.');
     }
   };
 
@@ -150,8 +150,8 @@ export default function TodayScreen() {
       await SuggestionUseCases.refuseSuggestion(sugg.id);
       showSnackbar('Suggestion ignorée.');
       load();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (error: unknown) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible d’ignorer la suggestion.');
     }
   };
 
