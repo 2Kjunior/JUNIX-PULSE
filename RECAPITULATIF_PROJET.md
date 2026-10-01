@@ -117,6 +117,12 @@ Toutes les migrations sont versionnées dans `src/database/migrations.ts` et app
 19. **`019_create_indexes`** : Index de performance pour les requêtes fréquentes (dates, statuts, clés étrangères).
 20. **`020_create_sanctum_notes`** : Note privée du coffre-fort Sanctum (`content`, `updated_at`).
 
+### Stratégie de suppression (vérifiée dans le code, cohérente)
+
+- **Suppression douce (`deleted_at`)** pour les 6 entités primaires manipulées directement par l'utilisateur : `persons`, `reminders`, `tasks`, `events`, `habits`, `goals`. Chaque repository correspondant écrit `UPDATE ... SET deleted_at = ?` (jamais `DELETE FROM`) et chaque lecture filtre systématiquement `WHERE deleted_at IS NULL`. Cela permet un Undo (30s) et évite toute référence orpheline sur les clés étrangères qui pointent vers ces tables (`reminders.person_id`, `goal_tasks.task_id`, etc.) puisque la ligne référencée n'est jamais physiquement effacée.
+- **Suppression physique (`DELETE FROM` + `ON DELETE CASCADE`)** uniquement pour les tables de jointure ou de journal qui n'ont pas de cycle de vie propre indépendant de leur parent : `reminder_checklist_items`, `subtasks`, `event_persons`, `habit_completions`, `habit_pauses`, `goal_tasks`, `planning_blocks`, `interactions`. C'est le comportement attendu pour ce type de table.
+- **`recurrence_rules`** n'est actuellement ni soft-delete ni jamais supprimée (aucun repository dédié) : les lignes s'accumulent sans nettoyage. Sans impact fonctionnel immédiat (volume négligeable à l'échelle d'un usage personnel), mais à garder en tête si une purge de données devient nécessaire plus tard.
+
 ---
 
 ## 5. 🧠 Logique Métier Détaillée (Domain Rules)
