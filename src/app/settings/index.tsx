@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   Switch,
   TouchableOpacity,
@@ -41,6 +40,7 @@ import { seedDatabase, clearAllData, isSeedAlreadyLoaded } from '@/database/seed
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
+import { styles } from './settings-styles';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -450,98 +450,3 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  content: { paddingHorizontal: Spacing.lg, paddingBottom: 80 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
-  },
-  backBtn: { padding: Spacing.xs },
-  title: { ...Typography.titleLarge, color: OnSurface.primary },
-  section: { marginBottom: Spacing.xl },
-  sectionLabel: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    marginBottom: Spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  rowCol: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  rowLabel: { ...Typography.titleMedium, color: OnSurface.primary },
-  rowSub: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-  rowValCol: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  rowValue: { ...Typography.bodyMedium, color: OnSurface.variant },
-  hoursRow: { flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.sm },
-  hourPill: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-    backgroundColor: Surface.base,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    alignItems: 'center',
-  },
-  hourPillActive: { backgroundColor: Primary.default, borderColor: Primary.default },
-  hourPillText: { ...Typography.labelMedium, color: OnSurface.variant },
-  hourPillTextActive: { color: Surface.base, fontWeight: '700' },
-  infoBox: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    alignItems: 'flex-start',
-    marginTop: Spacing.sm,
-  },
-  infoText: { ...Typography.bodySmall, color: OnSurface.variant, flex: 1, lineHeight: 18 },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.lg,
-  },
-  modalCard: {
-    width: '100%',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-  },
-  modalTitle: { ...Typography.titleLarge, color: OnSurface.primary, marginBottom: Spacing.md },
-  input: {
-    backgroundColor: Surface.base,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    ...Typography.bodyLarge,
-    color: OnSurface.primary,
-    marginBottom: Spacing.lg,
-  },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.md },
-  version: {
-    ...Typography.labelSmall,
-    color: OnSurface.disabled,
-    textAlign: 'center',
-    marginTop: Spacing.lg,
-  },
-});
