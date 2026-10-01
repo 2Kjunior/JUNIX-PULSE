@@ -1,6 +1,7 @@
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
 const expoConfig = require("eslint-config-expo/flat");
+const tseslintPlugin = require("@typescript-eslint/eslint-plugin");
 
 module.exports = defineConfig([
   expoConfig,
@@ -8,6 +9,13 @@ module.exports = defineConfig([
     ignores: ["dist/*", ".expo/*", "node_modules/*"],
   },
   {
+    // Ce plugin doit etre redeclare ici car chaque objet de config ESLint 9
+    // (flat config) est independant : les regles "@typescript-eslint/*"
+    // utilisees plus bas ne sont visibles que dans les objets qui enregistrent
+    // explicitement ce plugin, meme s'il est deja utilise par expoConfig.
+    plugins: {
+      "@typescript-eslint": tseslintPlugin,
+    },
     rules: {
       // Reanimated shared values (.value = ...) sont mutables par conception
       "react-hooks/immutability": "off",
