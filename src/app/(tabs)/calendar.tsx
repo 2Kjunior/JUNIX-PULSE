@@ -9,7 +9,6 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
@@ -41,8 +40,10 @@ import {
   Radius,
   Typography,
   Gradient,
+  TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { styles } from './calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -192,7 +193,7 @@ export default function CalendarScreen() {
 
       {/* Agenda synthétique */}
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 88 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 72 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
         }
@@ -340,7 +341,7 @@ export default function CalendarScreen() {
 
       {/* Bouton Flottant (FAB) — Élément dégradé unique de l'écran */}
       <TouchableOpacity
-        style={[styles.fabContainer, { bottom: insets.bottom + 16 }]}
+        style={[styles.fabContainer, { bottom: TAB_BAR_TOTAL_HEIGHT + 16 }]}
         onPress={() => router.push('/events/new')}
         activeOpacity={0.85}
         accessibilityLabel="Nouvel événement"
@@ -358,296 +359,3 @@ export default function CalendarScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  headerTitleCol: {
-    gap: 2,
-  },
-  title: {
-    ...Typography.headlineLarge,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  subtitle: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    textTransform: 'capitalize',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  todayBtn: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.high,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    marginRight: 4,
-  },
-  todayBtnText: {
-    ...Typography.labelSmall,
-    color: Primary.default,
-    fontWeight: '600',
-  },
-  navArrowBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weekStrip: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Surface.container,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: Outline.variant,
-    marginBottom: Spacing.md,
-  },
-  dayCell: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: 2,
-    borderRadius: Radius.md,
-    width: 44,
-  },
-  dayCellSelected: {
-    backgroundColor: Primary.default,
-  },
-  dayCellToday: {
-    backgroundColor: Surface.high,
-    borderWidth: 1,
-    borderColor: Primary.default,
-  },
-  dayName: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  dayNumber: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    marginTop: 2,
-    fontWeight: '700',
-  },
-  dayTextSelected: {
-    color: '#141317',
-    fontWeight: '700',
-  },
-  dayTextToday: {
-    color: Primary.default,
-    fontWeight: '700',
-  },
-  list: {
-    paddingHorizontal: Spacing.lg,
-    flexGrow: 1,
-    gap: Spacing.lg,
-  },
-  section: {
-    gap: Spacing.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: 2,
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    fontWeight: '600',
-  },
-  eventCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    borderLeftWidth: 4,
-    borderLeftColor: Primary.default,
-    gap: Spacing.md,
-  },
-  eventTimeCol: {
-    alignItems: 'center',
-    minWidth: 46,
-  },
-  eventTimeText: {
-    ...Typography.titleMedium,
-    color: Primary.default,
-    fontWeight: '700',
-  },
-  eventDurationText: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 11,
-  },
-  eventBody: {
-    flex: 1,
-    gap: 4,
-  },
-  eventTitle: {
-    ...Typography.bodyLarge,
-    color: OnSurface.primary,
-    fontWeight: '600',
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  eventLocation: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-  },
-  eventBufferText: {
-    ...Typography.labelSmall,
-    color: Tertiary.default,
-    fontSize: 11,
-  },
-  typeBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-  },
-  typeBadgeBusy: {
-    backgroundColor: Primary.container,
-  },
-  typeBadgeFree: {
-    backgroundColor: Surface.high,
-  },
-  typeBadgeText: {
-    ...Typography.labelSmall,
-    color: Primary.onContainer,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  reminderCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-    gap: Spacing.md,
-  },
-  reminderIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  taskCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    borderLeftWidth: 4,
-    borderLeftColor: Tertiary.default,
-    gap: Spacing.md,
-  },
-  taskIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.high,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemBody: {
-    flex: 1,
-    gap: 2,
-  },
-  itemTitle: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-    fontWeight: '600',
-  },
-  itemTime: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-  },
-  emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.xxl,
-    gap: Spacing.sm,
-  },
-  emptyIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.high,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  emptyDescription: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-    textAlign: 'center',
-  },
-  fabContainer: {
-    position: 'absolute',
-    right: Spacing.lg,
-    borderRadius: Radius.full,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.full,
-    gap: 6,
-  },
-  fabText: {
-    ...Typography.titleMedium,
-    color: '#141317',
-    fontWeight: '700',
-  },
-});
