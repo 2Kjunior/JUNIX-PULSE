@@ -2,9 +2,8 @@
  * Layout des 5 onglets principaux de Junix Pulse.
  *
  * Tab bar custom :
- * - Glassmorphism flottant avec blur et bordure violet subtil
+ * - Glassmorphism flottant avec capsule dégradée sur l'onglet actif
  * - Safe area bottom pour Android (gesture navigation bar)
- * - Pill animé sous l'icône active (Reanimated + spring)
  * - Label qui fade-in/fade-out selon l'état actif
  * - Légère élévation 3D avec ombre portée
  */
@@ -22,10 +21,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useEffect, type ComponentProps } from 'react';
 import {
-  Surface,
   Primary,
   OnSurface,
-  Outline,
   Spacing,
   Radius,
 } from '@/constants/theme';
@@ -49,7 +46,7 @@ const TABS: TabConfig[] = [
   { name: 'pulse',   title: 'Pulse',        icon: 'pulse-outline',           iconFocused: 'pulse' },
 ];
 
-// ─── Bouton d'onglet individuel ────────────────────────────────────────────────
+// ─── Bouton d'onglet individuel avec retour haptique & effet 3D ────────────────
 
 interface TabItemProps {
   tab: TabConfig;
@@ -58,99 +55,107 @@ interface TabItemProps {
 }
 
 function TabItem({ tab, focused, onPress }: TabItemProps) {
-  const pillWidth = useSharedValue(0);
-  const pillOpacity = useSharedValue(0);
-  const iconScale = useSharedValue(1);
-  const labelOpacity = useSharedValue(focused ? 1 : 0.6);
-  const translateY = useSharedValue(focused ? 0 : 2);
+  const pressScale = useSharedValue(1);
+  const activeBgOpacity = useSharedValue(focused ? 1 : 0);
+  const iconTranslateY = useSharedValue(focused ? -2 : 0);
 
   useEffect(() => {
     if (focused) {
-      // Pill qui grandit
-      pillWidth.value = withSpring(40, { damping: 14, stiffness: 200 });
-      pillOpacity.value = withTiming(1, { duration: 180 });
-      // Icône qui rebondit légèrement
-      iconScale.value = withSpring(1.15, { damping: 10, stiffness: 220 });
-      // Label qui monte
-      labelOpacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withSpring(0, { damping: 14, stiffness: 200 });
+      activeBgOpacity.value = withTiming(1, { duration: 200 });
+      iconTranslateY.value = withSpring(-2, { damping: 14, stiffness: 220 });
     } else {
-      pillWidth.value = withSpring(0, { damping: 14, stiffness: 200 });
-      pillOpacity.value = withTiming(0, { duration: 120 });
-      iconScale.value = withSpring(1, { damping: 12, stiffness: 180 });
-      labelOpacity.value = withTiming(0.55, { duration: 200, easing: Easing.out(Easing.quad) });
-      translateY.value = withSpring(2, { damping: 14, stiffness: 200 });
+      activeBgOpacity.value = withTiming(0, { duration: 160 });
+      iconTranslateY.value = withSpring(0, { damping: 14, stiffness: 220 });
     }
   }, [focused]);
 
-  const pillStyle = useAnimatedStyle(() => ({
-    width: pillWidth.value,
-    opacity: pillOpacity.value,
+  const animatedItemStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
   }));
 
-  const iconContainerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
+  const animatedBgStyle = useAnimatedStyle(() => ({
+    opacity: activeBgOpacity.value,
   }));
 
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: labelOpacity.value,
-    transform: [{ translateY: translateY.value }],
+
+
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: iconTranslateY.value }],
   }));
 
   return (
     <TouchableOpacity
       style={styles.tabItem}
       onPress={onPress}
-      activeOpacity={0.75}
+      onPressIn={() => {
+        pressScale.value = withSpring(0.9, { damping: 12, stiffness: 350 });
+      }}
+      onPressOut={() => {
+        pressScale.value = withSpring(1, { damping: 12, stiffness: 250 });
+      }}
+      activeOpacity={0.9}
       accessibilityRole="button"
       accessibilityLabel={tab.title}
       accessibilityState={{ selected: focused }}
     >
-      {/* Pill indicateur */}
-      <Animated.View style={[styles.pill, pillStyle]} />
+      <Animated.View style={[styles.tabItemContent, animatedItemStyle]}>
+        {/* Capsule active avec contour et dégradé subtil (façon segmented control des tâches) */}
+        <Animated.View style={[styles.activeCapsule, animatedBgStyle]}>
+          <LinearGradient
+            colors={['rgba(208, 188, 255, 0.16)', 'rgba(123, 208, 255, 0.06)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.activeCapsuleGradient}
+          />
+        </Animated.View>
 
-      {/* Icône animée */}
-      <Animated.View style={iconContainerStyle}>
-        <Ionicons
-          name={focused ? tab.iconFocused : tab.icon}
-          size={24}
-          color={focused ? Primary.default : OnSurface.disabled}
-        />
+
+
+        {/* Icône animée */}
+        <Animated.View style={animatedIconStyle}>
+          <Ionicons
+            name={focused ? tab.iconFocused : tab.icon}
+            size={focused ? 22 : 21}
+            color={focused ? Primary.default : OnSurface.disabled}
+          />
+        </Animated.View>
+
+        {/* Label */}
+        <Text
+          style={[
+            styles.tabLabel,
+            focused ? styles.tabLabelFocused : styles.tabLabelInactive,
+          ]}
+          numberOfLines={1}
+        >
+          {tab.title}
+        </Text>
       </Animated.View>
-
-      {/* Label */}
-      <Animated.Text
-        style={[
-          styles.tabLabel,
-          { color: focused ? Primary.default : OnSurface.disabled },
-          labelStyle,
-        ]}
-        numberOfLines={1}
-      >
-        {tab.title}
-      </Animated.Text>
     </TouchableOpacity>
   );
 }
 
-// ─── Tab Bar custom ────────────────────────────────────────────────────────────
+// ─── Tab Bar custom flottante ──────────────────────────────────────────────────
 
 type CustomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 function CustomTabBar({ state, navigation }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
 
-  // Sur Android avec gesture navigation, insets.bottom est la hauteur de la barre
-  // On ajoute une marge supplémentaire pour ne jamais coller au trait
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 0) + 8;
+  // Sur Android : garantir un espace net au-dessus de la barre système (gestes ou 3 boutons)
+  const bottomMargin = Math.max(insets.bottom, Platform.OS === 'android' ? 16 : 8) + (Platform.OS === 'android' ? 10 : 4);
 
   return (
-    <View style={[styles.outerContainer, { paddingBottom: bottomPadding }]}>
-      {/* Glassmorphism card */}
+    <View
+      style={[styles.outerContainer, { marginBottom: bottomMargin }]}
+      pointerEvents="box-none"
+    >
+      {/* Capsule flottante 3D avec bordure dégradée */}
       <LinearGradient
         colors={[
-          'rgba(208, 188, 255, 0.12)',
-          'rgba(123, 208, 255, 0.06)',
+          'rgba(208, 188, 255, 0.28)',
+          'rgba(123, 208, 255, 0.12)',
+          'rgba(255, 255, 255, 0.05)',
         ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -176,7 +181,15 @@ function CustomTabBar({ state, navigation }: CustomTabBarProps) {
 export default function TabsLayout() {
   return (
     <Tabs
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+        },
+      }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       {TABS.map(tab => (
@@ -194,50 +207,75 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   outerContainer: {
-    // Fond qui prolonge la surface jusqu'au bas de l'écran
-    backgroundColor: Surface.base,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: 8,
-    // Ombre douce vers le haut (iOS + Android elevation)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 24,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
   },
   gradientBorder: {
-    borderRadius: Radius.xl,
-    padding: 1, // Épaisseur du contour gradient
+    width: '100%',
+    borderRadius: Radius.full,
+    padding: 1.2,
+    // Ombre 3D portée (iOS et Android)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.65,
+    shadowRadius: 20,
+    elevation: 24,
   },
   tabBarInner: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(20, 19, 23, 0.94)', // Surface.base avec transparence
-    borderRadius: Radius.xl - 1,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.xs,
-    // Légère transparence pour l'effet verre
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(20, 19, 26, 0.96)',
+    borderRadius: Radius.full,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    minHeight: 50,
-    paddingVertical: 4,
-    position: 'relative',
   },
-  pill: {
-    position: 'absolute',
-    top: 0,
-    height: 3,
+  tabItemContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 6,
     borderRadius: Radius.full,
-    backgroundColor: Primary.default,
+    position: 'relative',
+    minHeight: 48,
+    width: '100%',
   },
+  activeCapsule: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(208, 188, 255, 0.32)',
+  },
+  activeCapsuleGradient: {
+    flex: 1,
+  },
+
   tabLabel: {
     fontSize: 10,
-    fontFamily: 'Inter-Medium',
     letterSpacing: 0.2,
+    marginTop: 2,
     textAlign: 'center',
+  },
+  tabLabelFocused: {
+    color: Primary.default,
+    fontFamily: 'Inter-Bold',
+    fontWeight: '700',
+  },
+  tabLabelInactive: {
+    color: OnSurface.disabled,
+    fontFamily: 'Inter-Medium',
   },
 });

@@ -210,6 +210,8 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
-// Inset pour la tab bar native
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+// Hauteur totale approximative occupée par la tab bar flottante (contenu + marges + safe area).
+// Utiliser pour le paddingBottom des listes et le positionnement des FAB.
+export const TAB_BAR_TOTAL_HEIGHT = Platform.select({ ios: 90, android: 110 }) ?? 100;
+
 export const MaxContentWidth = 800;

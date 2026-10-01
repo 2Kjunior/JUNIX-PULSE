@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Surface, Primary, Tertiary, OnSurface, Outline, Spacing, Radius, Typography,
+  Surface, Primary, Tertiary, OnSurface, Outline, Spacing, Radius, Typography, TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { HabitUseCases } from '@/use-cases/habit-use-cases';
 import { GoalUseCases } from '@/use-cases/goal-use-cases';
@@ -55,8 +55,8 @@ export default function PulseScreen() {
       await SuggestionUseCases.acceptSuggestion(id);
       showSnackbar(`Suggestion "${title}" acceptée !`);
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -65,8 +65,8 @@ export default function PulseScreen() {
       await SuggestionUseCases.refuseSuggestion(id);
       showSnackbar('Suggestion ignorée.');
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -90,7 +90,7 @@ export default function PulseScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.lg }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.lg, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 24 }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
