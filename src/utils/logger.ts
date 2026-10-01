@@ -1,7 +1,13 @@
 export const logger = {
-  error(message: string): void {
+  warn(...args: unknown[]): void {
     if (__DEV__) {
-      console.error(message);
+      console.warn(...args);
     }
+  },
+  error(...args: unknown[]): void {
+    if (__DEV__) {
+      console.error(...args);
+    }
+    // Future extension: send to monitoring service (Sentry, etc.)
   },
 };
