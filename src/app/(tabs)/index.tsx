@@ -15,7 +15,6 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   RefreshControl,
   TouchableOpacity,
   Alert,
@@ -35,22 +34,23 @@ import { GoalUseCases, GoalDetails } from '@/use-cases/goal-use-cases';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { SuggestionUseCases } from '@/use-cases/suggestion-use-cases';
 import { SettingsRepository } from '@/repositories/settings-repository';
+import { seedDatabase } from '@/database/seed';
 import { Reminder, Task, Event, Suggestion } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
   Primary,
   Tertiary,
   OnSurface,
-  Outline,
   Error as ErrorColors,
   Success,
   Spacing,
-  Radius,
-  Typography,
   Gradient,
+  TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { SummaryChip } from '@/components/today/SummaryChip';
+import { TaskCard } from '@/components/today/TaskCard';
+import { styles } from './today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -155,12 +155,30 @@ export default function TodayScreen() {
     }
   };
 
+  const handleLoadDemo = async () => {
+    try {
+      await seedDatabase();
+      showSnackbar('Données de démo chargées avec succès !');
+      await load();
+    } catch (error: unknown) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de charger les données de démonstration.');
+    }
+  };
+
   if (state === 'loading') return <LoadingState message="Préparation de votre rythme..." />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
 
   const dateLabel = format(today, 'EEEE d MMMM', { locale: fr });
   const urgentReminders = reminders.filter(r => r.priority === 'URGENT' || r.status === 'MISSED');
   const normalReminders = reminders.filter(r => r.priority !== 'URGENT' && r.status !== 'MISSED');
+
+  // État vide complet : proposer la démo
+  const isEmptyState =
+    tasks.length === 0 &&
+    habits.length === 0 &&
+    goals.length === 0 &&
+    reminders.length === 0 &&
+    events.length === 0;
 
   // Calcul du taux de complétion des tâches
   const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
@@ -176,7 +194,7 @@ export default function TodayScreen() {
       style={styles.container}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + Spacing.lg, paddingBottom: 110 },
+        { paddingTop: insets.top + Spacing.lg, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 24 },
       ]}
       refreshControl={
         <RefreshControl
@@ -198,14 +216,14 @@ export default function TodayScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerBtn}
-            onPress={() => router.push('/capture' as any)}
+            onPress={() => router.push('/capture')}
             accessibilityLabel="Capture rapide"
           >
             <Ionicons name="flash-outline" size={20} color={Primary.default} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerBtn}
-            onPress={() => router.push('/search' as any)}
+            onPress={() => router.push('/search')}
             accessibilityLabel="Recherche globale"
           >
             <Ionicons name="search-outline" size={20} color={OnSurface.variant} />
@@ -248,16 +266,54 @@ export default function TodayScreen() {
           label={`/ ${habits.length} habitudes`}
           color="#F59E0B"
           icon="flame-outline"
-          onPress={() => router.push('/habits' as any)}
+          onPress={() => router.push('/habits')}
         />
         <SummaryChip
           count={goals.length}
           label="objectifs"
           color="#6DD58C"
           icon="flag-outline"
-          onPress={() => router.push('/goals' as any)}
+          onPress={() => router.push('/goals')}
         />
       </ScrollView>
+
+      {/* ─── CARTE DÉCOUVERTE / DONNÉES DE DÉMO (si base vide) ────────────────── */}
+      {isEmptyState && (
+        <View style={styles.demoCardWrapper}>
+          <LinearGradient
+            colors={['rgba(208, 188, 255, 0.15)', 'rgba(123, 208, 255, 0.06)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.demoCard}
+          >
+            <View style={styles.demoHeader}>
+              <View style={styles.demoBadge}>
+                <Ionicons name="sparkles" size={13} color={Primary.default} />
+                <Text style={styles.demoBadgeText}>MODE DÉCOUVERTE</Text>
+              </View>
+            </View>
+            <Text style={styles.demoTitle}>Prêt à explorer Junix Pulse ?</Text>
+            <Text style={styles.demoSubtitle}>
+              Chargez un jeu de test complet (contacts, rappels, habitudes, objectifs) pour découvrir immédiatement la puissance du rythme quotidien.
+            </Text>
+            <TouchableOpacity
+              style={styles.demoBtn}
+              onPress={handleLoadDemo}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.demoBtnGradient}
+              >
+                <Ionicons name="cloud-download-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.demoBtnText}>Charger les données de démo</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      )}
 
       {/* ─── 1. MAINTENANT (Carte Urgent / Prioritaire) ───────────────────────── */}
       <View style={styles.sectionBlock}>
@@ -271,7 +327,7 @@ export default function TodayScreen() {
             <TouchableOpacity
               key={r.id}
               style={styles.urgentCard}
-              onPress={() => router.push(`/reminders/${r.id}` as any)}
+              onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
               activeOpacity={0.8}
             >
               <View style={styles.urgentHeader}>
@@ -333,7 +389,7 @@ export default function TodayScreen() {
           ) : nextReminder ? (
             <TouchableOpacity
               style={styles.nextCard}
-              onPress={() => router.push(`/reminders/${nextReminder.id}` as any)}
+              onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: nextReminder.id } })}
               activeOpacity={0.8}
             >
               <View style={styles.nextTimeCol}>
@@ -447,7 +503,7 @@ export default function TodayScreen() {
         <View style={styles.subBlock}>
           <View style={styles.subHeader}>
             <Text style={styles.subTitle}>Habitudes & Streaks ({habits.length})</Text>
-            <TouchableOpacity onPress={() => router.push('/habits' as any)}>
+            <TouchableOpacity onPress={() => router.push('/habits')}>
               <Text style={styles.subAction}>Gérer</Text>
             </TouchableOpacity>
           </View>
@@ -489,7 +545,7 @@ export default function TodayScreen() {
           ) : (
             <View style={styles.emptyCard}>
               <Text style={styles.emptyText}>Aucune habitude active pour le moment</Text>
-              <TouchableOpacity onPress={() => router.push('/habits/new' as any)}>
+              <TouchableOpacity onPress={() => router.push('/habits/new')}>
                 <Text style={styles.emptyAction}>+ Créer une habitude</Text>
               </TouchableOpacity>
             </View>
@@ -500,7 +556,7 @@ export default function TodayScreen() {
         <View style={styles.subBlock}>
           <View style={styles.subHeader}>
             <Text style={styles.subTitle}>Objectifs & Progression ({goals.length})</Text>
-            <TouchableOpacity onPress={() => router.push('/goals' as any)}>
+            <TouchableOpacity onPress={() => router.push('/goals')}>
               <Text style={styles.subAction}>Voir tout</Text>
             </TouchableOpacity>
           </View>
@@ -510,7 +566,7 @@ export default function TodayScreen() {
               <TouchableOpacity
                 key={item.goal.id}
                 style={styles.goalRowCard}
-                onPress={() => router.push(`/goals/${item.goal.id}` as any)}
+                onPress={() => router.push({ pathname: '/goals/[id]', params: { id: item.goal.id } })}
                 activeOpacity={0.8}
               >
                 <View style={styles.goalHeaderRow}>
@@ -535,7 +591,7 @@ export default function TodayScreen() {
           ) : (
             <View style={styles.emptyCard}>
               <Text style={styles.emptyText}>Aucun objectif défini</Text>
-              <TouchableOpacity onPress={() => router.push('/goals/new' as any)}>
+              <TouchableOpacity onPress={() => router.push('/goals/new')}>
                 <Text style={styles.emptyAction}>+ Définir un objectif</Text>
               </TouchableOpacity>
             </View>
@@ -546,7 +602,7 @@ export default function TodayScreen() {
   );
 }
 
-// ─── Composants locaux ─────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────────
 
 function getGreeting(hour: number): string {
   if (hour < 12) return 'Bonjour';
@@ -554,467 +610,3 @@ function getGreeting(hour: number): string {
   return 'Bonsoir';
 }
 
-function SummaryChip({
-  count,
-  label,
-  color,
-  icon,
-  onPress,
-}: {
-  count: number;
-  label: string;
-  color: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress?: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      style={[styles.chip, { borderColor: color + '30' }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <Ionicons name={icon} size={15} color={color} />
-      <Text style={[styles.chipCount, { color }]}>{count}</Text>
-      <Text style={styles.chipLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function TaskCard({ task, onComplete }: { task: Task; onComplete: () => void }) {
-  const isCompleted = task.status === 'COMPLETED';
-
-  return (
-    <View style={styles.taskCard}>
-      <TouchableOpacity
-        onPress={onComplete}
-        style={styles.checkBtn}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Ionicons
-          name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
-          size={22}
-          color={isCompleted ? Success.default : OnSurface.variant}
-        />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.cardBody}
-        onPress={() => router.push(`/tasks/${task.id}` as any)}
-      >
-        <Text
-          style={[
-            styles.cardTitle,
-            isCompleted && styles.cardTitleStrikethrough,
-          ]}
-          numberOfLines={1}
-        >
-          {task.title}
-        </Text>
-        {task.estimatedMinutes ? (
-          <View style={styles.inlineMeta}>
-            <Ionicons name="time-outline" size={12} color={OnSurface.variant} />
-            <Text style={styles.cardSubtitle}>{task.estimatedMinutes} min</Text>
-          </View>
-        ) : null}
-      </TouchableOpacity>
-      <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  content: {
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  greeting: {
-    ...Typography.headlineLarge,
-    color: OnSurface.primary,
-  },
-  date: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-    textTransform: 'capitalize',
-    marginTop: 2,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    marginRight: Spacing.xs,
-    gap: 6,
-    borderWidth: 1,
-  },
-  chipCount: {
-    ...Typography.labelLarge,
-    fontWeight: '700',
-  },
-  chipLabel: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-  },
-  sectionBlock: {
-    gap: Spacing.sm,
-  },
-  blockTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  nowIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: ErrorColors.default,
-  },
-  blockTitle: {
-    ...Typography.labelLarge,
-    color: OnSurface.variant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  urgentCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: ErrorColors.default,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.xs,
-  },
-  urgentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  urgentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  urgentBadgeText: {
-    ...Typography.labelSmall,
-    color: ErrorColors.default,
-    fontWeight: '700',
-  },
-  urgentTime: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-  },
-  urgentTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  urgentSubtitle: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-  },
-  zenCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  zenText: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-  },
-  nextCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.md,
-  },
-  nextTimeCol: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 54,
-  },
-  nextTimeText: {
-    ...Typography.titleMedium,
-    color: Primary.default,
-    fontWeight: '700',
-  },
-  nextTypeLabel: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 10,
-    textTransform: 'uppercase',
-  },
-  nextDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: Outline.variant,
-  },
-  nextBody: {
-    flex: 1,
-    gap: 2,
-  },
-  nextTitle: {
-    ...Typography.bodyLarge,
-    color: OnSurface.primary,
-    fontWeight: '600',
-  },
-  nextSubtitle: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-  },
-  suggestionCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Primary.default + '40',
-    gap: Spacing.sm,
-  },
-  suggHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  aiOrb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  suggBadge: {
-    ...Typography.labelSmall,
-    color: Primary.default,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  suggTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-  },
-  suggExplanation: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    lineHeight: 18,
-  },
-  suggActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  suggRefuseBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  suggRefuseText: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-  },
-  suggAcceptBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Primary.default,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    gap: 4,
-  },
-  suggAcceptText: {
-    ...Typography.labelMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  progressCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.sm,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  progressLabel: {
-    ...Typography.labelMedium,
-    color: OnSurface.primary,
-  },
-  progressValue: {
-    ...Typography.labelMedium,
-    color: Tertiary.default,
-    fontWeight: '700',
-  },
-  progressBarTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Surface.high,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: Tertiary.default,
-    borderRadius: 3,
-  },
-  subBlock: {
-    gap: Spacing.xs,
-    marginTop: Spacing.sm,
-  },
-  subHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  subTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-  },
-  subAction: {
-    ...Typography.labelMedium,
-    color: Primary.default,
-  },
-  taskCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.md,
-  },
-  checkBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  habitCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.md,
-  },
-  habitCardCompleted: {
-    borderColor: Success.default + '40',
-  },
-  cardBody: {
-    flex: 1,
-    gap: 2,
-  },
-  cardTitle: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-  },
-  cardTitleStrikethrough: {
-    textDecorationLine: 'line-through',
-    opacity: 0.5,
-  },
-  streakRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  cardSubtitle: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-  },
-  inlineMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    alignItems: 'center',
-    gap: 4,
-  },
-  emptyText: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-  },
-  emptyAction: {
-    ...Typography.labelSmall,
-    color: Primary.default,
-  },
-  goalRowCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  goalHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  goalCardTitle: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-    fontWeight: '600',
-    flex: 1,
-  },
-  goalCardPercent: {
-    ...Typography.labelSmall,
-    color: '#6DD58C',
-    fontWeight: '700',
-  },
-});
