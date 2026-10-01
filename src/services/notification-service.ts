@@ -7,26 +7,25 @@
  * Seules les notifications PUSH (serveur distant) nécessitent un Development Build.
  */
 
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
-import { logger } from '@/utils/logger';
+import { logger } from "@/utils/logger";
+import { Platform } from "react-native";
 
-type NotificationsType = typeof import('expo-notifications');
+type NotificationsType = typeof import("expo-notifications");
 
 let Notifications: NotificationsType | null = null;
 
 try {
   // Les notifications locales fonctionnent dans Expo Go depuis SDK 53.
   // Seul le push distant est bloqué — mais Junix Pulse n'utilise pas de push.
-  Notifications = require('expo-notifications');
+  Notifications = require("expo-notifications");
 } catch {
-  logger.error('[NotificationService] expo-notifications non disponible');
+  logger.warn("[NotificationService] expo-notifications non disponible — notifications désactivées");
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ScheduleReminderParams {
-  id: string;           // ID du rappel Junix Pulse (utilisé comme identifier)
+  id: string; // ID du rappel Junix Pulse (utilisé comme identifier)
   title: string;
   body?: string;
   scheduledAt: Date;
@@ -60,19 +59,21 @@ export const NotificationService = {
         }),
       });
 
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('reminders', {
-          name: 'Rappels',
-          description: 'Notifications pour vos rappels Junix Pulse',
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("reminders", {
+          name: "Rappels",
+          description: "Notifications pour vos rappels Junix Pulse",
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#D0BCFF',
+          lightColor: "#D0BCFF",
           enableVibrate: true,
           showBadge: false,
         });
       }
     } catch {
-      logger.error('[NotificationService] Initialisation des notifications ignorée');
+      logger.error(
+        "[NotificationService] Initialisation des notifications ignorée",
+      );
     }
   },
 
@@ -87,28 +88,29 @@ export const NotificationService = {
     try {
       const triggerDate = params.scheduledAt;
       const now = new Date();
-      const effectiveDate = triggerDate <= now ? new Date(now.getTime() + 10_000) : triggerDate;
+      const effectiveDate =
+        triggerDate <= now ? new Date(now.getTime() + 10_000) : triggerDate;
 
       return await Notifications.scheduleNotificationAsync({
         identifier: `reminder-${params.id}`,
         content: {
           title: params.title,
-          body: params.body ?? 'Rappel Junix Pulse',
+          body: params.body ?? "Rappel Junix Pulse",
           data: {
             reminderId: params.id,
-            type: 'REMINDER',
+            type: "REMINDER",
             ...params.data,
           },
-          sound: 'default',
+          sound: "default",
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: effectiveDate,
-          channelId: Platform.OS === 'android' ? 'reminders' : undefined,
-        } as import('expo-notifications').DateTriggerInput,
+          channelId: Platform.OS === "android" ? "reminders" : undefined,
+        } as import("expo-notifications").DateTriggerInput,
       });
     } catch {
-      logger.error('[NotificationService] Erreur lors de scheduleReminder');
+      logger.error("[NotificationService] Erreur lors de scheduleReminder");
       return `fallback-notif-${params.id}`;
     }
   },
@@ -117,11 +119,16 @@ export const NotificationService = {
    * Annule une notification planifiée.
    */
   async cancelReminder(notificationId: string): Promise<void> {
-    if (!Notifications || notificationId.startsWith('mock-') || notificationId.startsWith('fallback-')) return;
+    if (
+      !Notifications ||
+      notificationId.startsWith("mock-") ||
+      notificationId.startsWith("fallback-")
+    )
+      return;
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
     } catch {
-      logger.error('[NotificationService] Erreur cancelReminder');
+      logger.error("[NotificationService] Erreur cancelReminder");
     }
   },
 
@@ -133,14 +140,16 @@ export const NotificationService = {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
     } catch {
-      logger.error('[NotificationService] Erreur cancelAll');
+      logger.error("[NotificationService] Erreur cancelAll");
     }
   },
 
   /**
    * Retourne toutes les notifications planifiées.
    */
-  async getAllScheduled(): Promise<import('expo-notifications').NotificationRequest[]> {
+  async getAllScheduled(): Promise<
+    import("expo-notifications").NotificationRequest[]
+  > {
     if (!Notifications) return [];
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
@@ -156,7 +165,7 @@ export const NotificationService = {
     if (!Notifications) return true;
     try {
       const { status } = await Notifications.getPermissionsAsync();
-      return status === 'granted';
+      return status === "granted";
     } catch {
       return true;
     }
@@ -169,7 +178,7 @@ export const NotificationService = {
     if (!Notifications) return true;
     try {
       const { status } = await Notifications.requestPermissionsAsync();
-      return status === 'granted';
+      return status === "granted";
     } catch {
       return true;
     }
@@ -179,7 +188,7 @@ export const NotificationService = {
    * Écouteur foreground.
    */
   addForegroundListener(
-    handler: (notification: import('expo-notifications').Notification) => void
+    handler: (notification: import("expo-notifications").Notification) => void,
   ): () => void {
     if (!Notifications) return () => {};
     try {
@@ -194,11 +203,14 @@ export const NotificationService = {
    * Écouteur de tap sur notification.
    */
   addResponseListener(
-    handler: (response: import('expo-notifications').NotificationResponse) => void
+    handler: (
+      response: import("expo-notifications").NotificationResponse,
+    ) => void,
   ): () => void {
     if (!Notifications) return () => {};
     try {
-      const sub = Notifications.addNotificationResponseReceivedListener(handler);
+      const sub =
+        Notifications.addNotificationResponseReceivedListener(handler);
       return () => sub.remove();
     } catch {
       return () => {};
