@@ -68,8 +68,8 @@ export default function NewHabitScreen() {
 
       showSnackbar(`Habitude "${title.trim()}" créée avec succès`);
       router.back();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message || 'Impossible de créer l\'habitude.');
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de créer l\'habitude.');
     } finally {
       setSaving(false);
     }

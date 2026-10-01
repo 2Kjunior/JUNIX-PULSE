@@ -58,8 +58,8 @@ export default function HabitsListScreen() {
       setError('');
       const data = await HabitUseCases.getAllHabitsWithStats();
       setStatsList(data);
-    } catch (e: any) {
-      setError(e.message || 'Erreur lors du chargement des habitudes');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur lors du chargement des habitudes');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -81,8 +81,8 @@ export default function HabitsListScreen() {
           : `Validation retirée pour "${item.habit.title}"`
       );
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message || 'Impossible de mettre à jour l\'habitude');
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de mettre à jour l\'habitude');
     }
   };
 
@@ -91,8 +91,8 @@ export default function HabitsListScreen() {
       await HabitUseCases.resumeHabit(habitId);
       showSnackbar(`Habitude "${title}" reprise`);
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 

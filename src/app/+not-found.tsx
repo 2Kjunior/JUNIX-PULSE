@@ -22,7 +22,7 @@ export default function NotFoundScreen() {
       <View style={styles.actionContainer}>
         <Button
           label="Retour à l'accueil"
-          onPress={() => router.replace('/(tabs)' as any)}
+          onPress={() => router.replace('/(tabs)')}
           variant="primary"
           size="md"
         />

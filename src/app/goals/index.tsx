@@ -46,8 +46,8 @@ export default function GoalsListScreen() {
       setError('');
       const data = await GoalUseCases.getAllGoalsWithDetails();
       setGoalsList(data);
-    } catch (e: any) {
-      setError(e.message || 'Erreur lors du chargement des objectifs.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur lors du chargement des objectifs.');
     } finally {
       setLoading(false);
       setRefreshing(false);

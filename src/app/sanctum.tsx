@@ -74,8 +74,8 @@ export default function SanctumScreen() {
       } else {
         setAuthError('Authentification non réussie.');
       }
-    } catch (e: any) {
-      setAuthError(e.message || 'Erreur d’authentification');
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : 'Erreur d’authentification');
     } finally {
       setAuthenticating(false);
     }
@@ -92,8 +92,8 @@ export default function SanctumScreen() {
     try {
       await SanctumRepository.saveNote(noteContent);
       showSnackbar('Note sécurisée enregistrée');
-    } catch (e: any) {
-      showSnackbar(e.message || 'Erreur lors de la sauvegarde');
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la sauvegarde');
     } finally {
       setSavingNote(false);
     }

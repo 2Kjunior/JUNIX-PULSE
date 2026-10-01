@@ -74,8 +74,8 @@ export default function SettingsScreen() {
       showSnackbar('Prénom mis à jour !');
       setEditingName(false);
       loadSettings();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     } finally {
       setSaving(false);
     }
@@ -89,8 +89,8 @@ export default function SettingsScreen() {
       });
       setSettings(s => s ? { ...s, notificationsEnabled: val } : s);
       showSnackbar(val ? 'Notifications activées' : 'Notifications désactivées');
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -102,8 +102,8 @@ export default function SettingsScreen() {
       });
       setSettings(s => s ? { ...s, morningBriefingHour: hour } : s);
       showSnackbar(`Résumé matin réglé à ${hour}h00`);
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -115,8 +115,8 @@ export default function SettingsScreen() {
       });
       setSettings(s => s ? { ...s, endOfDayHour: hour } : s);
       showSnackbar(`Bilan fin de journée réglé à ${hour}h00`);
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -168,7 +168,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             setOnboardingComplete(false);
             showSnackbar('Application réinitialisée');
-            router.replace('/(onboarding)/index' as any);
+            router.replace('/(onboarding)');
           },
         },
       ]
@@ -196,8 +196,8 @@ export default function SettingsScreen() {
               }
               await seedDatabase();
               showSnackbar('Données de démo chargées avec succès !');
-            } catch (e: any) {
-              Alert.alert('Erreur', e.message);
+            } catch (e) {
+              Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
             }
           },
         },
@@ -218,8 +218,8 @@ export default function SettingsScreen() {
             try {
               await clearAllData();
               showSnackbar('Toutes les données effacées.');
-            } catch (e: any) {
-              Alert.alert('Erreur', e.message);
+            } catch (e) {
+              Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
             }
           },
         },
@@ -372,7 +372,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionLabel}>Données & Confidentialité</Text>
         <TouchableOpacity
           style={styles.row}
-          onPress={() => router.push('/sanctum' as any)}
+          onPress={() => router.push('/sanctum')}
         >
           <View>
             <Text style={styles.rowLabel}>Sanctum — Espace Privé</Text>

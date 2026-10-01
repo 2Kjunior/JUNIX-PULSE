@@ -141,8 +141,8 @@ export default function EditReminderScreen() {
 
       showSnackbar('Rappel modifié ✓');
       router.back();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message ?? 'Impossible de modifier le rappel');
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de modifier le rappel');
     } finally {
       setSaving(false);
     }

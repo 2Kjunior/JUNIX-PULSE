@@ -234,7 +234,7 @@ export default function EventDetailScreen() {
                 <TouchableOpacity
                   key={p.id}
                   style={styles.personRow}
-                  onPress={() => router.push(`/people/${p.id}` as any)}
+                  onPress={() => router.push({ pathname: '/people/[id]', params: { id: p.id } })}
                 >
                   <View style={styles.personAvatar}>
                     <Text style={styles.personAvatarText}>{initials}</Text>

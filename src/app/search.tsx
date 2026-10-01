@@ -21,7 +21,7 @@ import {
   FlatList,
   Keyboard,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -46,7 +46,7 @@ interface SearchResultItem {
   type: 'REMINDER' | 'TASK' | 'PERSON' | 'EVENT' | 'GOAL';
   title: string;
   subtitle?: string;
-  route: string;
+  route: Href;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
   typeLabel: string;
@@ -258,7 +258,7 @@ export default function SearchScreen() {
     if (trimmed && !recentSearches.includes(trimmed)) {
       setRecentSearches((prev) => [trimmed, ...prev.slice(0, 5)]);
     }
-    router.push(item.route as any);
+    router.push(item.route);
   };
 
   const handleSelectRecent = (term: string) => {

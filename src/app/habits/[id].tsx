@@ -51,8 +51,8 @@ export default function HabitDetailScreen() {
         return;
       }
       setStats(data);
-    } catch (e: any) {
-      setError(e.message || 'Erreur lors de la récupération de l\'habitude.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur lors de la récupération de l\'habitude.');
     } finally {
       setLoading(false);
     }
@@ -67,8 +67,8 @@ export default function HabitDetailScreen() {
     try {
       await HabitUseCases.toggleHabitCompletion(id, dateStr);
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -100,8 +100,8 @@ export default function HabitDetailScreen() {
       await HabitUseCases.resumeHabit(id);
       showSnackbar('Habitude reprise avec succès !');
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 

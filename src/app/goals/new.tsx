@@ -57,8 +57,8 @@ export default function NewGoalScreen() {
 
       showSnackbar(`Objectif "${title.trim()}" créé avec succès`);
       router.back();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message || 'Impossible de créer l\'objectif.');
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de créer l\'objectif.');
     } finally {
       setSaving(false);
     }

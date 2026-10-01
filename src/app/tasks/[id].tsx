@@ -44,8 +44,8 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
-const STATUS_LABELS: Record<TaskStatus, { label: string; color: string; icon: string }> = {
-  INBOX: { label: 'Inbox', color: OnSurface.variant, icon: 'tray-outline' },
+const STATUS_LABELS: Record<TaskStatus, { label: string; color: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  INBOX: { label: 'Inbox', color: OnSurface.variant, icon: 'file-tray-outline' },
   SCHEDULED: { label: 'Planifiée', color: Primary.default, icon: 'calendar-outline' },
   IN_PROGRESS: { label: 'En cours', color: Tertiary.default, icon: 'time-outline' },
   COMPLETED: { label: 'Terminée', color: Success.default, icon: 'checkmark-circle-outline' },
@@ -259,7 +259,7 @@ export default function TaskDetailScreen() {
               { backgroundColor: statusConfig.color + '20' },
             ]}
           >
-            <Ionicons name={statusConfig.icon as any} size={16} color={statusConfig.color} />
+            <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>

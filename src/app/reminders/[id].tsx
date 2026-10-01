@@ -222,7 +222,7 @@ export default function ReminderDetailScreen() {
         <Text style={styles.navTitle}>Détail du rappel</Text>
 
         <TouchableOpacity
-          onPress={() => router.push(`/reminders/edit/${reminder.id}` as any)}
+          onPress={() => router.push({ pathname: '/reminders/edit/[id]', params: { id: reminder.id } })}
           style={styles.editBtn}
           accessibilityLabel="Modifier"
         >

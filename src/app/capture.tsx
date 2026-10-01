@@ -184,8 +184,8 @@ export default function QuickCaptureScreen() {
 
       showSnackbar('Rappel créé via Quick Capture');
       router.back();
-    } catch (e: any) {
-      showSnackbar(e.message || 'Erreur lors de la création');
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
     } finally {
       setSaving(false);
     }

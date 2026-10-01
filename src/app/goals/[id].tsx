@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { GoalUseCases, GoalDetails } from '@/use-cases/goal-use-cases';
+import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { TaskRepository } from '@/repositories/task-repository';
 import { Task } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
@@ -60,8 +61,8 @@ export default function GoalDetailScreen() {
       const allTasks = await TaskRepository.findAllActive();
       const linkedIds = new Set(data.associatedTasks.map(t => t.id));
       setAvailableTasks(allTasks.filter(t => !linkedIds.has(t.id)));
-    } catch (e: any) {
-      setError(e.message || 'Erreur lors de la récupération.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur lors de la récupération.');
     } finally {
       setLoading(false);
     }
@@ -78,8 +79,8 @@ export default function GoalDetailScreen() {
       showSnackbar('Tâche associée à l\'objectif !');
       setShowTaskPicker(false);
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -89,8 +90,18 @@ export default function GoalDetailScreen() {
       await GoalUseCases.unlinkTask(id, taskId);
       showSnackbar(`Tâche "${title}" dissociée.`);
       loadData();
-    } catch (e: any) {
-      Alert.alert('Erreur', e.message);
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+    }
+  };
+
+  const handleToggleTask = async (taskId: string) => {
+    try {
+      const newStatus = await TaskUseCases.toggleComplete(taskId);
+      showSnackbar(newStatus === 'COMPLETED' ? 'Tâche terminée !' : 'Tâche rouverte');
+      loadData();
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -185,10 +196,20 @@ export default function GoalDetailScreen() {
             <View
               style={[
                 styles.fill,
-                { width: `${progress ?? 0}%`, backgroundColor: Primary.default },
+                {
+                  width: `${progress ?? 0}%`,
+                  backgroundColor: progress === 100 ? '#6DD58C' : Primary.default,
+                },
               ]}
             />
           </View>
+
+          {progress === 100 && (
+            <View style={styles.completedBadge}>
+              <Ionicons name="trophy-outline" size={16} color="#6DD58C" />
+              <Text style={styles.completedBadgeText}>Objectif accompli à 100% !</Text>
+            </View>
+          )}
 
           <Text style={styles.progressSub}>
             {associatedTasks.length > 0
@@ -243,20 +264,27 @@ export default function GoalDetailScreen() {
           ) : (
             associatedTasks.map(t => (
               <View key={t.id} style={styles.taskCard}>
-                <Ionicons
-                  name={
-                    t.status === 'COMPLETED'
-                      ? 'checkmark-circle'
-                      : 'ellipse-outline'
-                  }
-                  size={22}
-                  color={t.status === 'COMPLETED' ? '#4CAF50' : OnSurface.disabled}
-                />
+                <TouchableOpacity
+                  onPress={() => handleToggleTask(t.id)}
+                  style={styles.taskCheckBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={
+                      t.status === 'COMPLETED'
+                        ? 'checkmark-circle'
+                        : 'ellipse-outline'
+                    }
+                    size={22}
+                    color={t.status === 'COMPLETED' ? '#6DD58C' : OnSurface.disabled}
+                  />
+                </TouchableOpacity>
                 <Text
                   style={[
                     styles.taskTitle,
                     t.status === 'COMPLETED' && { textDecorationLine: 'line-through', opacity: 0.7 },
                   ]}
+                  onPress={() => handleToggleTask(t.id)}
                 >
                   {t.title}
                 </Text>
@@ -354,5 +382,26 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     gap: Spacing.md,
   },
+  taskCheckBtn: {
+    padding: 2,
+  },
   taskTitle: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(109, 213, 140, 0.15)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(109, 213, 140, 0.3)',
+  },
+  completedBadgeText: {
+    ...Typography.labelSmall,
+    color: '#6DD58C',
+    fontWeight: '700',
+  },
 });
