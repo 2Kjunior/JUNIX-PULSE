@@ -10,7 +10,6 @@ import {
   Text,
   TextInput,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
@@ -41,6 +40,7 @@ import {
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { styles } from './task-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -475,111 +475,3 @@ export default function TaskDetailScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  headerBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  content: { padding: Spacing.lg, gap: Spacing.xl },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    gap: 6,
-  },
-  statusText: { ...Typography.labelMedium },
-  field: { gap: Spacing.xs },
-  label: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: 4 },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-  },
-  multilineInput: { minHeight: 90 },
-  chipRow: { flexDirection: 'row', gap: Spacing.sm },
-  chipRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  chipActive: { backgroundColor: Primary.container, borderColor: Primary.default },
-  chipText: { ...Typography.labelMedium, color: OnSurface.variant },
-  chipTextActive: { color: Primary.onContainer },
-  subtasksHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  subtaskCounter: { ...Typography.labelSmall, color: Primary.default },
-  subtaskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xs,
-    gap: Spacing.sm,
-  },
-  subtaskCheck: { padding: 2 },
-  subtaskTitle: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
-  subtaskTitleCompleted: {
-    textDecorationLine: 'line-through',
-    color: OnSurface.disabled,
-  },
-  subtaskDelete: { padding: 4 },
-  addSubtaskContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: 4,
-  },
-  subtaskInput: {
-    flex: 1,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-  },
-  subtaskAddBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Primary.default,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtn: { marginTop: Spacing.md },
-});
