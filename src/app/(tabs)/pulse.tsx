@@ -181,7 +181,7 @@ export default function PulseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
+  container: { flex: 1, backgroundColor: 'transparent' }, // AnimatedBackgroundGlow visible derriere
   content: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: 100,

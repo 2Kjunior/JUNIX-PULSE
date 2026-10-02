@@ -17,7 +17,9 @@ import {
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Surface.base,
+    // Transparent : AnimatedBackgroundGlow (monte a la racine de l'app)
+    // doit etre visible derriere cet ecran.
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',

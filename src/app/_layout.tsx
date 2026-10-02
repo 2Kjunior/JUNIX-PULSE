@@ -37,6 +37,7 @@ import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { Snackbar } from '@/components/feedback/Snackbar';
 import { SplashAnimated } from '@/components/ui/SplashAnimated';
+import { AnimatedBackgroundGlow } from '@/components/ui/AnimatedBackgroundGlow';
 import { Surface, OnSurface } from '@/constants/theme';
 
 // Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
@@ -120,6 +121,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
+      <AnimatedBackgroundGlow />
       <SafeAreaProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
