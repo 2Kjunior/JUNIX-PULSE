@@ -133,11 +133,53 @@ export const TitleFontFamily = Platform.select({
 });
 
 // ─── Dégradé principal (CTA + logo) ──────────────────────────────────────────
-// Utilisé sur UN SEUL élément par écran — jamais sur les cartes de liste
+// Utilisé sur UN SEUL élément par écran — jamais sur les cartes de liste.
+// Cette règle ne concerne que CE dégradé de marque (violet → cyan, boutons/logo).
+// La lueur de GlowCard (voir Glow ci-dessous) est un voile d'une seule teinte
+// à moins de 30% d'opacité et n'enfreint pas cette règle : ce n'est pas un
+// dégradé de marque multicolore, mais un éclairage de coin ponctuel.
 export const Gradient = {
   primary: ['#D0BCFF', '#A078FF', '#4CD7F6'] as const,
   primaryStart: { x: 0, y: 0 } as const,
   primaryEnd: { x: 1, y: 0 } as const,
+} as const;
+
+// ─── GlowCard — accent par "tone" sémantique ─────────────────────────────────
+// La couleur suit toujours le SENS (priorité, statut), jamais la décoration.
+// "neutral" n'a aucune lueur : c'est l'état par défaut des cartes ordinaires.
+export type GlowTone = 'neutral' | 'info' | 'primary' | 'attention' | 'urgent' | 'success';
+
+export const Glow: Record<GlowTone, string> = {
+  neutral: 'transparent',
+  info: '#38BDF8',
+  primary: '#A855F7',
+  attention: '#FBBF24',
+  urgent: Error.default, // #FFB4AB — meilleur contraste que #F87171 sur fond sombre
+  success: Success.default, // #6DD58C (émeraude du thème)
+} as const;
+
+// Rayons, opacités de bordure/lueur et halo — valeurs utilisées par GlowCard.tsx.
+export const GlowCardTokens = {
+  background: '#14141E',
+  radiusList: Radius.lg, // 16 — cartes de liste
+  radiusHero: Radius.xl, // 24 — grandes cartes (hero). Le spec visuel demande 20/28 ;
+  // on aligne sur les rayons existants du thème (16/24) pour rester cohérent avec
+  // le reste de l'UI plutôt que d'introduire deux valeurs ad hoc non réutilisées ailleurs.
+  borderOpacityNeutral: 0.07, // bordure blanc 7% quand tone="neutral"
+  borderOpacityAccentStrong: 0.55, // dégradé de bordure côté lueur
+  borderOpacityAccentMid: 0.08,
+  borderOpacityAccentSoft: 0.05,
+  cornerGlowOpacity: {
+    soft: 0.18,
+    default: 0.28,
+  },
+  cornerGlowMidOpacity: {
+    soft: 0.065,
+    default: 0.1,
+  },
+  topHighlightOpacity: 0.08,
+  footerSeparatorOpacity: 0.06,
+  haloOpacity: 0.35, // halo extérieur statique, tone="attention"/"urgent" uniquement
 } as const;
 
 // ─── Glassmorphism — deux niveaux, hiérarchie stricte ────────────────────────

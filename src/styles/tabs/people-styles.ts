@@ -99,19 +99,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
   },
-  card: {
+  // card / cardForgotten : remplacés par <GlowCard tone="attention"|"neutral">.
+  // cardRow reprend l'agencement interne (avatar + contenu + actions) sans le
+  // fond/la bordure, désormais gérés par GlowCard lui-même.
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.md,
-  },
-  cardForgotten: {
-    borderLeftWidth: 3,
-    borderLeftColor: '#F59E0B',
   },
   avatar: {
     width: 44,

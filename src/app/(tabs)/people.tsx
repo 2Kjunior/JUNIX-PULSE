@@ -39,6 +39,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/people-styles';
 
 type FilterTab = 'all' | 'forgotten';
@@ -240,69 +241,71 @@ function PersonCardR09({ person }: { person: Person }) {
   };
 
   return (
-    <TouchableOpacity
-      style={[styles.card, isForgotten && styles.cardForgotten]}
+    <GlowCard
+      tone={isForgotten ? 'attention' : 'neutral'}
       onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
-      activeOpacity={0.8}
+      accessibilityLabel={`${person.displayName}${isForgotten ? ', relance conseillée' : ''}`}
     >
-      {/* Avatar / Initiales */}
-      <View style={[styles.avatar, isForgotten && styles.avatarForgotten]}>
-        <Text style={styles.avatarText}>{initials}</Text>
-      </View>
+      <View style={styles.cardRow}>
+        {/* Avatar / Initiales */}
+        <View style={[styles.avatar, isForgotten && styles.avatarForgotten]}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
 
-      {/* Contenu textuel */}
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.displayName} numberOfLines={1}>{person.displayName}</Text>
-          {!!person.relationship && (
-            <View style={styles.relationshipBadge}>
-              <Text style={styles.relationshipText}>{person.relationship}</Text>
+        {/* Contenu textuel */}
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.displayName} numberOfLines={1}>{person.displayName}</Text>
+            {!!person.relationship && (
+              <View style={styles.relationshipBadge}>
+                <Text style={styles.relationshipText}>{person.relationship}</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.lastContactText}>
+            {daysSinceLast === null
+              ? 'Jamais contacté'
+              : daysSinceLast === 0
+              ? 'Contact : aujourd’hui'
+              : `Contact : il y a ${daysSinceLast}j`}
+          </Text>
+
+          {isForgotten && (
+            <View style={styles.forgottenBadge}>
+              <Ionicons name="alert-circle-outline" size={12} color="#F59E0B" />
+              <Text style={styles.forgottenText}>Relance conseillée</Text>
             </View>
           )}
         </View>
 
-        <Text style={styles.lastContactText}>
-          {daysSinceLast === null
-            ? 'Jamais contacté'
-            : daysSinceLast === 0
-            ? 'Contact : aujourd’hui'
-            : `Contact : il y a ${daysSinceLast}j`}
-        </Text>
+        {/* Actions rapides inline (Appeler & Message - R-09) */}
+        <View style={styles.actionsCol}>
+          {person.phone ? (
+            <View style={styles.quickActionsRow}>
+              <TouchableOpacity
+                style={styles.actionIconBtn}
+                onPress={handleCall}
+                accessibilityLabel="Appeler"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Ionicons name="call-outline" size={16} color={Primary.default} />
+              </TouchableOpacity>
 
-        {isForgotten && (
-          <View style={styles.forgottenBadge}>
-            <Ionicons name="alert-circle-outline" size={12} color="#F59E0B" />
-            <Text style={styles.forgottenText}>Relance conseillée</Text>
-          </View>
-        )}
+              <TouchableOpacity
+                style={styles.actionIconBtn}
+                onPress={handleMessage}
+                accessibilityLabel="Envoyer un message"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Ionicons name="chatbubble-outline" size={16} color={Tertiary.default} />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+        </View>
       </View>
-
-      {/* Actions rapides inline (Appeler & Message - R-09) */}
-      <View style={styles.actionsCol}>
-        {person.phone ? (
-          <View style={styles.quickActionsRow}>
-            <TouchableOpacity
-              style={styles.actionIconBtn}
-              onPress={handleCall}
-              accessibilityLabel="Appeler"
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Ionicons name="call-outline" size={16} color={Primary.default} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionIconBtn}
-              onPress={handleMessage}
-              accessibilityLabel="Envoyer un message"
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Ionicons name="chatbubble-outline" size={16} color={Tertiary.default} />
-            </TouchableOpacity>
-          </View>
-        ) : null}
-
-        <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-      </View>
-    </TouchableOpacity>
+    </GlowCard>
   );
 }
