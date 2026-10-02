@@ -50,6 +50,7 @@ import {
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { SummaryChip } from '@/components/today/SummaryChip';
 import { TaskCard } from '@/components/today/TaskCard';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -324,34 +325,38 @@ export default function TodayScreen() {
 
         {urgentReminders.length > 0 ? (
           urgentReminders.map(r => (
-            <TouchableOpacity
+            <GlowCard
               key={r.id}
-              style={styles.urgentCard}
+              tone="urgent"
               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
-              activeOpacity={0.8}
+              accessibilityLabel={`${r.title}, ${r.status === 'MISSED' ? 'en retard' : 'priorité haute'}`}
             >
-              <View style={styles.urgentHeader}>
-                <View style={styles.urgentBadge}>
-                  <Ionicons name="alert-circle" size={14} color={ErrorColors.default} />
-                  <Text style={styles.urgentBadgeText}>
-                    {r.status === 'MISSED' ? 'En retard' : 'Priorité haute'}
+              <View style={styles.urgentContent}>
+                <View style={styles.urgentHeader}>
+                  <View style={styles.urgentBadge}>
+                    <Ionicons name="alert-circle" size={14} color={ErrorColors.default} />
+                    <Text style={styles.urgentBadgeText}>
+                      {r.status === 'MISSED' ? 'En retard' : 'Priorité haute'}
+                    </Text>
+                  </View>
+                  <Text style={styles.urgentTime}>
+                    {format(new Date(r.scheduledAt), 'HH:mm')}
                   </Text>
                 </View>
-                <Text style={styles.urgentTime}>
-                  {format(new Date(r.scheduledAt), 'HH:mm')}
-                </Text>
+                <Text style={styles.urgentTitle} numberOfLines={1}>{r.title}</Text>
+                {r.notes ? (
+                  <Text style={styles.urgentSubtitle} numberOfLines={2}>{r.notes}</Text>
+                ) : null}
               </View>
-              <Text style={styles.urgentTitle} numberOfLines={1}>{r.title}</Text>
-              {r.notes ? (
-                <Text style={styles.urgentSubtitle} numberOfLines={2}>{r.notes}</Text>
-              ) : null}
-            </TouchableOpacity>
+            </GlowCard>
           ))
         ) : (
-          <View style={styles.zenCard}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={Tertiary.default} />
-            <Text style={styles.zenText}>Tout est sous contrôle pour le moment.</Text>
-          </View>
+          <GlowCard tone="success" intensity="soft">
+            <View style={styles.zenRow}>
+              <Ionicons name="shield-checkmark-outline" size={20} color={Tertiary.default} />
+              <Text style={styles.zenText}>Tout est sous contrôle pour le moment.</Text>
+            </View>
+          </GlowCard>
         )}
       </View>
 
@@ -364,48 +369,52 @@ export default function TodayScreen() {
           </View>
 
           {nextEvent ? (
-            <TouchableOpacity
-              style={styles.nextCard}
+            <GlowCard
+              tone="info"
               onPress={() => router.push(`/events/${nextEvent.id}`)}
-              activeOpacity={0.8}
+              accessibilityLabel={nextEvent.title}
             >
-              <View style={styles.nextTimeCol}>
-                <Text style={styles.nextTimeText}>
-                  {format(new Date(nextEvent.startAt), 'HH:mm')}
-                </Text>
-                <Text style={styles.nextTypeLabel}>Agenda</Text>
+              <View style={styles.nextRow}>
+                <View style={styles.nextTimeCol}>
+                  <Text style={styles.nextTimeText}>
+                    {format(new Date(nextEvent.startAt), 'HH:mm')}
+                  </Text>
+                  <Text style={styles.nextTypeLabel}>Agenda</Text>
+                </View>
+                <View style={styles.nextDivider} />
+                <View style={styles.nextBody}>
+                  <Text style={styles.nextTitle} numberOfLines={1}>{nextEvent.title}</Text>
+                  {nextEvent.location && (
+                    <View style={styles.inlineMeta}>
+                      <Ionicons name="location-outline" size={13} color={OnSurface.variant} />
+                      <Text style={styles.nextSubtitle}>{nextEvent.location}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={styles.nextDivider} />
-              <View style={styles.nextBody}>
-                <Text style={styles.nextTitle} numberOfLines={1}>{nextEvent.title}</Text>
-                {nextEvent.location && (
-                  <View style={styles.inlineMeta}>
-                    <Ionicons name="location-outline" size={13} color={OnSurface.variant} />
-                    <Text style={styles.nextSubtitle}>{nextEvent.location}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
+            </GlowCard>
           ) : nextReminder ? (
-            <TouchableOpacity
-              style={styles.nextCard}
+            <GlowCard
+              tone="info"
               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: nextReminder.id } })}
-              activeOpacity={0.8}
+              accessibilityLabel={nextReminder.title}
             >
-              <View style={styles.nextTimeCol}>
-                <Text style={styles.nextTimeText}>
-                  {format(new Date(nextReminder.scheduledAt), 'HH:mm')}
-                </Text>
-                <Text style={styles.nextTypeLabel}>Rappel</Text>
+              <View style={styles.nextRow}>
+                <View style={styles.nextTimeCol}>
+                  <Text style={styles.nextTimeText}>
+                    {format(new Date(nextReminder.scheduledAt), 'HH:mm')}
+                  </Text>
+                  <Text style={styles.nextTypeLabel}>Rappel</Text>
+                </View>
+                <View style={styles.nextDivider} />
+                <View style={styles.nextBody}>
+                  <Text style={styles.nextTitle} numberOfLines={1}>{nextReminder.title}</Text>
+                  {nextReminder.notes && (
+                    <Text style={styles.nextSubtitle} numberOfLines={1}>{nextReminder.notes}</Text>
+                  )}
+                </View>
               </View>
-              <View style={styles.nextDivider} />
-              <View style={styles.nextBody}>
-                <Text style={styles.nextTitle} numberOfLines={1}>{nextReminder.title}</Text>
-                {nextReminder.notes && (
-                  <Text style={styles.nextSubtitle} numberOfLines={1}>{nextReminder.notes}</Text>
-                )}
-              </View>
-            </TouchableOpacity>
+            </GlowCard>
           ) : null}
         </View>
       )}
@@ -490,12 +499,14 @@ export default function TodayScreen() {
               <TaskCard key={t.id} task={t} onComplete={() => handleCompleteTask(t)} />
             ))
           ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Aucune tâche planifiée aujourd'hui</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/tasks')}>
-                <Text style={styles.emptyAction}>Ouvrir l'Inbox</Text>
-              </TouchableOpacity>
-            </View>
+            <GlowCard tone="neutral">
+              <View style={styles.emptyContent}>
+                <Text style={styles.emptyText}>Aucune tâche planifiée aujourd'hui</Text>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/tasks')}>
+                  <Text style={styles.emptyAction}>Ouvrir l'Inbox</Text>
+                </TouchableOpacity>
+              </View>
+            </GlowCard>
           )}
         </View>
 
@@ -510,45 +521,47 @@ export default function TodayScreen() {
 
           {habits.length > 0 ? (
             habits.map(item => (
-              <TouchableOpacity
+              <GlowCard
                 key={item.habit.id}
-                style={[
-                  styles.habitCard,
-                  item.completedToday && styles.habitCardCompleted,
-                ]}
+                tone={item.completedToday ? 'success' : 'neutral'}
+                intensity="soft"
                 onPress={() => handleToggleHabit(item)}
-                activeOpacity={0.8}
+                accessibilityLabel={`${item.habit.title}${item.completedToday ? ', complétée aujourd’hui' : ''}`}
               >
-                <Ionicons
-                  name={item.completedToday ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={22}
-                  color={item.completedToday ? Success.default : OnSurface.variant}
-                />
-                <View style={styles.cardBody}>
-                  <Text
-                    style={[
-                      styles.cardTitle,
-                      item.completedToday && styles.cardTitleStrikethrough,
-                    ]}
-                  >
-                    {item.habit.title}
-                  </Text>
-                  <View style={styles.streakRow}>
-                    <Ionicons name="flame" size={13} color="#F59E0B" />
-                    <Text style={styles.cardSubtitle}>
-                      {item.currentStreak} jour{item.currentStreak > 1 ? 's' : ''} consécutif{item.currentStreak > 1 ? 's' : ''}
+                <View style={styles.habitRow}>
+                  <Ionicons
+                    name={item.completedToday ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={22}
+                    color={item.completedToday ? Success.default : OnSurface.variant}
+                  />
+                  <View style={styles.cardBody}>
+                    <Text
+                      style={[
+                        styles.cardTitle,
+                        item.completedToday && styles.cardTitleStrikethrough,
+                      ]}
+                    >
+                      {item.habit.title}
                     </Text>
+                    <View style={styles.streakRow}>
+                      <Ionicons name="flame" size={13} color="#F59E0B" />
+                      <Text style={styles.cardSubtitle}>
+                        {item.currentStreak} jour{item.currentStreak > 1 ? 's' : ''} consécutif{item.currentStreak > 1 ? 's' : ''}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </GlowCard>
             ))
           ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Aucune habitude active pour le moment</Text>
-              <TouchableOpacity onPress={() => router.push('/habits/new')}>
-                <Text style={styles.emptyAction}>+ Créer une habitude</Text>
-              </TouchableOpacity>
-            </View>
+            <GlowCard tone="neutral">
+              <View style={styles.emptyContent}>
+                <Text style={styles.emptyText}>Aucune habitude active pour le moment</Text>
+                <TouchableOpacity onPress={() => router.push('/habits/new')}>
+                  <Text style={styles.emptyAction}>+ Créer une habitude</Text>
+                </TouchableOpacity>
+              </View>
+            </GlowCard>
           )}
         </View>
 
@@ -563,38 +576,42 @@ export default function TodayScreen() {
 
           {goals.length > 0 ? (
             goals.map(item => (
-              <TouchableOpacity
+              <GlowCard
                 key={item.goal.id}
-                style={styles.goalRowCard}
+                tone="neutral"
                 onPress={() => router.push({ pathname: '/goals/[id]', params: { id: item.goal.id } })}
-                activeOpacity={0.8}
+                accessibilityLabel={item.goal.title}
               >
-                <View style={styles.goalHeaderRow}>
-                  <Text style={styles.goalCardTitle} numberOfLines={1}>{item.goal.title}</Text>
-                  <Text style={styles.goalCardPercent}>
-                    {item.progress !== null ? `${item.progress}%` : '0%'}
-                  </Text>
+                <View style={styles.goalContent}>
+                  <View style={styles.goalHeaderRow}>
+                    <Text style={styles.goalCardTitle} numberOfLines={1}>{item.goal.title}</Text>
+                    <Text style={styles.goalCardPercent}>
+                      {item.progress !== null ? `${item.progress}%` : '0%'}
+                    </Text>
+                  </View>
+                  <View style={styles.progressBarTrack}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${item.progress ?? 0}%`,
+                          backgroundColor: '#6DD58C',
+                        },
+                      ]}
+                    />
+                  </View>
                 </View>
-                <View style={styles.progressBarTrack}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${item.progress ?? 0}%`,
-                        backgroundColor: '#6DD58C',
-                      },
-                    ]}
-                  />
-                </View>
-              </TouchableOpacity>
+              </GlowCard>
             ))
           ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Aucun objectif défini</Text>
-              <TouchableOpacity onPress={() => router.push('/goals/new')}>
-                <Text style={styles.emptyAction}>+ Définir un objectif</Text>
-              </TouchableOpacity>
-            </View>
+            <GlowCard tone="neutral">
+              <View style={styles.emptyContent}>
+                <Text style={styles.emptyText}>Aucun objectif défini</Text>
+                <TouchableOpacity onPress={() => router.push('/goals/new')}>
+                  <Text style={styles.emptyAction}>+ Définir un objectif</Text>
+                </TouchableOpacity>
+              </View>
+            </GlowCard>
           )}
         </View>
       </View>

@@ -104,14 +104,8 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  urgentCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: ErrorColors.default,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // urgentCard -> GlowCard tone="urgent" ; urgentContent reprend le layout interne.
+  urgentContent: {
     gap: Spacing.xs,
   },
   urgentHeader: {
@@ -142,28 +136,20 @@ export const styles = StyleSheet.create({
     ...Typography.bodySmall,
     color: OnSurface.variant,
   },
-  zenCard: {
+  // zenCard -> GlowCard tone="success" intensity="soft" ; zenRow = layout interne.
+  zenRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
     gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   zenText: {
     ...Typography.bodyMedium,
     color: OnSurface.variant,
   },
-  nextCard: {
+  // nextCard -> GlowCard tone="info" ; nextRow = layout interne.
+  nextRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.md,
   },
   nextTimeCol: {
@@ -318,14 +304,11 @@ export const styles = StyleSheet.create({
     ...Typography.labelMedium,
     color: Primary.default,
   },
-  taskCard: {
+  // taskCard -> GlowCard tone="neutral" (pas de priorite affichee ici) ;
+  // taskRow = layout interne.
+  taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.md,
   },
   checkBtn: {
@@ -334,18 +317,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  habitCard: {
+  // habitCard/habitCardCompleted -> GlowCard tone="neutral"|"success" (soft).
+  // habitRow = layout interne.
+  habitRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.md,
-  },
-  habitCardCompleted: {
-    borderColor: Success.default + '40',
   },
   cardBody: {
     flex: 1,
@@ -373,12 +350,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // emptyCard -> GlowCard tone="neutral" ; emptyContent = layout interne.
+  emptyContent: {
     alignItems: 'center',
     gap: 4,
   },
@@ -390,12 +363,8 @@ export const styles = StyleSheet.create({
     ...Typography.labelSmall,
     color: Primary.default,
   },
-  goalRowCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // goalRowCard -> GlowCard tone="neutral" ; goalContent = layout interne.
+  goalContent: {
     gap: Spacing.xs,
     marginBottom: Spacing.xs,
   },
