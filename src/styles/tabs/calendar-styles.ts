@@ -135,16 +135,12 @@ export const styles = StyleSheet.create({
     color: OnSurface.primary,
     fontWeight: '600',
   },
-  eventCard: {
+  // eventCard / reminderCard / taskCard : remplacees par <GlowCard tone=...>.
+  // itemRow reprend l'agencement interne (icone/heure + contenu + chevron),
+  // le fond/la bordure/la lueur sont desormais geres par GlowCard.
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    borderLeftWidth: 4,
-    borderLeftColor: Primary.default,
     gap: Spacing.md,
   },
   eventTimeCol: {
@@ -201,18 +197,6 @@ export const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
-  reminderCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-    gap: Spacing.md,
-  },
   reminderIconCircle: {
     width: 32,
     height: 32,
@@ -220,18 +204,6 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(245, 158, 11, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  taskCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    borderLeftWidth: 4,
-    borderLeftColor: Tertiary.default,
-    gap: Spacing.md,
   },
   taskIconCircle: {
     width: 32,

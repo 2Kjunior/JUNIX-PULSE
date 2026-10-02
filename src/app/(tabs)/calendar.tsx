@@ -43,6 +43,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -221,12 +222,13 @@ export default function CalendarScreen() {
                   </Text>
                 </View>
                 {events.map(e => (
-                  <TouchableOpacity
+                  <GlowCard
                     key={e.id}
-                    style={styles.eventCard}
+                    tone="primary"
                     onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
-                    activeOpacity={0.7}
+                    accessibilityLabel={e.title}
                   >
+                  <View style={styles.itemRow}>
                     <View style={styles.eventTimeCol}>
                       <Text style={styles.eventTimeText}>
                         {format(new Date(e.startAt), 'HH:mm')}
@@ -266,7 +268,8 @@ export default function CalendarScreen() {
                         {e.type === 'BUSY' ? 'Occupé' : 'Libre'}
                       </Text>
                     </View>
-                  </TouchableOpacity>
+                  </View>
+                  </GlowCard>
                 ))}
               </View>
             )}
@@ -281,12 +284,13 @@ export default function CalendarScreen() {
                   </Text>
                 </View>
                 {reminders.map(r => (
-                  <TouchableOpacity
+                  <GlowCard
                     key={r.id}
-                    style={styles.reminderCard}
+                    tone="attention"
                     onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
-                    activeOpacity={0.7}
+                    accessibilityLabel={r.title}
                   >
+                  <View style={styles.itemRow}>
                     <View style={styles.reminderIconCircle}>
                       <Ionicons name="notifications" size={16} color="#F59E0B" />
                     </View>
@@ -297,7 +301,8 @@ export default function CalendarScreen() {
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-                  </TouchableOpacity>
+                  </View>
+                  </GlowCard>
                 ))}
               </View>
             )}
@@ -312,12 +317,16 @@ export default function CalendarScreen() {
                   </Text>
                 </View>
                 {tasks.map(t => (
-                  <TouchableOpacity
+                  // tone="neutral" ici : aucune priorité n'est affichée dans cette
+                  // sous-liste du calendrier (contrairement à l'écran Tâches), donc
+                  // pas de couleur sémantique sans chip/libellé visible (règle a11y).
+                  <GlowCard
                     key={t.id}
-                    style={styles.taskCard}
+                    tone="neutral"
                     onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}
-                    activeOpacity={0.7}
+                    accessibilityLabel={t.title}
                   >
+                  <View style={styles.itemRow}>
                     <View style={styles.taskIconCircle}>
                       <Ionicons name="checkbox-outline" size={16} color={Tertiary.default} />
                     </View>
@@ -331,7 +340,8 @@ export default function CalendarScreen() {
                       )}
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-                  </TouchableOpacity>
+                  </View>
+                  </GlowCard>
                 ))}
               </View>
             )}
