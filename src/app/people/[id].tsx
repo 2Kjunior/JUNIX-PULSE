@@ -39,7 +39,7 @@ import {
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
-import { styles } from './person-detail-styles';
+import { styles } from '@/styles/people/person-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 

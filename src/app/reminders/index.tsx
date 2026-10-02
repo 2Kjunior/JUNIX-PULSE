@@ -43,7 +43,7 @@ import {
   Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
-import { styles } from './reminders-styles';
+import { styles } from '@/styles/reminders/reminders-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type FilterTab = 'ALL' | 'TONIGHT' | 'TOMORROW' | 'MISSED';

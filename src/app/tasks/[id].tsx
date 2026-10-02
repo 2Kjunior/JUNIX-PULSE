@@ -40,7 +40,7 @@ import {
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
-import { styles } from './task-detail-styles';
+import { styles } from '@/styles/tasks/task-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 

@@ -42,7 +42,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
-import { styles } from './tasks-styles';
+import { styles } from '@/styles/tabs/tasks-styles';
 
 type FilterTab = 'inbox' | 'today' | 'all';
 type ScreenState = 'loading' | 'content' | 'error';

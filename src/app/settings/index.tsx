@@ -40,7 +40,7 @@ import { seedDatabase, clearAllData, isSeedAlreadyLoaded } from '@/database/seed
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
-import { styles } from './settings-styles';
+import { styles } from '@/styles/settings/settings-styles';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();

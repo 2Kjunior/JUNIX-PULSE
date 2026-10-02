@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Task } from '@/domain/entities';
 import { OnSurface, Success } from '@/constants/theme';
-import { styles } from '@/app/(tabs)/today-styles';
+import { styles } from '@/styles/tabs/today-styles';
 
 interface TaskCardProps {
   task: Task;

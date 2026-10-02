@@ -39,7 +39,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
-import { styles } from './people-styles';
+import { styles } from '@/styles/tabs/people-styles';
 
 type FilterTab = 'all' | 'forgotten';
 type ScreenState = 'loading' | 'content' | 'error';

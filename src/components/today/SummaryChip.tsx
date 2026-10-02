@@ -5,7 +5,7 @@
 
 import { Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { styles } from '@/app/(tabs)/today-styles';
+import { styles } from '@/styles/tabs/today-styles';
 
 interface SummaryChipProps {
   count: number;

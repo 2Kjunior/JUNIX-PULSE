@@ -50,7 +50,7 @@ import {
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { SummaryChip } from '@/components/today/SummaryChip';
 import { TaskCard } from '@/components/today/TaskCard';
-import { styles } from './today-styles';
+import { styles } from '@/styles/tabs/today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 

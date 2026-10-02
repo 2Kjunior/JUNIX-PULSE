@@ -42,7 +42,7 @@ import {
   Priority as PriorityColors,
   Gradient,
 } from '@/constants/theme';
-import { styles } from './new-reminder-styles';
+import { styles } from '@/styles/reminders/new-reminder-styles';
 
 type PriorityKey = Reminder['priority'];
 type ActionType = Reminder['actionType'];

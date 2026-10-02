@@ -37,7 +37,7 @@ import {
   Radius,
   Typography,
 } from '@/constants/theme';
-import { styles } from './search-styles';
+import { styles } from '@/styles/search-styles';
 
 type SearchFilter = 'ALL' | 'REMINDERS' | 'TASKS' | 'PERSONS' | 'EVENTS' | 'GOALS';
 

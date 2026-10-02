@@ -13,15 +13,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Platform,
   Linking,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { PersonRepository } from '@/repositories/person-repository';
@@ -42,14 +40,14 @@ import {
   Outline,
   Error as ErrorColors,
   Success,
-  Spacing,
   Radius,
   Typography,
   Priority as PriorityColors,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
-import { SNOOZE_OPTIONS_MINUTES } from '@/domain/rules/reminder-rules';
-import { styles } from './reminder-detail-styles';
+import { ReminderBottomBar } from '@/components/reminders/ReminderBottomBar';
+import { ReminderSnoozeSheet } from '@/components/reminders/ReminderSnoozeSheet';
+import { styles } from '@/styles/reminders/reminder-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type SnoozeSheet = 'hidden' | 'picker';
@@ -339,141 +337,28 @@ export default function ReminderDetailScreen() {
       </ScrollView>
 
       {/* ─── Barre d'actions fixes en bas (R-06) ─────────────────────────────── */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + Spacing.md }]}>
-        <TouchableOpacity
-          style={[styles.bottomBtn, styles.snoozeBtn]}
-          onPress={() => setShowSnoozeSheet(true)}
-          accessibilityLabel="Reporter ce rappel"
-        >
-          <Ionicons name="alarm-outline" size={18} color={Tertiary.default} />
-          <Text style={styles.snoozeBtnText}>Reporter</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.bottomBtn, styles.completeBtn]}
-          onPress={handleComplete}
-          accessibilityLabel="Marquer le rappel comme terminé"
-        >
-          <Ionicons name="checkmark-circle-outline" size={18} color={Success.default} />
-          <Text style={styles.completeBtnText}>Terminer</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.bottomBtn, styles.deleteBtn]}
-          onPress={handleDelete}
-          accessibilityLabel="Supprimer ce rappel"
-        >
-          <Ionicons name="trash-outline" size={18} color={ErrorColors.default} />
-          <Text style={styles.deleteBtnText}>Supprimer</Text>
-        </TouchableOpacity>
-      </View>
+      <ReminderBottomBar
+        insetsBottom={insets.bottom}
+        onSnooze={() => setShowSnoozeSheet(true)}
+        onComplete={handleComplete}
+        onDelete={handleDelete}
+      />
 
       {/* ─── Bottom Sheet de Snooze (R-06 : 6 options) ───────────────────────── */}
       {showSnoozeSheet && (
-        <View style={styles.snoozeOverlay}>
-          <TouchableOpacity
-            style={styles.snoozeBackdrop}
-            onPress={() => {
-              setShowSnoozeSheet(false);
-              setSnoozeSheet('hidden');
-            }}
-          />
-          <View style={[styles.snoozeSheet, { paddingBottom: insets.bottom + Spacing.lg }]}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.snoozeTitle}>Reporter ce rappel</Text>
-
-            {/* 4 durées rapides en grille de chips (R-06) */}
-            <Text style={styles.snoozeSubtitle}>Raccourcis rapides</Text>
-            <View style={styles.snoozeGrid}>
-              {SNOOZE_OPTIONS_MINUTES.map(minutes => (
-                <TouchableOpacity
-                  key={minutes}
-                  style={styles.snoozeTile}
-                  onPress={() => handleSnooze({ kind: 'quick', minutes })}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="timer-outline" size={16} color={Tertiary.default} />
-                  <Text style={styles.snoozeTileText}>
-                    {minutes < 60 ? `${minutes} min` : `${minutes / 60}h`}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* 2 options pleine largeur (R-06) */}
-            <View style={styles.snoozeFullOptions}>
-              {/* Demain même heure */}
-              <TouchableOpacity
-                style={styles.snoozeFullOption}
-                onPress={() => handleSnooze({ kind: 'tomorrow' })}
-                activeOpacity={0.7}
-              >
-                <View style={styles.snoozeOptionLeft}>
-                  <Ionicons name="sunny-outline" size={18} color="#F59E0B" />
-                  <View>
-                    <Text style={styles.snoozeOptionLabel}>Demain même heure</Text>
-                    <Text style={styles.snoozeOptionHint}>
-                      {format(addDays(new Date(reminder.scheduledAt), 1), "EEEE d MMM 'à' HH:mm", {
-                        locale: fr,
-                      })}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-              </TouchableOpacity>
-
-              {/* Date personnalisée */}
-              <TouchableOpacity
-                style={styles.snoozeFullOption}
-                onPress={() => {
-                  setSnoozeSheet('picker');
-                  setCustomDate(new Date());
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.snoozeOptionLeft}>
-                  <Ionicons name="calendar-outline" size={18} color={Primary.default} />
-                  <Text style={styles.snoozeOptionLabel}>Choisir une date & heure</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-              </TouchableOpacity>
-            </View>
-
-            {/* DateTimePicker sélecteur */}
-            {snoozeSheet === 'picker' && (
-              <DateTimePicker
-                value={customDate}
-                mode="datetime"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                minimumDate={new Date()}
-                onChange={(_event, date) => {
-                  if (!date) {
-                    setSnoozeSheet('hidden');
-                    return;
-                  }
-                  setCustomDate(date);
-                  if (Platform.OS === 'android') {
-                    setSnoozeSheet('hidden');
-                    handleSnooze({ kind: 'custom', until: date });
-                  }
-                }}
-              />
-            )}
-
-            {/* Bouton de confirmation sur iOS */}
-            {snoozeSheet === 'picker' && Platform.OS === 'ios' && (
-              <TouchableOpacity
-                style={styles.snoozeConfirmBtn}
-                onPress={() => {
-                  setSnoozeSheet('hidden');
-                  handleSnooze({ kind: 'custom', until: customDate });
-                }}
-              >
-                <Text style={styles.snoozeConfirmLabel}>Confirmer la date</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+        <ReminderSnoozeSheet
+          scheduledAt={reminder.scheduledAt}
+          insetsBottom={insets.bottom}
+          snoozeSheet={snoozeSheet}
+          customDate={customDate}
+          onSnoozeSheetChange={setSnoozeSheet}
+          onCustomDateChange={setCustomDate}
+          onClose={() => {
+            setShowSnoozeSheet(false);
+            setSnoozeSheet('hidden');
+          }}
+          onSnooze={handleSnooze}
+        />
       )}
     </View>
   );

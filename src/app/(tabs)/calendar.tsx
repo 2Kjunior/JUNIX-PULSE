@@ -43,7 +43,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
-import { styles } from './calendar-styles';
+import { styles } from '@/styles/tabs/calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
