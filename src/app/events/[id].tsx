@@ -34,6 +34,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -143,7 +144,8 @@ export default function EventDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Carte principale */}
-        <View style={styles.card}>
+        <GlowCard tone="primary" size="hero">
+        <View style={styles.cardInner}>
           <View style={styles.cardHeader}>
             <Text style={styles.eventTitle}>{event.title}</Text>
             <View
@@ -215,6 +217,7 @@ export default function EventDetailScreen() {
             </View>
           )}
         </View>
+        </GlowCard>
 
         {/* Personnes associées */}
         {associatedPersons.length > 0 && (
@@ -270,10 +273,8 @@ const styles = StyleSheet.create({
   headerBtn: { padding: Spacing.xs },
   headerTitle: { ...Typography.titleMedium, color: OnSurface.primary, flex: 1, textAlign: 'center' },
   content: { padding: Spacing.lg, gap: Spacing.xl },
-  card: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // card -> GlowCard tone="primary" size="hero" ; cardInner = layout interne.
+  cardInner: {
     gap: Spacing.md,
   },
   cardHeader: {
