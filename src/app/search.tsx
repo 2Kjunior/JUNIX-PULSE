@@ -37,6 +37,7 @@ import {
   Radius,
   Typography,
 } from '@/constants/theme';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/search-styles';
 
 type SearchFilter = 'ALL' | 'REMINDERS' | 'TASKS' | 'PERSONS' | 'EVENTS' | 'GOALS';
@@ -367,13 +368,15 @@ export default function SearchScreen() {
           ) : null}
 
           {/* Guide de recherche transversal */}
-          <View style={styles.infoCard}>
-            <Ionicons name="sparkles-outline" size={24} color={Primary.default} />
-            <Text style={styles.infoCardTitle}>Recherche unifiée locale</Text>
-            <Text style={styles.infoCardText}>
-              Tapez un mot-clé pour chercher simultanément dans vos rappels, vos tâches quotidiennes, vos contacts de confiance, vos rendez-vous et vos objectifs.
-            </Text>
-          </View>
+          <GlowCard tone="neutral">
+            <View style={styles.infoCardInner}>
+              <Ionicons name="sparkles-outline" size={24} color={Primary.default} />
+              <Text style={styles.infoCardTitle}>Recherche unifiée locale</Text>
+              <Text style={styles.infoCardText}>
+                Tapez un mot-clé pour chercher simultanément dans vos rappels, vos tâches quotidiennes, vos contacts de confiance, vos rendez-vous et vos objectifs.
+              </Text>
+            </View>
+          </GlowCard>
         </ScrollView>
       ) : filteredResults.length > 0 ? (
         /* Liste des résultats trouvés */
@@ -383,11 +386,19 @@ export default function SearchScreen() {
           contentContainerStyle={styles.resultsList}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.resultCard}
+            // Ton derive du type de resultat (le typeLabel reste toujours visible
+            // a cote de la lueur - jamais de couleur seule) : rappel->attention,
+            // evenement->primary, le reste (tache/personne/objectif)->neutral
+            // (pas de contexte de priorite/relance dans un resultat de recherche).
+            <GlowCard
+              tone={
+                item.type === 'REMINDER' ? 'attention' : item.type === 'EVENT' ? 'primary' : 'neutral'
+              }
+              intensity="soft"
               onPress={() => handleSelectResult(item)}
-              activeOpacity={0.7}
+              accessibilityLabel={`${item.title}, ${item.typeLabel}`}
             >
+            <View style={styles.resultRow}>
               <View style={[styles.typeIconContainer, { backgroundColor: `${item.color}1F` }]}>
                 <Ionicons name={item.icon} size={20} color={item.color} />
               </View>
@@ -403,7 +414,8 @@ export default function SearchScreen() {
               </View>
 
               <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
-            </TouchableOpacity>
+            </View>
+            </GlowCard>
           )}
         />
       ) : (

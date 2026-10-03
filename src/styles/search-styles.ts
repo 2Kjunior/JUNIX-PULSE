@@ -132,14 +132,9 @@ export const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: OnSurface.primary,
   },
-  infoCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // infoCard -> GlowCard tone="neutral" ; infoCardInner = layout interne.
+  infoCardInner: {
     alignItems: 'center',
-    marginTop: Spacing.lg,
   },
   infoCardTitle: {
     ...Typography.titleMedium,
@@ -157,14 +152,10 @@ export const styles = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.sm,
   },
-  resultCard: {
+  // resultCard -> GlowCard tone selon item.type ; resultRow = layout interne.
+  resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.md,
   },
   typeIconContainer: {
