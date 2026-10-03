@@ -102,17 +102,14 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
   },
-  taskCard: {
+  // taskCard/taskCardCompleted -> GlowCard tone=urgent|attention|info|neutral
+  // (selon la priorite ; toujours neutral si terminee). taskRow = layout interne.
+  taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.sm,
   },
-  taskCardCompleted: {
+  taskRowCompleted: {
     opacity: 0.65,
   },
   checkBtn: {

@@ -40,8 +40,10 @@ import {
   Priority as PriorityColors,
   Gradient,
   TAB_BAR_TOTAL_HEIGHT,
+  type GlowTone,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/tasks-styles';
 
 type FilterTab = 'inbox' | 'today' | 'all';
@@ -274,12 +276,27 @@ function TaskCardR08({
   const totalSubs = subtasks.length;
   const priorityColor = PriorityColors[task.priority] ?? Primary.default;
 
+  // La lueur suit la priorite (jamais la decoration) et disparait toujours
+  // sur une tache terminee, meme si elle etait urgente/haute (regle du spec :
+  // "Taches terminees : neutral, texte attenue, jamais de lueur").
+  const glowTone: GlowTone = isCompleted
+    ? 'neutral'
+    : task.priority === 'URGENT'
+      ? 'urgent'
+      : task.priority === 'HIGH'
+        ? 'attention'
+        : task.priority === 'NORMAL'
+          ? 'info'
+          : 'neutral';
+
   return (
-    <TouchableOpacity
-      style={[styles.taskCard, isCompleted && styles.taskCardCompleted]}
+    <GlowCard
+      tone={glowTone}
+      intensity="soft"
       onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
-      activeOpacity={0.8}
+      accessibilityLabel={`${task.title}${isCompleted ? ', terminée' : ''}`}
     >
+    <View style={[styles.taskRow, isCompleted && styles.taskRowCompleted]}>
       {/* Case à cocher tactile */}
       <TouchableOpacity
         style={styles.checkBtn}
@@ -338,12 +355,14 @@ function TaskCardR08({
             </View>
           ) : null}
 
-          {/* Priorité haute/urgente */}
-          {task.priority === 'URGENT' || task.priority === 'HIGH' ? (
+          {/* Priorité : chip + libellé toujours visibles pour Urgent/Haute/Normale
+              (jamais la couleur seule — règle a11y). Basse n'a pas de chip :
+              elle reste neutre, sans lueur. */}
+          {task.priority !== 'LOW' ? (
             <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
               <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
               <Text style={[styles.metaPillText, { color: priorityColor }]}>
-                {task.priority === 'URGENT' ? 'Urgent' : 'Haute'}
+                {task.priority === 'URGENT' ? 'Urgent' : task.priority === 'HIGH' ? 'Haute' : 'Normale'}
               </Text>
             </View>
           ) : null}
@@ -351,6 +370,7 @@ function TaskCardR08({
       </View>
 
       <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-    </TouchableOpacity>
+    </View>
+    </GlowCard>
   );
 }
