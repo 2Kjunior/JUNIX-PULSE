@@ -34,6 +34,7 @@ import {
   Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 
 const COLOR_PRESETS: Record<string, string> = {
   primary: Primary.default,
@@ -138,20 +139,24 @@ export default function HabitsListScreen() {
       >
         {/* Résumé rapide */}
         <View style={styles.summaryBar}>
-          <View style={styles.summaryCard}>
-            <Ionicons name="flame" size={24} color="#FF9800" />
-            <Text style={styles.summaryVal}>
-              {statsList.reduce((acc, curr) => acc + curr.currentStreak, 0)}
-            </Text>
-            <Text style={styles.summarySub}>Jours cumulés</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Ionicons name="checkmark-circle" size={24} color={Primary.default} />
-            <Text style={styles.summaryVal}>
-              {activeHabits.filter(s => s.completedToday).length} / {activeHabits.length}
-            </Text>
-            <Text style={styles.summarySub}>Validées aujourd'hui</Text>
-          </View>
+          <GlowCard tone="neutral" style={{ flex: 1 }}>
+            <View style={styles.summaryCardInner}>
+              <Ionicons name="flame" size={24} color="#FF9800" />
+              <Text style={styles.summaryVal}>
+                {statsList.reduce((acc, curr) => acc + curr.currentStreak, 0)}
+              </Text>
+              <Text style={styles.summarySub}>Jours cumulés</Text>
+            </View>
+          </GlowCard>
+          <GlowCard tone="neutral" style={{ flex: 1 }}>
+            <View style={styles.summaryCardInner}>
+              <Ionicons name="checkmark-circle" size={24} color={Primary.default} />
+              <Text style={styles.summaryVal}>
+                {activeHabits.filter(s => s.completedToday).length} / {activeHabits.length}
+              </Text>
+              <Text style={styles.summarySub}>Validées aujourd'hui</Text>
+            </View>
+          </GlowCard>
         </View>
 
         {/* Section Habitudes Actives */}
@@ -160,30 +165,34 @@ export default function HabitsListScreen() {
         </Text>
 
         {activeHabits.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="repeat-outline" size={32} color={Primary.default} />
+          <GlowCard tone="neutral">
+            <View style={styles.emptyContent}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="repeat-outline" size={32} color={Primary.default} />
+              </View>
+              <Text style={styles.emptyTitle}>Aucune habitude active</Text>
+              <Text style={styles.emptyDescription}>
+                Créez des habitudes quotidiennes pour suivre vos routines et séries.
+              </Text>
             </View>
-            <Text style={styles.emptyTitle}>Aucune habitude active</Text>
-            <Text style={styles.emptyDescription}>
-              Créez des habitudes quotidiennes pour suivre vos routines et séries.
-            </Text>
-          </View>
+          </GlowCard>
         ) : (
           activeHabits.map(item => {
             const habitColor = item.habit.color
               ? (COLOR_PRESETS[item.habit.color] || item.habit.color)
               : Tertiary.default;
             return (
-              <TouchableOpacity
+              // tone="success" (soft) une fois cochée, sinon neutral — règle du spec.
+              // La couleur personnalisée de l'habitude (habitColor) reste sur le
+              // cercle de coche uniquement, pas sur la lueur de la carte.
+              <GlowCard
                 key={item.habit.id}
-                style={[
-                  styles.habitCard,
-                  item.completedToday && { borderColor: habitColor + '80', borderWidth: 1.5 },
-                ]}
+                tone={item.completedToday ? 'success' : 'neutral'}
+                intensity="soft"
                 onPress={() => router.push(`/habits/${item.habit.id}`)}
-                activeOpacity={0.8}
+                accessibilityLabel={`${item.habit.title}${item.completedToday ? ', validée aujourd’hui' : ''}`}
               >
+              <View style={styles.habitRow}>
                 <TouchableOpacity
                   style={[
                     styles.checkCircle,
@@ -217,7 +226,8 @@ export default function HabitsListScreen() {
                   <Ionicons name="flame" size={18} color="#FF9800" />
                   <Text style={styles.streakText}>{item.currentStreak} j</Text>
                 </View>
-              </TouchableOpacity>
+              </View>
+              </GlowCard>
             );
           })
         )}
@@ -229,22 +239,24 @@ export default function HabitsListScreen() {
               En pause ({pausedHabits.length})
             </Text>
             {pausedHabits.map(item => (
-              <View key={item.habit.id} style={styles.pausedCard}>
-                <View style={styles.habitInfo}>
-                  <Text style={[styles.habitTitle, { color: OnSurface.variant }]}>
-                    {item.habit.title}
-                  </Text>
-                  <Text style={styles.pausedSub}>Streak conservé ({item.currentStreak} j)</Text>
+              <GlowCard key={item.habit.id} tone="neutral">
+                <View style={styles.pausedRow}>
+                  <View style={styles.habitInfo}>
+                    <Text style={[styles.habitTitle, { color: OnSurface.variant }]}>
+                      {item.habit.title}
+                    </Text>
+                    <Text style={styles.pausedSub}>Streak conservé ({item.currentStreak} j)</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.resumeBtn}
+                    onPress={() => handleResume(item.habit.id, item.habit.title)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="play" size={16} color={Primary.default} />
+                    <Text style={styles.resumeText}>Reprendre</Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  style={styles.resumeBtn}
-                  onPress={() => handleResume(item.habit.id, item.habit.title)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="play" size={16} color={Primary.default} />
-                  <Text style={styles.resumeText}>Reprendre</Text>
-                </TouchableOpacity>
-              </View>
+              </GlowCard>
             ))}
           </>
         )}
@@ -302,14 +314,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.xl,
   },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // summaryCard -> GlowCard tone="neutral" ; summaryCardInner = layout interne.
+  summaryCardInner: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   summaryVal: {
     ...Typography.headlineMedium,
@@ -328,16 +335,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     fontWeight: '600',
   },
-  emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    padding: Spacing.xl,
+  // emptyCard -> GlowCard tone="neutral" ; emptyContent = layout interne.
+  emptyContent: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    marginTop: Spacing.md,
   },
   emptyIconCircle: {
     width: 60,
@@ -358,15 +360,10 @@ const styles = StyleSheet.create({
     color: OnSurface.variant,
     textAlign: 'center',
   },
-  habitCard: {
+  // habitCard -> GlowCard tone="success"|"neutral" ; habitRow = layout interne.
+  habitRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.md,
   },
   checkCircle: {
@@ -411,15 +408,10 @@ const styles = StyleSheet.create({
     color: OnSurface.primary,
     fontWeight: '700',
   },
-  pausedCard: {
+  // pausedCard -> GlowCard tone="neutral" ; pausedRow = layout interne.
+  pausedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     opacity: 0.8,
   },
   pausedSub: {
