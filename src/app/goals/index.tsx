@@ -32,6 +32,7 @@ import {
   Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 
 export default function GoalsListScreen() {
   const insets = useSafeAreaInsets();
@@ -102,39 +103,50 @@ export default function GoalsListScreen() {
       >
         {/* Résumé */}
         <View style={styles.summaryBar}>
-          <View style={styles.summaryCard}>
-            <Ionicons name="flag" size={24} color={Primary.default} />
-            <Text style={styles.summaryVal}>{activeGoals.length}</Text>
-            <Text style={styles.summarySub}>Objectifs actifs</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Ionicons name="trophy" size={24} color="#6DD58C" />
-            <Text style={styles.summaryVal}>{completedGoals.length}</Text>
-            <Text style={styles.summarySub}>Atteints</Text>
-          </View>
+          <GlowCard tone="neutral" style={{ flex: 1 }}>
+            <View style={styles.summaryCardInner}>
+              <Ionicons name="flag" size={24} color={Primary.default} />
+              <Text style={styles.summaryVal}>{activeGoals.length}</Text>
+              <Text style={styles.summarySub}>Objectifs actifs</Text>
+            </View>
+          </GlowCard>
+          <GlowCard tone="neutral" style={{ flex: 1 }}>
+            <View style={styles.summaryCardInner}>
+              <Ionicons name="trophy" size={24} color="#6DD58C" />
+              <Text style={styles.summaryVal}>{completedGoals.length}</Text>
+              <Text style={styles.summarySub}>Atteints</Text>
+            </View>
+          </GlowCard>
         </View>
 
         {/* Section En Cours */}
         <Text style={styles.sectionTitle}>En cours ({activeGoals.length})</Text>
 
         {activeGoals.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="flag-outline" size={32} color={Primary.default} />
+          <GlowCard tone="neutral">
+            <View style={styles.emptyContent}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="flag-outline" size={32} color={Primary.default} />
+              </View>
+              <Text style={styles.emptyTitle}>Aucun objectif en cours</Text>
+              <Text style={styles.emptyDescription}>
+                Définissez de grands objectifs et associez-y vos tâches quotidiennes pour mesurer votre progression.
+              </Text>
             </View>
-            <Text style={styles.emptyTitle}>Aucun objectif en cours</Text>
-            <Text style={styles.emptyDescription}>
-              Définissez de grands objectifs et associez-y vos tâches quotidiennes pour mesurer votre progression.
-            </Text>
-          </View>
+          </GlowCard>
         ) : (
           activeGoals.map(item => (
-            <TouchableOpacity
+            // tone="urgent" si echu (badge "Echu" visible), sinon "neutral" —
+            // pas de regle explicite du spec pour les objectifs actifs non echus,
+            // choix coherent avec le badge deja affiche (jamais couleur seule).
+            <GlowCard
               key={item.goal.id}
-              style={styles.goalCard}
+              tone={item.isOverdue ? 'urgent' : 'neutral'}
+              intensity="soft"
               onPress={() => router.push(`/goals/${item.goal.id}`)}
-              activeOpacity={0.8}
+              accessibilityLabel={`${item.goal.title}${item.isOverdue ? ', échu' : ''}`}
             >
+            <View style={styles.goalContent}>
               <View style={styles.cardHeader}>
                 <Text style={styles.goalTitle}>{item.goal.title}</Text>
                 {item.isOverdue && (
@@ -186,7 +198,8 @@ export default function GoalsListScreen() {
                   />
                 </View>
               </View>
-            </TouchableOpacity>
+            </View>
+            </GlowCard>
           ))
         )}
 
@@ -197,26 +210,30 @@ export default function GoalsListScreen() {
               Objectifs atteints ({completedGoals.length})
             </Text>
             {completedGoals.map(item => (
-              <TouchableOpacity
+              <GlowCard
                 key={item.goal.id}
-                style={[styles.goalCard, { opacity: 0.85 }]}
+                tone="success"
+                intensity="soft"
+                style={{ opacity: 0.85 }}
                 onPress={() => router.push(`/goals/${item.goal.id}`)}
-                activeOpacity={0.8}
+                accessibilityLabel={`${item.goal.title}, atteint`}
               >
-                <View style={styles.cardHeader}>
-                  <Text style={styles.goalTitle}>{item.goal.title}</Text>
-                  <View style={styles.completedBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#6DD58C" />
-                    <Text style={styles.completedText}>Atteint</Text>
+                <View style={styles.goalContent}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.goalTitle}>{item.goal.title}</Text>
+                    <View style={styles.completedBadge}>
+                      <Ionicons name="checkmark-circle" size={14} color="#6DD58C" />
+                      <Text style={styles.completedText}>Atteint</Text>
+                    </View>
                   </View>
-                </View>
 
-                {item.goal.description ? (
-                  <Text style={styles.goalDesc} numberOfLines={1}>
-                    {item.goal.description}
-                  </Text>
-                ) : null}
-              </TouchableOpacity>
+                  {item.goal.description ? (
+                    <Text style={styles.goalDesc} numberOfLines={1}>
+                      {item.goal.description}
+                    </Text>
+                  ) : null}
+                </View>
+              </GlowCard>
             ))}
           </>
         )}
@@ -274,14 +291,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.xl,
   },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // summaryCard -> GlowCard tone="neutral" ; summaryCardInner = layout interne.
+  summaryCardInner: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   summaryVal: {
     ...Typography.headlineMedium,
@@ -300,16 +312,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     fontWeight: '600',
   },
-  emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    padding: Spacing.xl,
+  // emptyCard -> GlowCard tone="neutral" ; emptyContent = layout interne.
+  emptyContent: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    marginTop: Spacing.md,
   },
   emptyIconCircle: {
     width: 60,
@@ -330,13 +337,8 @@ const styles = StyleSheet.create({
     color: OnSurface.variant,
     textAlign: 'center',
   },
-  goalCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // goalCard -> GlowCard tone="urgent"|"success"|"neutral" ; goalContent = layout interne.
+  goalContent: {
     gap: Spacing.sm,
   },
   cardHeader: {
