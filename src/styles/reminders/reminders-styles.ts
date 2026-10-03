@@ -132,14 +132,10 @@ export const styles = StyleSheet.create({
   cardWrapper: {
     marginBottom: Spacing.xs,
   },
-  cardMain: {
+  // cardMain -> GlowCard tone="attention" ; cardRow = layout interne.
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
     gap: Spacing.sm,
   },
   checkCircle: {

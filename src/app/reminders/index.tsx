@@ -43,6 +43,7 @@ import {
   Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/reminders/reminders-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -401,11 +402,12 @@ function ReminderCardR04({
 
   return (
     <View style={styles.cardWrapper}>
-      <TouchableOpacity
-        style={styles.cardMain}
+      <GlowCard
+        tone="attention"
         onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: reminder.id } })}
-        activeOpacity={0.8}
+        accessibilityLabel={reminder.title}
       >
+      <View style={styles.cardRow}>
         {/* Checkmark bouton */}
         <TouchableOpacity
           style={styles.checkCircle}
@@ -475,7 +477,8 @@ function ReminderCardR04({
         >
           <Ionicons name="ellipsis-vertical" size={18} color={OnSurface.variant} />
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
+      </GlowCard>
     </View>
   );
 }
