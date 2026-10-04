@@ -225,6 +225,7 @@ export default function CalendarScreen() {
                   <GlowCard
                     key={e.id}
                     tone="primary"
+                    intensity="soft"
                     onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
                     accessibilityLabel={e.title}
                   >
@@ -287,6 +288,7 @@ export default function CalendarScreen() {
                   <GlowCard
                     key={r.id}
                     tone="attention"
+                    intensity="soft"
                     onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
                     accessibilityLabel={r.title}
                   >

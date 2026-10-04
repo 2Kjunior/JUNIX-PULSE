@@ -404,6 +404,7 @@ function ReminderCardR04({
     <View style={styles.cardWrapper}>
       <GlowCard
         tone="attention"
+        intensity="soft"
         onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: reminder.id } })}
         accessibilityLabel={reminder.title}
       >

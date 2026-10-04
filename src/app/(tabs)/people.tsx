@@ -243,6 +243,7 @@ function PersonCardR09({ person }: { person: Person }) {
   return (
     <GlowCard
       tone={isForgotten ? 'attention' : 'neutral'}
+      intensity="soft"
       onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
       accessibilityLabel={`${person.displayName}${isForgotten ? ', relance conseillée' : ''}`}
     >

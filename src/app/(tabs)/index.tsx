@@ -328,6 +328,7 @@ export default function TodayScreen() {
             <GlowCard
               key={r.id}
               tone="urgent"
+              intensity="soft"
               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
               accessibilityLabel={`${r.title}, ${r.status === 'MISSED' ? 'en retard' : 'priorité haute'}`}
             >
