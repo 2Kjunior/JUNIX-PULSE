@@ -31,6 +31,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 
 export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -165,7 +166,8 @@ export default function HabitDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* En-tête statut */}
-        <View style={styles.topCard}>
+        <View style={styles.topCardSpacing}>
+        <GlowCard tone="neutral" size="hero">
           <Text style={styles.title}>{stats.habit.title}</Text>
           {stats.habit.description ? (
             <Text style={styles.desc}>{stats.habit.description}</Text>
@@ -181,21 +183,26 @@ export default function HabitDetailScreen() {
               {stats.habit.frequency === 'DAILY' ? 'Quotidienne' : 'Hebdomadaire'}
             </Text>
           </View>
+        </GlowCard>
         </View>
 
         {/* Statistiques Streaks */}
         <View style={styles.streakGrid}>
-          <View style={styles.streakBox}>
-            <Ionicons name="flame" size={28} color="#FF9800" />
-            <Text style={styles.streakVal}>{stats.currentStreak}</Text>
-            <Text style={styles.streakLabel}>Série actuelle (jours)</Text>
-          </View>
+          <GlowCard tone="neutral" style={{ flex: 1 }}>
+            <View style={styles.streakBoxInner}>
+              <Ionicons name="flame" size={28} color="#FF9800" />
+              <Text style={styles.streakVal}>{stats.currentStreak}</Text>
+              <Text style={styles.streakLabel}>Série actuelle (jours)</Text>
+            </View>
+          </GlowCard>
 
-          <View style={styles.streakBox}>
-            <Ionicons name="trophy" size={28} color={Primary.default} />
-            <Text style={styles.streakVal}>{stats.bestStreak}</Text>
-            <Text style={styles.streakLabel}>Meilleure série</Text>
-          </View>
+          <GlowCard tone="neutral" style={{ flex: 1 }}>
+            <View style={styles.streakBoxInner}>
+              <Ionicons name="trophy" size={28} color={Primary.default} />
+              <Text style={styles.streakVal}>{stats.bestStreak}</Text>
+              <Text style={styles.streakLabel}>Meilleure série</Text>
+            </View>
+          </GlowCard>
         </View>
 
         {/* Historique 14 derniers jours */}
@@ -233,21 +240,25 @@ export default function HabitDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Gestion de la routine</Text>
           {stats.habit.status === 'PAUSED' ? (
-            <TouchableOpacity style={styles.actionRow} onPress={handleResume}>
-              <Ionicons name="play" size={22} color={Primary.default} />
-              <View style={styles.actionTextCol}>
-                <Text style={styles.actionTitle}>Reprendre l'habitude</Text>
-                <Text style={styles.actionDesc}>Réactiver la validation quotidienne.</Text>
+            <GlowCard tone="neutral" onPress={handleResume}>
+              <View style={styles.actionRowInner}>
+                <Ionicons name="play" size={22} color={Primary.default} />
+                <View style={styles.actionTextCol}>
+                  <Text style={styles.actionTitle}>Reprendre l'habitude</Text>
+                  <Text style={styles.actionDesc}>Réactiver la validation quotidienne.</Text>
+                </View>
               </View>
-            </TouchableOpacity>
+            </GlowCard>
           ) : (
-            <TouchableOpacity style={styles.actionRow} onPress={handlePause}>
-              <Ionicons name="pause" size={22} color="#FF9800" />
-              <View style={styles.actionTextCol}>
-                <Text style={styles.actionTitle}>Mettre en pause</Text>
-                <Text style={styles.actionDesc}>Garder votre streak intact pendant les vacances.</Text>
+            <GlowCard tone="neutral" onPress={handlePause}>
+              <View style={styles.actionRowInner}>
+                <Ionicons name="pause" size={22} color="#FF9800" />
+                <View style={styles.actionTextCol}>
+                  <Text style={styles.actionTitle}>Mettre en pause</Text>
+                  <Text style={styles.actionDesc}>Garder votre streak intact pendant les vacances.</Text>
+                </View>
               </View>
-            </TouchableOpacity>
+            </GlowCard>
           )}
         </View>
       </ScrollView>
@@ -277,10 +288,8 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { padding: Spacing.xs },
   content: { padding: Spacing.lg, paddingBottom: 60 },
-  topCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // topCard -> GlowCard tone="neutral" size="hero" ; topCardSpacing = marge externe.
+  topCardSpacing: {
     marginBottom: Spacing.lg,
   },
   title: { ...Typography.headlineMedium, color: OnSurface.primary },
@@ -303,14 +312,9 @@ const styles = StyleSheet.create({
     borderColor: Outline.variant,
   },
   streakGrid: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl },
-  streakBox: {
-    flex: 1,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // streakBox -> GlowCard tone="neutral" ; streakBoxInner = layout interne.
+  streakBoxInner: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   streakVal: { ...Typography.headlineLarge, color: OnSurface.primary, marginTop: 4 },
   streakLabel: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2, textAlign: 'center' },
@@ -332,12 +336,10 @@ const styles = StyleSheet.create({
   dayCardCompleted: { backgroundColor: Primary.default, borderColor: Primary.default },
   dayWeek: { ...Typography.labelSmall, color: OnSurface.variant, textTransform: 'uppercase' },
   dayNum: { ...Typography.titleMedium, color: OnSurface.primary, marginTop: 2 },
-  actionRow: {
+  // actionRow -> GlowCard tone="neutral" ; actionRowInner = layout interne.
+  actionRowInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
     gap: Spacing.md,
   },
   actionTextCol: { flex: 1 },
