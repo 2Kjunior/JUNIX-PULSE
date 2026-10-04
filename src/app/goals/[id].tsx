@@ -34,6 +34,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 
 export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -152,7 +153,8 @@ export default function GoalDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Top Card */}
-        <View style={styles.topCard}>
+        <View style={styles.topCardSpacing}>
+        <GlowCard tone={isOverdue ? 'urgent' : 'neutral'} size="hero">
           <Text style={styles.title}>{goal.title}</Text>
           {goal.description ? (
             <Text style={styles.desc}>{goal.description}</Text>
@@ -181,10 +183,12 @@ export default function GoalDetailScreen() {
               </Text>
             )}
           </View>
+        </GlowCard>
         </View>
 
         {/* Progression */}
-        <View style={styles.progressCard}>
+        <View style={styles.progressCardSpacing}>
+        <GlowCard tone={progress === 100 ? 'success' : 'neutral'}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressTitle}>Progression globale</Text>
             <Text style={styles.progressPercent}>
@@ -216,6 +220,7 @@ export default function GoalDetailScreen() {
               ? `${associatedTasks.filter(t => t.status === 'COMPLETED').length} / ${associatedTasks.length} tâches terminées`
               : 'Aucune tâche associée. Associez des tâches pour calculer la progression.'}
           </Text>
+        </GlowCard>
         </View>
 
         {/* Section Tâches Associées */}
@@ -263,34 +268,38 @@ export default function GoalDetailScreen() {
             </Text>
           ) : (
             associatedTasks.map(t => (
-              <View key={t.id} style={styles.taskCard}>
-                <TouchableOpacity
-                  onPress={() => handleToggleTask(t.id)}
-                  style={styles.taskCheckBtn}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons
-                    name={
-                      t.status === 'COMPLETED'
-                        ? 'checkmark-circle'
-                        : 'ellipse-outline'
-                    }
-                    size={22}
-                    color={t.status === 'COMPLETED' ? '#6DD58C' : OnSurface.disabled}
-                  />
-                </TouchableOpacity>
-                <Text
-                  style={[
-                    styles.taskTitle,
-                    t.status === 'COMPLETED' && { textDecorationLine: 'line-through', opacity: 0.7 },
-                  ]}
-                  onPress={() => handleToggleTask(t.id)}
-                >
-                  {t.title}
-                </Text>
-                <TouchableOpacity onPress={() => handleUnlinkTask(t.id, t.title)}>
-                  <Ionicons name="unlink-outline" size={20} color={OnSurface.disabled} />
-                </TouchableOpacity>
+              <View key={t.id} style={styles.taskCardSpacing}>
+              <GlowCard tone="neutral">
+                <View style={styles.taskRow}>
+                  <TouchableOpacity
+                    onPress={() => handleToggleTask(t.id)}
+                    style={styles.taskCheckBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name={
+                        t.status === 'COMPLETED'
+                          ? 'checkmark-circle'
+                          : 'ellipse-outline'
+                      }
+                      size={22}
+                      color={t.status === 'COMPLETED' ? '#6DD58C' : OnSurface.disabled}
+                    />
+                  </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.taskTitle,
+                      t.status === 'COMPLETED' && { textDecorationLine: 'line-through', opacity: 0.7 },
+                    ]}
+                    onPress={() => handleToggleTask(t.id)}
+                  >
+                    {t.title}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleUnlinkTask(t.id, t.title)}>
+                    <Ionicons name="unlink-outline" size={20} color={OnSurface.disabled} />
+                  </TouchableOpacity>
+                </View>
+              </GlowCard>
               </View>
             ))
           )}
@@ -322,10 +331,8 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { padding: Spacing.xs },
   content: { padding: Spacing.lg, paddingBottom: 60 },
-  topCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // topCard -> GlowCard tone="urgent"|"neutral" size="hero" ; topCardSpacing = marge externe.
+  topCardSpacing: {
     marginBottom: Spacing.lg,
   },
   title: { ...Typography.headlineMedium, color: OnSurface.primary },
@@ -334,13 +341,9 @@ const styles = StyleSheet.create({
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText: { ...Typography.bodySmall, color: OnSurface.variant },
   daysBadge: { ...Typography.labelMedium, color: Primary.default, fontWeight: '600' },
-  progressCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // progressCard -> GlowCard tone="success"|"neutral" ; progressCardSpacing = marge externe.
+  progressCardSpacing: {
     marginBottom: Spacing.xl,
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs },
   progressTitle: { ...Typography.titleMedium, color: OnSurface.primary },
@@ -373,13 +376,13 @@ const styles = StyleSheet.create({
   },
   pickerItemText: { ...Typography.bodyMedium, color: OnSurface.primary },
   emptyText: { ...Typography.bodySmall, color: OnSurface.variant, fontStyle: 'italic' },
-  taskCard: {
+  // taskCard -> GlowCard tone="neutral" ; taskCardSpacing = marge externe.
+  taskCardSpacing: {
+    marginBottom: Spacing.xs,
+  },
+  taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.xs,
     gap: Spacing.md,
   },
   taskCheckBtn: {
