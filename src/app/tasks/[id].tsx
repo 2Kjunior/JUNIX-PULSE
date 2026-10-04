@@ -39,6 +39,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { styles } from '@/styles/tasks/task-detail-styles';
 
@@ -252,26 +253,28 @@ export default function TaskDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Statut Badge & Bouton de bascule */}
-        <View style={styles.statusRow}>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: statusConfig.color + '20' },
-            ]}
-          >
-            <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
-            <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {statusConfig.label}
-            </Text>
-          </View>
+        <GlowCard tone="neutral">
+          <View style={styles.statusRowInner}>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusConfig.color + '20' },
+              ]}
+            >
+              <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
+              <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                {statusConfig.label}
+              </Text>
+            </View>
 
-          <Button
-            label={task.status === 'COMPLETED' ? 'Réouvrir la tâche' : 'Marquer terminée ✓'}
-            onPress={handleToggleStatus}
-            variant={task.status === 'COMPLETED' ? 'secondary' : 'primary'}
-            size="sm"
-          />
-        </View>
+            <Button
+              label={task.status === 'COMPLETED' ? 'Réouvrir la tâche' : 'Marquer terminée ✓'}
+              onPress={handleToggleStatus}
+              variant={task.status === 'COMPLETED' ? 'secondary' : 'primary'}
+              size="sm"
+            />
+          </View>
+        </GlowCard>
 
         {/* Titre */}
         <View style={styles.field}>
@@ -402,31 +405,35 @@ export default function TaskDetailScreen() {
 
           {/* Liste des sous-tâches */}
           {subtasks.map(s => (
-            <View key={s.id} style={styles.subtaskRow}>
-              <TouchableOpacity
-                onPress={() => handleToggleSubtask(s.id, s.isCompleted)}
-                style={styles.subtaskCheck}
-              >
-                <Ionicons
-                  name={s.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={s.isCompleted ? Success.default : OnSurface.disabled}
-                />
-              </TouchableOpacity>
-              <Text
-                style={[
-                  styles.subtaskTitle,
-                  s.isCompleted && styles.subtaskTitleCompleted,
-                ]}
-              >
-                {s.title}
-              </Text>
-              <TouchableOpacity
-                onPress={() => handleDeleteSubtask(s.id)}
-                style={styles.subtaskDelete}
-              >
-                <Ionicons name="close" size={18} color={OnSurface.disabled} />
-              </TouchableOpacity>
+            <View key={s.id} style={styles.subtaskWrapper}>
+              <GlowCard tone="neutral">
+                <View style={styles.subtaskRowInner}>
+                  <TouchableOpacity
+                    onPress={() => handleToggleSubtask(s.id, s.isCompleted)}
+                    style={styles.subtaskCheck}
+                  >
+                    <Ionicons
+                      name={s.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={s.isCompleted ? Success.default : OnSurface.disabled}
+                    />
+                  </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.subtaskTitle,
+                      s.isCompleted && styles.subtaskTitleCompleted,
+                    ]}
+                  >
+                    {s.title}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteSubtask(s.id)}
+                    style={styles.subtaskDelete}
+                  >
+                    <Ionicons name="close" size={18} color={OnSurface.disabled} />
+                  </TouchableOpacity>
+                </View>
+              </GlowCard>
             </View>
           ))}
 

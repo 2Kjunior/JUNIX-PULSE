@@ -28,13 +28,11 @@ export const styles = StyleSheet.create({
   headerBtn: { padding: Spacing.xs },
   headerTitle: { ...Typography.titleMedium, color: OnSurface.primary },
   content: { padding: Spacing.lg, gap: Spacing.xl },
-  statusRow: {
+  // statusRow -> GlowCard tone="neutral" ; statusRowInner = layout interne.
+  statusRowInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -79,15 +77,16 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   subtaskCounter: { ...Typography.labelSmall, color: Primary.default },
-  subtaskRow: {
+  // subtaskRow -> GlowCard tone="neutral" ; subtaskRowInner = layout interne.
+  subtaskRowInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
     gap: Spacing.sm,
+  },
+  subtaskWrapper: {
+    marginBottom: Spacing.xs,
   },
   subtaskCheck: { padding: 2 },
   subtaskTitle: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
