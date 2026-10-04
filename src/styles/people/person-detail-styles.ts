@@ -42,13 +42,10 @@ export const styles = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.xl,
   },
-  profileCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+  // profileCard -> GlowCard tone="attention"|"neutral" size="hero" ;
+  // profileCardInner = layout interne.
+  profileCardInner: {
     gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -170,12 +167,8 @@ export const styles = StyleSheet.create({
     color: OnSurface.primary,
     fontWeight: '600',
   },
-  logCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // logCard -> GlowCard tone="neutral" ; logCardInner = layout interne.
+  logCardInner: {
     gap: Spacing.md,
   },
   typeScroll: {
@@ -219,12 +212,8 @@ export const styles = StyleSheet.create({
     ...Typography.bodySmall,
     minHeight: 64,
   },
-  emptyBox: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    padding: Spacing.xl,
+  // emptyBox -> GlowCard tone="neutral" ; emptyBoxInner = layout interne.
+  emptyBoxInner: {
     alignItems: 'center',
     gap: Spacing.xs,
   },
@@ -238,14 +227,10 @@ export const styles = StyleSheet.create({
     color: OnSurface.variant,
     textAlign: 'center',
   },
-  timelineItem: {
+  // timelineItem -> GlowCard tone="neutral" ; timelineRow = layout interne.
+  timelineRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    padding: Spacing.md,
     marginBottom: Spacing.xs,
     gap: Spacing.md,
   },

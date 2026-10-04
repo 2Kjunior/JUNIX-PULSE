@@ -39,6 +39,7 @@ import {
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/people/person-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -212,7 +213,12 @@ export default function PersonDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Carte de Profil */}
-        <View style={styles.profileCard}>
+        <GlowCard
+          tone={isForgotten ? 'attention' : 'neutral'}
+          size="hero"
+          accessibilityLabel={`${person.displayName}${isForgotten ? ', relance conseillée' : ''}`}
+        >
+        <View style={styles.profileCardInner}>
           <View style={styles.profileHeader}>
             <View style={[styles.avatar, isForgotten && styles.avatarForgotten]}>
               <Text style={styles.avatarText}>{initials}</Text>
@@ -318,11 +324,13 @@ export default function PersonDetailScreen() {
             </View>
           )}
         </View>
+        </GlowCard>
 
         {/* Section : Enregistrer une nouvelle interaction */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Enregistrer une interaction</Text>
-          <View style={styles.logCard}>
+          <GlowCard tone="neutral">
+          <View style={styles.logCardInner}>
             {/* Choix du type */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typeScroll}>
               <View style={styles.typeRow}>
@@ -371,6 +379,7 @@ export default function PersonDetailScreen() {
               loading={logging}
             />
           </View>
+          </GlowCard>
         </View>
 
         {/* Section : Historique / Timeline */}
@@ -380,20 +389,23 @@ export default function PersonDetailScreen() {
           </Text>
 
           {interactions.length === 0 ? (
-            <View style={styles.emptyBox}>
-              <Ionicons name="chatbubbles-outline" size={32} color={OnSurface.disabled} />
-              <Text style={styles.emptyTitle}>Aucune interaction</Text>
-              <Text style={styles.emptyText}>
-                Enregistrez vos échanges pour maintenir le lien dans la durée.
-              </Text>
-            </View>
+            <GlowCard tone="neutral">
+              <View style={styles.emptyBoxInner}>
+                <Ionicons name="chatbubbles-outline" size={32} color={OnSurface.disabled} />
+                <Text style={styles.emptyTitle}>Aucune interaction</Text>
+                <Text style={styles.emptyText}>
+                  Enregistrez vos échanges pour maintenir le lien dans la durée.
+                </Text>
+              </View>
+            </GlowCard>
           ) : (
             interactions.map(item => {
               const typeConfig =
                 INTERACTION_TYPES.find(t => t.type === item.type) ?? INTERACTION_TYPES[0];
 
               return (
-                <View key={item.id} style={styles.timelineItem}>
+                <GlowCard key={item.id} tone="neutral">
+                <View style={styles.timelineRow}>
                   <View style={styles.timelineIcon}>
                     <Ionicons name={typeConfig.icon} size={18} color={Primary.default} />
                   </View>
@@ -414,6 +426,7 @@ export default function PersonDetailScreen() {
                     <Ionicons name="close" size={16} color={OnSurface.disabled} />
                   </TouchableOpacity>
                 </View>
+                </GlowCard>
               );
             })
           )}
