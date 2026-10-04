@@ -62,12 +62,8 @@ export const styles = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.md,
   },
-  mainCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // mainCard -> GlowCard tone="attention" size="hero" ; mainCardInner = layout interne.
+  mainCardInner: {
     gap: Spacing.sm,
   },
   badgesRow: {
@@ -127,15 +123,11 @@ export const styles = StyleSheet.create({
   actionSection: {
     marginTop: 2,
   },
-  actionCard: {
+  // actionCard -> GlowCard tone="neutral" ; actionCardRow = layout interne.
+  actionCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
   },
   actionCardLeft: {
     flexDirection: 'row',
@@ -172,12 +164,8 @@ export const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  notesCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // notesCard -> GlowCard tone="neutral" ; notesCardInner = layout interne.
+  notesCardInner: {
     gap: Spacing.xs,
   },
   notesHeader: {
@@ -195,12 +183,8 @@ export const styles = StyleSheet.create({
     color: OnSurface.primary,
     lineHeight: 22,
   },
-  checklistCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  // checklistCard -> GlowCard tone="neutral" ; checklistCardInner = layout interne.
+  checklistCardInner: {
     gap: Spacing.xs,
   },
   checklistItemRow: {

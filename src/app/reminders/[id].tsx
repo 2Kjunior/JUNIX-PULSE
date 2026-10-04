@@ -46,6 +46,7 @@ import {
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { ReminderBottomBar } from '@/components/reminders/ReminderBottomBar';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { ReminderSnoozeSheet } from '@/components/reminders/ReminderSnoozeSheet';
 import { styles } from '@/styles/reminders/reminder-detail-styles';
 
@@ -234,7 +235,8 @@ export default function ReminderDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ─── En-tête du rappel (Carte principale R-06) ─────────────────────── */}
-        <View style={styles.mainCard}>
+        <GlowCard tone="attention" size="hero" accessibilityLabel={reminder.title}>
+        <View style={styles.mainCardInner}>
           <View style={styles.badgesRow}>
             {/* Badge de priorité vectoriel */}
             <View style={[styles.priorityBadge, { borderColor: priorityColor + '40' }]}>
@@ -262,11 +264,13 @@ export default function ReminderDetailScreen() {
             <Text style={styles.timeText}>{dateStr}</Text>
           </View>
         </View>
+        </GlowCard>
 
         {/* ─── Action Rapide Associée (Haut R-06) ─────────────────────────────── */}
         {actionInfo && actionInfo.label && (
           <View style={styles.actionSection}>
-            <View style={styles.actionCard}>
+            <GlowCard tone="neutral">
+            <View style={styles.actionCardRow}>
               <View style={styles.actionCardLeft}>
                 <View style={[styles.actionIconBox, { backgroundColor: actionInfo.color + '20' }]}>
                   <Ionicons name={actionInfo.icon} size={20} color={actionInfo.color} />
@@ -289,23 +293,27 @@ export default function ReminderDetailScreen() {
                 </TouchableOpacity>
               ) : null}
             </View>
+            </GlowCard>
           </View>
         )}
 
         {/* ─── Notes & Précisions ────────────────────────────────────────────── */}
         {reminder.notes ? (
-          <View style={styles.notesCard}>
+          <GlowCard tone="neutral">
+          <View style={styles.notesCardInner}>
             <View style={styles.notesHeader}>
               <Ionicons name="document-text-outline" size={16} color={OnSurface.variant} />
               <Text style={styles.sectionTitle}>Notes & Contexte</Text>
             </View>
             <Text style={styles.notesText}>{reminder.notes}</Text>
           </View>
+          </GlowCard>
         ) : null}
 
         {/* ─── Checklist / Sous-éléments ──────────────────────────────────────── */}
         {checklist.length > 0 && (
-          <View style={styles.checklistCard}>
+          <GlowCard tone="neutral">
+          <View style={styles.checklistCardInner}>
             <View style={styles.notesHeader}>
               <Ionicons name="checkbox-outline" size={16} color={OnSurface.variant} />
               <Text style={styles.sectionTitle}>Liste de contrôle</Text>
@@ -333,6 +341,7 @@ export default function ReminderDetailScreen() {
               </TouchableOpacity>
             ))}
           </View>
+          </GlowCard>
         )}
       </ScrollView>
 
