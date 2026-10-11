@@ -626,3 +626,227 @@ export async function seedDatabase(): Promise<void> {
     n
   );
 }
+
+// ─── Seed supplémentaire — données de test pour l'écran Pulse ────────────────
+//
+// seedPulseExtra() injecte des données riches couvrant les 3 types de
+// suggestion du moteur proactif : FORGOTTEN_CONTACT, RESCHEDULE_REMINDER
+// et HABIT_REMINDER. Appelable depuis Settings → "Charger démo Pulse".
+// N'efface rien : additive uniquement.
+
+export async function seedPulseExtra(): Promise<void> {
+  const n = now();
+  const db = await getDatabase();
+
+  // ── Nouvelles personnes (seuils courts pour déclencher FORGOTTEN_CONTACT) ──
+
+  const personIds = {
+    elena:   uid(),
+    raphael: uid(),
+    nadia:   uid(),
+  };
+
+  await PersonRepository.create({
+    id: personIds.elena,
+    displayName: 'Elena Vasquez',
+    relationship: 'Associée potentielle',
+    phone: '+33 6 44 55 66 77',
+    email: 'elena.v@startup.io',
+    notes: 'Rencontrée au meetup React Native — intéressée pour co-fonder un SaaS. À rappeler dans la semaine.',
+    lastInteractionAt: daysAgo(22) + 'T15:00:00.000Z',
+    forgottenThresholdDays: 14,
+    importedFromContacts: false,
+    createdAt: n, updatedAt: n,
+  });
+
+  await PersonRepository.create({
+    id: personIds.raphael,
+    displayName: 'Raphaël Lemaire',
+    relationship: 'Ancien collègue',
+    phone: '+33 6 33 22 11 00',
+    email: 'raph.lemaire@gmail.com',
+    notes: 'Ex-collègue chez Alma. Travaille maintenant chez Doctolib — pourrait aider pour des contacts RH.',
+    lastInteractionAt: daysAgo(18) + 'T12:00:00.000Z',
+    forgottenThresholdDays: 10,
+    importedFromContacts: false,
+    createdAt: n, updatedAt: n,
+  });
+
+  await PersonRepository.create({
+    id: personIds.nadia,
+    displayName: 'Nadia Chouaki',
+    relationship: 'Amie d\'enfance',
+    phone: '+33 7 99 88 77 66',
+    notes: 'On se connaît depuis le lycée. Son chat vient d\'avoir des chatons — lui envoyer un message.',
+    lastInteractionAt: daysAgo(45) + 'T18:00:00.000Z',
+    forgottenThresholdDays: 21,
+    importedFromContacts: false,
+    createdAt: n, updatedAt: n,
+  });
+
+  // ── Rappels manqués (déclenchent RESCHEDULE_REMINDER) ────────────────────
+
+  const missedRem1 = uid();
+  await ReminderRepository.create({
+    id: missedRem1,
+    title: 'Renouveler l\'abonnement Figma',
+    notes: 'Plan Pro — échéance ce mois-ci. Vérifier si l\'offre éducation est disponible.',
+    scheduledAt: hoursFromNow(-36),
+    timezone: 'Europe/Paris',
+    priority: 'HIGH',
+    actionType: 'TASK',
+    createdAt: n, updatedAt: n,
+  });
+  await ReminderRepository.update({ id: missedRem1, status: 'MISSED', updatedAt: n });
+
+  const missedRem2 = uid();
+  await ReminderRepository.create({
+    id: missedRem2,
+    title: 'Appeler Raphaël pour opportunité RH',
+    notes: 'Il m\'a dit qu\'il y avait peut-être un poste ouvert pour un développeur senior.',
+    scheduledAt: hoursFromNow(-50),
+    timezone: 'Europe/Paris',
+    priority: 'NORMAL',
+    actionType: 'CALL',
+    personId: personIds.raphael,
+    createdAt: n, updatedAt: n,
+  });
+  await ReminderRepository.update({ id: missedRem2, status: 'MISSED', updatedAt: n });
+
+  const missedRem3 = uid();
+  await ReminderRepository.create({
+    id: missedRem3,
+    title: 'Remplir la déclaration de revenus complémentaire',
+    notes: 'Formulaire 2042-C — délai ce vendredi. Rassembler les justificatifs.',
+    scheduledAt: hoursFromNow(-72),
+    timezone: 'Europe/Paris',
+    priority: 'URGENT',
+    actionType: 'TASK',
+    createdAt: n, updatedAt: n,
+  });
+  await ReminderRepository.update({ id: missedRem3, status: 'MISSED', updatedAt: n });
+
+  // ── Nouvelles habitudes avec streaks actifs (déclenchent HABIT_REMINDER) ──
+
+  const habitIds = {
+    cold:    uid(),
+    coding:  uid(),
+    walk:    uid(),
+  };
+
+  await HabitRepository.create({
+    id: habitIds.cold,
+    title: 'Douche froide matinale',
+    description: '2 minutes d\'eau froide après la douche chaude — méthode Wim Hof',
+    frequency: 'DAILY',
+    status: 'ACTIVE',
+    color: '#7BD0FF',
+    createdAt: n, updatedAt: n,
+  });
+
+  await HabitRepository.create({
+    id: habitIds.coding,
+    title: '1h de code perso',
+    description: 'Projet Junix Pulse ou contribution open source — sans interruption',
+    frequency: 'DAILY',
+    status: 'ACTIVE',
+    color: '#D0BCFF',
+    createdAt: n, updatedAt: n,
+  });
+
+  await HabitRepository.create({
+    id: habitIds.walk,
+    title: 'Marche 20 min après déjeuner',
+    description: 'Sortir du bureau — aide à la concentration l\'après-midi',
+    frequency: 'DAILY',
+    status: 'ACTIVE',
+    color: '#6DD58C',
+    createdAt: n, updatedAt: n,
+  });
+
+  // Streaks des 10 derniers jours (sauf aujourd'hui → déclenche HABIT_REMINDER)
+  for (let d = 10; d >= 1; d--) {
+    const dateStr = daysAgo(d);
+    const createdAt = new Date(Date.now() - d * 86400000).toISOString();
+
+    // Douche froide — streak de 10 jours, pas encore fait aujourd'hui
+    await HabitRepository.addCompletion({
+      id: uid(), habitId: habitIds.cold, completedDate: dateStr, createdAt,
+    });
+
+    // Code perso — streak de 7 jours (manqué j-10, j-9, j-8)
+    if (d <= 7) {
+      await HabitRepository.addCompletion({
+        id: uid(), habitId: habitIds.coding, completedDate: dateStr, createdAt,
+      });
+    }
+
+    // Marche — streak de 5 jours
+    if (d <= 5) {
+      await HabitRepository.addCompletion({
+        id: uid(), habitId: habitIds.walk, completedDate: dateStr, createdAt,
+      });
+    }
+  }
+  // Aujourd'hui non complété → le moteur générera une suggestion HABIT_REMINDER
+  // pour les 3 habitudes ci-dessus au prochain chargement de l'écran Pulse.
+
+  // ── Suggestions pré-injectées pour un aperçu immédiat ────────────────────
+  // (le moteur en générera d'autres dynamiquement au chargement)
+
+  await db.runAsync(
+    `INSERT OR IGNORE INTO suggestions (
+      id, type, status, title, explanation,
+      target_id, target_type, generated_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    uid(), 'FORGOTTEN_CONTACT', 'PENDING',
+    'Prendre des nouvelles d\'Elena Vasquez',
+    'Vous n\'avez pas eu de contact avec Elena depuis 22 jours. Elle attendait peut-être votre retour sur le projet SaaS.',
+    personIds.elena, 'person', n, n
+  );
+
+  await db.runAsync(
+    `INSERT OR IGNORE INTO suggestions (
+      id, type, status, title, explanation,
+      target_id, target_type, generated_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    uid(), 'RESCHEDULE_REMINDER', 'PENDING',
+    'Replanifier : Renouveler l\'abonnement Figma',
+    'Ce rappel n\'a pas été validé à l\'heure prévue. Voulez-vous le reporter à demain même heure ?',
+    missedRem1, 'reminder', n, n
+  );
+
+  await db.runAsync(
+    `INSERT OR IGNORE INTO suggestions (
+      id, type, status, title, explanation,
+      target_id, target_type, generated_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    uid(), 'HABIT_REMINDER', 'PENDING',
+    'Maintenir la série sur "Douche froide matinale"',
+    'Vous avez une série de 10 jours. Ne l\'interrompez pas aujourd\'hui — validez votre habitude.',
+    habitIds.cold, 'habit', n, n
+  );
+
+  await db.runAsync(
+    `INSERT OR IGNORE INTO suggestions (
+      id, type, status, title, explanation,
+      target_id, target_type, generated_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    uid(), 'FORGOTTEN_CONTACT', 'PENDING',
+    'Recontacter Nadia Chouaki',
+    'Aucune interaction avec Nadia depuis 45 jours — bien au-delà de votre seuil de 21 jours.',
+    personIds.nadia, 'person', n, n
+  );
+
+  await db.runAsync(
+    `INSERT OR IGNORE INTO suggestions (
+      id, type, status, title, explanation,
+      target_id, target_type, generated_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    uid(), 'RESCHEDULE_REMINDER', 'PENDING',
+    'Replanifier : Déclaration de revenus complémentaire',
+    'Ce rappel urgent a été manqué il y a 3 jours. L\'échéance approche — agissez dès maintenant.',
+    missedRem3, 'reminder', n, n
+  );
+}
+

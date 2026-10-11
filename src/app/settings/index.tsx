@@ -36,7 +36,7 @@ import { Button } from '@/components/ui/Button';
 import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { LoadingState } from '@/components/feedback/States';
 import { getDatabase } from '@/database/sqlite';
-import { seedDatabase, clearAllData, isSeedAlreadyLoaded } from '@/database/seed';
+import { seedDatabase, clearAllData, isSeedAlreadyLoaded, seedPulseExtra } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
@@ -205,6 +205,27 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleLoadPulseExtra = () => {
+    Alert.alert(
+      'Charger démo Pulse IA',
+      'Cela va injecter de nouveaux contacts oubliés, rappels manqués et habitudes avec streaks actifs pour tester le moteur proactif. Continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Charger',
+          onPress: async () => {
+            try {
+              await seedPulseExtra();
+              showSnackbar('Données Pulse IA chargées avec succès !');
+            } catch (e) {
+              Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleClearAllData = () => {
     Alert.alert(
       'Effacer toutes les données',
@@ -354,6 +375,14 @@ export default function SettingsScreen() {
             <Text style={styles.rowSub}>Personnes, rappels, habitudes, objectifs</Text>
           </View>
           <Ionicons name="sparkles-outline" size={20} color={Primary.default} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.row} onPress={handleLoadPulseExtra}>
+          <View>
+            <Text style={styles.rowLabel}>Charger démo Pulse IA</Text>
+            <Text style={styles.rowSub}>Suggestions, streaks actifs & rappels manqués</Text>
+          </View>
+          <Ionicons name="bulb-outline" size={20} color={Primary.default} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.row} onPress={handleClearAllData}>
