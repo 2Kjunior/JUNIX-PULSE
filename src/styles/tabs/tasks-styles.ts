@@ -2,22 +2,20 @@
  * Styles extraits de tasks.tsx.
  */
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import {
-  Surface,
   Primary,
   OnSurface,
-  Outline,
   Spacing,
   Radius,
   Typography,
+  FontFamily,
+  TitleFontFamily,
 } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Transparent : AnimatedBackgroundGlow (monte a la racine de l'app)
-    // doit etre visible derriere cet ecran.
     backgroundColor: 'transparent',
   },
   header: {
@@ -29,7 +27,10 @@ export const styles = StyleSheet.create({
   },
   title: {
     ...Typography.headlineLarge,
-    color: OnSurface.primary,
+    fontFamily: TitleFontFamily?.bold ?? FontFamily?.bold,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   subtitle: {
     ...Typography.bodySmall,
@@ -37,12 +38,12 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   settingsBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(26, 30, 44, 0.75)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -52,42 +53,61 @@ export const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(20, 24, 36, 0.82)',
     borderRadius: Radius.full,
     padding: 4,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+      default: {
+        boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.3)',
+      },
+    }),
   },
   tabItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: Radius.full,
-    gap: 5,
+    gap: 6,
   },
   tabItemActive: {
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(139, 92, 246, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.35)',
   },
   tabLabel: {
     ...Typography.labelMedium,
     color: OnSurface.variant,
+    fontFamily: FontFamily?.medium,
   },
   tabLabelActive: {
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     fontWeight: '700',
+    fontFamily: FontFamily?.bold,
   },
   tabBadge: {
-    backgroundColor: Surface.base,
+    backgroundColor: 'rgba(11, 13, 20, 0.65)',
     borderRadius: Radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   tabBadgeActive: {
     borderColor: Primary.default,
+    backgroundColor: 'rgba(139, 92, 246, 0.35)',
   },
   tabBadgeText: {
     ...Typography.labelSmall,
@@ -95,15 +115,13 @@ export const styles = StyleSheet.create({
     color: OnSurface.variant,
   },
   tabBadgeTextActive: {
-    color: Primary.default,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   list: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
   },
-  // taskCard/taskCardCompleted -> GlowCard tone=urgent|attention|info|neutral
-  // (selon la priorite ; toujours neutral si terminee). taskRow = layout interne.
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -124,7 +142,7 @@ export const styles = StyleSheet.create({
   },
   taskTitle: {
     ...Typography.bodyMedium,
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   taskTitleCompleted: {
@@ -140,12 +158,12 @@ export const styles = StyleSheet.create({
   metaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.base,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
     gap: 4,
   },
   metaPillText: {
@@ -161,11 +179,20 @@ export const styles = StyleSheet.create({
   floatingCtaContainer: {
     position: 'absolute',
     right: Spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.45,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+      default: {
+        boxShadow: '0 8px 32px -4px rgba(124, 58, 237, 0.40)',
+      },
+    }),
   },
   floatingCta: {
     flexDirection: 'row',
@@ -181,3 +208,4 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+

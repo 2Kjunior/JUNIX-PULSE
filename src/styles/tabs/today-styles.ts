@@ -3,7 +3,7 @@
  * Extraits de (tabs)/index.tsx pour lisibilité.
  */
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import {
   Surface,
   Primary,
@@ -55,9 +55,9 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Radius.full,
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(26, 30, 44, 0.75)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(22, 26, 38, 0.75)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
@@ -187,12 +187,26 @@ export const styles = StyleSheet.create({
     color: OnSurface.variant,
   },
   suggestionCard: {
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(24, 28, 42, 0.82)',
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Primary.default + '40',
+    borderColor: 'rgba(139, 92, 246, 0.35)',
     gap: Spacing.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.22,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 4,
+      },
+      default: {
+        boxShadow: '0 8px 24px -4px rgba(139, 92, 246, 0.22)',
+      },
+    }),
   },
   suggHeaderRow: {
     flexDirection: 'row',
@@ -233,7 +247,8 @@ export const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   suggRefuseText: {
     ...Typography.labelMedium,
@@ -254,12 +269,26 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
   progressCard: {
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(22, 26, 38, 0.75)',
     borderRadius: Radius.lg,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     gap: Spacing.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 3,
+      },
+      default: {
+        boxShadow: '0 6px 18px -4px rgba(0, 0, 0, 0.35)',
+      },
+    }),
   },
   progressRow: {
     flexDirection: 'row',

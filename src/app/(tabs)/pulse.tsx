@@ -1,22 +1,108 @@
 /**
- * Onglet Pulse — Tableau de bord central : Habitudes, Objectifs et Suggestions proactives.
- * BR-001 : Affiche les suggestions intelligentes avec explications et validation humaine.
+ * Onglet Pulse — Moteur de suggestion proactif de Junix Pulse.
+ *
+ * Ce n'est pas un chatbot. C'est un moteur d'analyse LOCAL qui :
+ *  - Lit les données SQLite (Contacts, Rappels, Habitudes)
+ *  - Applique des règles métier déterministes (BR-001 à BR-014)
+ *  - Génère des Suggestions jamais appliquées automatiquement
+ *  - Laisse l'utilisateur décider (Accepter / Ignorer)
+ *
+ * Latence : zéro appel réseau — tout est SQLite local.
+ *
+ * Règle A.1 : zéro emoji.
+ * Règle A.2 : un seul dégradé de marque par écran (bouton CTA en bas).
+ * Règle A.3 : orbe en mode 'idle' = seul élément ambiant de cet écran.
  */
+
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Alert,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+
 import {
-  Surface, Primary, Tertiary, OnSurface, Outline, Spacing, Radius, Typography, TAB_BAR_TOTAL_HEIGHT,
+  Surface,
+  Primary,
+  Tertiary,
+  Success,
+  OnSurface,
+  Spacing,
+  Gradient,
+  TAB_BAR_TOTAL_HEIGHT,
+  type GlowTone,
 } from '@/constants/theme';
 import { HabitUseCases } from '@/use-cases/habit-use-cases';
 import { GoalUseCases } from '@/use-cases/goal-use-cases';
 import { SuggestionUseCases } from '@/use-cases/suggestion-use-cases';
 import { Suggestion } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-
+import { GlowCard } from '@/components/ui/GlowCard';
 import { PulseLogo } from '@/components/ui/PulseLogo';
+import { styles } from '@/styles/tabs/pulse-styles';
+
+// ─── Helpers visuels ─────────────────────────────────────────────────────────
+
+/**
+ * Mappe un type de suggestion vers :
+ * - tone GlowCard sémantique
+ * - label du chip pill
+ * - couleur du chip
+ * - icône
+ */
+type SuggMeta = {
+  tone: GlowTone;
+  label: string;
+  bg: string;
+  fg: string;
+  icon: 'person-outline' | 'alarm-outline' | 'repeat-outline' | 'bulb-outline';
+};
+
+function getSuggMeta(type: Suggestion['type']): SuggMeta {
+  switch (type) {
+    case 'FORGOTTEN_CONTACT':
+      return {
+        tone: 'info',
+        label: 'Contact',
+        bg: 'rgba(56, 189, 248, 0.15)',
+        fg: '#38BDF8',
+        icon: 'person-outline',
+      };
+    case 'RESCHEDULE_REMINDER':
+      return {
+        tone: 'attention',
+        label: 'Rappel',
+        bg: 'rgba(251, 191, 36, 0.15)',
+        fg: '#FBBF24',
+        icon: 'alarm-outline',
+      };
+    case 'HABIT_REMINDER':
+      return {
+        tone: 'success',
+        label: 'Habitude',
+        bg: 'rgba(109, 213, 140, 0.15)',
+        fg: '#6DD58C',
+        icon: 'repeat-outline',
+      };
+    default:
+      return {
+        tone: 'primary',
+        label: 'Suggestion',
+        bg: 'rgba(208, 188, 255, 0.15)',
+        fg: Primary.default,
+        icon: 'bulb-outline',
+      };
+  }
+}
+
+// ─── Composant principal ─────────────────────────────────────────────────────
 
 export default function PulseScreen() {
   const insets = useSafeAreaInsets();
@@ -27,6 +113,7 @@ export default function PulseScreen() {
   const [goalCount, setGoalCount] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
+  // Le moteur de suggestion est appelé à chaque focus — SQLite local, latence ~0.
   const loadData = useCallback(async () => {
     try {
       const [habits, goals, suggs] = await Promise.all([
@@ -38,7 +125,7 @@ export default function PulseScreen() {
       setGoalCount(goals.filter(g => g.goal.status === 'ACTIVE').length);
       setSuggestions(suggs);
     } catch {
-      // Ignorer silencieusement en cas d'erreur temporaire
+      // Échec silencieux — les données restent dans l'état précédent
     } finally {
       setRefreshing(false);
     }
@@ -50,47 +137,62 @@ export default function PulseScreen() {
     }, [loadData])
   );
 
-  const handleAcceptSuggestion = async (id: string, title: string) => {
+  const handleAccept = async (id: string, title: string) => {
     try {
       await SuggestionUseCases.acceptSuggestion(id);
-      showSnackbar(`Suggestion "${title}" acceptée !`);
+      showSnackbar(`Suggestion acceptée.`);
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Erreur inattendue');
     }
   };
 
-  const handleRefuseSuggestion = async (id: string) => {
+  const handleRefuse = async (id: string) => {
     try {
       await SuggestionUseCases.refuseSuggestion(id);
       showSnackbar('Suggestion ignorée.');
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Erreur inattendue');
     }
   };
 
-  const SECTIONS = [
+  // Métriques affichées dans la bande à 3 colonnes
+  const stats = [
+    { value: habitCount ?? '-', label: 'Habitudes\nactives' },
+    { value: goalCount ?? '-', label: 'Objectifs\nen cours' },
+    { value: suggestions.length, label: 'Suggestions\nen attente' },
+  ];
+
+  // Modules raccourcis vers les sous-écrans
+  const MODULES = [
     {
       icon: 'repeat-outline' as const,
       label: 'Habitudes & Streaks',
       desc: habitCount !== null ? `${habitCount} habitudes actives` : 'Suivez vos pratiques quotidiennes.',
       color: Tertiary.default,
+      bg: 'rgba(123, 208, 255, 0.12)',
       route: '/habits',
     },
     {
       icon: 'flag-outline' as const,
       label: 'Objectifs & Progression',
       desc: goalCount !== null ? `${goalCount} objectifs en cours` : 'Progression liée à vos tâches.',
-      color: '#6DD58C',
+      color: Success.default,
+      bg: 'rgba(109, 213, 140, 0.12)',
       route: '/goals',
     },
   ];
 
+  const hasNoSuggestions = suggestions.length === 0;
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.lg, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 24 }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + Spacing.md, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 24 },
+      ]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -101,168 +203,144 @@ export default function PulseScreen() {
           tintColor={Primary.default}
         />
       }
+      showsVerticalScrollIndicator={false}
     >
-      <View style={styles.headerRow}>
-        <View style={styles.headerTextCol}>
-          <Text style={styles.title}>Pulse</Text>
-          <Text style={styles.subtitle}>
-            Votre centre d'intelligence et de progression.
+      {/* ── Hero : orbe central + état système ── */}
+      <View style={styles.heroSection}>
+        <View style={styles.orbContainer}>
+          {/* Anneaux vitrés derrière l'orbe */}
+          <View style={styles.orbRingOuter} />
+          <View style={styles.orbRing} />
+          {/* PulseLogo en mode idle : double battement toutes les 2.4s */}
+          <PulseLogo size={96} mode="idle" />
+        </View>
+
+        <Text style={styles.heroTitle}>Pulse</Text>
+        <Text style={styles.heroSubtitle}>
+          Votre centre d'intelligence locale — analyse, propose, ne décide jamais.
+        </Text>
+
+        {/* Puce état système */}
+        <View style={styles.statusPill}>
+          <View style={styles.statusDot} />
+          <Text style={styles.statusText}>
+            {hasNoSuggestions ? 'Tout est à jour' : `${suggestions.length} actions suggérées`}
           </Text>
         </View>
-        <PulseLogo size={52} mode="idle" />
       </View>
 
-      {/* Raccourcis Modules */}
-      {SECTIONS.map(s => (
-        <TouchableOpacity
-          key={s.label}
-          style={styles.sectionCard}
-          onPress={() => router.push(s.route as never)}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.sectionIcon, { backgroundColor: s.color + '20' }]}>
-            <Ionicons name={s.icon} size={24} color={s.color} />
+      {/* ── Bande métriques 3 colonnes ── */}
+      <View style={styles.statsRow}>
+        {stats.map((s, i) => (
+          <View key={i} style={styles.statCell}>
+            <Text style={styles.statValue}>{s.value}</Text>
+            <Text style={styles.statLabel}>{s.label}</Text>
           </View>
-          <View style={styles.sectionBody}>
-            <Text style={styles.sectionLabel}>{s.label}</Text>
-            <Text style={styles.sectionDesc}>{s.desc}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
-        </TouchableOpacity>
-      ))}
+        ))}
+      </View>
 
-      {/* Suggestions Proactives */}
-      <View style={styles.suggestionsSection}>
-        <View style={styles.suggHeader}>
-          <Ionicons name="bulb" size={20} color={Primary.default} />
-          <Text style={styles.suggTitle}>
-            Suggestions intelligentes ({suggestions.length})
+      {/* ── Suggestions proactives ── */}
+      <View style={styles.sectionRow}>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="sparkles" size={16} color={Primary.default} />
+          <Text style={styles.sectionTitle}>Suggestions</Text>
+          {suggestions.length > 0 && (
+            <Text style={styles.suggCount}>{suggestions.length}</Text>
+          )}
+        </View>
+      </View>
+
+      {hasNoSuggestions ? (
+        /* État vide */
+        <View style={styles.emptyCard}>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="checkmark-circle-outline" size={26} color={Primary.default} />
+          </View>
+          <Text style={styles.emptyTitle}>Tout est sous contrôle</Text>
+          <Text style={styles.emptyDesc}>
+            Le moteur local analyse vos contacts, rappels et habitudes en
+            continu. Aucune action urgente pour le moment.
           </Text>
         </View>
+      ) : (
+        /* Cartes de suggestion */
+        <View style={styles.suggestionsList}>
+          {suggestions.map(s => {
+            const meta = getSuggMeta(s.type);
+            return (
+              <GlowCard
+                key={s.id}
+                tone={meta.tone}
+                intensity="soft"
+                size="list"
+              >
+                <View style={styles.suggInner}>
+                  {/* Ligne supérieure : chip + espace */}
+                  <View style={styles.suggTopRow}>
+                    <View style={[styles.typePill, { backgroundColor: meta.bg }]}>
+                      <Ionicons name={meta.icon} size={10} color={meta.fg} />
+                      <Text style={[styles.typePillText, { color: meta.fg }]}>
+                        {meta.label}
+                      </Text>
+                    </View>
+                  </View>
 
-        {suggestions.length === 0 ? (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderTitle}>✦ Tout est sous contrôle</Text>
-            <Text style={styles.placeholderDesc}>
-              Aucune suggestion urgente pour le moment. Junix Pulse continuera d'analyser vos
-              rappels, tâches et contacts pour vous proposer des actions pertinentes.
-            </Text>
-          </View>
-        ) : (
-          suggestions.map(s => (
-            <View key={s.id} style={styles.suggCard}>
-              <View style={styles.suggBody}>
-                <Text style={styles.suggCardTitle}>{s.title}</Text>
-                <Text style={styles.suggCardDesc}>{s.explanation}</Text>
-              </View>
+                  {/* Titre + explication */}
+                  <Text style={styles.suggTitle}>{s.title}</Text>
+                  <Text style={styles.suggExplanation}>{s.explanation}</Text>
 
-              <View style={styles.suggActions}>
-                <TouchableOpacity
-                  style={styles.refuseBtn}
-                  onPress={() => handleRefuseSuggestion(s.id)}
-                >
-                  <Text style={styles.refuseText}>Ignorer</Text>
-                </TouchableOpacity>
+                  {/* Actions */}
+                  <View style={styles.suggActions}>
+                    <TouchableOpacity
+                      style={styles.refuseBtn}
+                      onPress={() => handleRefuse(s.id)}
+                      accessibilityLabel="Ignorer cette suggestion"
+                    >
+                      <Text style={styles.refuseText}>Ignorer</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.acceptBtn}
-                  onPress={() => handleAcceptSuggestion(s.id, s.title)}
-                >
-                  <Ionicons name="checkmark" size={16} color={Surface.base} />
-                  <Text style={styles.acceptText}>Accepter</Text>
-                </TouchableOpacity>
-              </View>
+                    <TouchableOpacity
+                      style={styles.acceptBtn}
+                      onPress={() => handleAccept(s.id, s.title)}
+                      accessibilityLabel={`Accepter : ${s.title}`}
+                    >
+                      <Ionicons name="checkmark" size={14} color={Primary.default} />
+                      <Text style={styles.acceptText}>Accepter</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </GlowCard>
+            );
+          })}
+        </View>
+      )}
+
+      {/* ── Modules raccourcis ── */}
+      <View style={styles.modulesSection}>
+        <View style={[styles.sectionTitleRow, { marginBottom: Spacing.md }]}>
+          <Ionicons name="grid-outline" size={16} color={OnSurface.variant} />
+          <Text style={[styles.sectionTitle, { color: OnSurface.variant }]}>Modules</Text>
+        </View>
+
+        {MODULES.map(m => (
+          <TouchableOpacity
+            key={m.label}
+            style={styles.moduleCard}
+            onPress={() => router.push(m.route as never)}
+            activeOpacity={0.8}
+            accessibilityLabel={m.label}
+          >
+            <View style={[styles.moduleIcon, { backgroundColor: m.bg }]}>
+              <Ionicons name={m.icon} size={22} color={m.color} />
             </View>
-          ))
-        )}
+            <View style={styles.moduleBody}>
+              <Text style={styles.moduleLabel}>{m.label}</Text>
+              <Text style={styles.moduleDesc}>{m.desc}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
+          </TouchableOpacity>
+        ))}
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'transparent' }, // AnimatedBackgroundGlow visible derriere
-  content: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: 100,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
-  },
-  headerTextCol: {
-    flex: 1,
-    paddingRight: Spacing.md,
-  },
-  title: { ...Typography.headlineLarge, color: OnSurface.primary, marginBottom: Spacing.xs },
-  subtitle: { ...Typography.bodyMedium, color: OnSurface.variant },
-  sectionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    gap: Spacing.md,
-  },
-  sectionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionBody: { flex: 1 },
-  sectionLabel: { ...Typography.titleMedium, color: OnSurface.primary },
-  sectionDesc: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-  suggestionsSection: { marginTop: Spacing.lg },
-  suggHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.md },
-  suggTitle: { ...Typography.titleLarge, color: OnSurface.primary },
-  placeholder: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
-    borderWidth: 1,
-    borderColor: Primary.default + '20',
-  },
-  placeholderTitle: {
-    ...Typography.titleMedium,
-    color: Primary.default,
-    marginBottom: Spacing.sm,
-  },
-  placeholderDesc: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    lineHeight: 20,
-  },
-  suggCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Primary.default + '40',
-  },
-  suggBody: { marginBottom: Spacing.md },
-  suggCardTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  suggCardDesc: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 4, lineHeight: 18 },
-  suggActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.md },
-  refuseBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-  },
-  refuseText: { ...Typography.labelMedium, color: OnSurface.variant },
-  acceptBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Primary.default,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    gap: 4,
-  },
-  acceptText: { ...Typography.labelMedium, color: Surface.base, fontWeight: '700' },
-});

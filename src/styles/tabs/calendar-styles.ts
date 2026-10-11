@@ -2,23 +2,21 @@
  * Styles extraits de calendar.tsx.
  */
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import {
-  Surface,
   Primary,
   Tertiary,
   OnSurface,
-  Outline,
   Spacing,
   Radius,
   Typography,
+  FontFamily,
+  TitleFontFamily,
 } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Transparent : AnimatedBackgroundGlow (monte a la racine de l'app)
-    // doit etre visible derriere cet ecran.
     backgroundColor: 'transparent',
   },
   header: {
@@ -33,13 +31,16 @@ export const styles = StyleSheet.create({
   },
   title: {
     ...Typography.headlineLarge,
-    color: OnSurface.primary,
+    fontFamily: TitleFontFamily?.bold ?? FontFamily?.bold,
+    color: '#FFFFFF',
     fontWeight: '700',
+    letterSpacing: -0.5,
   },
   subtitle: {
     ...Typography.labelMedium,
     color: OnSurface.variant,
     textTransform: 'capitalize',
+    fontFamily: FontFamily?.medium,
   },
   headerActions: {
     flexDirection: 'row',
@@ -47,66 +48,100 @@ export const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   todayBtn: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.xs + 1,
     borderRadius: Radius.full,
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(26, 30, 44, 0.80)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(139, 92, 246, 0.40)',
     marginRight: 4,
   },
   todayBtnText: {
     ...Typography.labelSmall,
     color: Primary.default,
-    fontWeight: '600',
+    fontWeight: '700',
+    fontFamily: FontFamily?.bold,
   },
   navArrowBtn: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: Radius.full,
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(26, 30, 44, 0.75)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   weekStrip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
-    backgroundColor: Surface.container,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: Outline.variant,
+    backgroundColor: 'rgba(20, 24, 36, 0.82)',
+    borderRadius: Radius.xl,
+    marginHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: Spacing.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+      default: {
+        boxShadow: '0 4px 14px -2px rgba(0, 0, 0, 0.3)',
+      },
+    }),
   },
   dayCell: {
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs + 2,
     paddingHorizontal: 2,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     width: 44,
+    height: 60,
   },
   dayCellSelected: {
     backgroundColor: Primary.default,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.45,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 5,
+      },
+      default: {
+        boxShadow: '0 4px 14px 0 rgba(139, 92, 246, 0.45)',
+      },
+    }),
   },
   dayCellToday: {
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(26, 30, 44, 0.85)',
     borderWidth: 1,
-    borderColor: Primary.default,
+    borderColor: 'rgba(139, 92, 246, 0.50)',
   },
   dayName: {
     ...Typography.labelSmall,
     color: OnSurface.variant,
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: FontFamily?.medium,
   },
   dayNumber: {
     ...Typography.titleMedium,
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     marginTop: 2,
     fontWeight: '700',
+    fontFamily: TitleFontFamily?.bold ?? FontFamily?.bold,
   },
   dayTextSelected: {
     color: '#141317',
@@ -132,12 +167,10 @@ export const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...Typography.titleMedium,
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
+    fontFamily: FontFamily?.semiBold,
   },
-  // eventCard / reminderCard / taskCard : remplacees par <GlowCard tone=...>.
-  // itemRow reprend l'agencement interne (icone/heure + contenu + chevron),
-  // le fond/la bordure/la lueur sont desormais geres par GlowCard.
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,6 +184,7 @@ export const styles = StyleSheet.create({
     ...Typography.titleMedium,
     color: Primary.default,
     fontWeight: '700',
+    fontFamily: TitleFontFamily?.bold ?? FontFamily?.bold,
   },
   eventDurationText: {
     ...Typography.labelSmall,
@@ -163,7 +197,7 @@ export const styles = StyleSheet.create({
   },
   eventTitle: {
     ...Typography.bodyLarge,
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   metaRow: {
@@ -184,16 +218,19 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: Radius.full,
+    borderWidth: 1,
   },
   typeBadgeBusy: {
-    backgroundColor: Primary.container,
+    backgroundColor: 'rgba(139, 92, 246, 0.20)',
+    borderColor: 'rgba(139, 92, 246, 0.35)',
   },
   typeBadgeFree: {
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   typeBadgeText: {
     ...Typography.labelSmall,
-    color: Primary.onContainer,
+    color: Primary.default,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -201,7 +238,7 @@ export const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -209,7 +246,7 @@ export const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.full,
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -219,7 +256,7 @@ export const styles = StyleSheet.create({
   },
   itemTitle: {
     ...Typography.bodyMedium,
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   itemTime: {
@@ -227,28 +264,42 @@ export const styles = StyleSheet.create({
     color: OnSurface.variant,
   },
   emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
+    backgroundColor: 'rgba(22, 26, 38, 0.75)',
+    borderRadius: Radius.xl,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     padding: Spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.xxl,
     gap: Spacing.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+      default: {
+        boxShadow: '0 6px 20px -4px rgba(0, 0, 0, 0.35)',
+      },
+    }),
   },
   emptyIconCircle: {
     width: 60,
     height: 60,
     borderRadius: Radius.full,
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xs,
   },
   emptyTitle: {
     ...Typography.titleLarge,
-    color: OnSurface.primary,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   emptyDescription: {
@@ -260,11 +311,20 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     right: Spacing.lg,
     borderRadius: Radius.full,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.45,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+      default: {
+        boxShadow: '0 8px 32px -4px rgba(124, 58, 237, 0.40)',
+      },
+    }),
   },
   fabGradient: {
     flexDirection: 'row',
@@ -276,7 +336,8 @@ export const styles = StyleSheet.create({
   },
   fabText: {
     ...Typography.titleMedium,
-    color: '#141317',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 });
+

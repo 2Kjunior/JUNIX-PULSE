@@ -94,12 +94,15 @@ function GlowCardInner({
   // boxShadow est cross-platform (iOS + Android) depuis RN 0.76 / New Architecture
   // (déjà actif sur ce projet) — confirmé sur la doc React Native officielle.
   const showHalo = tone === 'attention' || tone === 'urgent';
-  const haloStyle = showHalo
-    ? ({ boxShadow: `0 0 16px 0 ${hexToRgba(accentHex, GlowCardTokens.haloOpacity)}` } as ViewStyle)
+  const haloStyle: ViewStyle | null = showHalo
+    ? ({
+        boxShadow: `0 0 16px 0 ${hexToRgba(accentHex, GlowCardTokens.haloOpacity)}`,
+        borderRadius: radius,
+      })
     : null;
 
   const content = (
-    <View style={[styles.outerWrapper, haloStyle]}>
+    <View style={[styles.outerWrapper, { borderRadius: radius }, haloStyle]}>
       <LinearGradient
         colors={borderColors}
         start={{ x: 1, y: 0 }}
@@ -107,6 +110,15 @@ function GlowCardInner({
         style={[styles.gradientBorder, { borderRadius: radius }]}
       >
         <View style={[styles.inner, { borderRadius: radius - 0.5 }]}>
+          {/* Fond ardoise dégradé pour la profondeur de verre */}
+          <LinearGradient
+            colors={['rgba(27, 32, 48, 0.72)', 'rgba(20, 24, 36, 0.92)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: radius - 0.5 }]}
+            pointerEvents="none"
+          />
+
           {hasGlow && (
             <LinearGradient
               pointerEvents="none"
@@ -122,7 +134,14 @@ function GlowCardInner({
             />
           )}
 
-          <View style={styles.topHighlight} />
+          {/* Liseré spéculaire zénithal dégradé */}
+          <LinearGradient
+            colors={['transparent', 'rgba(255, 255, 255, 0.32)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.topHighlight}
+            pointerEvents="none"
+          />
 
           <View style={styles.content}>{children}</View>
 
@@ -172,12 +191,24 @@ export const GlowCard = memo(GlowCardInner);
 const styles = StyleSheet.create({
   outerWrapper: {
     minHeight: 44, // zone tactile >= 44dp
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+      default: {
+        boxShadow: '0 6px 20px -4px rgba(0, 0, 0, 0.40)',
+      },
+    }),
   },
   gradientBorder: {
     padding: 1,
-    ...Platform.select({
-      android: { overflow: 'hidden' },
-    }),
+    overflow: 'hidden',
   },
   inner: {
     backgroundColor: GlowCardTokens.background,
@@ -189,7 +220,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    zIndex: 2,
   },
   content: {
     paddingHorizontal: 15,

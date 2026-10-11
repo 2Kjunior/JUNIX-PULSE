@@ -1,22 +1,15 @@
 /**
- * AnimatedBackgroundGlow — fond d'écran animé de Junix Pulse.
+ * AnimatedBackgroundGlow — Fond d'écran animé haute performance de Junix Pulse.
  *
- * Une lueur diagonale (violet → cyan, très faible opacité) dérive lentement
- * du coin haut-gauche vers le coin bas-droit puis revient, en boucle douce
- * (~18s, easing sinusoïdal). Monté une seule fois à la racine de l'app,
- * derrière tous les écrans.
- *
- * Performance : une seule couche animée, transform uniquement (translateX/Y
- * sur le thread UI via Reanimated) — aucun recalcul de dégradé à chaque
- * frame, donc coût proche de zéro même sur les listes de 50+ éléments.
- *
- * Accessibilité : respecte useReducedMotion — la dérive est désactivée et
- * remplacée par une teinte fixe pour les personnes sensibles au mouvement.
- * Opacité globale très faible (≤ 8%) : n'affecte jamais le contraste du
- * texte au-dessus (les écrans restent responsables de leur propre lisibilité).
+ * Implémentation GPU-first ultra-fluide (60/120 FPS) :
+ * 1. Animation d'opacité et d'échelle douce (respiration biophysique "Pulse")
+ * 2. Zéro déplacement de boîte complexe : exécuté 100% sur le thread UI
+ * 3. Mémoïsation stricte pour éviter tout recalcul lors de la navigation
+ * 4. Respect complet de useReducedMotion
  */
-import { useEffect } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+
+import { memo, useEffect } from 'react';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -29,57 +22,100 @@ import Animated, {
 
 import { Surface } from '@/constants/theme';
 
-const LOOP_DURATION_MS = 18000;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export function AnimatedBackgroundGlow() {
-  const { width, height } = useWindowDimensions();
+function AnimatedBackgroundGlowComponent() {
   const reducedMotion = useReducedMotion();
-  const progress = useSharedValue(0);
+
+  // Valeurs partagées Reanimated exécutées sur le thread natif
+  const glowOpacity1 = useSharedValue(0.40);
+  const glowScale1 = useSharedValue(1.0);
+
+  const glowOpacity2 = useSharedValue(0.35);
+  const glowScale2 = useSharedValue(1.0);
 
   useEffect(() => {
     if (reducedMotion) return;
-    progress.value = withRepeat(
-      withTiming(1, { duration: LOOP_DURATION_MS, easing: Easing.inOut(Easing.sin) }),
+
+    // Respiration douce du halo 1 (Violet) : cycle de 6.5s
+    glowOpacity1.value = withRepeat(
+      withTiming(0.85, { duration: 6500, easing: Easing.inOut(Easing.ease) }),
       -1,
-      true,
+      true
+    );
+    glowScale1.value = withRepeat(
+      withTiming(1.12, { duration: 6500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+
+    // Respiration déphasée du halo 2 (Cyan) : cycle de 8.5s
+    glowOpacity2.value = withRepeat(
+      withTiming(0.75, { duration: 8500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+    glowScale2.value = withRepeat(
+      withTiming(1.15, { duration: 8500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
     );
   }, [reducedMotion]);
 
-  // Le voile est surdimensionné (1.6x) pour que la dérive ne révèle jamais
-  // de bord vide, même sur les écrans larges ou en rotation.
-  const glowSize = Math.max(width, height) * 1.6;
+  const animatedStyle1 = useAnimatedStyle(() => ({
+    opacity: glowOpacity1.value,
+    transform: [{ scale: glowScale1.value }],
+  }));
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const travel = glowSize * 0.22; // amplitude de la dérive
-    return {
-      transform: [
-        { translateX: -glowSize * 0.3 + progress.value * travel },
-        { translateY: -glowSize * 0.35 + progress.value * travel },
-      ],
-    };
-  });
+  const animatedStyle2 = useAnimatedStyle(() => ({
+    opacity: glowOpacity2.value,
+    transform: [{ scale: glowScale2.value }],
+  }));
 
   return (
     <View style={styles.root} pointerEvents="none">
-      <View style={styles.base} />
+      {/* 1. Fond sombre de base */}
+      <View style={styles.baseCanvas} />
+
+      {/* 2. Halo 1 (Electric Violet en haut à gauche) */}
       <Animated.View
-        style={[{ width: glowSize, height: glowSize }, animatedStyle]}
+        style={[
+          styles.glowOrb,
+          styles.glowOrb1,
+          reducedMotion ? styles.reducedOrb1 : animatedStyle1,
+        ]}
       >
         <LinearGradient
-          colors={[
-            'rgba(168, 85, 247, 0.07)', // violet, haut-gauche
-            'rgba(123, 208, 255, 0.05)', // cyan, milieu
-            'rgba(20, 19, 23, 0)', // s'éteint vers le fond
-          ]}
-          locations={[0, 0.45, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          colors={['rgba(139, 92, 246, 0.22)', 'rgba(139, 92, 246, 0.0)']}
+          start={{ x: 0.3, y: 0.3 }}
+          end={{ x: 0.9, y: 0.9 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+
+      {/* 3. Halo 2 (Digital Cyan en haut à droite) */}
+      <Animated.View
+        style={[
+          styles.glowOrb,
+          styles.glowOrb2,
+          reducedMotion ? styles.reducedOrb2 : animatedStyle2,
+        ]}
+      >
+        <LinearGradient
+          colors={['rgba(6, 182, 212, 0.18)', 'rgba(6, 182, 212, 0.0)']}
+          start={{ x: 0.5, y: 0.2 }}
+          end={{ x: 0.9, y: 0.9 }}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
     </View>
   );
 }
+
+export const AnimatedBackgroundGlow = memo(AnimatedBackgroundGlowComponent);
+
+const ORB_SIZE_1 = Math.round(SCREEN_WIDTH * 0.95);
+const ORB_SIZE_2 = Math.round(SCREEN_WIDTH * 0.85);
 
 const styles = StyleSheet.create({
   root: {
@@ -90,12 +126,35 @@ const styles = StyleSheet.create({
     bottom: 0,
     overflow: 'hidden',
   },
-  base: {
+  baseCanvas: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: Surface.base,
+    backgroundColor: Surface.base, // #141317 / Midnight Base
+  },
+  glowOrb: {
+    position: 'absolute',
+    borderRadius: 9999,
+    overflow: 'hidden',
+  },
+  glowOrb1: {
+    top: -SCREEN_HEIGHT * 0.08,
+    left: -SCREEN_WIDTH * 0.25,
+    width: ORB_SIZE_1,
+    height: ORB_SIZE_1,
+  },
+  glowOrb2: {
+    top: SCREEN_HEIGHT * 0.12,
+    right: -SCREEN_WIDTH * 0.30,
+    width: ORB_SIZE_2,
+    height: ORB_SIZE_2,
+  },
+  reducedOrb1: {
+    opacity: 0.5,
+  },
+  reducedOrb2: {
+    opacity: 0.4,
   },
 });

@@ -50,6 +50,7 @@ import {
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { SummaryChip } from '@/components/today/SummaryChip';
 import { TaskCard } from '@/components/today/TaskCard';
+import { RecoveryAndHrvMetricCard } from '@/components/today/RecoveryAndHrvMetricCard';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/today-styles';
 
@@ -352,12 +353,7 @@ export default function TodayScreen() {
             </GlowCard>
           ))
         ) : (
-          <GlowCard tone="success" intensity="soft">
-            <View style={styles.zenRow}>
-              <Ionicons name="shield-checkmark-outline" size={20} color={Tertiary.default} />
-              <Text style={styles.zenText}>Tout est sous contrôle pour le moment.</Text>
-            </View>
-          </GlowCard>
+          <RecoveryAndHrvMetricCard />
         )}
       </View>
 

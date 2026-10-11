@@ -12,38 +12,35 @@
  * CAS B (retour utilisateur) : onboarding_completed = 1 → route (tabs)
  */
 
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import * as SplashScreen from 'expo-splash-screen';
-import { View, Text, StyleSheet, LogBox } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
-  useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
-import {
-  Outfit_600SemiBold,
-  Outfit_700Bold,
-} from '@expo-google-fonts/outfit';
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    useFonts,
+} from "@expo-google-fonts/inter";
+import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { LogBox, StyleSheet, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { getDatabase } from '@/database/sqlite';
-import { SettingsRepository } from '@/repositories/settings-repository';
-import { NotificationService } from '@/services/notification-service';
-import { useAppStore } from '@/store/app-store';
-import { Snackbar } from '@/components/feedback/Snackbar';
-import { SplashAnimated } from '@/components/ui/SplashAnimated';
-import { AnimatedBackgroundGlow } from '@/components/ui/AnimatedBackgroundGlow';
-import { Surface, OnSurface } from '@/constants/theme';
+import { Snackbar } from "@/components/feedback/Snackbar";
+import { AnimatedBackgroundGlow } from "@/components/ui/AnimatedBackgroundGlow";
+import { SplashAnimated } from "@/components/ui/SplashAnimated";
+import { OnSurface, Surface } from "@/constants/theme";
+import { getDatabase } from "@/database/sqlite";
+import { SettingsRepository } from "@/repositories/settings-repository";
+import { NotificationService } from "@/services/notification-service";
+import { useAppStore } from "@/store/app-store";
 
 // Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
 LogBox.ignoreLogs([
-  'Cannot connect to Expo CLI',
-  'DateTimePicker: `onChange` is deprecated',
+  "Cannot connect to Expo CLI",
+  "DateTimePicker: `onChange` is deprecated",
 ]);
 
 // Garder le splash screen visible pendant l'initialisation
@@ -61,12 +58,12 @@ export default function RootLayout() {
   } = useAppStore();
 
   const [fontsLoaded, fontError] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-    'Outfit-SemiBold': Outfit_600SemiBold,
-    'Outfit-Bold': Outfit_700Bold,
+    "Inter-Regular": Inter_400Regular,
+    "Inter-Medium": Inter_500Medium,
+    "Inter-SemiBold": Inter_600SemiBold,
+    "Inter-Bold": Inter_700Bold,
+    "Outfit-SemiBold": Outfit_600SemiBold,
+    "Outfit-Bold": Outfit_700Bold,
   });
 
   const appReady = fontsLoaded || !!fontError;
@@ -96,7 +93,7 @@ export default function RootLayout() {
         setDbReady(true);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : 'Erreur base de données';
+          error instanceof Error ? error.message : "Erreur base de données";
         setDbError(message);
       }
     }
@@ -124,48 +121,74 @@ export default function RootLayout() {
       <AnimatedBackgroundGlow />
       <SafeAreaProvider>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        >
           {/* Onboarding — affiché uniquement au premier lancement */}
           <Stack.Screen
             name="(onboarding)"
-            options={{ animation: 'fade' }}
+            options={{ animation: "fade" }}
             redirect={onboardingComplete}
           />
           {/* Application principale — redirigée si onboarding non terminé */}
           <Stack.Screen
             name="(tabs)"
-            options={{ animation: 'fade' }}
+            options={{ animation: "fade" }}
             redirect={!onboardingComplete}
           />
           {/* Routes de détail — Rappels */}
-          <Stack.Screen name="reminders/index" options={{ presentation: 'card' }} />
-          <Stack.Screen name="reminders/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="reminders/new" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="reminders/edit/[id]" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="reminders/index"
+            options={{ presentation: "card" }}
+          />
+          <Stack.Screen
+            name="reminders/[id]"
+            options={{ presentation: "card" }}
+          />
+          <Stack.Screen
+            name="reminders/new"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="reminders/edit/[id]"
+            options={{ presentation: "modal" }}
+          />
           {/* Tâches */}
-          <Stack.Screen name="tasks/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="tasks/new" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="tasks/[id]" options={{ presentation: "card" }} />
+          <Stack.Screen name="tasks/new" options={{ presentation: "modal" }} />
           {/* Personnes */}
-          <Stack.Screen name="people/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="people/new" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="people/[id]" options={{ presentation: "card" }} />
+          <Stack.Screen name="people/new" options={{ presentation: "modal" }} />
           {/* Événements */}
-          <Stack.Screen name="events/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="events/new" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
+          <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
           {/* Habitudes */}
-          <Stack.Screen name="habits/index" options={{ presentation: 'card' }} />
-          <Stack.Screen name="habits/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="habits/new" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="habits/index"
+            options={{ presentation: "card" }}
+          />
+          <Stack.Screen name="habits/[id]" options={{ presentation: "card" }} />
+          <Stack.Screen name="habits/new" options={{ presentation: "modal" }} />
           {/* Objectifs */}
-          <Stack.Screen name="goals/index" options={{ presentation: 'card' }} />
-          <Stack.Screen name="goals/[id]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="goals/new" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="goals/index" options={{ presentation: "card" }} />
+          <Stack.Screen name="goals/[id]" options={{ presentation: "card" }} />
+          <Stack.Screen name="goals/new" options={{ presentation: "modal" }} />
           {/* Paramètres */}
-          <Stack.Screen name="settings/index" options={{ presentation: 'card' }} />
-          <Stack.Screen name="settings/schedule" options={{ presentation: 'card' }} />
+          <Stack.Screen
+            name="settings/index"
+            options={{ presentation: "card" }}
+          />
+          <Stack.Screen
+            name="settings/schedule"
+            options={{ presentation: "card" }}
+          />
           {/* Modules transversaux (Vague 9) */}
-          <Stack.Screen name="capture" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="sanctum" options={{ presentation: 'card' }} />
-          <Stack.Screen name="search" options={{ presentation: 'card' }} />
+          <Stack.Screen name="capture" options={{ presentation: "modal" }} />
+          <Stack.Screen name="sanctum" options={{ presentation: "card" }} />
+          <Stack.Screen name="search" options={{ presentation: "card" }} />
         </Stack>
         {/* Snackbar global (au-dessus de tout le contenu) */}
         <Snackbar />
@@ -183,22 +206,22 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 32,
     backgroundColor: Surface.base,
   },
   errorTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     color: OnSurface.primary,
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   errorMessage: {
     fontSize: 14,
     color: OnSurface.variant,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
   },
 });
