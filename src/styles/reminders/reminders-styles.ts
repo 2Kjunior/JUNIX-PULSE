@@ -162,12 +162,12 @@ export const styles = StyleSheet.create({
   metaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Surface.base,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
     gap: 4,
   },
   metaPillText: {

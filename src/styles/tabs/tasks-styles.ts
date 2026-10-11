@@ -47,77 +47,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabBarWrapper: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(20, 24, 36, 0.82)',
-    borderRadius: Radius.full,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-      default: {
-        boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.3)',
-      },
-    }),
-  },
-  tabItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xs + 2,
-    borderRadius: Radius.full,
-    gap: 6,
-  },
-  tabItemActive: {
-    backgroundColor: 'rgba(139, 92, 246, 0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.35)',
-  },
-  tabLabel: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    fontFamily: FontFamily?.medium,
-  },
-  tabLabelActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontFamily: FontFamily?.bold,
-  },
-  tabBadge: {
-    backgroundColor: 'rgba(11, 13, 20, 0.65)',
-    borderRadius: Radius.full,
-    paddingHorizontal: 7,
-    paddingVertical: 1.5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
-  },
-  tabBadgeActive: {
-    borderColor: Primary.default,
-    backgroundColor: 'rgba(139, 92, 246, 0.35)',
-  },
-  tabBadgeText: {
-    ...Typography.labelSmall,
-    fontSize: 10,
-    color: OnSurface.variant,
-  },
-  tabBadgeTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
+
   list: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
@@ -125,14 +55,14 @@ export const styles = StyleSheet.create({
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   taskRowCompleted: {
-    opacity: 0.65,
+    opacity: 0.55,
   },
   checkBtn: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -144,10 +74,11 @@ export const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: '#FFFFFF',
     fontWeight: '600',
+    fontSize: 15,
   },
   taskTitleCompleted: {
     textDecorationLine: 'line-through',
-    opacity: 0.6,
+    color: 'rgba(255, 255, 255, 0.45)',
   },
   metaRow: {
     flexDirection: 'row',

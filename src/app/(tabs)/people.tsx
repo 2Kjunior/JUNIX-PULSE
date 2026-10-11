@@ -119,7 +119,7 @@ export default function PeopleScreen() {
 
       {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 72 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
         }

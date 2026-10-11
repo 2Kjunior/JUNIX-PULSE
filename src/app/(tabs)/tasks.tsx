@@ -179,7 +179,7 @@ export default function TasksScreen() {
 
       {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 72 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
         }
@@ -274,17 +274,23 @@ function TaskCardR08({
       accessibilityLabel={`${task.title}${isCompleted ? ', terminée' : ''}`}
     >
     <View style={[styles.taskRow, isCompleted && styles.taskRowCompleted]}>
-      {/* Case à cocher tactile */}
+      {/* Case à cocher tactile isolée */}
       <TouchableOpacity
         style={styles.checkBtn}
-        onPress={onToggleComplete}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        onPress={(e) => {
+          e.stopPropagation();
+          onToggleComplete();
+        }}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        activeOpacity={0.65}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: isCompleted }}
         accessibilityLabel={isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
       >
         <Ionicons
           name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
-          size={22}
-          color={isCompleted ? Success.default : OnSurface.variant}
+          size={24}
+          color={isCompleted ? Success.default : 'rgba(255, 255, 255, 0.40)'}
         />
       </TouchableOpacity>
 

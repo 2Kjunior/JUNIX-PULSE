@@ -52,57 +52,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabBarWrapper: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.full,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  tabItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    gap: 6,
-  },
-  tabItemActive: {
-    backgroundColor: Surface.high,
-  },
-  tabLabel: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-  },
-  tabLabelActive: {
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  tabBadge: {
-    backgroundColor: Surface.base,
-    borderRadius: Radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  tabBadgeActive: {
-    borderColor: Primary.default,
-  },
-  tabBadgeText: {
-    ...Typography.labelSmall,
-    fontSize: 10,
-    color: OnSurface.variant,
-  },
-  tabBadgeTextActive: {
-    color: Primary.default,
-  },
+
   list: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,

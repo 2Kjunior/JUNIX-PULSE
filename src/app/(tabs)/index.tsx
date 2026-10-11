@@ -196,7 +196,7 @@ export default function TodayScreen() {
       style={styles.container}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + Spacing.lg, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 24 },
+        { paddingTop: insets.top + Spacing.lg, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 80 },
       ]}
       refreshControl={
         <RefreshControl
@@ -241,7 +241,7 @@ export default function TodayScreen() {
       </View>
 
       {/* ─── Synthèse rapide (Pill Counters) ─────────────────────────────────── */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryRow} contentContainerStyle={styles.summaryRowContent}>
         <SummaryChip
           count={reminders.length}
           label="rappels"
@@ -439,12 +439,16 @@ export default function TodayScreen() {
             <View style={styles.suggActions}>
               <TouchableOpacity
                 style={styles.suggRefuseBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 onPress={() => handleRefuseSuggestion(topSuggestion)}
               >
                 <Text style={styles.suggRefuseText}>Ignorer</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.suggAcceptBtn}
+                activeOpacity={0.8}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 onPress={() => handleAcceptSuggestion(topSuggestion)}
               >
                 <Ionicons name="checkmark" size={14} color="#FFFFFF" />

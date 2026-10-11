@@ -78,6 +78,10 @@ export const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
   },
+  summaryRowContent: {
+    paddingRight: Spacing.lg,
+    gap: Spacing.xs,
+  },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -85,9 +89,9 @@ export const styles = StyleSheet.create({
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md + 2,
     paddingVertical: Spacing.xs + 2,
-    marginRight: Spacing.xs + 2,
     gap: 6,
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     ...Platform.select({
       ios: {
         shadowColor: '#000000',
@@ -271,8 +275,11 @@ export const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   suggRefuseBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md + 2,
+    paddingVertical: Spacing.xs + 4,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
@@ -281,15 +288,18 @@ export const styles = StyleSheet.create({
   suggRefuseText: {
     ...Typography.labelMedium,
     color: OnSurface.variant,
+    fontWeight: '600',
   },
   suggAcceptBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Primary.default,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md + 4,
+    paddingVertical: Spacing.xs + 4,
+    minHeight: 38,
     borderRadius: Radius.full,
-    gap: 4,
+    gap: 6,
   },
   suggAcceptText: {
     ...Typography.labelMedium,

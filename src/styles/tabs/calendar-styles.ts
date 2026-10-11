@@ -56,11 +56,19 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(139, 92, 246, 0.40)',
     marginRight: 4,
   },
+  todayBtnDisabled: {
+    backgroundColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    opacity: 0.45,
+  },
   todayBtnText: {
     ...Typography.labelSmall,
     color: Primary.default,
     fontWeight: '700',
     fontFamily: FontFamily?.bold,
+  },
+  todayBtnTextDisabled: {
+    color: 'rgba(255, 255, 255, 0.45)',
   },
   navArrowBtn: {
     width: 36,
@@ -75,7 +83,7 @@ export const styles = StyleSheet.create({
   weekStrip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.sm,
     backgroundColor: 'rgba(20, 24, 36, 0.82)',
     borderRadius: Radius.xl,
@@ -99,12 +107,13 @@ export const styles = StyleSheet.create({
     }),
   },
   dayCell: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.xs + 2,
-    paddingHorizontal: 2,
-    borderRadius: Radius.lg,
-    width: 44,
+    paddingHorizontal: 1,
+    borderRadius: Radius.md,
+    maxWidth: 48,
     height: 60,
   },
   dayCellSelected: {

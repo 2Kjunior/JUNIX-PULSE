@@ -124,15 +124,25 @@ export default function CalendarScreen() {
         </View>
 
         <View style={styles.headerActions}>
-          {!isToday(selectedDate) && (
-            <TouchableOpacity
-              style={styles.todayBtn}
-              onPress={handleGoToday}
-              activeOpacity={0.7}
+          <TouchableOpacity
+            style={[
+              styles.todayBtn,
+              isToday(selectedDate) && styles.todayBtnDisabled,
+            ]}
+            onPress={handleGoToday}
+            disabled={isToday(selectedDate)}
+            activeOpacity={0.7}
+            accessibilityLabel="Revenir à aujourd'hui"
+          >
+            <Text
+              style={[
+                styles.todayBtnText,
+                isToday(selectedDate) && styles.todayBtnTextDisabled,
+              ]}
             >
-              <Text style={styles.todayBtnText}>Aujourd'hui</Text>
-            </TouchableOpacity>
-          )}
+              Aujourd'hui
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.navArrowBtn}
@@ -194,7 +204,7 @@ export default function CalendarScreen() {
 
       {/* Agenda synthétique */}
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 72 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
         }

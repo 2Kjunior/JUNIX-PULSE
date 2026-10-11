@@ -24,11 +24,15 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
   // du spec. Les tâches terminées restent neutres, texte atténué, sans lueur.
   return (
     <GlowCard tone="neutral">
-      <View style={styles.taskRow}>
+      <View style={[styles.taskRow, isCompleted && { opacity: 0.6 }]}>
         <TouchableOpacity
           onPress={onComplete}
           style={styles.checkBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.65}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isCompleted }}
+          accessibilityLabel={isCompleted ? 'Marquer tâche non terminée' : 'Marquer tâche terminée'}
         >
           <Ionicons
             name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
@@ -38,6 +42,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.cardBody}
+          activeOpacity={0.82}
           onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
         >
           <Text

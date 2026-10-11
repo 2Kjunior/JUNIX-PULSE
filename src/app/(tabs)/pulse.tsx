@@ -191,7 +191,7 @@ export default function PulseScreen() {
       style={styles.container}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + Spacing.md, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 24 },
+        { paddingTop: insets.top + Spacing.md, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 48 },
       ]}
       refreshControl={
         <RefreshControl
