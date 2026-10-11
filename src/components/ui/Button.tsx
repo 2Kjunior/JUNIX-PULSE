@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   View,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -60,7 +61,7 @@ export function Button({
   const content = loading ? (
     <ActivityIndicator
       size="small"
-      color={variant === 'primary' ? Surface.base : Primary.default}
+      color="#FFFFFF"
     />
   ) : (
     <View style={styles.content}>
@@ -79,6 +80,7 @@ export function Button({
         disabled={isDisabled}
         style={({ pressed }) => [
           styles.base,
+          styles.primaryBase,
           styles[`size_${size}`],
           isDisabled && styles.disabled,
           style,
@@ -90,9 +92,9 @@ export function Button({
         accessibilityState={{ disabled: isDisabled }}
       >
         <LinearGradient
-          colors={Gradient.primary}
-          start={Gradient.primaryStart}
-          end={Gradient.primaryEnd}
+          colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
           style={[styles.gradient, styles[`size_${size}`]]}
         >
           {content}
@@ -125,11 +127,28 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: Radius.md,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44, // Accessibilité : zone tactile minimale
+    minHeight: 46, // Accessibilité : zone tactile minimale
     overflow: 'hidden',
+  },
+
+  primaryBase: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.38,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 6,
+      },
+      default: {
+        boxShadow: '0 6px 24px -2px rgba(139, 92, 246, 0.40)',
+      },
+    }),
   },
 
   pressed: {
@@ -140,38 +159,43 @@ const styles = StyleSheet.create({
   gradient: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.md,
+    borderRadius: Radius.full,
     width: '100%',
   },
 
   // ─── Sizes ─────────────────────────────────────────────────────────────────
   size_sm: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    minHeight: 36,
+    paddingHorizontal: Spacing.md + 2,
+    paddingVertical: Spacing.xs + 2,
+    minHeight: 38,
   },
   size_md: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm + 4,
+    minHeight: 48,
   },
   size_lg: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl + 8,
+    paddingVertical: Spacing.md + 2,
+    minHeight: 54,
   },
 
   // ─── Variants (non-primary) ─────────────────────────────────────────────────
   variant_secondary: {
-    backgroundColor: Surface.high,
+    backgroundColor: 'rgba(27, 32, 48, 0.85)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: Radius.full,
   },
   variant_ghost: {
     backgroundColor: 'transparent',
+    borderRadius: Radius.full,
   },
   variant_destructive: {
-    backgroundColor: Error.container,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderWidth: 1,
-    borderColor: Error.default,
+    borderColor: 'rgba(239, 68, 68, 0.45)',
+    borderRadius: Radius.full,
   },
 
   disabled: {
@@ -184,22 +208,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   label_primary: {
-    color: '#0D0B12', // texte sombre sur dégradé clair
-    fontWeight: '600',
+    color: '#FFFFFF', // Texte blanc éclatant conforme à l'image 2
+    fontWeight: '700',
   },
   label_secondary: {
-    color: OnSurface.primary,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   label_ghost: {
     color: Primary.default,
+    fontWeight: '600',
   },
   label_destructive: {
     color: Error.default,
+    fontWeight: '600',
   },
 
-  labelSize_sm: { fontSize: 12 },
-  labelSize_md: { fontSize: 14 },
-  labelSize_lg: { fontSize: 16 },
+  labelSize_sm: { fontSize: 13 },
+  labelSize_md: { fontSize: 15 },
+  labelSize_lg: { fontSize: 17 },
 
   // ─── Icônes ────────────────────────────────────────────────────────────────
   content: {
@@ -207,9 +234,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconLeft: {
-    marginRight: Spacing.xs,
+    marginRight: Spacing.xs + 2,
   },
   iconRight: {
-    marginLeft: Spacing.xs,
+    marginLeft: Spacing.xs + 2,
   },
 });

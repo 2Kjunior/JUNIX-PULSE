@@ -39,6 +39,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/people-styles';
 
@@ -107,60 +108,14 @@ export default function PeopleScreen() {
       </View>
 
       {/* ─── Segmented Control R-09 ────────────────────────────────────────────── */}
-      <View style={styles.tabBarWrapper}>
-        <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'all' && styles.tabItemActive]}
-            onPress={() => setActiveTab('all')}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="people-outline"
-              size={14}
-              color={activeTab === 'all' ? Primary.default : OnSurface.variant}
-            />
-            <Text style={[styles.tabLabel, activeTab === 'all' && styles.tabLabelActive]}>
-              Toutes
-            </Text>
-            <View style={[styles.tabBadge, activeTab === 'all' && styles.tabBadgeActive]}>
-              <Text style={[styles.tabBadgeText, activeTab === 'all' && styles.tabBadgeTextActive]}>
-                {totalCount}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'forgotten' && styles.tabItemActive]}
-            onPress={() => setActiveTab('forgotten')}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="time-outline"
-              size={14}
-              color={activeTab === 'forgotten' ? '#F59E0B' : OnSurface.variant}
-            />
-            <Text style={[styles.tabLabel, activeTab === 'forgotten' && styles.tabLabelActive]}>
-              À recontacter
-            </Text>
-            <View
-              style={[
-                styles.tabBadge,
-                activeTab === 'forgotten' && styles.tabBadgeActive,
-                forgottenCount > 0 && { borderColor: '#F59E0B' },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.tabBadgeText,
-                  activeTab === 'forgotten' && { color: '#F59E0B', fontWeight: '700' },
-                ]}
-              >
-                {forgottenCount}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <PillTopBar
+        tabs={[
+          { key: 'all', label: 'Toutes', count: totalCount, icon: 'people-outline' },
+          { key: 'forgotten', label: 'À recontacter', count: forgottenCount, icon: 'time-outline' },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(k) => setActiveTab(k as FilterTab)}
+      />
 
       {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView

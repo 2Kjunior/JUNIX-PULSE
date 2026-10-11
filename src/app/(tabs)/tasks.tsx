@@ -43,6 +43,7 @@ import {
   type GlowTone,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/tasks-styles';
 
@@ -166,39 +167,15 @@ export default function TasksScreen() {
       </View>
 
       {/* ─── Segmented Control R-08 ────────────────────────────────────────────── */}
-      <View style={styles.tabBarWrapper}>
-        <View style={styles.tabBar}>
-          {[
-            { key: 'inbox', label: 'Inbox', count: counts.inbox, icon: 'file-tray-outline' as const },
-            { key: 'today', label: "Aujourd'hui", count: counts.today, icon: 'today-outline' as const },
-            { key: 'all', label: 'Toutes', count: counts.all, icon: 'list-outline' as const },
-          ].map(tab => {
-            const isActive = activeTab === tab.key;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.tabItem, isActive && styles.tabItemActive]}
-                onPress={() => setActiveTab(tab.key as FilterTab)}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={tab.icon}
-                  size={14}
-                  color={isActive ? Primary.default : OnSurface.variant}
-                />
-                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-                  {tab.label}
-                </Text>
-                <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                  <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>
-                    {tab.count}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
+      <PillTopBar
+        tabs={[
+          { key: 'inbox', label: 'Inbox', count: counts.inbox, icon: 'file-tray-outline' },
+          { key: 'today', label: "Aujourd'hui", count: counts.today, icon: 'today-outline' },
+          { key: 'all', label: 'Toutes', count: counts.all, icon: 'list-outline' },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(k) => setActiveTab(k as FilterTab)}
+      />
 
       {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView

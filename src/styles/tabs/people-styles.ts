@@ -2,7 +2,7 @@
  * Styles extraits de people.tsx.
  */
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import {
   Surface,
   Primary,
@@ -11,6 +11,8 @@ import {
   Spacing,
   Radius,
   Typography,
+  FontFamily,
+  TitleFontFamily,
 } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
@@ -29,20 +31,24 @@ export const styles = StyleSheet.create({
   },
   title: {
     ...Typography.headlineLarge,
-    color: OnSurface.primary,
+    fontFamily: TitleFontFamily?.bold ?? FontFamily?.bold,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   subtitle: {
     ...Typography.bodySmall,
-    color: OnSurface.variant,
+    color: 'rgba(255, 255, 255, 0.65)',
     marginTop: 2,
+    letterSpacing: 0.2,
   },
   settingsBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(26, 30, 44, 0.75)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,11 +198,20 @@ export const styles = StyleSheet.create({
   floatingCtaContainer: {
     position: 'absolute',
     right: Spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.45,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+      default: {
+        boxShadow: '0 8px 32px -4px rgba(124, 58, 237, 0.40)',
+      },
+    }),
   },
   floatingCta: {
     flexDirection: 'row',

@@ -361,10 +361,10 @@ export default function CalendarScreen() {
         <LinearGradient
           colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 1, y: 0 }}
           style={styles.fabGradient}
         >
-          <Ionicons name="add" size={24} color="#141317" />
+          <Ionicons name="add" size={20} color="#FFFFFF" />
           <Text style={styles.fabText}>Événement</Text>
         </LinearGradient>
       </TouchableOpacity>

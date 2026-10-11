@@ -55,11 +55,25 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Radius.full,
-    backgroundColor: 'rgba(26, 30, 44, 0.75)',
+    backgroundColor: 'rgba(20, 24, 36, 0.82)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 3,
+      },
+      default: {
+        boxShadow: '0 2px 10px -2px rgba(0, 0, 0, 0.35)',
+      },
+    }),
   },
   summaryRow: {
     flexDirection: 'row',
@@ -67,13 +81,27 @@ export const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(22, 26, 38, 0.75)',
+    backgroundColor: 'rgba(20, 24, 36, 0.82)',
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    marginRight: Spacing.xs,
+    paddingHorizontal: Spacing.md + 2,
+    paddingVertical: Spacing.xs + 2,
+    marginRight: Spacing.xs + 2,
     gap: 6,
     borderWidth: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.20,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+      default: {
+        boxShadow: '0 2px 8px -2px rgba(0, 0, 0, 0.30)',
+      },
+    }),
   },
   chipCount: {
     ...Typography.labelLarge,
