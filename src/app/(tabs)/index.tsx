@@ -182,10 +182,20 @@ export default function TodayScreen() {
     reminders.length === 0 &&
     events.length === 0;
 
-  // Calcul du taux de complétion des tâches
+  // Calcul du taux de complétion des tâches et des habitudes du jour (Rythme Réel)
   const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
   const totalTasksCount = tasks.length;
   const taskProgressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
+  const completedHabitsCount = habits.filter(h => h.completedToday).length;
+  const totalHabitsCount = habits.length;
+
+  const totalActions = totalTasksCount + totalHabitsCount;
+  const completedActions = completedTasksCount + completedHabitsCount;
+  const rhythmScore = totalActions > 0
+    ? Math.round((completedActions / totalActions) * 100)
+    : 100;
+  const rhythmStatus = rhythmScore >= 80 ? 'Optimal' : rhythmScore >= 50 ? 'En cours' : 'Démarrage';
 
   // Prochain événement ou rappel ("Ensuite")
   const nextEvent = events.length > 0 ? events[0] : null;
@@ -353,7 +363,20 @@ export default function TodayScreen() {
             </GlowCard>
           ))
         ) : (
-          <RecoveryAndHrvMetricCard />
+          <RecoveryAndHrvMetricCard
+            score={rhythmScore}
+            scoreLabel="RYTHME"
+            statusLabel={rhythmStatus}
+            title="Rythme Quotidien"
+            subtitle={
+              totalActions > 0
+                ? `${completedActions}/${totalActions} actions complétées aujourd’hui`
+                : 'Aucun rappel urgent • Journée sereine'
+            }
+            metricLabel="FOCUS"
+            metricValue={totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : `${completedActions}`}
+            metricUnit={totalTasksCount > 0 ? 'tâches' : 'actions'}
+          />
         )}
       </View>
 

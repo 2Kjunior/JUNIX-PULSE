@@ -38,6 +38,9 @@ export interface RecoveryAndHrvMetricCardProps {
   statusLabel?: string;
   title?: string;
   subtitle?: string;
+  metricLabel?: string;
+  metricValue?: string | number;
+  metricUnit?: string;
   hrvValue?: number;
   hrvUnit?: string;
   onPress?: () => void;
@@ -51,19 +54,24 @@ const RADIUS = (GAUGE_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 function RecoveryAndHrvMetricCardInner({
-  score = 89,
-  scoreLabel = 'SCORE',
+  score = 100,
+  scoreLabel = 'RYTHME',
   statusLabel = 'Optimal',
-  title = 'Récupération Corporelle',
-  subtitle = 'VFC élevée (+12% vs. moyenne 7j)',
-  hrvValue = 74,
-  hrvUnit = 'ms',
+  title = 'Rythme Quotidien',
+  subtitle = 'Aucun rappel urgent en attente',
+  metricLabel = 'FOCUS',
+  metricValue,
+  metricUnit = '',
+  hrvValue,
+  hrvUnit,
   onPress,
   style,
   testID = 'recovery-metric-card',
 }: RecoveryAndHrvMetricCardProps) {
   const clampedScore = Math.max(0, Math.min(100, score));
   const strokeDashoffset = CIRCUMFERENCE * (1 - clampedScore / 100);
+  const displayValue = metricValue ?? hrvValue ?? `${clampedScore}%`;
+  const displayUnit = metricUnit || hrvUnit || '';
 
   const cardContent = (
     <View style={styles.cardContainer}>
@@ -139,12 +147,14 @@ function RecoveryAndHrvMetricCardInner({
           </Text>
         </View>
 
-        {/* Colonne droite : Télémétrie VFC */}
+        {/* Colonne droite : Métrique de Focus / Accomplissement */}
         <View style={styles.metricColumn}>
-          <Text style={styles.metricLabel}>VFC</Text>
+          <Text style={styles.metricLabel}>{metricLabel}</Text>
           <View style={styles.metricValueRow}>
-            <Text style={styles.metricNumber}>{hrvValue}</Text>
-            <Text style={styles.metricUnit}>{hrvUnit}</Text>
+            <Text style={styles.metricNumber}>{displayValue}</Text>
+            {displayUnit ? (
+              <Text style={styles.metricUnit}>{displayUnit}</Text>
+            ) : null}
           </View>
         </View>
       </View>
@@ -169,7 +179,7 @@ function RecoveryAndHrvMetricCardInner({
       ]}
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, score ${score}, ${statusLabel}, VFC ${hrvValue} ${hrvUnit}`}
+      accessibilityLabel={`${title}, score ${score}, ${statusLabel}, ${metricLabel} ${displayValue} ${displayUnit}`}
       hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
     >
       {cardContent}
