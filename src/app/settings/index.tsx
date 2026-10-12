@@ -40,6 +40,7 @@ import { seedDatabase, clearAllData, isSeedAlreadyLoaded, seedPulseExtra } from 
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
+import { NotificationService } from '@/services/notification-service';
 import { styles } from '@/styles/settings/settings-styles';
 
 export default function SettingsScreen() {
@@ -51,6 +52,7 @@ export default function SettingsScreen() {
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
+  const [testingNotification, setTestingNotification] = useState(false);
 
   const loadSettings = useCallback(async () => {
     const s = await SettingsRepository.get();
@@ -63,6 +65,27 @@ export default function SettingsScreen() {
   }, [loadSettings]);
 
   if (!settings) return <LoadingState message="Chargement des paramètres..." />;
+
+  const handleTestNotification = async () => {
+    try {
+      setTestingNotification(true);
+      const res = await NotificationService.sendTestNotification({
+        title: '⚡ Test Junix Pulse',
+        body: 'Le système de notifications locales est 100% opérationnel ! 🔔',
+        delaySeconds: 2,
+      });
+
+      if (res.success) {
+        showSnackbar('Notification test envoyée ! Elle arrive dans 2 secondes.');
+      } else {
+        Alert.alert('Information Notification', res.message ?? 'Impossible d\'envoyer la notification.');
+      }
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+    } finally {
+      setTestingNotification(false);
+    }
+  };
 
   const handleSaveName = async () => {
     try {
@@ -364,6 +387,24 @@ export default function SettingsScreen() {
             thumbColor={settings.notificationsEnabled ? Primary.default : OnSurface.disabled}
           />
         </View>
+
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleTestNotification}
+          disabled={testingNotification}
+        >
+          <View>
+            <Text style={styles.rowLabel}>
+              {testingNotification ? 'Envoi en cours...' : 'Tester une notification'}
+            </Text>
+            <Text style={styles.rowSub}>Déclenche une alerte locale dans 2 secondes</Text>
+          </View>
+          <Ionicons
+            name="notifications-outline"
+            size={20}
+            color={Primary.default}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Section Données de démo */}

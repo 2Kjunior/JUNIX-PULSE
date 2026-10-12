@@ -116,6 +116,69 @@ export const NotificationService = {
   },
 
   /**
+   * Déclenche une notification locale de test (immédiate ou dans quelques secondes).
+   */
+  async sendTestNotification(options?: {
+    title?: string;
+    body?: string;
+    delaySeconds?: number;
+  }): Promise<{ success: boolean; id?: string; message?: string }> {
+    if (!Notifications) {
+      return {
+        success: false,
+        message: "expo-notifications n'est pas disponible dans cet environnement.",
+      };
+    }
+
+    try {
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) {
+        return {
+          success: false,
+          message: "Permissions refusées. Activez les notifications dans les réglages système.",
+        };
+      }
+
+      const delaySeconds = options?.delaySeconds ?? 2;
+      const effectiveDate = new Date(Date.now() + Math.max(1, delaySeconds) * 1000);
+      const title = options?.title ?? "⚡ Test Junix Pulse";
+      const body =
+        options?.body ??
+        "Votre système de notifications est opérationnel ! 🔔";
+
+      const id = await Notifications.scheduleNotificationAsync({
+        identifier: `test-${Date.now()}`,
+        content: {
+          title,
+          body,
+          sound: "default",
+          data: {
+            type: "TEST_NOTIFICATION",
+            sentAt: new Date().toISOString(),
+          },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: effectiveDate,
+          channelId: Platform.OS === "android" ? "reminders" : undefined,
+        } as import("expo-notifications").DateTriggerInput,
+      });
+
+      return {
+        success: true,
+        id,
+        message: `Notification programmée dans ${delaySeconds} seconde(s).`,
+      };
+    } catch (err) {
+      logger.error("[NotificationService] Erreur lors de sendTestNotification", err);
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : "Erreur inconnue lors du test",
+      };
+    }
+  },
+
+  /**
    * Annule une notification planifiée.
    */
   async cancelReminder(notificationId: string): Promise<void> {
