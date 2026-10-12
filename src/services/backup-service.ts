@@ -48,7 +48,7 @@ const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   interactions: ['id', 'person_id', 'type', 'occurred_at', 'notes', 'reminder_id', 'created_at'],
   suggestions: ['id', 'type', 'status', 'title', 'explanation', 'target_id', 'target_type', 'proposed_data', 'generated_at', 'expires_at', 'decided_at', 'created_at'],
   settings: ['id', 'display_name', 'timezone', 'onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'created_at', 'updated_at'],
-  sanctum_notes: ['id', 'content', 'updated_at'],
+  sanctum_notes: ['id', 'title', 'content', 'folder', 'created_at', 'updated_at'],
 };
 
 const REQUIRED_COLUMNS: Partial<Record<BackupTable, readonly string[]>> = {

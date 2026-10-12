@@ -22,6 +22,8 @@
  * 017 – suggestions
  * 018 – settings
  * 019 – indexes
+ * 020 – sanctum_notes
+ * 021 – sanctum_notes_multi_notebooks
  */
 
 export interface Migration {
@@ -401,6 +403,20 @@ export const MIGRATIONS: Migration[] = [
         content TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
+    `,
+  },
+  {
+    version: 21,
+    name: 'sanctum_notes_multi_notebooks',
+    sql: `
+      -- Ajout des colonnes pour le mode multi-carnets
+      ALTER TABLE sanctum_notes ADD COLUMN title TEXT NOT NULL DEFAULT '';
+      ALTER TABLE sanctum_notes ADD COLUMN created_at TEXT NOT NULL DEFAULT '';
+      ALTER TABLE sanctum_notes ADD COLUMN folder TEXT NOT NULL DEFAULT 'Général';
+
+      -- Index pour le tri et le filtrage par dossier
+      CREATE INDEX IF NOT EXISTS idx_sanctum_notes_folder ON sanctum_notes(folder);
+      CREATE INDEX IF NOT EXISTS idx_sanctum_notes_updated_at ON sanctum_notes(updated_at);
     `,
   },
 ];
