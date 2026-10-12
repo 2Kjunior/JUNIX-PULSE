@@ -4,6 +4,7 @@
 
 import { getDatabase } from '../database/sqlite';
 import { Person, Interaction } from '../domain/entities';
+import { isPersonForgotten } from '../domain/rules/person-rules';
 
 function rowToPerson(row: Record<string, unknown>): Person {
   return {
@@ -124,12 +125,7 @@ export const PersonRepository = {
     const all = await this.findAll();
     const now = new Date();
 
-    return all.filter(p => {
-      if (!p.lastInteractionAt) return true; // Jamais contacté
-      const lastDate = new Date(p.lastInteractionAt);
-      const diffDays = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
-      return diffDays >= (p.forgottenThresholdDays || 30);
-    });
+    return all.filter(p => isPersonForgotten(p, now));
   },
 
   // ─── Interactions ───────────────────────────────────────────────────────────

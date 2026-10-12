@@ -6,6 +6,7 @@
 import { randomUUID } from 'expo-crypto';
 import { TaskRepository } from '../repositories/task-repository';
 import { Task, Subtask, TaskStatus, ReminderPriority } from '../domain/entities';
+import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
 
 // ─── Interfaces d'entrée ──────────────────────────────────────────────────────
 
@@ -47,7 +48,7 @@ export const TaskUseCases = {
 
     // Si une date est planifiée, le statut par défaut devient SCHEDULED au lieu d'INBOX
     const initialStatus: TaskStatus =
-      input.status ?? (input.scheduledDate ? 'SCHEDULED' : 'INBOX');
+      input.status ?? resolveTaskReopenStatus(input.scheduledDate);
 
     await TaskRepository.create({
       id: taskId,
@@ -110,7 +111,7 @@ export const TaskUseCases = {
     if (isNowCompleted) {
       newStatus = 'COMPLETED';
     } else {
-      newStatus = task.scheduledDate ? 'SCHEDULED' : 'INBOX';
+      newStatus = resolveTaskReopenStatus(task.scheduledDate);
     }
 
     await TaskRepository.update({

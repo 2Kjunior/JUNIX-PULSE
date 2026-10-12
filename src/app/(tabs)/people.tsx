@@ -26,6 +26,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person } from '@/domain/entities';
+import { daysSinceLastInteraction, isPersonForgotten } from '@/domain/rules/person-rules';
 import {
   Surface,
   Primary,
@@ -171,12 +172,8 @@ export default function PeopleScreen() {
 // ─── Composants locaux ─────────────────────────────────────────────────────────
 
 function PersonCardR09({ person }: { person: Person }) {
-  const daysSinceLast = person.lastInteractionAt
-    ? differenceInDays(new Date(), new Date(person.lastInteractionAt))
-    : null;
-
-  const isForgotten =
-    daysSinceLast === null || daysSinceLast >= (person.forgottenThresholdDays || 30);
+  const daysSinceLast = daysSinceLastInteraction(person.lastInteractionAt);
+  const isForgotten = isPersonForgotten(person);
 
   const initials = person.displayName
     .split(' ')
