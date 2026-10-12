@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native';
 import {
   Surface,
   Primary,
+  Tertiary,
   OnSurface,
   Outline,
   Spacing,
@@ -92,6 +93,24 @@ export const styles = StyleSheet.create({
     ...Typography.labelSmall,
     color: OnSurface.variant,
     fontSize: 11,
+  },
+  importedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(123, 208, 255, 0.08)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(123, 208, 255, 0.25)',
+  },
+  importedText: {
+    ...Typography.labelSmall,
+    color: Tertiary.default,
+    fontSize: 11,
+    fontWeight: '600',
   },
   statusBanner: {
     flexDirection: 'row',

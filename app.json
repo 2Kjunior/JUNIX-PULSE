@@ -44,7 +44,13 @@
         }
       ],
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Autoriser Junix Pulse à accéder à vos contacts pour importer vos proches."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

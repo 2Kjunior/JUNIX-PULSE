@@ -20,6 +20,8 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+import { Contact, requestPermissionsAsync } from 'expo-contacts';
+
 import { PersonUseCases } from '@/use-cases/person-use-cases';
 import { useAppStore } from '@/store/app-store';
 import {
@@ -66,7 +68,75 @@ export default function NewPersonScreen() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importedFromContacts, setImportedFromContacts] = useState(false);
   const [nameError, setNameError] = useState('');
+
+  async function handleImportFromContacts() {
+    setImporting(true);
+    try {
+      if (Platform.OS === 'android') {
+        const { status } = await requestPermissionsAsync();
+        if (status !== 'granted') {
+          showSnackbar("Permission d'accès aux contacts requise");
+          setImporting(false);
+          return;
+        }
+      }
+
+      const contact = await Contact.presentPicker();
+      if (!contact) {
+        setImporting(false);
+        return;
+      }
+
+      const fullName = (await contact.getFullName()) || '';
+      const phones = await contact.getPhones();
+      const emails = await contact.getEmails();
+
+      let birthday: { day?: number; month?: number; year?: number } | null = null;
+      try {
+        birthday = await contact.getBirthday();
+      } catch {
+        // getBirthday est specifique iOS
+      }
+      if (!birthday) {
+        try {
+          const dates = await contact.getDates();
+          const bDay = dates?.find((d) => d.label?.toLowerCase() === 'birthday');
+          if (bDay?.date) {
+            birthday = bDay.date;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (fullName) {
+        setDisplayName(fullName);
+        setNameError('');
+      }
+      if (phones && phones.length > 0 && phones[0]?.number) {
+        setPhone(phones[0].number);
+      }
+      if (emails && emails.length > 0 && emails[0]?.address) {
+        setEmail(emails[0].address);
+      }
+      if (birthday && birthday.day && birthday.month) {
+        const y = birthday.year ? String(birthday.year).padStart(4, '0') : '2000';
+        const m = String(birthday.month).padStart(2, '0');
+        const d = String(birthday.day).padStart(2, '0');
+        setBirthDate(`${y}-${m}-${d}`);
+      }
+
+      setImportedFromContacts(true);
+      showSnackbar(`Contact « ${fullName || 'sélectionné'} » importé.`);
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : "Impossible d'accéder au carnet d'adresses");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   function validate(): boolean {
     if (!displayName.trim()) {
@@ -90,6 +160,7 @@ export default function NewPersonScreen() {
         birthDate,
         notes: notes.trim() || undefined,
         forgottenThresholdDays,
+        importedFromContacts,
       });
 
       showSnackbar('Personne ajoutée avec succès');
@@ -132,6 +203,41 @@ export default function NewPersonScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* Action d'importation rapide depuis le carnet d'adresses */}
+        <TouchableOpacity
+          style={[styles.importBtn, importedFromContacts && styles.importBtnActive]}
+          onPress={handleImportFromContacts}
+          disabled={importing}
+          activeOpacity={0.75}
+          accessibilityRole="button"
+          accessibilityLabel="Importer depuis le carnet d'adresses"
+        >
+          <View style={[styles.importIconCircle, importedFromContacts && styles.importIconCircleActive]}>
+            <Ionicons
+              name={importedFromContacts ? 'checkmark' : 'person-add-outline'}
+              size={18}
+              color={importedFromContacts ? '#10B981' : Primary.default}
+            />
+          </View>
+          <View style={styles.importTextCol}>
+            <Text style={styles.importTitle}>
+              {importedFromContacts
+                ? 'Coordonnées issues du carnet d’adresses'
+                : 'Importer depuis le carnet d’adresses'}
+            </Text>
+            <Text style={styles.importSubtitle}>
+              {importedFromContacts
+                ? 'Nom, téléphone et email chargés en local'
+                : 'Pré-remplir le nom, le numéro et l’email en 1 clic'}
+            </Text>
+          </View>
+          <Ionicons
+            name={importedFromContacts ? 'checkmark-circle' : 'chevron-forward'}
+            size={18}
+            color={importedFromContacts ? '#10B981' : OnSurface.variant}
+          />
+        </TouchableOpacity>
+
         {/* Nom complet */}
         <View style={styles.field}>
           <Text style={styles.label}>Nom complet *</Text>
@@ -336,4 +442,43 @@ const styles = StyleSheet.create({
   chipText: { ...Typography.labelMedium, color: OnSurface.variant },
   chipTextActive: { color: Primary.onContainer },
   submitBtn: { marginTop: Spacing.md },
+  importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  importBtnActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+  },
+  importIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(160, 120, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  importIconCircleActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  importTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  importTitle: {
+    ...Typography.labelMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  importSubtitle: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    fontSize: 12,
+  },
 });

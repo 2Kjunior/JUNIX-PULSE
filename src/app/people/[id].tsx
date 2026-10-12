@@ -225,11 +225,19 @@ export default function PersonDetailScreen() {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.displayName}>{person.displayName}</Text>
-              {!!person.relationship && (
-                <View style={styles.relationshipBadge}>
-                  <Text style={styles.relationshipText}>{person.relationship}</Text>
-                </View>
-              )}
+              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                {!!person.relationship && (
+                  <View style={styles.relationshipBadge}>
+                    <Text style={styles.relationshipText}>{person.relationship}</Text>
+                  </View>
+                )}
+                {person.importedFromContacts && (
+                  <View style={styles.importedBadge}>
+                    <Ionicons name="book-outline" size={11} color={Tertiary.default} />
+                    <Text style={styles.importedText}>Répertoire</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
 
