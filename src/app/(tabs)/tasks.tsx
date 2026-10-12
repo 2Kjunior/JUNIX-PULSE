@@ -26,6 +26,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { Task, Subtask } from '@/domain/entities';
+import { isTaskOverdue, calculateTaskProgress } from '@/domain/rules/task-rules';
 import { useAppStore } from '@/store/app-store';
 import {
   Surface,
@@ -34,6 +35,7 @@ import {
   OnSurface,
   Outline,
   Success,
+  Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
@@ -98,7 +100,18 @@ export default function TasksScreen() {
         })
       );
 
-      setItems(tasksWithSubs);
+      // Tri ergonomique : Tâches non terminées d'abord (triées par priorité), puis tâches terminées
+      const priorityWeights: Record<string, number> = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 };
+      const sorted = [...tasksWithSubs].sort((a, b) => {
+        const aCompleted = a.task.status === 'COMPLETED';
+        const bCompleted = b.task.status === 'COMPLETED';
+        if (aCompleted !== bCompleted) {
+          return aCompleted ? 1 : -1;
+        }
+        return (priorityWeights[a.task.priority] ?? 2) - (priorityWeights[b.task.priority] ?? 2);
+      });
+
+      setItems(sorted);
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de chargement');
@@ -249,32 +262,34 @@ function TaskCardR08({
   onToggleComplete: () => void;
 }) {
   const isCompleted = task.status === 'COMPLETED';
-  const completedSubs = subtasks.filter(s => s.isCompleted).length;
+  const isOverdue = !isCompleted && isTaskOverdue(task);
+  const progress = calculateTaskProgress(task, subtasks);
   const totalSubs = subtasks.length;
+  const completedSubs = progress.completed;
   const priorityColor = PriorityColors[task.priority] ?? Primary.default;
 
-  // La lueur suit la priorite (jamais la decoration) et disparait toujours
-  // sur une tache terminee, meme si elle etait urgente/haute (regle du spec :
-  // "Taches terminees : neutral, texte attenue, jamais de lueur").
+  // La lueur suit la priorité ou le retard et disparaît sur une tâche terminée
   const glowTone: GlowTone = isCompleted
     ? 'neutral'
-    : task.priority === 'URGENT'
+    : isOverdue
       ? 'urgent'
-      : task.priority === 'HIGH'
-        ? 'attention'
-        : task.priority === 'NORMAL'
-          ? 'info'
-          : 'neutral';
+      : task.priority === 'URGENT'
+        ? 'urgent'
+        : task.priority === 'HIGH'
+          ? 'attention'
+          : task.priority === 'NORMAL'
+            ? 'info'
+            : 'neutral';
 
   return (
     <GlowCard
       tone={glowTone}
       intensity="soft"
       onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
-      accessibilityLabel={`${task.title}${isCompleted ? ', terminée' : ''}`}
+      accessibilityLabel={`${task.title}${isCompleted ? ', terminée' : ''}${isOverdue ? ', en retard' : ''}`}
     >
     <View style={[styles.taskRow, isCompleted && styles.taskRowCompleted]}>
-      {/* Case à cocher tactile isolée */}
+      {/* Case à cocher tactile isolée (44x44px accessible) */}
       <TouchableOpacity
         style={styles.checkBtn}
         onPress={(e) => {
@@ -303,14 +318,30 @@ function TaskCardR08({
           {task.title}
         </Text>
 
+        {/* Mini-jauge de progression des sous-tâches (2px) */}
+        {totalSubs > 0 ? (
+          <View
+            style={styles.progressTrack}
+            accessibilityLabel={`Progression : ${progress.percentage}%`}
+          >
+            <View style={[styles.progressFill, { width: `${progress.percentage}%` }]} />
+          </View>
+        ) : null}
+
         {/* Ligne des badges d'information (Action-first) */}
         <View style={styles.metaRow}>
-          {/* Tag de statut/date */}
+          {/* Tag de statut/date ou alerte de retard */}
           {task.scheduledDate ? (
-            <View style={styles.metaPill}>
-              <Ionicons name="calendar-outline" size={11} color={Tertiary.default} />
-              <Text style={styles.metaPillText}>
-                {format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
+            <View style={[styles.metaPill, isOverdue && styles.metaPillOverdue]}>
+              <Ionicons
+                name={isOverdue ? 'alert-circle-outline' : 'calendar-outline'}
+                size={11}
+                color={isOverdue ? ErrorColors.default : Tertiary.default}
+              />
+              <Text style={[styles.metaPillText, isOverdue && styles.metaPillTextOverdue]}>
+                {isOverdue
+                  ? `En retard (${format(new Date(task.scheduledDate), 'd MMM', { locale: fr })})`
+                  : format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
               </Text>
             </View>
           ) : (
