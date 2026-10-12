@@ -9,6 +9,7 @@ import { PersonRepository } from '../repositories/person-repository';
 import { ReminderRepository } from '../repositories/reminder-repository';
 import { PersonUseCases } from './person-use-cases';
 import { HabitUseCases } from './habit-use-cases';
+import { snoozeReminder } from './reminder-use-cases';
 import { Suggestion } from '../domain/entities';
 
 export const SuggestionUseCases = {
@@ -117,6 +118,11 @@ export const SuggestionUseCases = {
         });
       } else if (sugg.type === 'HABIT_REMINDER' && sugg.targetId) {
         await HabitUseCases.toggleHabitCompletion(sugg.targetId);
+      } else if (sugg.type === 'RESCHEDULE_REMINDER' && sugg.targetId) {
+        const rem = await ReminderRepository.findById(sugg.targetId);
+        if (rem) {
+          await snoozeReminder(rem, { kind: 'tomorrow' }, true);
+        }
       }
     }
 
