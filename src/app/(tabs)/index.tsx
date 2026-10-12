@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { format } from 'date-fns';
+import { format, isToday, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -62,6 +62,8 @@ export default function TodayScreen() {
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [totalActiveReminders, setTotalActiveReminders] = useState(0);
+  const [todayRemindersCount, setTodayRemindersCount] = useState(0);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [habits, setHabits] = useState<HabitStats[]>([]);
@@ -77,8 +79,8 @@ export default function TodayScreen() {
   const load = useCallback(async () => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     try {
-      const [rems, tks, evts, habStats, suggs, settings, goalsData] = await Promise.all([
-        ReminderRepository.findForDate(todayStr),
+      const [allRems, tks, evts, habStats, suggs, settings, goalsData] = await Promise.all([
+        ReminderRepository.findAll(),
         TaskRepository.findForDate(todayStr),
         EventRepository.findForDate(todayStr),
         HabitUseCases.getAllHabitsWithStats(),
@@ -87,7 +89,21 @@ export default function TodayScreen() {
         GoalUseCases.getAllGoalsWithDetails(),
       ]);
 
-      setReminders(rems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED'));
+      const activeReminders = allRems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED');
+      const dueTodayOrPast = activeReminders.filter(r => {
+        try {
+          const d = new Date(r.scheduledAt);
+          return isToday(d) || isPast(d);
+        } catch {
+          return true;
+        }
+      });
+
+      // Affiche les rappels du jour/en retard, ou s'il n'y en a pas, les prochains rappels actifs
+      setReminders(dueTodayOrPast.length > 0 ? dueTodayOrPast : activeReminders);
+      setTotalActiveReminders(activeReminders.length);
+      setTodayRemindersCount(dueTodayOrPast.length);
+
       setTasks(tks);
       setEvents(evts);
       setHabits(habStats.filter(h => h.habit.status === 'ACTIVE'));
@@ -253,8 +269,8 @@ export default function TodayScreen() {
       {/* ─── Synthèse rapide (Pill Counters) ─────────────────────────────────── */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryRow} contentContainerStyle={styles.summaryRowContent}>
         <SummaryChip
-          count={reminders.length}
-          label="rappels"
+          count={todayRemindersCount > 0 ? todayRemindersCount : totalActiveReminders}
+          label={todayRemindersCount > 0 ? 'rappels (auj.)' : 'rappels'}
           color={Primary.default}
           icon="notifications-outline"
           onPress={() => router.push('/reminders')}

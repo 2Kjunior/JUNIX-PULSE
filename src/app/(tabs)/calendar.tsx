@@ -44,14 +44,17 @@ import {
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
 import { styles } from '@/styles/tabs/calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
+type CalendarViewMode = 'agenda' | 'timetable';
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('agenda');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -202,14 +205,73 @@ export default function CalendarScreen() {
         })}
       </View>
 
-      {/* Agenda synthétique */}
-      <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Sélecteur de mode (Top Bar Switcher) : Agenda vs Emploi du temps */}
+      <View style={styles.viewModeSelector}>
+        <TouchableOpacity
+          style={[
+            styles.viewModeTab,
+            viewMode === 'agenda' && styles.viewModeTabActive,
+          ]}
+          onPress={() => setViewMode('agenda')}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="list-outline"
+            size={16}
+            color={viewMode === 'agenda' ? Primary.default : OnSurface.variant}
+          />
+          <Text
+            style={[
+              styles.viewModeTabText,
+              viewMode === 'agenda' && styles.viewModeTabTextActive,
+            ]}
+          >
+            Agenda
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.viewModeTab,
+            viewMode === 'timetable' && styles.viewModeTabActive,
+          ]}
+          onPress={() => setViewMode('timetable')}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="time-outline"
+            size={16}
+            color={viewMode === 'timetable' ? Primary.default : OnSurface.variant}
+          />
+          <Text
+            style={[
+              styles.viewModeTabText,
+              viewMode === 'timetable' && styles.viewModeTabTextActive,
+            ]}
+          >
+            Emploi du temps
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Rendu conditionnel selon le mode choisi */}
+      {viewMode === 'timetable' ? (
+        <CalendarTimetable
+          selectedDate={selectedDate}
+          events={events}
+          reminders={reminders}
+          tasks={tasks}
+          onRefresh={load}
+        />
+      ) : (
+        /* Agenda synthétique */
+        <ScrollView
+          contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
         {!hasItems ? (
           <View style={styles.emptyCard}>
             <View style={styles.emptyIconCircle}>
@@ -360,6 +422,7 @@ export default function CalendarScreen() {
           </>
         )}
       </ScrollView>
+      )}
 
       {/* Bouton Flottant (FAB) — Élément dégradé unique de l'écran */}
       <TouchableOpacity

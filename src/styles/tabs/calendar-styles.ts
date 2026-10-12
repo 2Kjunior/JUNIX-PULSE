@@ -348,5 +348,39 @@ export const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
+  viewModeSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(20, 24, 36, 0.85)',
+    borderRadius: Radius.lg,
+    padding: 3,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  viewModeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    gap: 6,
+  },
+  viewModeTabActive: {
+    backgroundColor: 'rgba(208, 188, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(208, 188, 255, 0.35)',
+  },
+  viewModeTabText: {
+    ...Typography.labelMedium,
+    color: OnSurface.variant,
+    fontWeight: '600',
+  },
+  viewModeTabTextActive: {
+    color: Primary.default,
+    fontWeight: '700',
+  },
 });
 

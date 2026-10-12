@@ -20,11 +20,11 @@ import {
     useFonts,
 } from "@expo-google-fonts/inter";
 import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { LogBox, StyleSheet, Text, View } from "react-native";
+import { Alert, LogBox, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -100,6 +100,44 @@ export default function RootLayout() {
 
     initialize();
   }, [appReady]);
+
+  // Écouteurs de notifications pour navigation directe & snooze
+  useEffect(() => {
+    // 1. Clic sur une notification système (Background / Verrouillage)
+    const cleanupResponse = NotificationService.addResponseListener((response) => {
+      const data = response.notification.request.content.data;
+      if (data?.reminderId && typeof data.reminderId === "string") {
+        router.push(`/reminders/${data.reminderId}`);
+      }
+    });
+
+    // 2. Notification reçue alors que l'application est ouverte (Foreground)
+    const cleanupForeground = NotificationService.addForegroundListener((notification) => {
+      const data = notification.request.content.data;
+      const title = notification.request.content.title ?? "Rappel Junix Pulse";
+      const body = notification.request.content.body ?? "";
+      const reminderId = data?.reminderId as string | undefined;
+
+      if (reminderId) {
+        Alert.alert(
+          `🔔 ${title}`,
+          body || "Votre rappel est arrivé à échéance.",
+          [
+            { text: "Plus tard", style: "cancel" },
+            {
+              text: "Ouvrir & Snooze",
+              onPress: () => router.push(`/reminders/${reminderId}`),
+            },
+          ]
+        );
+      }
+    });
+
+    return () => {
+      cleanupResponse();
+      cleanupForeground();
+    };
+  }, []);
 
   // Fonts pas encore prêtes : laisser le splash natif visible
   if (!appReady) {

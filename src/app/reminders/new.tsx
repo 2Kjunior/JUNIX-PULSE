@@ -122,9 +122,11 @@ export default function NewReminderScreen() {
   }
 
   // Raccourcis temporels pour la commodité (R-05)
-  const setQuickTime = (type: 'tonight' | 'tomorrow') => {
+  const setQuickTime = (type: 'now_10s' | 'tonight' | 'tomorrow') => {
     const now = new Date();
-    if (type === 'tonight') {
+    if (type === 'now_10s') {
+      setScheduledAt(new Date(now.getTime() + 10_000));
+    } else if (type === 'tonight') {
       const tonight = setMinutes(setHours(now, 20), 30);
       setScheduledAt(tonight > now ? tonight : addHours(now, 2));
     } else {
@@ -207,18 +209,27 @@ export default function NewReminderScreen() {
             {/* Chips rapides */}
             <View style={styles.quickTimesRow}>
               <TouchableOpacity
+                style={[styles.quickTimeChip, { borderColor: 'rgba(208, 188, 255, 0.4)' }]}
+                onPress={() => setQuickTime('now_10s')}
+              >
+                <Ionicons name="flash-outline" size={12} color={Primary.default} />
+                <Text style={[styles.quickTimeText, { color: Primary.default, fontWeight: '600' }]}>
+                  Dans 10s (Test)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={styles.quickTimeChip}
                 onPress={() => setQuickTime('tonight')}
               >
                 <Ionicons name="time-outline" size={12} color={OnSurface.variant} />
-                <Text style={styles.quickTimeText}>Ce soir (20:30)</Text>
+                <Text style={styles.quickTimeText}>Ce soir</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickTimeChip}
                 onPress={() => setQuickTime('tomorrow')}
               >
                 <Ionicons name="sunny-outline" size={12} color={OnSurface.variant} />
-                <Text style={styles.quickTimeText}>Demain matin (08:30)</Text>
+                <Text style={styles.quickTimeText}>Demain</Text>
               </TouchableOpacity>
             </View>
 

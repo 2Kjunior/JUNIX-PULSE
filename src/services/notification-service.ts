@@ -86,6 +86,9 @@ export const NotificationService = {
     }
 
     try {
+      // S'assurer que les permissions sont accordées sur Android / iOS
+      await this.requestPermissions();
+
       const triggerDate = params.scheduledAt;
       const now = new Date();
       const effectiveDate =
@@ -102,6 +105,7 @@ export const NotificationService = {
             ...params.data,
           },
           sound: "default",
+          priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
