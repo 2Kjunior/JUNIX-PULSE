@@ -2,18 +2,20 @@
  * Bouton Flottant 3D Glassmorphism (GlassFloatingActionButton / GlassFAB)
  *
  * Fonctionnalités clés :
- * 1. Animation de rétractation temporelle :
- *    - S'affiche initialement en version étendue [ +  Nouvelle tâche ]
- *    - Après quelques secondes (collapseDelayMs, défaut 2.8s), se rétracte
- *      automatiquement avec une transition fluide en bouton 3D circulaire [ + ].
+ * 1. Animation de rétractation temporelle synchronisée avec la Tab Bar :
+ *    - Utilise `useFocusEffect` d'Expo Router pour se redéclencher à CHAQUE passage
+ *      sur l'onglet de la bottom bar (Tâches, Calendrier, Contacts, Sanctuaire, etc.).
+ *    - Reste affiché en version étendue [ +  Nouvelle tâche ] pendant 10 secondes (10 000 ms).
+ *    - Après 10 secondes, se rétracte avec une animation 3D fluide pour devenir
+ *      un bouton circulaire parfait 52x52 [ + ].
  * 2. Effet 3D tactile (Touch scale & spring) :
- *    - Compression volumétrique au toucher (scale 0.92) puis rebond élastique (spring).
- *    - Éclairage biseauté 3D (liseré supérieur lumineux blanc 30%, halo violet diffus).
+ *    - Compression volumétrique au toucher (scale 0.90) puis rebond élastique (spring).
+ *    - Liseré supérieur biseauté 3D (reflet blanc 35%, halo d'élévation Electric Violet).
  * 3. Colorimétrie Midnight Glassmorphism :
- *    - Élimine la nuance criarde de 3 couleurs au profit d'un duo Electric Violet / Indigo profond.
+ *    - Duo Electric Violet / Royal Indigo (#8B5CF6 / #6D28D9) sans la nuance 3 couleurs.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
   Animated,
   Text,
@@ -26,6 +28,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import {
   Radius,
   Typography,
@@ -49,37 +52,54 @@ export function GlassFloatingActionButton({
   icon = 'add',
   iconSize = 22,
   bottomOffset = TAB_BAR_TOTAL_HEIGHT + 16,
-  collapseDelayMs = 2800,
+  collapseDelayMs = 10000, // 10 secondes avant réduction
   accessibilityLabel,
   style,
 }: GlassFloatingActionButtonProps) {
-  // Valeur d'expansion : 1 = étendu (texte visible), 0 = compact (cercle 3D)
+  // Valeur d'expansion : 1 = étendu (largeur ~168px), 0 = compact (cercle 52x52)
   const expandAnim = useRef(new Animated.Value(1)).current;
   // Valeur d'échelle 3D (touch press)
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
 
-  useEffect(() => {
-    // Déclenchement automatique de la réduction après collapseDelayMs
-    const timer = setTimeout(() => {
-      Animated.timing(expandAnim, {
-        toValue: 0,
-        duration: 380,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: false,
-      }).start(() => {
-        setIsExpanded(false);
-      });
-    }, collapseDelayMs);
+  // Déclenché à chaque fois que l'écran/onglet devient actif
+  useFocusEffect(
+    useCallback(() => {
+      // 1. Annuler tout timer précédent
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
 
-    return () => clearTimeout(timer);
-  }, [collapseDelayMs, expandAnim]);
+      // 2. Déplier immédiatement dans l'état étendu complet
+      expandAnim.setValue(1);
+      setIsExpanded(true);
+
+      // 3. Programmer la réduction après 10 secondes (10000ms)
+      timerRef.current = setTimeout(() => {
+        Animated.timing(expandAnim, {
+          toValue: 0,
+          duration: 420,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: false,
+        }).start(() => {
+          setIsExpanded(false);
+        });
+      }, collapseDelayMs);
+
+      return () => {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+      };
+    }, [collapseDelayMs, expandAnim])
+  );
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.92,
+      toValue: 0.90,
       friction: 6,
-      tension: 100,
+      tension: 120,
       useNativeDriver: true,
     }).start();
   };
@@ -93,20 +113,28 @@ export function GlassFloatingActionButton({
     }).start();
   };
 
-  // Interpolations de largeur et d'opacité
+  // Interpolation de la largeur totale du bouton (52px = cercle parfait, 168px = capsule étendue)
+  const animatedWidth = expandAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [52, 168],
+  });
+
+  // Interpolation de l'opacité du texte (s'estompe rapidement au début de la rétractation)
   const labelOpacity = expandAnim.interpolate({
-    inputRange: [0, 0.4, 1],
+    inputRange: [0, 0.35, 1],
     outputRange: [0, 0, 1],
   });
 
+  // Interpolation de la largeur du conteneur texte
   const labelWidth = expandAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 110], // largeur maximale allouée au texte
+    outputRange: [0, 98],
   });
 
-  const paddingHorizontal = expandAnim.interpolate({
+  // Espacement entre l'icône et le texte
+  const labelMarginLeft = expandAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [16, 20],
+    outputRange: [0, 6],
   });
 
   return (
@@ -124,45 +152,47 @@ export function GlassFloatingActionButton({
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        activeOpacity={0.9}
+        activeOpacity={0.92}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel || label}
-        style={styles.touchable}
       >
-        <LinearGradient
-          colors={['#8B5CF6', '#6D28D9']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
+        <Animated.View
+          style={[
+            styles.touchableWrapper,
+            { width: animatedWidth },
+          ]}
         >
-          {/* Liseré de réflexion supérieure (effet verre 3D) */}
-          <Animated.View
-            style={[
-              styles.innerContent,
-              { paddingHorizontal },
-            ]}
+          <LinearGradient
+            colors={['#8B5CF6', '#6D28D9']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradient}
           >
-            <Ionicons name={icon} size={iconSize} color="#FFFFFF" />
+            <Animated.View style={styles.contentRow}>
+              {/* Icône toujours nette et centrée lorsque rétracté */}
+              <Ionicons name={icon} size={iconSize} color="#FFFFFF" />
 
-            {/* Texte rétractable */}
-            <Animated.View
-              style={{
-                width: labelWidth,
-                opacity: labelOpacity,
-                overflow: 'hidden',
-                justifyContent: 'center',
-              }}
-            >
-              <Text
-                style={styles.label}
-                numberOfLines={1}
-                ellipsizeMode="clip"
+              {/* Texte rétractable avec masquage overflow strict */}
+              <Animated.View
+                style={{
+                  width: labelWidth,
+                  opacity: labelOpacity,
+                  marginLeft: labelMarginLeft,
+                  overflow: 'hidden',
+                  justifyContent: 'center',
+                }}
               >
-                {label}
-              </Text>
+                <Text
+                  style={styles.label}
+                  numberOfLines={1}
+                  ellipsizeMode="clip"
+                >
+                  {label}
+                </Text>
+              </Animated.View>
             </Animated.View>
-          </Animated.View>
-        </LinearGradient>
+          </LinearGradient>
+        </Animated.View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -173,7 +203,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     zIndex: 999,
-    // Ombre 3D et halo volumétrique
+    // Ombre 3D et halo volumétrique Electric Violet
     ...Platform.select({
       ios: {
         shadowColor: '#8B5CF6',
@@ -189,32 +219,34 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  touchable: {
-    borderRadius: Radius.full,
+  touchableWrapper: {
+    height: 52,
+    borderRadius: 26,
     overflow: 'hidden',
     borderWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.40)', // Reflet lumineux 3D en haut
-    borderLeftColor: 'rgba(255, 255, 255, 0.25)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.35)',    // Ombrage de fond 3D
+    borderTopColor: 'rgba(255, 255, 255, 0.38)', // Reflet verre 3D supérieur
+    borderLeftColor: 'rgba(255, 255, 255, 0.22)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.35)',    // Ombre de tranche inférieure
     borderRightColor: 'rgba(0, 0, 0, 0.20)',
   },
   gradient: {
-    height: 52,
-    borderRadius: Radius.full,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  innerContent: {
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
-    gap: 8,
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    paddingHorizontal: 8,
   },
   label: {
     ...Typography.labelLarge,
     color: '#FFFFFF',
     fontWeight: '700',
     letterSpacing: -0.2,
-    marginLeft: 2,
   },
 });
