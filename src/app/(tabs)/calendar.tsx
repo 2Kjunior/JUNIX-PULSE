@@ -43,6 +43,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
 import { styles } from '@/styles/tabs/calendar-styles';
@@ -424,23 +425,12 @@ export default function CalendarScreen() {
       </ScrollView>
       )}
 
-      {/* Bouton Flottant (FAB) — Élément dégradé unique de l'écran */}
-      <TouchableOpacity
-        style={[styles.fabContainer, { bottom: TAB_BAR_TOTAL_HEIGHT + 16 }]}
+      {/* Bouton Flottant 3D (FAB) */}
+      <GlassFloatingActionButton
+        label="Événement"
+        icon="calendar-outline"
         onPress={() => router.push('/events/new')}
-        activeOpacity={0.85}
-        accessibilityLabel="Nouvel événement"
-      >
-        <LinearGradient
-          colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.fabGradient}
-        >
-          <Ionicons name="add" size={20} color="#FFFFFF" />
-          <Text style={styles.fabText}>Événement</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      />
     </View>
   );
 }

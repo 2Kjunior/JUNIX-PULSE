@@ -139,7 +139,7 @@ export const TitleFontFamily = Platform.select({
 // à moins de 30% d'opacité et n'enfreint pas cette règle : ce n'est pas un
 // dégradé de marque multicolore, mais un éclairage de coin ponctuel.
 export const Gradient = {
-  primary: ['#D0BCFF', '#A078FF', '#4CD7F6'] as const,
+  primary: ['#8B5CF6', '#6D28D9'] as const,
   primaryStart: { x: 0, y: 0 } as const,
   primaryEnd: { x: 1, y: 0 } as const,
 } as const;

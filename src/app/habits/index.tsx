@@ -35,6 +35,7 @@ import {
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 
 const COLOR_PRESETS: Record<string, string> = {
   primary: Primary.default,
@@ -262,23 +263,13 @@ export default function HabitsListScreen() {
         )}
       </ScrollView>
 
-      {/* FAB avec dégradé unique */}
-      <TouchableOpacity
-        style={[styles.fabContainer, { bottom: insets.bottom + 16 }]}
+      {/* FAB 3D Glassmorphism */}
+      <GlassFloatingActionButton
+        label="Habitude"
+        icon="repeat-outline"
+        bottomOffset={insets.bottom + 16}
         onPress={() => router.push('/habits/new')}
-        activeOpacity={0.85}
-        accessibilityLabel="Nouvelle habitude"
-      >
-        <LinearGradient
-          colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
-        >
-          <Ionicons name="add" size={24} color="#141317" />
-          <Text style={styles.fabText}>Habitude</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      />
     </View>
   );
 }

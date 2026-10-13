@@ -43,6 +43,7 @@ import {
   Gradient,
 } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
+import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/reminders/reminders-styles';
 
@@ -326,24 +327,13 @@ export default function RemindersListScreen() {
         />
       )}
 
-      {/* ─── Bouton Flottant Dégradé (Unique CTA R-04) ─────────────────────────── */}
-      <View style={[styles.floatingCtaContainer, { bottom: insets.bottom + 20 }]}>
-        <TouchableOpacity
-          onPress={() => router.push('/reminders/new')}
-          activeOpacity={0.85}
-          accessibilityLabel="Créer un nouveau rappel"
-        >
-          <LinearGradient
-            colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.floatingCta}
-          >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-            <Text style={styles.floatingCtaText}>Nouveau rappel</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+      {/* ─── Bouton Flottant 3D (Unique CTA R-04) ─────────────────────────── */}
+      <GlassFloatingActionButton
+        label="Nouveau rappel"
+        icon="notifications-outline"
+        bottomOffset={insets.bottom + 20}
+        onPress={() => router.push('/reminders/new')}
+      />
     </View>
   );
 }

@@ -42,6 +42,7 @@ import {
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { styles } from '@/styles/tabs/people-styles';
 
 type FilterTab = 'all' | 'forgotten';
@@ -147,24 +148,12 @@ export default function PeopleScreen() {
         )}
       </ScrollView>
 
-      {/* ─── Bouton Flottant Dégradé (Unique CTA R-09) ─────────────────────────── */}
-      <View style={[styles.floatingCtaContainer, { bottom: TAB_BAR_TOTAL_HEIGHT + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.push('/people/new')}
-          activeOpacity={0.85}
-          accessibilityLabel="Ajouter un contact"
-        >
-          <LinearGradient
-            colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.floatingCta}
-          >
-            <Ionicons name="person-add" size={18} color="#FFFFFF" />
-            <Text style={styles.floatingCtaText}>Nouveau contact</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+      {/* ─── Bouton Flottant 3D (Unique CTA R-09) ─────────────────────────── */}
+      <GlassFloatingActionButton
+        label="Nouveau contact"
+        icon="person-add"
+        onPress={() => router.push('/people/new')}
+      />
     </View>
   );
 }

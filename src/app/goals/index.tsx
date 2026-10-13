@@ -33,6 +33,7 @@ import {
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 
 export default function GoalsListScreen() {
   const insets = useSafeAreaInsets();
@@ -239,23 +240,13 @@ export default function GoalsListScreen() {
         )}
       </ScrollView>
 
-      {/* FAB avec dégradé unique */}
-      <TouchableOpacity
-        style={[styles.fabContainer, { bottom: insets.bottom + 16 }]}
+      {/* FAB 3D Glassmorphism */}
+      <GlassFloatingActionButton
+        label="Objectif"
+        icon="flag-outline"
+        bottomOffset={insets.bottom + 16}
         onPress={() => router.push('/goals/new')}
-        activeOpacity={0.85}
-        accessibilityLabel="Nouvel objectif"
-      >
-        <LinearGradient
-          colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
-        >
-          <Ionicons name="add" size={24} color="#141317" />
-          <Text style={styles.fabText}>Objectif</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      />
     </View>
   );
 }

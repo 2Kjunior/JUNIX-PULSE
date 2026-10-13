@@ -135,6 +135,11 @@ const styles = StyleSheet.create({
   },
 
   primaryBase: {
+    borderWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.35)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.20)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.35)',
+    borderRightColor: 'rgba(0, 0, 0, 0.20)',
     ...Platform.select({
       ios: {
         shadowColor: '#8B5CF6',

@@ -47,6 +47,7 @@ import {
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { styles } from '@/styles/tabs/tasks-styles';
 
 type FilterTab = 'inbox' | 'today' | 'all';
@@ -228,24 +229,12 @@ export default function TasksScreen() {
         )}
       </ScrollView>
 
-      {/* ─── Bouton Flottant Dégradé (Unique CTA R-08) ─────────────────────────── */}
-      <View style={[styles.floatingCtaContainer, { bottom: TAB_BAR_TOTAL_HEIGHT + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.push('/tasks/new')}
-          activeOpacity={0.85}
-          accessibilityLabel="Créer une nouvelle tâche"
-        >
-          <LinearGradient
-            colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.floatingCta}
-          >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-            <Text style={styles.floatingCtaText}>Nouvelle tâche</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+      {/* ─── Bouton Flottant 3D Glassmorphism (Unique CTA R-08) ─────────────── */}
+      <GlassFloatingActionButton
+        label="Nouvelle tâche"
+        icon="add"
+        onPress={() => router.push('/tasks/new')}
+      />
     </View>
   );
 }
