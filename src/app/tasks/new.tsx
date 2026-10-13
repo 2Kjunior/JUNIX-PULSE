@@ -1,9 +1,3 @@
-/**
- * Formulaire de création d'une tâche.
- * Champs : Titre, Description/Notes, Priorité, Date planifiée (Inbox vs Planifiée),
- * Durée estimée, et liste dynamique de sous-tâches.
- */
-
 import { useState } from 'react';
 import {
   View,
@@ -15,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -26,16 +20,15 @@ import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { useAppStore } from '@/store/app-store';
 import { ReminderPriority } from '@/domain/entities';
 import {
-  Surface,
   Primary,
   OnSurface,
-  Outline,
   Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { formStyles } from '@/styles/common/form-styles';
 
 const PRIORITY_OPTIONS: { key: ReminderPriority; label: string; color: string }[] = [
   { key: 'LOW', label: 'Faible', color: OnSurface.variant },
@@ -56,12 +49,15 @@ const ESTIMATED_TIME_OPTIONS: { minutes?: number; label: string }[] = [
 export default function NewTaskScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const params = useLocalSearchParams<{ defaultDate?: string }>();
 
   // Champs de saisie
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<ReminderPriority>('NORMAL');
-  const [scheduledDateStr, setScheduledDateStr] = useState<string | undefined>(undefined); // YYYY-MM-DD
+  const [scheduledDateStr, setScheduledDateStr] = useState<string | undefined>(
+    params.defaultDate || undefined
+  );
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>(undefined);
 
   // Sous-tâches dynamiques
@@ -114,7 +110,6 @@ export default function NewTaskScreen() {
       });
 
       showSnackbar('Tâche créée avec succès');
-
       router.back();
     } catch (e) {
       showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
@@ -125,40 +120,44 @@ export default function NewTaskScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={[formStyles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* En-tête */}
-      <View style={styles.header}>
+      {/* En-tête harmonisé Midnight */}
+      <View style={formStyles.toolbar}>
         <TouchableOpacity
-          style={styles.closeBtn}
+          style={formStyles.toolbarBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Fermer"
+          accessibilityLabel="Annuler"
         >
-          <Ionicons name="close" size={24} color={OnSurface.primary} />
+          <Text style={formStyles.toolbarCancel}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvelle tâche</Text>
+        <View style={formStyles.toolbarCenter}>
+          <Text style={formStyles.toolbarTitle}>Nouvelle tâche</Text>
+          <Text style={formStyles.toolbarSubtitle}>Action & Projet</Text>
+        </View>
         <TouchableOpacity
+          style={formStyles.toolbarBtn}
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Enregistrer la tâche"
+          accessibilityLabel="Créer la tâche"
         >
-          <Text style={[styles.saveBtnText, saving && styles.saveBtnDisabled]}>
+          <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
             {saving ? 'Création...' : 'Créer'}
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxxl }]}
+        style={formStyles.scroll}
+        contentContainerStyle={[formStyles.scrollContent, { paddingBottom: insets.bottom + Spacing.xxxl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Titre */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Titre *</Text>
+        {/* Carte 1 : Titre & Détails */}
+        <View style={formStyles.cardGroup}>
           <TextInput
-            style={[styles.input, !!titleError && styles.inputError]}
+            style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
             value={title}
             onChangeText={t => {
               setTitle(t);
@@ -168,40 +167,49 @@ export default function NewTaskScreen() {
             placeholderTextColor={OnSurface.disabled}
             autoFocus
           />
-          {!!titleError && <Text style={styles.errorText}>{titleError}</Text>}
+          {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
+
+          <View style={formStyles.notesRow}>
+            <Ionicons name="document-text-outline" size={18} color={OnSurface.variant} style={formStyles.notesIcon} />
+            <TextInput
+              style={formStyles.notesInput}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Contextes, notes, liens utiles..."
+              placeholderTextColor={OnSurface.disabled}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
         </View>
 
-        {/* Description / Notes */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Description / Détails</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Contextes, liens, critères de validation..."
-            placeholderTextColor={OnSurface.disabled}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
+        {/* Carte 2 : Priorité */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="flag-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Priorité d'exécution</Text>
         </View>
 
-        {/* Priorité */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Priorité</Text>
-          <View style={styles.chipRow}>
+        <View style={formStyles.cardGroup}>
+          <View style={formStyles.chipsRow}>
             {PRIORITY_OPTIONS.map(opt => {
               const isSelected = priority === opt.key;
               return (
                 <TouchableOpacity
                   key={opt.key}
                   style={[
-                    styles.chip,
-                    isSelected && { backgroundColor: opt.color + '22', borderColor: opt.color },
+                    formStyles.chip,
+                    isSelected && {
+                      backgroundColor: opt.color + '22',
+                      borderColor: opt.color,
+                    },
                   ]}
                   onPress={() => setPriority(opt.key)}
                 >
-                  <Text style={[styles.chipText, isSelected && { color: opt.color }]}>
+                  <View style={[formStyles.chipDot, { backgroundColor: opt.color }]} />
+                  <Text style={[formStyles.chipText, isSelected && { color: opt.color, fontWeight: '700' }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -210,77 +218,90 @@ export default function NewTaskScreen() {
           </View>
         </View>
 
-        {/* Planification de Date */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Planification</Text>
-          <View style={styles.chipRowWrap}>
+        {/* Carte 3 : Planification */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="calendar-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Date planifiée</Text>
+        </View>
+
+        <View style={formStyles.cardGroup}>
+          <View style={formStyles.chipsRow}>
             <TouchableOpacity
-              style={[styles.chip, !scheduledDateStr && styles.chipActive]}
+              style={[formStyles.chip, !scheduledDateStr && formStyles.chipActive]}
               onPress={() => setScheduledDateStr(undefined)}
             >
               <Ionicons
                 name="file-tray-outline"
                 size={14}
-                color={!scheduledDateStr ? Primary.onContainer : OnSurface.variant}
+                color={!scheduledDateStr ? Primary.default : OnSurface.variant}
               />
-              <Text style={[styles.chipText, !scheduledDateStr && styles.chipTextActive]}>
+              <Text style={[formStyles.chipText, !scheduledDateStr && formStyles.chipTextActive]}>
                 Inbox (sans date)
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.chip, scheduledDateStr === todayStr && styles.chipActive]}
+              style={[formStyles.chip, scheduledDateStr === todayStr && formStyles.chipActive]}
               onPress={() => setScheduledDateStr(todayStr)}
             >
               <Ionicons
                 name="today-outline"
                 size={14}
-                color={scheduledDateStr === todayStr ? Primary.onContainer : OnSurface.variant}
+                color={scheduledDateStr === todayStr ? Primary.default : OnSurface.variant}
               />
-              <Text style={[styles.chipText, scheduledDateStr === todayStr && styles.chipTextActive]}>
-                Aujourd&apos;hui
+              <Text style={[formStyles.chipText, scheduledDateStr === todayStr && formStyles.chipTextActive]}>
+                Aujourd'hui
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.chip, scheduledDateStr === tomorrowStr && styles.chipActive]}
+              style={[formStyles.chip, scheduledDateStr === tomorrowStr && formStyles.chipActive]}
               onPress={() => setScheduledDateStr(tomorrowStr)}
             >
               <Ionicons
                 name="arrow-forward-outline"
                 size={14}
-                color={scheduledDateStr === tomorrowStr ? Primary.onContainer : OnSurface.variant}
+                color={scheduledDateStr === tomorrowStr ? Primary.default : OnSurface.variant}
               />
-              <Text style={[styles.chipText, scheduledDateStr === tomorrowStr && styles.chipTextActive]}>
+              <Text style={[formStyles.chipText, scheduledDateStr === tomorrowStr && formStyles.chipTextActive]}>
                 Demain
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.chip, scheduledDateStr === nextWeekStr && styles.chipActive]}
+              style={[formStyles.chip, scheduledDateStr === nextWeekStr && formStyles.chipActive]}
               onPress={() => setScheduledDateStr(nextWeekStr)}
             >
               <Ionicons
                 name="calendar-outline"
                 size={14}
-                color={scheduledDateStr === nextWeekStr ? Primary.onContainer : OnSurface.variant}
+                color={scheduledDateStr === nextWeekStr ? Primary.default : OnSurface.variant}
               />
-              <Text style={[styles.chipText, scheduledDateStr === nextWeekStr && styles.chipTextActive]}>
+              <Text style={[formStyles.chipText, scheduledDateStr === nextWeekStr && formStyles.chipTextActive]}>
                 Lundi prochain
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
-                styles.chip,
+                formStyles.chip,
                 !!scheduledDateStr &&
                   ![todayStr, tomorrowStr, nextWeekStr].includes(scheduledDateStr) &&
-                  styles.chipActive,
+                  formStyles.chipActive,
               ]}
               onPress={() => setShowDatePicker(true)}
             >
-              <Ionicons name="calendar-outline" size={16} color={OnSurface.variant} />
-              <Text style={styles.chipText}>
+              <Ionicons name="calendar-number-outline" size={14} color={Primary.default} />
+              <Text
+                style={[
+                  formStyles.chipText,
+                  !!scheduledDateStr &&
+                    ![todayStr, tomorrowStr, nextWeekStr].includes(scheduledDateStr) &&
+                    formStyles.chipTextActive,
+                ]}
+              >
                 {scheduledDateStr && ![todayStr, tomorrowStr, nextWeekStr].includes(scheduledDateStr)
                   ? format(new Date(scheduledDateStr + 'T12:00:00'), 'd MMMM yyyy', { locale: fr })
                   : 'Autre date...'}
@@ -289,19 +310,25 @@ export default function NewTaskScreen() {
           </View>
         </View>
 
-        {/* Durée estimée */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Durée estimée</Text>
-          <View style={styles.chipRowWrap}>
+        {/* Carte 4 : Durée estimée */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="hourglass-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Durée estimée</Text>
+        </View>
+
+        <View style={formStyles.cardGroup}>
+          <View style={formStyles.chipsRow}>
             {ESTIMATED_TIME_OPTIONS.map((opt, i) => {
               const isSelected = estimatedMinutes === opt.minutes;
               return (
                 <TouchableOpacity
                   key={i}
-                  style={[styles.chip, isSelected && styles.chipActive]}
+                  style={[formStyles.chip, isSelected && formStyles.chipActive]}
                   onPress={() => setEstimatedMinutes(opt.minutes)}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                  <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -310,46 +337,49 @@ export default function NewTaskScreen() {
           </View>
         </View>
 
-        {/* Sous-tâches */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Sous-tâches ({subtasks.length})</Text>
+        {/* Carte 5 : Sous-tâches */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="list-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Sous-tâches ({subtasks.length})</Text>
+        </View>
 
-          {/* Liste des sous-tâches ajoutées */}
+        <View style={formStyles.cardGroup}>
           {subtasks.map((st, index) => (
-            <View key={index} style={styles.subtaskRow}>
-              <Ionicons name="ellipse-outline" size={18} color={OnSurface.disabled} />
-              <Text style={styles.subtaskTitle}>{st}</Text>
-              <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.subtaskRemove}>
-                <Ionicons name="close-circle" size={20} color={ErrorColors.default} />
+            <View key={index} style={styles.subtaskItem}>
+              <Ionicons name="ellipse-outline" size={16} color={Primary.default} />
+              <Text style={styles.subtaskLabel}>{st}</Text>
+              <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.subtaskRemoveBtn}>
+                <Ionicons name="close-circle" size={18} color={ErrorColors.default} />
               </TouchableOpacity>
             </View>
           ))}
 
-          {/* Champ d'ajout sous-tâche */}
-          <View style={styles.addSubtaskContainer}>
+          <View style={styles.subtaskAdderRow}>
             <TextInput
-              style={styles.subtaskInput}
+              style={styles.subtaskInputField}
               value={subtaskInput}
               onChangeText={setSubtaskInput}
-              placeholder="Ajouter une étape..."
+              placeholder="Ajouter une étape (ex: Rédiger le plan)..."
               placeholderTextColor={OnSurface.disabled}
               onSubmitEditing={addSubtask}
               returnKeyType="done"
             />
-            <TouchableOpacity style={styles.subtaskAddBtn} onPress={addSubtask}>
-              <Ionicons name="add" size={20} color={Primary.on} />
+            <TouchableOpacity style={styles.subtaskAddIconButton} onPress={addSubtask}>
+              <Ionicons name="add" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Bouton Créer */}
+        {/* Bouton de confirmation */}
         <Button
           label="Créer la tâche"
           onPress={handleSave}
           variant="primary"
           size="lg"
           loading={saving}
-          style={styles.submitBtn}
+          style={{ marginTop: Spacing.sm }}
         />
       </ScrollView>
 
@@ -372,86 +402,52 @@ export default function NewTaskScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+  inputErrorBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
+    borderBottomColor: ErrorColors.default,
   },
-  closeBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  saveBtnText: { ...Typography.titleMedium, color: Primary.default },
-  saveBtnDisabled: { color: OnSurface.disabled },
-  content: { padding: Spacing.lg, gap: Spacing.xl },
-  field: { gap: Spacing.xs },
-  label: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: 4 },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  multilineInput: { minHeight: 90 },
-  inputError: { borderColor: ErrorColors.default },
-  errorText: { ...Typography.labelSmall, color: ErrorColors.default, marginTop: 4 },
-  chipRow: { flexDirection: 'row', gap: Spacing.sm },
-  chipRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  subtaskItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-  },
-  chipActive: { backgroundColor: Primary.container, borderColor: Primary.default },
-  chipText: { ...Typography.labelMedium, color: OnSurface.variant },
-  chipTextActive: { color: Primary.onContainer },
-  subtaskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(15, 18, 28, 0.85)',
+    borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     gap: Spacing.sm,
   },
-  subtaskTitle: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
-  subtaskRemove: { padding: 2 },
-  addSubtaskContainer: {
+  subtaskLabel: {
+    flex: 1,
+    ...Typography.bodyMedium,
+    color: '#FFFFFF',
+  },
+  subtaskRemoveBtn: {
+    padding: 2,
+  },
+  subtaskAdderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     marginTop: 4,
   },
-  subtaskInput: {
+  subtaskInputField: {
     flex: 1,
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(15, 18, 28, 0.85)',
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    color: OnSurface.primary,
+    paddingVertical: Spacing.sm + 2,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     ...Typography.bodyMedium,
   },
-  subtaskAddBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  subtaskAddIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
     backgroundColor: Primary.default,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  submitBtn: { marginTop: Spacing.md },
 });

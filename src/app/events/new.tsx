@@ -1,7 +1,3 @@
-/**
- * Formulaire de création d'un événement dans l'agenda.
- */
-
 import { useEffect, useState } from 'react';
 import {
   View,
@@ -13,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -25,17 +21,16 @@ import { PersonRepository } from '@/repositories/person-repository';
 import { Person, EventType } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
   Primary,
   Tertiary,
   OnSurface,
-  Outline,
   Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { formStyles } from '@/styles/common/form-styles';
 
 const BUFFER_OPTIONS = [
   { minutes: 0, label: 'Aucune' },
@@ -48,22 +43,40 @@ const BUFFER_OPTIONS = [
 export default function NewEventScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar, userTimezone } = useAppStore();
+  const { defaultHour, defaultDate } = useLocalSearchParams<{
+    defaultHour?: string;
+    defaultDate?: string;
+  }>();
 
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
 
   const [startAt, setStartAt] = useState<Date>(() => {
-    const d = new Date();
+    let d = new Date();
+    if (defaultDate) {
+      try {
+        const parsed = new Date(defaultDate);
+        if (!isNaN(parsed.getTime())) d = parsed;
+      } catch {}
+    }
+    const h = defaultHour !== undefined ? Number(defaultHour) : d.getHours() + 1;
     d.setMinutes(0, 0, 0);
-    d.setHours(d.getHours() + 1);
+    d.setHours(h);
     return d;
   });
 
   const [endAt, setEndAt] = useState<Date>(() => {
-    const d = new Date();
+    let d = new Date();
+    if (defaultDate) {
+      try {
+        const parsed = new Date(defaultDate);
+        if (!isNaN(parsed.getTime())) d = parsed;
+      } catch {}
+    }
+    const h = defaultHour !== undefined ? Number(defaultHour) + 1 : d.getHours() + 2;
     d.setMinutes(0, 0, 0);
-    d.setHours(d.getHours() + 2);
+    d.setHours(h);
     return d;
   });
 
@@ -91,11 +104,11 @@ export default function NewEventScreen() {
 
   function validate(): boolean {
     if (!title.trim()) {
-      setTitleError('Le titre est requis');
+      setTitleError('Le titre de l\'événement est requis');
       return false;
     }
     if (endAt <= startAt) {
-      showSnackbar("L'heure de fin doit être postérieure à l'heure de début");
+      showSnackbar('L\'heure de fin doit être postérieure à l\'heure de début');
       return false;
     }
     setTitleError('');
@@ -130,150 +143,190 @@ export default function NewEventScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={[formStyles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* En-tête */}
-      <View style={styles.header}>
+      {/* En-tête Midnight Glassmorphism */}
+      <View style={formStyles.toolbar}>
         <TouchableOpacity
-          style={styles.closeBtn}
+          style={formStyles.toolbarBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Fermer"
+          accessibilityLabel="Annuler"
         >
-          <Ionicons name="close" size={24} color={OnSurface.primary} />
+          <Text style={formStyles.toolbarCancel}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvel événement</Text>
+        <View style={formStyles.toolbarCenter}>
+          <Text style={formStyles.toolbarTitle}>Nouvel événement</Text>
+          <Text style={formStyles.toolbarSubtitle}>Agenda & Calendrier</Text>
+        </View>
         <TouchableOpacity
+          style={formStyles.toolbarBtn}
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Enregistrer"
+          accessibilityLabel="Créer l'événement"
         >
-          <Text style={[styles.saveBtnText, saving && styles.saveBtnDisabled]}>
+          <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
             {saving ? 'Création...' : 'Créer'}
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxxl }]}
+        style={formStyles.scroll}
+        contentContainerStyle={[formStyles.scrollContent, { paddingBottom: insets.bottom + Spacing.xxxl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Titre */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Titre *</Text>
+        {/* Carte 1 : Titre, Lieu & Notes */}
+        <View style={formStyles.cardGroup}>
           <TextInput
-            style={[styles.input, !!titleError && styles.inputError]}
+            style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
             value={title}
             onChangeText={t => {
               setTitle(t);
               if (titleError) setTitleError('');
             }}
-            placeholder="Ex: Réunion projet, Anniversaire, Déjeuner..."
+            placeholder="Ex: Réunion projet, Déjeuner, Atelier..."
             placeholderTextColor={OnSurface.disabled}
             autoFocus
           />
-          {!!titleError && <Text style={styles.errorText}>{titleError}</Text>}
-        </View>
+          {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
 
-        {/* Lieu / Adresse */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Lieu / Adresse</Text>
-          <View style={styles.inputWithIcon}>
-            <Ionicons name="location-outline" size={18} color={OnSurface.variant} />
+          <View style={styles.inlineFieldRow}>
+            <Ionicons name="location-outline" size={18} color={Primary.default} />
             <TextInput
-              style={styles.inputInner}
+              style={styles.inlineInput}
               value={location}
               onChangeText={setLocation}
-              placeholder="Ex: Bureau B2, Visioconférence, Restaurant..."
+              placeholder="Lieu / Adresse (ex: Salle B, Visioconférence)..."
               placeholderTextColor={OnSurface.disabled}
+            />
+          </View>
+
+          <View style={formStyles.notesRow}>
+            <Ionicons name="document-text-outline" size={18} color={OnSurface.variant} style={formStyles.notesIcon} />
+            <TextInput
+              style={formStyles.notesInput}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Ordre du jour, contexte, détails utiles..."
+              placeholderTextColor={OnSurface.disabled}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
             />
           </View>
         </View>
 
-        {/* Dates & Heures (Début et Fin) */}
-        <View style={styles.fieldRow}>
-          <View style={[styles.field, { flex: 1 }]}>
-            <Text style={styles.label}>Début</Text>
+        {/* Carte 2 : Plage Horaire */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="time-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Créneau horaire</Text>
+        </View>
+
+        <View style={formStyles.cardGroup}>
+          <View style={styles.timeRangeRow}>
+            {/* Début */}
             <TouchableOpacity
-              style={styles.dateTimeBtn}
+              style={styles.timeBox}
               onPress={() => setActivePicker('start')}
             >
-              <Ionicons name="time-outline" size={18} color={Primary.default} />
-              <Text style={styles.dateTimeText}>
-                {format(startAt, 'd MMM HH:mm', { locale: fr })}
+              <View style={styles.timeBoxHeader}>
+                <Ionicons name="play-circle-outline" size={14} color={Primary.default} />
+                <Text style={styles.timeBoxLabel}>Début</Text>
+              </View>
+              <Text style={styles.timeBoxValue}>
+                {format(startAt, 'HH:mm')}
+              </Text>
+              <Text style={styles.timeBoxDate}>
+                {format(startAt, 'd MMM yyyy', { locale: fr })}
               </Text>
             </TouchableOpacity>
-          </View>
 
-          <View style={[styles.field, { flex: 1 }]}>
-            <Text style={styles.label}>Fin</Text>
+            <View style={styles.timeArrow}>
+              <Ionicons name="arrow-forward" size={16} color={OnSurface.variant} />
+            </View>
+
+            {/* Fin */}
             <TouchableOpacity
-              style={styles.dateTimeBtn}
+              style={styles.timeBox}
               onPress={() => setActivePicker('end')}
             >
-              <Ionicons name="time-outline" size={18} color={Tertiary.default} />
-              <Text style={styles.dateTimeText}>
-                {format(endAt, 'd MMM HH:mm', { locale: fr })}
+              <View style={styles.timeBoxHeader}>
+                <Ionicons name="stop-circle-outline" size={14} color={Tertiary.default} />
+                <Text style={styles.timeBoxLabel}>Fin</Text>
+              </View>
+              <Text style={styles.timeBoxValue}>
+                {format(endAt, 'HH:mm')}
+              </Text>
+              <Text style={styles.timeBoxDate}>
+                {format(endAt, 'd MMM yyyy', { locale: fr })}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Type d'événement (Occupé vs Libre) */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Disponibilité</Text>
-          <View style={styles.chipRow}>
+        {/* Carte 3 : Disponibilité */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="briefcase-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Disponibilité</Text>
+        </View>
+
+        <View style={formStyles.cardGroup}>
+          <View style={formStyles.chipsRow}>
             <TouchableOpacity
-              style={[styles.chip, eventType === 'BUSY' && styles.chipActive]}
+              style={[formStyles.chip, eventType === 'BUSY' && formStyles.chipActive]}
               onPress={() => setEventType('BUSY')}
             >
               <Ionicons
-                name="briefcase-outline"
-                size={16}
-                color={eventType === 'BUSY' ? Primary.onContainer : OnSurface.variant}
+                name="lock-closed-outline"
+                size={14}
+                color={eventType === 'BUSY' ? Primary.default : OnSurface.variant}
               />
-              <Text style={[styles.chipText, eventType === 'BUSY' && styles.chipTextActive]}>
-                Occupé (Bloque le créneau)
+              <Text style={[formStyles.chipText, eventType === 'BUSY' && formStyles.chipTextActive]}>
+                Occupé (bloque le créneau)
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.chip, eventType === 'FREE' && styles.chipActive]}
+              style={[formStyles.chip, eventType === 'FREE' && formStyles.chipActive]}
               onPress={() => setEventType('FREE')}
             >
               <Ionicons
                 name="cafe-outline"
-                size={16}
-                color={eventType === 'FREE' ? Primary.onContainer : OnSurface.variant}
+                size={14}
+                color={eventType === 'FREE' ? Primary.default : OnSurface.variant}
               />
-              <Text style={[styles.chipText, eventType === 'FREE' && styles.chipTextActive]}>
+              <Text style={[formStyles.chipText, eventType === 'FREE' && formStyles.chipTextActive]}>
                 Temps libre
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Marge de trajet / déplacement */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Marge de déplacement (Buffer avant)</Text>
-          <View style={styles.chipRowWrap}>
+        {/* Carte 4 : Marge de trajet */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="car-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Marge de trajet / Buffer</Text>
+        </View>
+
+        <View style={formStyles.cardGroup}>
+          <View style={formStyles.chipsRow}>
             {BUFFER_OPTIONS.map(opt => {
               const isSelected = travelBufferMinutes === opt.minutes;
               return (
                 <TouchableOpacity
                   key={opt.minutes}
-                  style={[styles.chip, isSelected && styles.chipActive]}
+                  style={[formStyles.chip, isSelected && formStyles.chipActive]}
                   onPress={() => setTravelBufferMinutes(opt.minutes)}
                 >
-                  {opt.minutes > 0 && (
-                    <Ionicons
-                      name="car-outline"
-                      size={14}
-                      color={isSelected ? Primary.onContainer : OnSurface.variant}
-                    />
-                  )}
-                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                  <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -282,56 +335,50 @@ export default function NewEventScreen() {
           </View>
         </View>
 
-        {/* Personnes invitées / associées */}
+        {/* Carte 5 : Personnes associées */}
         {availablePersons.length > 0 && (
-          <View style={styles.field}>
-            <Text style={styles.label}>Personnes associées</Text>
-            <View style={styles.chipRowWrap}>
-              {availablePersons.map(p => {
-                const isSelected = selectedPersonIds.includes(p.id);
-                return (
-                  <TouchableOpacity
-                    key={p.id}
-                    style={[styles.chip, isSelected && styles.chipActive]}
-                    onPress={() => togglePersonSelect(p.id)}
-                  >
-                    <Ionicons
-                      name={isSelected ? 'checkmark-circle' : 'person-outline'}
-                      size={16}
-                      color={isSelected ? Primary.onContainer : OnSurface.variant}
-                    />
-                    <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
-                      {p.displayName}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+          <>
+            <View style={formStyles.sectionHeaderRow}>
+              <View style={formStyles.sectionHeaderIconBadge}>
+                <Ionicons name="people-outline" size={14} color={Primary.default} />
+              </View>
+              <Text style={formStyles.sectionHeaderTitle}>Contacts associés ({selectedPersonIds.length})</Text>
             </View>
-          </View>
+
+            <View style={formStyles.cardGroup}>
+              <View style={formStyles.chipsRow}>
+                {availablePersons.map(p => {
+                  const isSelected = selectedPersonIds.includes(p.id);
+                  return (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={[formStyles.chip, isSelected && formStyles.chipActive]}
+                      onPress={() => togglePersonSelect(p.id)}
+                    >
+                      <Ionicons
+                        name={isSelected ? 'checkmark-circle' : 'person-outline'}
+                        size={14}
+                        color={isSelected ? Primary.default : OnSurface.variant}
+                      />
+                      <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
+                        {p.displayName}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </>
         )}
 
-        {/* Notes */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Notes & Détails</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Ordre du jour, informations importantes, liens..."
-            placeholderTextColor={OnSurface.disabled}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-        </View>
-
+        {/* Bouton Créer */}
         <Button
           label="Créer l'événement"
           onPress={handleSave}
           variant="primary"
           size="lg"
           loading={saving}
-          style={styles.submitBtn}
+          style={{ marginTop: Spacing.sm }}
         />
       </ScrollView>
 
@@ -343,7 +390,6 @@ export default function NewEventScreen() {
         onConfirm={d => {
           if (activePicker === 'start') {
             setStartAt(d);
-            // Si la fin est inférieure au nouveau début, décaler la fin de +1h
             if (endAt <= d) {
               setEndAt(addHours(d, 1));
             }
@@ -362,74 +408,63 @@ export default function NewEventScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
+  inputErrorBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: ErrorColors.default,
+  },
+  inlineFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: Spacing.xs,
+  },
+  inlineInput: {
+    flex: 1,
+    ...Typography.bodyMedium,
+    color: '#FFFFFF',
+    paddingVertical: Spacing.xs,
+  },
+  timeRangeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  closeBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  saveBtnText: { ...Typography.titleMedium, color: Primary.default },
-  saveBtnDisabled: { color: OnSurface.disabled },
-  content: { padding: Spacing.lg, gap: Spacing.xl },
-  field: { gap: Spacing.xs },
-  fieldRow: { flexDirection: 'row', gap: Spacing.md },
-  label: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: 4 },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-  },
-  multilineInput: { minHeight: 90 },
-  inputError: { borderWidth: 1, borderColor: ErrorColors.default },
-  errorText: { ...Typography.labelSmall, color: ErrorColors.default, marginTop: 4 },
-  inputWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
     gap: Spacing.sm,
   },
-  inputInner: {
+  timeBox: {
     flex: 1,
-    paddingVertical: Spacing.md,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-  },
-  dateTimeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
+    backgroundColor: 'rgba(15, 18, 28, 0.85)',
     borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  dateTimeText: { ...Typography.labelMedium, color: OnSurface.primary },
-  chipRow: { flexDirection: 'row', gap: Spacing.sm },
-  chipRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(208, 188, 255, 0.16)',
+  },
+  timeBoxHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginBottom: 4,
   },
-  chipActive: { backgroundColor: Primary.container, borderColor: Primary.default },
-  chipText: { ...Typography.labelMedium, color: OnSurface.variant },
-  chipTextActive: { color: Primary.onContainer },
-  submitBtn: { marginTop: Spacing.md },
+  timeBoxLabel: {
+    ...Typography.labelSmall,
+    color: OnSurface.variant,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  timeBoxValue: {
+    ...Typography.headlineMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  timeBoxDate: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
+    marginTop: 2,
+  },
+  timeArrow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
 });

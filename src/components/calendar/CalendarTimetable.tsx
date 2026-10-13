@@ -4,7 +4,7 @@
  * Chaque événement, rappel et tâche y est positionné à son heure exacte
  * avec sa carte lumineuse GlowCard personnalisée.
  */
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Modal,
 } from 'react-native';
 import { format, isToday, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -51,6 +52,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
+  const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null);
 
   // Indexation des items par heure
   const { hourEventsMap, hourRemindersMap, totalOccupiedSlots } = useMemo(() => {
@@ -309,12 +311,12 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   /* Créneau libre */
                   <TouchableOpacity
                     style={styles.freeSlot}
-                    onPress={() => router.push('/capture')}
+                    onPress={() => setSelectedSlotHour(hour)}
                     activeOpacity={0.65}
                   >
                     <View style={styles.freeSlotInner}>
-                      <Text style={styles.freeSlotText}>Créneau disponible</Text>
-                      <Ionicons name="add" size={14} color="rgba(255, 255, 255, 0.25)" />
+                      <Text style={styles.freeSlotText}>Créneau disponible • Choisir une action</Text>
+                      <Ionicons name="add" size={14} color={Primary.default} />
                     </View>
                   </TouchableOpacity>
                 )}
@@ -323,6 +325,116 @@ export const CalendarTimetable = memo(function CalendarTimetable({
           );
         })}
       </View>
+
+      {/* ─── Modal de sélection du type d'élément pour le créneau ────── */}
+      <Modal
+        visible={selectedSlotHour !== null}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setSelectedSlotHour(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setSelectedSlotHour(null)}
+        >
+          <View style={styles.slotActionSheet}>
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetHeaderCol}>
+                <Text style={styles.sheetTitle}>
+                  Créneau de {selectedSlotHour !== null ? String(selectedSlotHour).padStart(2, '0') : ''}:00
+                </Text>
+                <Text style={styles.sheetSub}>
+                  {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.sheetCloseBtn}
+                onPress={() => setSelectedSlotHour(null)}
+              >
+                <Ionicons name="close" size={20} color={OnSurface.variant} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.sheetQuestion}>
+              Que souhaitez-vous positionner sur ce créneau ?
+            </Text>
+
+            <View style={styles.optionsGrid}>
+              {/* Option 1: Événement */}
+              <TouchableOpacity
+                style={[styles.optionCard, { borderColor: 'rgba(56, 189, 248, 0.35)' }]}
+                onPress={() => {
+                  const hour = selectedSlotHour;
+                  const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                  setSelectedSlotHour(null);
+                  router.push({
+                    pathname: '/events/new',
+                    params: { defaultHour: String(hour), defaultDate: dateStr },
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.optionIconCircle, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+                  <Ionicons name="calendar" size={20} color="#38BDF8" />
+                </View>
+                <View style={styles.optionTextCol}>
+                  <Text style={styles.optionTitle}>Événement</Text>
+                  <Text style={styles.optionDesc}>Rendez-vous, réunion ou bloc fixe</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="rgba(56, 189, 248, 0.6)" />
+              </TouchableOpacity>
+
+              {/* Option 2: Rappel */}
+              <TouchableOpacity
+                style={[styles.optionCard, { borderColor: 'rgba(208, 188, 255, 0.35)' }]}
+                onPress={() => {
+                  const hour = selectedSlotHour;
+                  const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                  setSelectedSlotHour(null);
+                  router.push({
+                    pathname: '/reminders/new',
+                    params: { defaultHour: String(hour), defaultDate: dateStr },
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.optionIconCircle, { backgroundColor: 'rgba(208, 188, 255, 0.15)' }]}>
+                  <Ionicons name="notifications" size={20} color={Primary.default} />
+                </View>
+                <View style={styles.optionTextCol}>
+                  <Text style={styles.optionTitle}>Rappel</Text>
+                  <Text style={styles.optionDesc}>Alerte sonore et notification précise</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="rgba(208, 188, 255, 0.6)" />
+              </TouchableOpacity>
+
+              {/* Option 3: Tâche */}
+              <TouchableOpacity
+                style={[styles.optionCard, { borderColor: 'rgba(52, 211, 153, 0.35)' }]}
+                onPress={() => {
+                  const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                  setSelectedSlotHour(null);
+                  router.push({
+                    pathname: '/tasks/new',
+                    params: { defaultDate: dateStr },
+                  });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.optionIconCircle, { backgroundColor: 'rgba(52, 211, 153, 0.15)' }]}>
+                  <Ionicons name="checkbox" size={20} color="#34D399" />
+                </View>
+                <View style={styles.optionTextCol}>
+                  <Text style={styles.optionTitle}>Tâche du jour</Text>
+                  <Text style={styles.optionDesc}>Action à cocher avec durée estimée</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="rgba(52, 211, 153, 0.6)" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 });
@@ -619,7 +731,88 @@ const styles = StyleSheet.create({
   },
   freeSlotText: {
     ...Typography.labelSmall,
-    color: 'rgba(255, 255, 255, 0.28)',
+    color: 'rgba(255, 255, 255, 0.45)',
+    fontSize: 11,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.70)',
+    justifyContent: 'flex-end',
+  },
+  slotActionSheet: {
+    backgroundColor: 'rgba(20, 24, 38, 0.96)',
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxl + 10,
+    borderWidth: 1,
+    borderColor: 'rgba(208, 188, 255, 0.20)',
+    gap: Spacing.md,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sheetHeaderCol: {
+    gap: 2,
+  },
+  sheetTitle: {
+    ...Typography.headlineMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  sheetSub: {
+    ...Typography.labelSmall,
+    color: Primary.default,
+    textTransform: 'capitalize',
+    fontSize: 11,
+  },
+  sheetCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetQuestion: {
+    ...Typography.bodyMedium,
+    color: OnSurface.variant,
+    marginTop: -2,
+  },
+  optionsGrid: {
+    gap: Spacing.sm,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(26, 30, 48, 0.85)',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    gap: Spacing.md,
+  },
+  optionIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  optionTitle: {
+    ...Typography.titleMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  optionDesc: {
+    ...Typography.bodySmall,
+    color: OnSurface.variant,
     fontSize: 11,
   },
 });

@@ -17,7 +17,7 @@ import {
   Platform,
   Switch,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -66,14 +66,30 @@ const ACTION_OPTIONS: { key: ActionType; label: string; icon: keyof typeof Ionic
 export default function NewReminderScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { defaultHour, defaultDate } = useLocalSearchParams<{
+    defaultHour?: string;
+    defaultDate?: string;
+  }>();
 
   // Champs du formulaire
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [scheduledAt, setScheduledAt] = useState<Date>(() => {
-    const d = new Date();
-    d.setMinutes(d.getMinutes() + 30);
-    d.setSeconds(0, 0);
+    let d = new Date();
+    if (defaultDate) {
+      try {
+        const parsed = new Date(defaultDate);
+        if (!isNaN(parsed.getTime())) d = parsed;
+      } catch {
+        // fallback
+      }
+    }
+    if (defaultHour !== undefined) {
+      d.setHours(Number(defaultHour), 0, 0, 0);
+    } else {
+      d.setMinutes(d.getMinutes() + 30);
+      d.setSeconds(0, 0);
+    }
     return d;
   });
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');

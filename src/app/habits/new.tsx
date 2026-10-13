@@ -1,5 +1,5 @@
 /**
- * Formulaire de création d'une habitude.
+ * Formulaire de création d'une habitude — Midnight Glassmorphism.
  */
 import { useState } from 'react';
 import {
@@ -19,16 +19,16 @@ import { HabitUseCases } from '@/use-cases/habit-use-cases';
 import { HabitFrequency } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
   Primary,
   Tertiary,
   OnSurface,
-  Outline,
+  Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { formStyles } from '@/styles/common/form-styles';
 
 const COLOR_OPTIONS = [
   { id: 'primary', label: 'Violet', hex: Primary.default },
@@ -49,12 +49,14 @@ export default function NewHabitScreen() {
   const [targetDaysPerWeek, setTargetDaysPerWeek] = useState(3);
   const [color, setColor] = useState('primary');
   const [saving, setSaving] = useState(false);
+  const [titleError, setTitleError] = useState('');
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Champ requis', 'Veuillez saisir un titre pour votre habitude.');
+      setTitleError('Le nom de l\'habitude est requis');
       return;
     }
+    setTitleError('');
 
     try {
       setSaving(true);
@@ -76,125 +78,162 @@ export default function NewHabitScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color={OnSurface.primary} />
+    <View style={[formStyles.container, { paddingTop: insets.top }]}>
+      {/* Header Toolbar */}
+      <View style={formStyles.toolbar}>
+        <TouchableOpacity
+          style={formStyles.toolbarBtn}
+          onPress={() => router.back()}
+          accessibilityLabel="Annuler"
+        >
+          <Text style={formStyles.toolbarCancel}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvelle habitude</Text>
-        <View style={{ width: 24 }} />
+        <View style={formStyles.toolbarCenter}>
+          <Text style={formStyles.toolbarTitle}>Nouvelle habitude</Text>
+          <Text style={formStyles.toolbarSubtitle}>Discipline & Routine</Text>
+        </View>
+        <TouchableOpacity
+          style={formStyles.toolbarBtn}
+          onPress={handleSave}
+          disabled={saving}
+          accessibilityLabel="Créer l'habitude"
+        >
+          <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
+            {saving ? 'Création...' : 'Créer'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Titre */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Titre *</Text>
+      <ScrollView
+        style={formStyles.scroll}
+        contentContainerStyle={[formStyles.scrollContent, { paddingBottom: insets.bottom + Spacing.xxxl }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Carte 1 : Titre & Description */}
+        <View style={formStyles.cardGroup}>
           <TextInput
-            style={styles.input}
-            placeholder="ex: Boire 2L d'eau, Lire 15 mins..."
+            style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
+            placeholder="ex: Méditation 10 min, Boire 2L d'eau..."
             placeholderTextColor={OnSurface.disabled}
             value={title}
-            onChangeText={setTitle}
+            onChangeText={t => {
+              setTitle(t);
+              if (titleError) setTitleError('');
+            }}
             maxLength={60}
+            autoFocus
           />
+          {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
+
+          <View style={formStyles.notesRow}>
+            <Ionicons name="document-text-outline" size={18} color={OnSurface.variant} style={formStyles.notesIcon} />
+            <TextInput
+              style={formStyles.notesInput}
+              placeholder="Pourquoi cette habitude et comment la maintenir..."
+              placeholderTextColor={OnSurface.disabled}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
         </View>
 
-        {/* Description */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Description (optionnelle)</Text>
-          <TextInput
-            style={[styles.input, styles.multiline]}
-            placeholder="Ajouter des précisions..."
-            placeholderTextColor={OnSurface.disabled}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-          />
+        {/* Carte 2 : Fréquence */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="repeat-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Rythme & Fréquence</Text>
         </View>
 
-        {/* Fréquence */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Fréquence</Text>
-          <View style={styles.freqRow}>
+        <View style={formStyles.cardGroup}>
+          <View style={formStyles.chipsRow}>
             <TouchableOpacity
               style={[
-                styles.freqTab,
-                frequency === 'DAILY' && styles.freqTabActive,
+                formStyles.chip,
+                frequency === 'DAILY' && formStyles.chipActive,
               ]}
               onPress={() => setFrequency('DAILY')}
             >
               <Ionicons
                 name="calendar-outline"
-                size={18}
-                color={frequency === 'DAILY' ? Surface.base : OnSurface.variant}
+                size={16}
+                color={frequency === 'DAILY' ? Primary.default : OnSurface.variant}
               />
               <Text
                 style={[
-                  styles.freqText,
-                  frequency === 'DAILY' && styles.freqTextActive,
+                  formStyles.chipText,
+                  frequency === 'DAILY' && formStyles.chipTextActive,
                 ]}
               >
-                Quotidienne
+                Quotidienne (Tous les jours)
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
-                styles.freqTab,
-                frequency === 'WEEKLY' && styles.freqTabActive,
+                formStyles.chip,
+                frequency === 'WEEKLY' && formStyles.chipActive,
               ]}
               onPress={() => setFrequency('WEEKLY')}
             >
               <Ionicons
                 name="bar-chart-outline"
-                size={18}
-                color={frequency === 'WEEKLY' ? Surface.base : OnSurface.variant}
+                size={16}
+                color={frequency === 'WEEKLY' ? Primary.default : OnSurface.variant}
               />
               <Text
                 style={[
-                  styles.freqText,
-                  frequency === 'WEEKLY' && styles.freqTextActive,
+                  formStyles.chipText,
+                  frequency === 'WEEKLY' && formStyles.chipTextActive,
                 ]}
               >
                 Hebdomadaire
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Jours visés si Hebdomadaire */}
+          {frequency === 'WEEKLY' && (
+            <View style={styles.daysSelectorContainer}>
+              <Text style={formStyles.fieldSub}>Objectif : {targetDaysPerWeek} jours par semaine</Text>
+              <View style={styles.daysSelector}>
+                {[1, 2, 3, 4, 5, 6].map(num => (
+                  <TouchableOpacity
+                    key={num}
+                    style={[
+                      styles.dayPill,
+                      targetDaysPerWeek === num && styles.dayPillActive,
+                    ]}
+                    onPress={() => setTargetDaysPerWeek(num)}
+                  >
+                    <Text
+                      style={[
+                        styles.dayPillText,
+                        targetDaysPerWeek === num && styles.dayPillTextActive,
+                      ]}
+                    >
+                      {num}j
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
-        {/* Jours visés si Hebdomadaire */}
-        {frequency === 'WEEKLY' && (
-          <View style={styles.field}>
-            <Text style={styles.label}>Objectif : {targetDaysPerWeek} jours par semaine</Text>
-            <View style={styles.daysSelector}>
-              {[1, 2, 3, 4, 5, 6].map(num => (
-                <TouchableOpacity
-                  key={num}
-                  style={[
-                    styles.dayPill,
-                    targetDaysPerWeek === num && styles.dayPillActive,
-                  ]}
-                  onPress={() => setTargetDaysPerWeek(num)}
-                >
-                  <Text
-                    style={[
-                      styles.dayPillText,
-                      targetDaysPerWeek === num && styles.dayPillTextActive,
-                    ]}
-                  >
-                    {num}d
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+        {/* Carte 3 : Thème Couleur */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="color-palette-outline" size={14} color={Primary.default} />
           </View>
-        )}
+          <Text style={formStyles.sectionHeaderTitle}>Couleur distinctive</Text>
+        </View>
 
-        {/* Thème Couleur */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Couleur distinctive</Text>
+        <View style={formStyles.cardGroup}>
           <View style={styles.colorRow}>
             {COLOR_OPTIONS.map(c => (
               <TouchableOpacity
@@ -207,7 +246,7 @@ export default function NewHabitScreen() {
                 onPress={() => setColor(c.id)}
               >
                 {color === c.id && (
-                  <Ionicons name="checkmark" size={16} color={Surface.base} />
+                  <Ionicons name="checkmark" size={18} color="#FFFFFF" />
                 )}
               </TouchableOpacity>
             ))}
@@ -218,8 +257,9 @@ export default function NewHabitScreen() {
           label="Créer l'habitude"
           onPress={handleSave}
           variant="primary"
+          size="lg"
           loading={saving}
-          style={{ marginTop: Spacing.xl }}
+          style={{ marginTop: Spacing.sm }}
         />
       </ScrollView>
     </View>
@@ -227,79 +267,55 @@ export default function NewHabitScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    backgroundColor: Surface.container,
+  inputErrorBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
+    borderBottomColor: ErrorColors.default,
   },
-  closeBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleLarge, color: OnSurface.primary },
-  content: { padding: Spacing.lg, paddingBottom: 60 },
-  field: { marginBottom: Spacing.xl },
-  label: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    marginBottom: Spacing.xs,
-  },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    ...Typography.bodyLarge,
-    color: OnSurface.primary,
-  },
-  multiline: { height: 90, textAlignVertical: 'top' },
-  freqRow: { flexDirection: 'row', gap: Spacing.md },
-  freqTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
+  daysSelectorContainer: {
+    marginTop: Spacing.sm,
     gap: Spacing.xs,
   },
-  freqTabActive: {
-    backgroundColor: Primary.default,
-    borderColor: Primary.default,
+  daysSelector: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginTop: 4,
   },
-  freqText: { ...Typography.labelLarge, color: OnSurface.variant },
-  freqTextActive: { color: Surface.base, fontWeight: '700' },
-  daysSelector: { flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.xs },
   dayPill: {
     flex: 1,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-    backgroundColor: Surface.container,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(15, 18, 28, 0.85)',
     borderWidth: 1,
-    borderColor: Outline.variant,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
   },
-  dayPillActive: { backgroundColor: Tertiary.default, borderColor: Tertiary.default },
-  dayPillText: { ...Typography.labelMedium, color: OnSurface.variant },
-  dayPillTextActive: { color: Surface.base, fontWeight: '700' },
-  colorRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xs },
+  dayPillActive: {
+    backgroundColor: 'rgba(208, 188, 255, 0.20)',
+    borderColor: Primary.default,
+  },
+  dayPillText: {
+    ...Typography.labelMedium,
+    color: OnSurface.variant,
+  },
+  dayPillTextActive: {
+    color: Primary.default,
+    fontWeight: '700',
+  },
+  colorRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
   colorCircle: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   colorCircleSelected: {
     borderWidth: 3,
-    borderColor: OnSurface.primary,
+    borderColor: '#FFFFFF',
   },
 });

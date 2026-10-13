@@ -1,5 +1,5 @@
 /**
- * Formulaire de création d'un objectif.
+ * Formulaire de création d'un objectif — Midnight Glassmorphism.
  */
 import { useState } from 'react';
 import {
@@ -21,15 +21,15 @@ import { fr } from 'date-fns/locale';
 import { GoalUseCases } from '@/use-cases/goal-use-cases';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
   Primary,
   OnSurface,
-  Outline,
+  Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
+import { formStyles } from '@/styles/common/form-styles';
 
 export default function NewGoalScreen() {
   const insets = useSafeAreaInsets();
@@ -40,12 +40,14 @@ export default function NewGoalScreen() {
   const [deadline, setDeadline] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [titleError, setTitleError] = useState('');
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Champ requis', 'Veuillez saisir un titre pour l\'objectif.');
+      setTitleError('Le titre de l\'objectif est requis');
       return;
     }
+    setTitleError('');
 
     try {
       setSaving(true);
@@ -65,70 +67,115 @@ export default function NewGoalScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color={OnSurface.primary} />
+    <View style={[formStyles.container, { paddingTop: insets.top }]}>
+      {/* Header Toolbar */}
+      <View style={formStyles.toolbar}>
+        <TouchableOpacity
+          style={formStyles.toolbarBtn}
+          onPress={() => router.back()}
+          accessibilityLabel="Annuler"
+        >
+          <Text style={formStyles.toolbarCancel}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvel objectif</Text>
-        <View style={{ width: 24 }} />
+        <View style={formStyles.toolbarCenter}>
+          <Text style={formStyles.toolbarTitle}>Nouvel objectif</Text>
+          <Text style={formStyles.toolbarSubtitle}>Vision & Accomplissement</Text>
+        </View>
+        <TouchableOpacity
+          style={formStyles.toolbarBtn}
+          onPress={handleSave}
+          disabled={saving}
+          accessibilityLabel="Créer l'objectif"
+        >
+          <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
+            {saving ? 'Création...' : 'Créer'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Titre */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Titre de l'objectif *</Text>
+      <ScrollView
+        style={formStyles.scroll}
+        contentContainerStyle={[formStyles.scrollContent, { paddingBottom: insets.bottom + Spacing.xxxl }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Carte 1 : Titre & Vision */}
+        <View style={formStyles.cardGroup}>
           <TextInput
-            style={styles.input}
-            placeholder="ex: Lancer mon application, Courir un marathon..."
+            style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
+            placeholder="ex: Lancer mon produit, Courir un marathon..."
             placeholderTextColor={OnSurface.disabled}
             value={title}
-            onChangeText={setTitle}
+            onChangeText={t => {
+              setTitle(t);
+              if (titleError) setTitleError('');
+            }}
             maxLength={80}
+            autoFocus
           />
+          {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
+
+          <View style={formStyles.notesRow}>
+            <Ionicons name="compass-outline" size={18} color={Primary.default} style={formStyles.notesIcon} />
+            <TextInput
+              style={formStyles.notesInput}
+              placeholder="Pourquoi cet objectif compte et quelle est votre stratégie..."
+              placeholderTextColor={OnSurface.disabled}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
         </View>
 
-        {/* Description */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Description & Vision</Text>
-          <TextInput
-            style={[styles.input, styles.multiline]}
-            placeholder="Pourquoi cet objectif est important et comment vous allez l'atteindre..."
-            placeholderTextColor={OnSurface.disabled}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-          />
+        {/* Carte 2 : Date cible (Deadline) */}
+        <View style={formStyles.sectionHeaderRow}>
+          <View style={formStyles.sectionHeaderIconBadge}>
+            <Ionicons name="calendar-outline" size={14} color={Primary.default} />
+          </View>
+          <Text style={formStyles.sectionHeaderTitle}>Échéance visée</Text>
         </View>
 
-        {/* Deadline */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Date cible (Deadline)</Text>
+        <View style={formStyles.cardGroup}>
           <TouchableOpacity
-            style={styles.dateSelector}
+            style={formStyles.selectorRow}
             onPress={() => setShowDatePicker(true)}
           >
-            <Ionicons name="calendar-outline" size={20} color={Primary.default} />
-            <Text style={styles.dateText}>
-              {deadline
-                ? format(deadline, 'd MMMM yyyy', { locale: fr })
-                : 'Aucune date limite fixée'}
-            </Text>
-            {deadline && (
-              <TouchableOpacity onPress={() => setDeadline(null)}>
-                <Ionicons name="close-circle" size={18} color={OnSurface.disabled} />
+            <View style={formStyles.selectorLeft}>
+              <View style={formStyles.selectorIconBadge}>
+                <Ionicons name="flag-outline" size={18} color={Primary.default} />
+              </View>
+              <View>
+                <Text style={formStyles.selectorLabel}>DATE BUTOIR</Text>
+                <Text style={formStyles.selectorValue}>
+                  {deadline
+                    ? format(deadline, 'd MMMM yyyy', { locale: fr })
+                    : 'Aucune date limite fixée'}
+                </Text>
+              </View>
+            </View>
+            {deadline ? (
+              <TouchableOpacity
+                onPress={() => setDeadline(null)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close-circle" size={20} color={OnSurface.disabled} />
               </TouchableOpacity>
+            ) : (
+              <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
             )}
           </TouchableOpacity>
         </View>
 
         <Button
-          label={saving ? 'Création...' : 'Créer l\'objectif'}
+          label="Créer l'objectif"
           onPress={handleSave}
-          disabled={saving}
-          style={{ marginTop: Spacing.xl }}
+          variant="primary"
+          size="lg"
+          loading={saving}
+          style={{ marginTop: Spacing.sm }}
         />
       </ScrollView>
 
@@ -141,49 +188,17 @@ export default function NewGoalScreen() {
           setDeadline(date);
         }}
         onCancel={() => setShowDatePicker(false)}
+        confirmTextIOS="Confirmer"
+        cancelTextIOS="Annuler"
+        locale="fr_FR"
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    backgroundColor: Surface.container,
+  inputErrorBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
+    borderBottomColor: ErrorColors.default,
   },
-  closeBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleLarge, color: OnSurface.primary },
-  content: { padding: Spacing.lg, paddingBottom: 60 },
-  field: { marginBottom: Spacing.xl },
-  label: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: Spacing.xs },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    ...Typography.bodyLarge,
-    color: OnSurface.primary,
-  },
-  multiline: { height: 100, textAlignVertical: 'top' },
-  dateSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  dateText: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
 });
