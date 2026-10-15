@@ -7,7 +7,10 @@
  * - Label qui fade-in/fade-out selon l'état actif
  * - Légère élévation 3D avec ombre portée
  */
-import { OnSurface, Primary, Radius, Spacing } from "@/constants/theme";
+import { Radius, Spacing } from "@/constants/theme";
+import type { ThemePalette } from "@/constants/palettes";
+import { useTheme } from "@/hooks/use-theme";
+import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
@@ -80,6 +83,8 @@ interface TabItemProps {
 }
 
 function TabItem({ tab, focused, onPress }: TabItemProps) {
+  const { palette, isDark } = useTheme();
+  const styles = useThemedStyles(makeTabsLayoutStyles);
   const pressScale = useSharedValue(1);
   const activeBgOpacity = useSharedValue(focused ? 1 : 0);
   const iconTranslateY = useSharedValue(focused ? -2 : 0);
@@ -122,10 +127,14 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
       accessibilityState={{ selected: focused }}
     >
       <Animated.View style={[styles.tabItemContent, animatedItemStyle]}>
-        {/* Capsule active avec contour et dégradé subtil (façon segmented control des tâches) */}
+        {/* Capsule active avec contour et dégradé subtil */}
         <Animated.View style={[styles.activeCapsule, animatedBgStyle]}>
           <LinearGradient
-            colors={["rgba(208, 188, 255, 0.16)", "rgba(123, 208, 255, 0.06)"]}
+            colors={
+              isDark
+                ? ["rgba(208, 188, 255, 0.16)", "rgba(123, 208, 255, 0.06)"]
+                : ["rgba(103, 80, 164, 0.12)", "rgba(0, 100, 146, 0.05)"]
+            }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.activeCapsuleGradient}
@@ -137,7 +146,7 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
           <Ionicons
             name={focused ? tab.iconFocused : tab.icon}
             size={focused ? 22 : 21}
-            color={focused ? Primary.default : OnSurface.disabled}
+            color={focused ? palette.primary.default : palette.onSurface.disabled}
           />
         </Animated.View>
 
@@ -163,6 +172,8 @@ type CustomTabBarProps = Parameters<
 >[0];
 
 function CustomTabBar({ state, navigation }: CustomTabBarProps) {
+  const { isDark } = useTheme();
+  const styles = useThemedStyles(makeTabsLayoutStyles);
   const insets = useSafeAreaInsets();
 
   // Sur Android : garantir un espace net au-dessus de la barre système (gestes ou 3 boutons)
@@ -177,11 +188,19 @@ function CustomTabBar({ state, navigation }: CustomTabBarProps) {
     >
       {/* Capsule flottante 3D avec bordure dégradée */}
       <LinearGradient
-        colors={[
-          "rgba(208, 188, 255, 0.28)",
-          "rgba(123, 208, 255, 0.12)",
-          "rgba(255, 255, 255, 0.05)",
-        ]}
+        colors={
+          isDark
+            ? [
+                "rgba(208, 188, 255, 0.28)",
+                "rgba(123, 208, 255, 0.12)",
+                "rgba(255, 255, 255, 0.05)",
+              ]
+            : [
+                "rgba(103, 80, 164, 0.20)",
+                "rgba(0, 100, 146, 0.10)",
+                "rgba(0, 0, 0, 0.04)",
+              ]
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBorder}
@@ -231,77 +250,79 @@ export default function TabsLayout() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  outerContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: "transparent",
-    alignItems: "center",
-  },
-  gradientBorder: {
-    width: "100%",
-    borderRadius: Radius.full,
-    padding: 1.2,
-    // Ombre 3D portée (iOS et Android)
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.65,
-    shadowRadius: 20,
-    elevation: 24,
-  },
-  tabBarInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: "rgba(20, 19, 26, 0.96)",
-    borderRadius: Radius.full,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabItemContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 6,
-    borderRadius: Radius.full,
-    position: "relative",
-    minHeight: 48,
-    width: "100%",
-  },
-  activeCapsule: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: Radius.full,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(208, 188, 255, 0.32)",
-  },
-  activeCapsuleGradient: {
-    flex: 1,
-  },
+const makeTabsLayoutStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    outerContainer: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: "transparent",
+      alignItems: "center",
+    },
+    gradientBorder: {
+      width: "100%",
+      borderRadius: Radius.full,
+      padding: 1.2,
+      // Ombre 3D portée (iOS et Android)
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: theme.mode === 'dark' ? 0.65 : 0.15,
+      shadowRadius: 20,
+      elevation: 24,
+    },
+    tabBarInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-around",
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.full,
+      paddingVertical: 8,
+      paddingHorizontal: 6,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    tabItem: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    tabItemContent: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 6,
+      paddingHorizontal: 6,
+      borderRadius: Radius.full,
+      position: "relative",
+      minHeight: 48,
+      width: "100%",
+    },
+    activeCapsule: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: Radius.full,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: theme.primary.default + "52",
+    },
+    activeCapsuleGradient: {
+      flex: 1,
+    },
 
-  tabLabel: {
-    fontSize: 10,
-    letterSpacing: 0.2,
-    marginTop: 2,
-    textAlign: "center",
-  },
-  tabLabelFocused: {
-    color: Primary.default,
-    fontFamily: "Inter-Bold",
-    fontWeight: "700",
-  },
-  tabLabelInactive: {
-    color: OnSurface.disabled,
-    fontFamily: "Inter-Medium",
-  },
-});
+    tabLabel: {
+      fontSize: 10,
+      letterSpacing: 0.2,
+      marginTop: 2,
+      textAlign: "center",
+    },
+    tabLabelFocused: {
+      color: theme.primary.default,
+      fontFamily: "Inter-Bold",
+      fontWeight: "700",
+    },
+    tabLabelInactive: {
+      color: theme.onSurface.disabled,
+      fontFamily: "Inter-Medium",
+    },
+  });
+

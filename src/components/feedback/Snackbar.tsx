@@ -4,6 +4,7 @@
  * BR : suppression logique avec possibilité d'annulation pendant ~30 secondes.
  */
 
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -13,12 +14,15 @@ import {
   View,
   Platform,
 } from 'react-native';
-import { Surface, OnSurface, Primary, Radius, Spacing, Typography } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useAppStore } from '@/store/app-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function Snackbar() {
   const { snackbar, hideSnackbar } = useAppStore();
+  const styles = useThemedStyles(makeSnackbarStyles);
   const [translateY] = useState(() => new Animated.Value(100));
   const [opacity] = useState(() => new Animated.Value(0));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,44 +111,46 @@ export function Snackbar() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: Spacing.lg,
-    right: Spacing.lg,
-    backgroundColor: Surface.highest,
-    borderRadius: Radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 48,
-    zIndex: 1000,
-    // Ombre légère sur iOS
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  message: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-    flex: 1,
-  },
-  action: {
-    marginLeft: Spacing.md,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-  },
-  actionLabel: {
-    ...Typography.labelLarge,
-    color: Primary.default,
-  },
-});
+const makeSnackbarStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      left: Spacing.lg,
+      right: Spacing.lg,
+      backgroundColor: theme.surface.highest,
+      borderRadius: Radius.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+      minHeight: 48,
+      zIndex: 1000,
+      // Ombre légère sur iOS
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        },
+        android: {
+          elevation: 6,
+        },
+      }),
+    },
+    message: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+      flex: 1,
+    },
+    action: {
+      marginLeft: Spacing.md,
+      paddingVertical: Spacing.xs,
+      paddingHorizontal: Spacing.sm,
+    },
+    actionLabel: {
+      ...Typography.labelLarge,
+      color: theme.primary.default,
+    },
+  });
+

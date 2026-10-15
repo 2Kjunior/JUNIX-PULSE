@@ -20,17 +20,12 @@ import { EventUseCases } from '@/use-cases/event-use-cases';
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person, EventType } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Primary,
-  Tertiary,
-  OnSurface,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
-import { formStyles } from '@/styles/common/form-styles';
+import { makeFormStyles } from '@/styles/common/form-styles';
 
 const BUFFER_OPTIONS = [
   { minutes: 0, label: 'Aucune' },
@@ -43,6 +38,10 @@ const BUFFER_OPTIONS = [
 export default function NewEventScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar, userTimezone } = useAppStore();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const styles = useThemedStyles(makeNewEventStyles);
+
   const { defaultHour, defaultDate } = useLocalSearchParams<{
     defaultHour?: string;
     defaultDate?: string;
@@ -146,7 +145,7 @@ export default function NewEventScreen() {
       style={[formStyles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* En-tête Midnight Glassmorphism */}
+      {/* En-tête dynamique Midnight / Crème */}
       <View style={formStyles.toolbar}>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
@@ -187,30 +186,30 @@ export default function NewEventScreen() {
               if (titleError) setTitleError('');
             }}
             placeholder="Ex: Réunion projet, Déjeuner, Atelier..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             autoFocus
           />
           {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
 
           <View style={styles.inlineFieldRow}>
-            <Ionicons name="location-outline" size={18} color={Primary.default} />
+            <Ionicons name="location-outline" size={18} color={palette.primary.default} />
             <TextInput
               style={styles.inlineInput}
               value={location}
               onChangeText={setLocation}
               placeholder="Lieu / Adresse (ex: Salle B, Visioconférence)..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
             />
           </View>
 
           <View style={formStyles.notesRow}>
-            <Ionicons name="document-text-outline" size={18} color={OnSurface.variant} style={formStyles.notesIcon} />
+            <Ionicons name="document-text-outline" size={18} color={palette.onSurface.variant} style={formStyles.notesIcon} />
             <TextInput
               style={formStyles.notesInput}
               value={notes}
               onChangeText={setNotes}
               placeholder="Ordre du jour, contexte, détails utiles..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -221,7 +220,7 @@ export default function NewEventScreen() {
         {/* Carte 2 : Plage Horaire */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="time-outline" size={14} color={Primary.default} />
+            <Ionicons name="time-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Créneau horaire</Text>
         </View>
@@ -234,7 +233,7 @@ export default function NewEventScreen() {
               onPress={() => setActivePicker('start')}
             >
               <View style={styles.timeBoxHeader}>
-                <Ionicons name="play-circle-outline" size={14} color={Primary.default} />
+                <Ionicons name="play-circle-outline" size={14} color={palette.primary.default} />
                 <Text style={styles.timeBoxLabel}>Début</Text>
               </View>
               <Text style={styles.timeBoxValue}>
@@ -246,7 +245,7 @@ export default function NewEventScreen() {
             </TouchableOpacity>
 
             <View style={styles.timeArrow}>
-              <Ionicons name="arrow-forward" size={16} color={OnSurface.variant} />
+              <Ionicons name="arrow-forward" size={16} color={palette.onSurface.variant} />
             </View>
 
             {/* Fin */}
@@ -255,7 +254,7 @@ export default function NewEventScreen() {
               onPress={() => setActivePicker('end')}
             >
               <View style={styles.timeBoxHeader}>
-                <Ionicons name="stop-circle-outline" size={14} color={Tertiary.default} />
+                <Ionicons name="stop-circle-outline" size={14} color={palette.tertiary.default} />
                 <Text style={styles.timeBoxLabel}>Fin</Text>
               </View>
               <Text style={styles.timeBoxValue}>
@@ -271,7 +270,7 @@ export default function NewEventScreen() {
         {/* Carte 3 : Disponibilité */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="briefcase-outline" size={14} color={Primary.default} />
+            <Ionicons name="briefcase-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Disponibilité</Text>
         </View>
@@ -285,7 +284,7 @@ export default function NewEventScreen() {
               <Ionicons
                 name="lock-closed-outline"
                 size={14}
-                color={eventType === 'BUSY' ? Primary.default : OnSurface.variant}
+                color={eventType === 'BUSY' ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, eventType === 'BUSY' && formStyles.chipTextActive]}>
                 Occupé (bloque le créneau)
@@ -299,7 +298,7 @@ export default function NewEventScreen() {
               <Ionicons
                 name="cafe-outline"
                 size={14}
-                color={eventType === 'FREE' ? Primary.default : OnSurface.variant}
+                color={eventType === 'FREE' ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, eventType === 'FREE' && formStyles.chipTextActive]}>
                 Temps libre
@@ -311,7 +310,7 @@ export default function NewEventScreen() {
         {/* Carte 4 : Marge de trajet */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="car-outline" size={14} color={Primary.default} />
+            <Ionicons name="car-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Marge de trajet / Buffer</Text>
         </View>
@@ -340,7 +339,7 @@ export default function NewEventScreen() {
           <>
             <View style={formStyles.sectionHeaderRow}>
               <View style={formStyles.sectionHeaderIconBadge}>
-                <Ionicons name="people-outline" size={14} color={Primary.default} />
+                <Ionicons name="people-outline" size={14} color={palette.primary.default} />
               </View>
               <Text style={formStyles.sectionHeaderTitle}>Contacts associés ({selectedPersonIds.length})</Text>
             </View>
@@ -358,7 +357,7 @@ export default function NewEventScreen() {
                       <Ionicons
                         name={isSelected ? 'checkmark-circle' : 'person-outline'}
                         size={14}
-                        color={isSelected ? Primary.default : OnSurface.variant}
+                        color={isSelected ? palette.primary.default : palette.onSurface.variant}
                       />
                       <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
                         {p.displayName}
@@ -407,64 +406,68 @@ export default function NewEventScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  inputErrorBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: ErrorColors.default,
-  },
-  inlineFieldRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: Spacing.xs,
-  },
-  inlineInput: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    color: '#FFFFFF',
-    paddingVertical: Spacing.xs,
-  },
-  timeRangeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-  },
-  timeBox: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 18, 28, 0.85)',
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.16)',
-  },
-  timeBoxHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  timeBoxLabel: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  timeBoxValue: {
-    ...Typography.headlineMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  timeBoxDate: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    marginTop: 2,
-  },
-  timeArrow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-});
+function makeNewEventStyles(theme: ThemePalette) {
+  const isDark = theme.mode === 'dark';
+
+  return StyleSheet.create({
+    inputErrorBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.error.default,
+    },
+    inlineFieldRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.outline.variant,
+      paddingVertical: Spacing.xs,
+    },
+    inlineInput: {
+      flex: 1,
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+      paddingVertical: Spacing.xs,
+    },
+    timeRangeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: Spacing.sm,
+    },
+    timeBox: {
+      flex: 1,
+      backgroundColor: isDark ? 'rgba(15, 18, 28, 0.85)' : theme.surface.container,
+      borderRadius: Radius.md,
+      padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(208, 188, 255, 0.16)' : theme.outline.variant,
+    },
+    timeBoxHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 4,
+    },
+    timeBoxLabel: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    timeBoxValue: {
+      ...Typography.headlineMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    timeBoxDate: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      marginTop: 2,
+    },
+    timeArrow: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 2,
+    },
+  });
+}

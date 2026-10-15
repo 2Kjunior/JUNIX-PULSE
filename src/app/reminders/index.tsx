@@ -22,7 +22,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, isTomorrow, isPast, addHours } from 'date-fns';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
@@ -30,22 +29,17 @@ import { deleteReminder, completeReminder, snoozeReminder } from '@/use-cases/re
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
-  Priority as PriorityColors,
-  Gradient,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { styles } from '@/styles/reminders/reminders-styles';
+import { makeRemindersStyles } from '@/styles/reminders/reminders-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type FilterTab = 'ALL' | 'TONIGHT' | 'TOMORROW' | 'MISSED';
@@ -71,6 +65,8 @@ const ACTION_LABELS: Record<string, string> = {
 export default function RemindersListScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeRemindersStyles);
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -165,7 +161,7 @@ export default function RemindersListScreen() {
         title: 'En retard',
         subtitle: 'À traiter en priorité',
         icon: 'alert-circle',
-        iconColor: ErrorColors.default,
+        iconColor: palette.error.default,
         key: 'missed',
         data: missed,
       });
@@ -176,7 +172,7 @@ export default function RemindersListScreen() {
         title: 'Ce soir',
         subtitle: 'Avant 23:00',
         icon: 'moon-outline',
-        iconColor: Tertiary.default,
+        iconColor: palette.tertiary.default,
         key: 'tonight',
         data: tonight,
       });
@@ -198,14 +194,14 @@ export default function RemindersListScreen() {
         title: 'À venir',
         subtitle: 'Prochains jours',
         icon: 'calendar-outline',
-        iconColor: Primary.default,
+        iconColor: palette.primary.default,
         key: 'upcoming',
         data: upcoming,
       });
     }
 
     return { sections: sectionList, counts: countsMap };
-  }, [reminders, activeFilter]);
+  }, [reminders, activeFilter, palette]);
 
   if (state === 'loading') return <LoadingState />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
@@ -219,7 +215,7 @@ export default function RemindersListScreen() {
           style={styles.backBtn}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="chevron-back" size={22} color={OnSurface.primary} />
+          <Ionicons name="chevron-back" size={22} color={palette.onSurface.primary} />
         </TouchableOpacity>
 
         <View style={styles.titleCol}>
@@ -237,7 +233,7 @@ export default function RemindersListScreen() {
           onPress={() => router.push('/settings')}
           accessibilityLabel="Paramètres"
         >
-          <Ionicons name="options-outline" size={20} color={OnSurface.variant} />
+          <Ionicons name="options-outline" size={20} color={palette.onSurface.variant} />
         </TouchableOpacity>
       </View>
 
@@ -262,7 +258,7 @@ export default function RemindersListScreen() {
           <FilterChip
             label={`En retard ${counts.missed}`}
             active={activeFilter === 'MISSED'}
-            badgeColor={counts.missed > 0 ? ErrorColors.default : undefined}
+            badgeColor={counts.missed > 0 ? palette.error.default : undefined}
             onPress={() => setActiveFilter('MISSED')}
           />
         </ScrollView>
@@ -291,7 +287,7 @@ export default function RemindersListScreen() {
                 await load();
                 setRefreshing(false);
               }}
-              tintColor={Primary.default}
+              tintColor={palette.primary.default}
             />
           }
           renderSectionHeader={({ section }) => (
@@ -315,7 +311,7 @@ export default function RemindersListScreen() {
           )}
           ListFooterComponent={
             <View style={styles.nightModeCard}>
-              <Ionicons name="bed-outline" size={20} color={Tertiary.default} />
+              <Ionicons name="bed-outline" size={20} color={palette.tertiary.default} />
               <View style={styles.nightModeTextCol}>
                 <Text style={styles.nightModeTitle}>Mode Nuit activé dès 22h30</Text>
                 <Text style={styles.nightModeDesc}>
@@ -351,6 +347,8 @@ function FilterChip({
   badgeColor?: string;
   onPress: () => void;
 }) {
+  const styles = useThemedStyles(makeRemindersStyles);
+
   return (
     <TouchableOpacity
       style={[
@@ -385,7 +383,9 @@ function ReminderCardR04({
   onQuickSnooze: () => void;
   onDelete: () => void;
 }) {
-  const priorityColor = PriorityColors[reminder.priority];
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeRemindersStyles);
+  const priorityColor = palette.priority[reminder.priority];
   const d = new Date(reminder.scheduledAt);
   const timeStr = format(d, 'HH:mm');
   const actionLabel = reminder.actionType && ACTION_LABELS[reminder.actionType];
@@ -406,7 +406,7 @@ function ReminderCardR04({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel="Marquer le rappel comme terminé"
         >
-          <Ionicons name="ellipse-outline" size={22} color={OnSurface.variant} />
+          <Ionicons name="ellipse-outline" size={22} color={palette.onSurface.variant} />
         </TouchableOpacity>
 
         {/* Détails du rappel */}
@@ -419,7 +419,7 @@ function ReminderCardR04({
           <View style={styles.metaRow}>
             {/* Heure */}
             <View style={styles.metaPill}>
-              <Ionicons name="time-outline" size={12} color={Primary.default} />
+              <Ionicons name="time-outline" size={12} color={palette.primary.default} />
               <Text style={styles.metaPillText}>{timeStr}</Text>
             </View>
 
@@ -443,7 +443,7 @@ function ReminderCardR04({
             {/* Récurrence */}
             {reminder.recurrenceRuleId ? (
               <View style={styles.metaPill}>
-                <Ionicons name="repeat-outline" size={12} color={Tertiary.default} />
+                <Ionicons name="repeat-outline" size={12} color={palette.tertiary.default} />
               </View>
             ) : null}
           </View>
@@ -466,10 +466,11 @@ function ReminderCardR04({
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           accessibilityLabel="Supprimer le rappel"
         >
-          <Ionicons name="ellipsis-vertical" size={18} color={OnSurface.variant} />
+          <Ionicons name="ellipsis-vertical" size={18} color={palette.onSurface.variant} />
         </TouchableOpacity>
       </View>
       </GlowCard>
     </View>
   );
 }
+

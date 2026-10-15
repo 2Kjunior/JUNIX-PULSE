@@ -8,7 +8,6 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -21,19 +20,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScheduleUseCases } from '@/use-cases/schedule-use-cases';
 import { PlanningBlock, PlanningBlockType } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { Spacing } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { Button } from '@/components/ui/Button';
+import { makeScheduleStyles } from '@/styles/settings/schedule-styles';
 
 const DAYS_OF_WEEK = [
   { num: 1, label: 'Lun', full: 'Lundi' },
@@ -47,19 +39,21 @@ const DAYS_OF_WEEK = [
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const BLOCK_TYPES: { type: PlanningBlockType; label: string; icon: IoniconName; color: string }[] = [
-  { type: 'WORK', label: 'Travail', icon: 'briefcase', color: Primary.default },
-  { type: 'STUDY', label: 'Études', icon: 'book', color: Tertiary.default },
-  { type: 'REST', label: 'Repos / Loisirs', icon: 'cafe', color: '#4CAF50' },
-  { type: 'SPORT', label: 'Sport', icon: 'fitness', color: '#FF9800' },
-  { type: 'HOUSE', label: 'Maison / Famille', icon: 'home', color: '#9C27B0' },
-  { type: 'FREE', label: 'Temps libre', icon: 'sparkles', color: '#00BCD4' },
-  { type: 'OTHER', label: 'Autre', icon: 'ellipsis-horizontal', color: OnSurface.variant },
-];
-
 export default function PersonalScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeScheduleStyles);
+
+  const BLOCK_TYPES: { type: PlanningBlockType; label: string; icon: IoniconName; color: string }[] = [
+    { type: 'WORK', label: 'Travail', icon: 'briefcase', color: palette.primary.default },
+    { type: 'STUDY', label: 'Études', icon: 'book', color: palette.tertiary.default },
+    { type: 'REST', label: 'Repos / Loisirs', icon: 'cafe', color: '#4CAF50' },
+    { type: 'SPORT', label: 'Sport', icon: 'fitness', color: '#FF9800' },
+    { type: 'HOUSE', label: 'Maison / Famille', icon: 'home', color: '#9C27B0' },
+    { type: 'FREE', label: 'Temps libre', icon: 'sparkles', color: '#00BCD4' },
+    { type: 'OTHER', label: 'Autre', icon: 'ellipsis-horizontal', color: palette.onSurface.variant },
+  ];
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -150,11 +144,11 @@ export default function PersonalScheduleScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Emploi du temps type</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
-          <Ionicons name="add" size={24} color={Surface.base} />
+          <Ionicons name="add" size={24} color={palette.surface.base} />
         </TouchableOpacity>
       </View>
 
@@ -191,7 +185,7 @@ export default function PersonalScheduleScreen() {
 
         {currentDayBlocks.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Ionicons name="calendar-outline" size={36} color={OnSurface.disabled} />
+            <Ionicons name="calendar-outline" size={36} color={palette.onSurface.disabled} />
             <Text style={styles.emptyTitle}>Aucun bloc pour {selectedDayInfo.full}</Text>
             <Text style={styles.emptyDesc}>
               Ajoutez des blocs de travail, repos ou loisirs pour structurer vos journées.
@@ -229,7 +223,7 @@ export default function PersonalScheduleScreen() {
                   onPress={() => handleDeleteBlock(block.id, block.label)}
                   style={{ padding: Spacing.xs }}
                 >
-                  <Ionicons name="trash-outline" size={18} color={ErrorColors.default} />
+                  <Ionicons name="trash-outline" size={18} color={palette.error.default} />
                 </TouchableOpacity>
               </View>
             );
@@ -246,7 +240,7 @@ export default function PersonalScheduleScreen() {
                 Nouveau bloc — {selectedDayInfo.full}
               </Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color={OnSurface.primary} />
+                <Ionicons name="close" size={24} color={palette.onSurface.primary} />
               </TouchableOpacity>
             </View>
 
@@ -255,7 +249,7 @@ export default function PersonalScheduleScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="ex: Session Code, Sport, Repos..."
-                placeholderTextColor={OnSurface.disabled}
+                placeholderTextColor={palette.onSurface.disabled}
                 value={blockLabel}
                 onChangeText={setBlockLabel}
               />
@@ -265,7 +259,7 @@ export default function PersonalScheduleScreen() {
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
                   placeholder="Début (08:00)"
-                  placeholderTextColor={OnSurface.disabled}
+                  placeholderTextColor={palette.onSurface.disabled}
                   value={startTime}
                   onChangeText={setStartTime}
                   keyboardType="numbers-and-punctuation"
@@ -274,7 +268,7 @@ export default function PersonalScheduleScreen() {
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
                   placeholder="Fin (12:00)"
-                  placeholderTextColor={OnSurface.disabled}
+                  placeholderTextColor={palette.onSurface.disabled}
                   value={endTime}
                   onChangeText={setEndTime}
                   keyboardType="numbers-and-punctuation"
@@ -295,12 +289,12 @@ export default function PersonalScheduleScreen() {
                     <Ionicons
                       name={t.icon}
                       size={16}
-                      color={blockType === t.type ? Surface.base : OnSurface.primary}
+                      color={blockType === t.type ? palette.surface.base : palette.onSurface.primary}
                     />
                     <Text
                       style={[
                         styles.typePillText,
-                        blockType === t.type && { color: Surface.base, fontWeight: '700' },
+                        blockType === t.type && { color: palette.surface.base, fontWeight: '700' },
                       ]}
                     >
                       {t.label}
@@ -323,124 +317,4 @@ export default function PersonalScheduleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    backgroundColor: Surface.container,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleLarge, color: OnSurface.primary },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    backgroundColor: Primary.default,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  daysBar: {
-    flexDirection: 'row',
-    backgroundColor: Surface.container,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-    paddingHorizontal: Spacing.xs,
-  },
-  dayTab: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  dayTabActive: { borderBottomColor: Primary.default },
-  dayTabText: { ...Typography.labelMedium, color: OnSurface.disabled },
-  dayTabTextActive: { color: Primary.default, fontWeight: '700' },
-  content: { padding: Spacing.lg, paddingBottom: 100 },
-  dayHeader: { marginBottom: Spacing.lg },
-  dayTitle: { ...Typography.headlineMedium, color: OnSurface.primary },
-  daySub: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-  emptyCard: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  emptyTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginTop: Spacing.md },
-  emptyDesc: { ...Typography.bodySmall, color: OnSurface.variant, textAlign: 'center', marginTop: 4 },
-  blockCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  blockTypeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  blockInfo: { flex: 1 },
-  blockLabel: { ...Typography.titleMedium, color: OnSurface.primary },
-  blockTime: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: Surface.container,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Spacing.lg,
-    paddingBottom: 40,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  modalTitle: { ...Typography.titleLarge, color: OnSurface.primary },
-  modalBody: {},
-  label: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: Spacing.xs },
-  input: {
-    backgroundColor: Surface.base,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-  },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  timeSep: { ...Typography.bodyMedium, color: OnSurface.variant },
-  typeRow: { flexDirection: 'row', paddingVertical: Spacing.xs },
-  typePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    marginRight: Spacing.xs,
-    gap: 4,
-  },
-  typePillText: { ...Typography.labelSmall, color: OnSurface.primary },
-});
+

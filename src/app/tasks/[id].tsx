@@ -4,7 +4,7 @@
  * de basculer son statut et de la supprimer avec Undo (30s).
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,44 +26,23 @@ import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { Task, Subtask, TaskStatus, ReminderPriority } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Success,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
-import { styles } from '@/styles/tasks/task-detail-styles';
+import { makeTaskDetailStyles } from '@/styles/tasks/task-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
-
-const STATUS_LABELS: Record<TaskStatus, { label: string; color: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  INBOX: { label: 'Inbox', color: OnSurface.variant, icon: 'file-tray-outline' },
-  SCHEDULED: { label: 'Planifiée', color: Primary.default, icon: 'calendar-outline' },
-  IN_PROGRESS: { label: 'En cours', color: Tertiary.default, icon: 'time-outline' },
-  COMPLETED: { label: 'Terminée', color: Success.default, icon: 'checkmark-circle-outline' },
-  POSTPONED: { label: 'Reportée', color: '#FFB74D', icon: 'arrow-forward-circle-outline' },
-};
-
-const PRIORITY_OPTIONS: { key: ReminderPriority; label: string; color: string }[] = [
-  { key: 'LOW', label: 'Faible', color: OnSurface.variant },
-  { key: 'NORMAL', label: 'Normale', color: Primary.default },
-  { key: 'HIGH', label: 'Haute', color: '#FFB74D' },
-  { key: 'URGENT', label: 'Urgente', color: ErrorColors.default },
-];
 
 export default function TaskDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeTaskDetailStyles);
+  const isLight = theme.mode === 'light';
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [task, setTask] = useState<Task | null>(null);
@@ -83,6 +62,21 @@ export default function TaskDetailScreen() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+
+  const statusLabels: Record<TaskStatus, { label: string; color: string; icon: keyof typeof Ionicons.glyphMap }> = useMemo(() => ({
+    INBOX: { label: 'Inbox', color: theme.onSurface.variant, icon: 'file-tray-outline' },
+    SCHEDULED: { label: 'Planifiée', color: theme.primary.default, icon: 'calendar-outline' },
+    IN_PROGRESS: { label: 'En cours', color: theme.tertiary.default, icon: 'time-outline' },
+    COMPLETED: { label: 'Terminée', color: theme.success.default, icon: 'checkmark-circle-outline' },
+    POSTPONED: { label: 'Reportée', color: theme.priority.HIGH, icon: 'arrow-forward-circle-outline' },
+  }), [theme]);
+
+  const priorityOptions: { key: ReminderPriority; label: string; color: string }[] = useMemo(() => [
+    { key: 'LOW', label: 'Faible', color: theme.onSurface.variant },
+    { key: 'NORMAL', label: 'Normale', color: theme.primary.default },
+    { key: 'HIGH', label: 'Haute', color: theme.priority.HIGH },
+    { key: 'URGENT', label: 'Urgente', color: theme.error.default },
+  ], [theme]);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -220,7 +214,7 @@ export default function TaskDetailScreen() {
   if (screenState === 'error' || !task)
     return <ErrorState message={error} onRetry={load} />;
 
-  const statusConfig = STATUS_LABELS[task.status];
+  const statusConfig = statusLabels[task.status];
   const completedSubtasksCount = subtasks.filter(s => s.isCompleted).length;
 
   return (
@@ -235,7 +229,7 @@ export default function TaskDetailScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="chevron-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Détails de la tâche</Text>
         <TouchableOpacity
@@ -243,7 +237,7 @@ export default function TaskDetailScreen() {
           onPress={handleDelete}
           accessibilityLabel="Supprimer"
         >
-          <Ionicons name="trash-outline" size={20} color={ErrorColors.default} />
+          <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
       </View>
 
@@ -284,7 +278,7 @@ export default function TaskDetailScreen() {
             value={title}
             onChangeText={setTitle}
             placeholder="Titre de la tâche"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={theme.onSurface.disabled}
           />
         </View>
 
@@ -296,7 +290,7 @@ export default function TaskDetailScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder="Ajouter des précisions..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={theme.onSurface.disabled}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
@@ -307,7 +301,7 @@ export default function TaskDetailScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>Priorité</Text>
           <View style={styles.chipRow}>
-            {PRIORITY_OPTIONS.map(opt => {
+            {priorityOptions.map(opt => {
               const isSelected = priority === opt.key;
               return (
                 <TouchableOpacity
@@ -338,7 +332,7 @@ export default function TaskDetailScreen() {
               <Ionicons
                 name="file-tray-outline"
                 size={14}
-                color={!scheduledDateStr ? Primary.onContainer : OnSurface.variant}
+                color={!scheduledDateStr ? (isLight ? theme.primary.onContainer : theme.primary.onContainer) : theme.onSurface.variant}
               />
               <Text style={[styles.chipText, !scheduledDateStr && styles.chipTextActive]}>
                 Inbox
@@ -352,7 +346,7 @@ export default function TaskDetailScreen() {
               <Ionicons
                 name="today-outline"
                 size={14}
-                color={scheduledDateStr === todayStr ? Primary.onContainer : OnSurface.variant}
+                color={scheduledDateStr === todayStr ? (isLight ? theme.primary.onContainer : theme.primary.onContainer) : theme.onSurface.variant}
               />
               <Text style={[styles.chipText, scheduledDateStr === todayStr && styles.chipTextActive]}>
                 Aujourd&apos;hui
@@ -366,7 +360,7 @@ export default function TaskDetailScreen() {
               <Ionicons
                 name="arrow-forward-outline"
                 size={14}
-                color={scheduledDateStr === tomorrowStr ? Primary.onContainer : OnSurface.variant}
+                color={scheduledDateStr === tomorrowStr ? (isLight ? theme.primary.onContainer : theme.primary.onContainer) : theme.onSurface.variant}
               />
               <Text style={[styles.chipText, scheduledDateStr === tomorrowStr && styles.chipTextActive]}>
                 Demain
@@ -382,7 +376,7 @@ export default function TaskDetailScreen() {
               ]}
               onPress={() => setShowDatePicker(true)}
             >
-              <Ionicons name="calendar-outline" size={16} color={OnSurface.variant} />
+              <Ionicons name="calendar-outline" size={16} color={theme.onSurface.variant} />
               <Text style={styles.chipText}>
                 {scheduledDateStr && ![todayStr, tomorrowStr].includes(scheduledDateStr)
                   ? format(new Date(scheduledDateStr + 'T12:00:00'), 'd MMMM yyyy', { locale: fr })
@@ -415,7 +409,7 @@ export default function TaskDetailScreen() {
                     <Ionicons
                       name={s.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
                       size={20}
-                      color={s.isCompleted ? Success.default : OnSurface.disabled}
+                      color={s.isCompleted ? theme.success.default : theme.onSurface.disabled}
                     />
                   </TouchableOpacity>
                   <Text
@@ -430,7 +424,7 @@ export default function TaskDetailScreen() {
                     onPress={() => handleDeleteSubtask(s.id)}
                     style={styles.subtaskDelete}
                   >
-                    <Ionicons name="close" size={18} color={OnSurface.disabled} />
+                    <Ionicons name="close" size={18} color={theme.onSurface.disabled} />
                   </TouchableOpacity>
                 </View>
               </GlowCard>
@@ -444,12 +438,12 @@ export default function TaskDetailScreen() {
               value={newSubtaskInput}
               onChangeText={setNewSubtaskInput}
               placeholder="Ajouter une sous-tâche..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={theme.onSurface.disabled}
               onSubmitEditing={handleAddSubtask}
               returnKeyType="done"
             />
             <TouchableOpacity style={styles.subtaskAddBtn} onPress={handleAddSubtask}>
-              <Ionicons name="add" size={20} color={Primary.on} />
+              <Ionicons name="add" size={20} color={theme.primary.on} />
             </TouchableOpacity>
           </View>
         </View>

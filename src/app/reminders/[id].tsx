@@ -32,23 +32,14 @@ import {
 } from '@/use-cases/reminder-use-cases';
 import { Reminder, ReminderChecklistItem, Person } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Success,
-  Radius,
-  Typography,
-  Priority as PriorityColors,
-} from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { ThemePalette } from '@/constants/palettes';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { ReminderBottomBar } from '@/components/reminders/ReminderBottomBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { ReminderSnoozeSheet } from '@/components/reminders/ReminderSnoozeSheet';
-import { styles } from '@/styles/reminders/reminder-detail-styles';
+import { makeReminderDetailStyles } from '@/styles/reminders/reminder-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type SnoozeSheet = 'hidden' | 'picker';
@@ -60,22 +51,23 @@ const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Faible',
 };
 
-const ACTION_CONFIG: Record<
-  string,
-  { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }
-> = {
-  CALL: { label: 'Appeler', icon: 'call-outline', color: Primary.default },
-  MESSAGE: { label: 'Message', icon: 'chatbubble-outline', color: Tertiary.default },
-  EMAIL: { label: 'Email', icon: 'mail-outline', color: '#38BDF8' },
-  MEET: { label: 'Rencontre', icon: 'people-outline', color: '#F59E0B' },
-  TASK: { label: 'Action à faire', icon: 'checkmark-outline', color: Success.default },
-  NONE: { label: '', icon: 'remove-outline', color: OnSurface.variant },
-};
+const getActionConfig = (
+  theme: ThemePalette
+): Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }> => ({
+  CALL: { label: 'Appeler', icon: 'call-outline', color: theme.primary.default },
+  MESSAGE: { label: 'Message', icon: 'chatbubble-outline', color: theme.tertiary.default },
+  EMAIL: { label: 'Email', icon: 'mail-outline', color: theme.mode === 'light' ? '#0284C7' : '#38BDF8' },
+  MEET: { label: 'Rencontre', icon: 'people-outline', color: theme.mode === 'light' ? '#D97706' : '#F59E0B' },
+  TASK: { label: 'Action à faire', icon: 'checkmark-outline', color: theme.success.default },
+  NONE: { label: '', icon: 'remove-outline', color: theme.onSurface.variant },
+});
 
 export default function ReminderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeReminderDetailStyles);
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminder, setReminder] = useState<Reminder | null>(null);
@@ -203,8 +195,9 @@ export default function ReminderDetailScreen() {
 
   const scheduledDate = new Date(reminder.scheduledAt);
   const dateStr = format(scheduledDate, "EEEE d MMMM 'à' HH:mm", { locale: fr });
-  const priorityColor = PriorityColors[reminder.priority];
-  const actionInfo = reminder.actionType ? ACTION_CONFIG[reminder.actionType] : null;
+  const priorityColor = theme.priority[reminder.priority as keyof typeof theme.priority] ?? theme.priority.NORMAL;
+  const actionConfigs = getActionConfig(theme);
+  const actionInfo = reminder.actionType ? actionConfigs[reminder.actionType] : null;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -215,7 +208,7 @@ export default function ReminderDetailScreen() {
           style={styles.navBtn}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="chevron-back" size={22} color={OnSurface.primary} />
+          <Ionicons name="chevron-back" size={22} color={theme.onSurface.primary} />
         </TouchableOpacity>
 
         <Text style={styles.navTitle}>Détail du rappel</Text>
@@ -249,7 +242,7 @@ export default function ReminderDetailScreen() {
             {/* Badge récurrence */}
             {reminder.recurrenceRuleId && (
               <View style={styles.metaPill}>
-                <Ionicons name="repeat-outline" size={13} color={Tertiary.default} />
+                <Ionicons name="repeat-outline" size={13} color={theme.tertiary.default} />
                 <Text style={styles.metaPillText}>Récurrent</Text>
               </View>
             )}
@@ -260,7 +253,7 @@ export default function ReminderDetailScreen() {
 
           {/* Date et heure */}
           <View style={styles.timeRow}>
-            <Ionicons name="time-outline" size={16} color={Primary.default} />
+            <Ionicons name="time-outline" size={16} color={theme.primary.default} />
             <Text style={styles.timeText}>{dateStr}</Text>
           </View>
         </View>
@@ -302,7 +295,7 @@ export default function ReminderDetailScreen() {
           <GlowCard tone="neutral">
           <View style={styles.notesCardInner}>
             <View style={styles.notesHeader}>
-              <Ionicons name="document-text-outline" size={16} color={OnSurface.variant} />
+              <Ionicons name="document-text-outline" size={16} color={theme.onSurface.variant} />
               <Text style={styles.sectionTitle}>Notes & Contexte</Text>
             </View>
             <Text style={styles.notesText}>{reminder.notes}</Text>
@@ -315,7 +308,7 @@ export default function ReminderDetailScreen() {
           <GlowCard tone="neutral">
           <View style={styles.checklistCardInner}>
             <View style={styles.notesHeader}>
-              <Ionicons name="checkbox-outline" size={16} color={OnSurface.variant} />
+              <Ionicons name="checkbox-outline" size={16} color={theme.onSurface.variant} />
               <Text style={styles.sectionTitle}>Liste de contrôle</Text>
             </View>
             {checklist.map(item => (
@@ -328,7 +321,7 @@ export default function ReminderDetailScreen() {
                 <Ionicons
                   name={item.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
                   size={20}
-                  color={item.isCompleted ? Success.default : OnSurface.disabled}
+                  color={item.isCompleted ? theme.success.default : theme.onSurface.disabled}
                 />
                 <Text
                   style={[

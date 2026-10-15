@@ -7,7 +7,6 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -26,19 +25,12 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { updateReminder } from '@/use-cases/reminder-use-cases';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-  Priority as PriorityColors,
-} from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { Spacing } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
+import { makeEditReminderStyles } from '@/styles/reminders/edit-reminder-styles';
 
 type PriorityKey = Reminder['priority'];
 type ActionType = Reminder['actionType'];
@@ -63,6 +55,8 @@ export default function EditReminderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeEditReminderStyles);
 
   const [loading, setLoading] = useState(true);
   const [reminder, setReminder] = useState<Reminder | null>(null);
@@ -183,7 +177,7 @@ export default function EditReminderScreen() {
             <TextInput
               style={[styles.input, !!titleError && styles.inputError]}
               placeholder="Ex: Appeler le comptable"
-              placeholderTextColor={OnSurface.variant}
+              placeholderTextColor={palette.onSurface.variant}
               value={title}
               onChangeText={(t) => {
                 setTitle(t);
@@ -201,11 +195,11 @@ export default function EditReminderScreen() {
               style={styles.datePickerBtn}
               onPress={() => setShowDatePicker(true)}
             >
-              <Ionicons name="calendar-outline" size={20} color={Primary.default} />
+              <Ionicons name="calendar-outline" size={20} color={palette.primary.default} />
               <Text style={styles.datePickerText}>
                 {format(scheduledAt, "EEEE d MMMM 'à' HH:mm", { locale: fr })}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={OnSurface.variant} />
+              <Ionicons name="chevron-forward" size={16} color={palette.onSurface.variant} />
             </TouchableOpacity>
           </View>
 
@@ -215,13 +209,13 @@ export default function EditReminderScreen() {
             <View style={styles.chipsRow}>
               {PRIORITY_OPTIONS.map((opt) => {
                 const isSelected = priority === opt.key;
-                const chipColor = PriorityColors[opt.key];
+                const chipColor = palette.priority[opt.key];
                 return (
                   <TouchableOpacity
                     key={opt.key}
                     style={[
                       styles.chip,
-                      isSelected && { backgroundColor: Primary.container, borderColor: chipColor },
+                      isSelected && { backgroundColor: palette.primary.container, borderColor: chipColor },
                     ]}
                     onPress={() => setPriority(opt.key)}
                   >
@@ -258,7 +252,7 @@ export default function EditReminderScreen() {
                     <Ionicons
                       name={opt.icon}
                       size={20}
-                      color={isSelected ? Primary.default : OnSurface.variant}
+                      color={isSelected ? palette.primary.default : palette.onSurface.variant}
                     />
                     <Text
                       style={[
@@ -280,7 +274,7 @@ export default function EditReminderScreen() {
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Précisions, liens, contexte..."
-              placeholderTextColor={OnSurface.variant}
+              placeholderTextColor={palette.onSurface.variant}
               value={notes}
               onChangeText={setNotes}
               multiline
@@ -319,162 +313,3 @@ export default function EditReminderScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  keyboardContainer: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Outline.variant,
-  },
-  cancelBtn: {
-    paddingVertical: Spacing.xs,
-    paddingRight: Spacing.sm,
-  },
-  cancelText: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-  },
-  screenTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  saveBtn: {
-    paddingVertical: Spacing.xs,
-    paddingLeft: Spacing.sm,
-  },
-  saveBtnDisabled: {
-    opacity: 0.5,
-  },
-  saveText: {
-    ...Typography.bodyMedium,
-    color: Primary.default,
-    fontWeight: '700',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: Spacing.lg,
-    gap: Spacing.xl,
-  },
-  fieldGroup: {
-    gap: Spacing.xs,
-  },
-  label: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    color: OnSurface.primary,
-    ...Typography.bodyLarge,
-  },
-  inputError: {
-    borderColor: ErrorColors.default,
-  },
-  textArea: {
-    minHeight: 90,
-  },
-  errorText: {
-    ...Typography.bodySmall,
-    color: ErrorColors.default,
-    marginTop: 2,
-  },
-  datePickerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  datePickerText: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-    textTransform: 'capitalize',
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    gap: 6,
-  },
-  chipDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  chipText: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-  },
-  actionOption: {
-    flexBasis: '31%',
-    flexGrow: 1,
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    gap: 4,
-  },
-  actionOptionSelected: {
-    backgroundColor: Primary.container,
-    borderColor: Primary.default,
-  },
-  actionIcon: {
-    fontSize: 18,
-  },
-  actionLabel: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    textAlign: 'center',
-  },
-  actionLabelSelected: {
-    color: Primary.default,
-    fontWeight: '700',
-  },
-  footerBtn: {
-    marginTop: Spacing.md,
-  },
-});

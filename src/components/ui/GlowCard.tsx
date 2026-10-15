@@ -1,23 +1,20 @@
 /**
- * GlowCard — carte unique de Junix Pulse, remplace toutes les anciennes cartes
- * "fond sombre + barre colorée à gauche" (borderLeftWidth/borderLeftColor).
+ * GlowCard — carte unique de Junix Pulse.
  *
  * Anatomie (de bas en haut) :
  * 1) Bordure en dégradé (padding 1px, plus forte côté coin supérieur droit)
- * 2) Fond uni opaque (GlowCardTokens.background)
- * 3) Lueur de coin (LinearGradient absolu, pointerEvents="none")
- * 4) Reflet supérieur (1px blanc 8%)
- * 5) Contenu (children)
- * 6) Pied optionnel (footer), séparé par un filet 1px blanc 6%
+ * 2) Fond uni opaque (sombre: #14141E, clair: #FFFFFF)
+ * 3) Dégradé de profondeur (sombre: ardoise, clair: #FFFFFF -> #FBF8FF)
+ * 4) Lueur de coin (LinearGradient absolu, pointerEvents="none")
+ * 5) Reflet supérieur (1px blanc, uniquement en sombre)
+ * 6) Contenu (children)
+ * 7) Pied optionnel (footer), séparé par un filet
  *
  * La couleur ("tone") suit toujours le SENS (priorité, statut), jamais la
- * décoration — voir les règles d'usage par écran dans la documentation du
- * projet. "neutral" n'a aucune lueur : c'est la carte ordinaire par défaut.
+ * décoration. "neutral" n'a aucune lueur : c'est la carte ordinaire par défaut.
  *
  * Accessibilité : la lueur est un renfort visuel, jamais l'unique indicateur
- * — chaque carte colorée doit porter, en plus, un chip/icône avec un libellé
- * explicite (ex. "Haute", "Relance conseillée"), géré par l'écran appelant
- * via children/footer. Contraste texte ≥ 4,5:1 vérifié pour les 5 teintes.
+ * (règle BR-025). Contraste texte ≥ 4,5:1 vérifié pour les deux modes.
  */
 import { memo, type ReactNode } from 'react';
 import { View, Pressable, StyleSheet, type StyleProp, type ViewStyle, Platform } from 'react-native';
@@ -30,6 +27,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Glow, GlowCardTokens, type GlowTone } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { hexToRgba } from '@/utils/color';
 
 export type GlowCardSize = 'list' | 'hero';
 export type GlowCardIntensity = 'soft' | 'default';
@@ -46,14 +45,15 @@ export interface GlowCardProps {
   accessibilityLabel?: string;
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  if (hex === 'transparent') return 'rgba(255, 255, 255, 0)';
-  const clean = hex.replace('#', '');
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
+// Teintes Glow en mode clair (Section 10 du Master Prompt)
+export const GlowLight: Record<GlowTone, string> = {
+  neutral: 'transparent',
+  info: '#0284C7',
+  primary: '#7C3AED',
+  attention: '#D97706',
+  urgent: '#DC2626',
+  success: '#16A34A',
+} as const;
 
 function GlowCardInner({
   tone = 'neutral',
@@ -66,6 +66,7 @@ function GlowCardInner({
   testID,
   accessibilityLabel,
 }: GlowCardProps) {
+  const { isDark } = useTheme();
   const reducedMotion = useReducedMotion();
   const pressScale = useSharedValue(1);
 
@@ -73,46 +74,108 @@ function GlowCardInner({
     transform: [{ scale: pressScale.value }],
   }));
 
-  const accentHex = Glow[tone];
+  const accentHex = isDark ? Glow[tone] : GlowLight[tone];
   const hasGlow = tone !== 'neutral';
   const radius = size === 'hero' ? GlowCardTokens.radiusHero : GlowCardTokens.radiusList;
-  const glowOpacity = GlowCardTokens.cornerGlowOpacity[intensity];
-  const glowMidOpacity = GlowCardTokens.cornerGlowMidOpacity[intensity];
 
-  const borderColors = hasGlow
-    ? ([
-        hexToRgba(accentHex, GlowCardTokens.borderOpacityAccentStrong),
-        hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityAccentMid),
-        hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityAccentSoft),
-      ] as const)
-    : ([
-        hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityNeutral),
-        hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityNeutral),
-      ] as const);
+  // Opacités de coin selon le mode
+  const glowOpacity = isDark
+    ? GlowCardTokens.cornerGlowOpacity[intensity]
+    : (intensity === 'soft' ? 0.10 : 0.16);
+  const glowMidOpacity = isDark
+    ? GlowCardTokens.cornerGlowMidOpacity[intensity]
+    : (intensity === 'soft' ? 0.04 : 0.06);
 
-  // Halo extérieur statique : uniquement attention/urgent, demandé par le spec.
-  // boxShadow est cross-platform (iOS + Android) depuis RN 0.76 / New Architecture
-  // (déjà actif sur ce projet) — confirmé sur la doc React Native officielle.
+  // Couleurs de bordure en dégradé
+  const borderColors: readonly [string, string, ...string[]] = isDark
+    ? (hasGlow
+        ? [
+            hexToRgba(accentHex, GlowCardTokens.borderOpacityAccentStrong),
+            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityAccentMid),
+            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityAccentSoft),
+          ]
+        : [
+            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityNeutral),
+            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityNeutral),
+          ])
+    : (hasGlow
+        ? [
+            hexToRgba(accentHex, 0.40),
+            'rgba(76, 52, 120, 0.10)',
+            'rgba(76, 52, 120, 0.06)',
+          ]
+        : [
+            'rgba(76, 52, 120, 0.10)',
+            'rgba(76, 52, 120, 0.10)',
+          ]);
+
+  // Halo extérieur statique : attention/urgent
   const showHalo = tone === 'attention' || tone === 'urgent';
   const haloStyle: ViewStyle | null = showHalo
     ? ({
-        boxShadow: `0 0 16px 0 ${hexToRgba(accentHex, GlowCardTokens.haloOpacity)}`,
+        boxShadow: isDark
+          ? `0 0 16px 0 ${hexToRgba(accentHex, GlowCardTokens.haloOpacity)}`
+          : `0 4px 16px 0 ${hexToRgba(accentHex, 0.22)}`,
         borderRadius: radius,
       })
     : null;
 
+  // Dégradé de profondeur
+  const depthColors: readonly [string, string] = isDark
+    ? ['rgba(27, 32, 48, 0.72)', 'rgba(20, 24, 36, 0.92)']
+    : ['#FFFFFF', '#FBF8FF'];
+
+  // Fond uni inner
+  const innerBg = isDark ? GlowCardTokens.background : '#FFFFFF';
+
+  // Séparateur de pied
+  const separatorColor = isDark
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(76, 52, 120, 0.08)';
+
+  // Ombre extérieure thématique
+  const shadowStyle: ViewStyle = isDark
+    ? (Platform.select({
+        ios: {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: 4,
+        },
+        default: {
+          boxShadow: '0 6px 20px -4px rgba(0, 0, 0, 0.40)',
+        },
+      }) as ViewStyle)
+    : (Platform.select({
+        ios: {
+          shadowColor: '#3C2864',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.10,
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: 2,
+        },
+        default: {
+          boxShadow: '0 4px 16px -2px rgba(60, 40, 100, 0.10)',
+        },
+      }) as ViewStyle);
+
   const content = (
-    <View style={[styles.outerWrapper, { borderRadius: radius }, haloStyle]}>
+    <View style={[styles.outerWrapper, shadowStyle, { borderRadius: radius }, haloStyle]}>
       <LinearGradient
         colors={borderColors}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={[styles.gradientBorder, { borderRadius: radius }]}
       >
-        <View style={[styles.inner, { borderRadius: radius - 0.5 }]}>
-          {/* Fond ardoise dégradé pour la profondeur de verre */}
+        <View style={[styles.inner, { backgroundColor: innerBg, borderRadius: radius - 0.5 }]}>
+          {/* Fond dégradé pour la profondeur */}
           <LinearGradient
-            colors={['rgba(27, 32, 48, 0.72)', 'rgba(20, 24, 36, 0.92)']}
+            colors={depthColors}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={[StyleSheet.absoluteFill, { borderRadius: radius - 0.5 }]}
@@ -134,20 +197,22 @@ function GlowCardInner({
             />
           )}
 
-          {/* Liseré spéculaire zénithal dégradé */}
-          <LinearGradient
-            colors={['transparent', 'rgba(255, 255, 255, 0.32)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.topHighlight}
-            pointerEvents="none"
-          />
+          {/* Liseré spéculaire zénithal (sombre uniquement) */}
+          {isDark && (
+            <LinearGradient
+              colors={['transparent', 'rgba(255, 255, 255, 0.32)', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.topHighlight}
+              pointerEvents="none"
+            />
+          )}
 
           <View style={styles.content}>{children}</View>
 
           {footer ? (
             <View style={styles.footer}>
-              <View style={styles.footerSeparator} />
+              <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
               {footer}
             </View>
           ) : null}
@@ -191,27 +256,12 @@ export const GlowCard = memo(GlowCardInner);
 const styles = StyleSheet.create({
   outerWrapper: {
     minHeight: 44, // zone tactile >= 44dp
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-      default: {
-        boxShadow: '0 6px 20px -4px rgba(0, 0, 0, 0.40)',
-      },
-    }),
   },
   gradientBorder: {
     padding: 1,
     overflow: 'hidden',
   },
   inner: {
-    backgroundColor: GlowCardTokens.background,
     overflow: 'hidden',
   },
   topHighlight: {
@@ -232,7 +282,6 @@ const styles = StyleSheet.create({
   },
   footerSeparator: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     marginBottom: 10,
   },
 });

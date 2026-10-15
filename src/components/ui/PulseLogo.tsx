@@ -27,6 +27,7 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/use-theme';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -46,6 +47,8 @@ interface PulseLogoProps {
 }
 
 export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseLogoProps) {
+  const { isDark } = useTheme();
+
   // Valeurs d'animation Reanimated
   const dashOffset = useSharedValue(TOTAL_LENGTH);
   const logoScale = useSharedValue(1);
@@ -162,6 +165,13 @@ export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseL
   const viewBox = `0 0 100 100`;
   const center = 50;
 
+  // Couleurs du dégradé selon le mode (clair: plus contrasté sur fond crème)
+  const gradId = isDark ? 'pulseGradDark' : 'pulseGradLight';
+  const stop1 = isDark ? '#D0BCFF' : '#6B46C1';
+  const stop2 = isDark ? '#A078FF' : '#805AD5';
+  const stop3 = isDark ? '#4CD7F6' : '#0E7490';
+  const haloColor = isDark ? '#A078FF' : '#6B46C1';
+
   return (
     <Animated.View
       style={[
@@ -172,10 +182,10 @@ export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseL
     >
       <Svg width={size} height={size} viewBox={viewBox} accessibilityLabel="Junix Pulse logo">
         <Defs>
-          <LinearGradient id="pulseGrad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#D0BCFF" />
-            <Stop offset="0.5" stopColor="#A078FF" />
-            <Stop offset="1" stopColor="#4CD7F6" />
+          <LinearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor={stop1} />
+            <Stop offset="0.5" stopColor={stop2} />
+            <Stop offset="1" stopColor={stop3} />
           </LinearGradient>
         </Defs>
 
@@ -183,7 +193,7 @@ export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseL
         <AnimatedCircle
           cx={center}
           cy={center}
-          fill="#A078FF"
+          fill={haloColor}
           animatedProps={animatedHaloProps}
         />
 
@@ -217,7 +227,7 @@ export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseL
             'L 62 62',
             'L 72 62',
           ].join(' ')}
-          stroke="url(#pulseGrad)"
+          stroke={`url(#${gradId})`}
           strokeWidth={4.5}
           strokeLinecap="round"
           strokeLinejoin="round"

@@ -27,15 +27,12 @@ import { PersonRepository } from '@/repositories/person-repository';
 import { Person, ActionType, ReminderPriority } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme, useThemedStyles } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/Button';
 
 const DAY_MAP: Record<string, Day> = {
@@ -51,6 +48,8 @@ const DAY_MAP: Record<string, Day> = {
 export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();
   const { userTimezone, showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeQuickCaptureStyles);
 
   const [input, setInput] = useState('');
   const [persons, setPersons] = useState<Person[]>([]);
@@ -219,7 +218,7 @@ export default function QuickCaptureScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Fermer"
         >
-          <Ionicons name="close" size={24} color={OnSurface.primary} />
+          <Ionicons name="close" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quick Capture</Text>
         <View style={{ width: 40 }} />
@@ -240,7 +239,7 @@ export default function QuickCaptureScreen() {
             value={input}
             onChangeText={setInput}
             placeholder="Ex : Appeler Thomas demain à 18h..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             autoFocus
             multiline
             numberOfLines={3}
@@ -251,7 +250,7 @@ export default function QuickCaptureScreen() {
         {cleanTitle.length > 0 && (
           <View style={styles.interpretationSection}>
             <View style={styles.interpretationHeader}>
-              <Ionicons name="sparkles-outline" size={16} color={Primary.default} />
+              <Ionicons name="sparkles-outline" size={16} color={palette.primary.default} />
               <Text style={styles.interpretationTitle}>Voici ce que j'ai compris</Text>
             </View>
 
@@ -277,7 +276,7 @@ export default function QuickCaptureScreen() {
                       : 'ellipse-outline'
                   }
                   size={15}
-                  color={Primary.default}
+                  color={palette.primary.default}
                 />
                 <Text style={styles.chipText}>
                   {actionType === 'CALL'
@@ -297,14 +296,14 @@ export default function QuickCaptureScreen() {
               {/* Chip Personne */}
               {targetPerson && (
                 <View style={styles.chipPerson}>
-                  <Ionicons name="person-outline" size={14} color="#7BD0FF" />
+                  <Ionicons name="person-outline" size={14} color={palette.tertiary.default} />
                   <Text style={styles.chipPersonText}>{targetPerson.displayName}</Text>
                 </View>
               )}
 
               {/* Chip Date */}
               <TouchableOpacity style={styles.chip} onPress={cycleDate} activeOpacity={0.7}>
-                <Ionicons name="calendar-outline" size={14} color={Tertiary.default} />
+                <Ionicons name="calendar-outline" size={14} color={palette.tertiary.default} />
                 <Text style={styles.chipText}>
                   {format(targetDate, 'EEEE d MMM', { locale: fr })}
                 </Text>
@@ -312,7 +311,7 @@ export default function QuickCaptureScreen() {
 
               {/* Chip Heure */}
               <View style={styles.chip}>
-                <Ionicons name="time-outline" size={14} color={OnSurface.variant} />
+                <Ionicons name="time-outline" size={14} color={palette.onSurface.variant} />
                 <Text style={styles.chipText}>{targetTime}</Text>
               </View>
 
@@ -328,12 +327,12 @@ export default function QuickCaptureScreen() {
                 <Ionicons
                   name="flag-outline"
                   size={14}
-                  color={priority === 'URGENT' ? '#FF5252' : OnSurface.variant}
+                  color={priority === 'URGENT' ? palette.error.default : palette.onSurface.variant}
                 />
                 <Text
                   style={[
                     styles.chipText,
-                    priority === 'URGENT' && { color: '#FF5252', fontWeight: '700' },
+                    priority === 'URGENT' && { color: palette.error.default, fontWeight: '700' },
                   ]}
                 >
                   {priority === 'URGENT' ? 'Urgent' : priority === 'LOW' ? 'Doux' : 'Normal'}
@@ -363,117 +362,118 @@ export default function QuickCaptureScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  closeBtn: {
-    padding: Spacing.xs,
-  },
-  headerTitle: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  content: {
-    padding: Spacing.lg,
-    gap: Spacing.lg,
-  },
-  subtitle: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-  },
-  inputContainer: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  textInput: {
-    ...Typography.bodyLarge,
-    color: OnSurface.primary,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  interpretationSection: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: Spacing.md,
-  },
-  interpretationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  interpretationTitle: {
-    ...Typography.titleMedium,
-    color: Primary.default,
-    fontWeight: '600',
-  },
-  chipsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.high,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: 6,
-  },
-  chipActiveAction: {
-    borderColor: Primary.default,
-    backgroundColor: Primary.container,
-  },
-  chipPerson: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(123, 208, 255, 0.12)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: '#7BD0FF',
-    gap: 6,
-  },
-  chipPersonText: {
-    ...Typography.labelMedium,
-    color: '#7BD0FF',
-    fontWeight: '600',
-  },
-  chipUrgent: {
-    borderColor: '#FF5252',
-    backgroundColor: 'rgba(255, 82, 82, 0.12)',
-  },
-  chipText: {
-    ...Typography.labelMedium,
-    color: OnSurface.primary,
-  },
-  hint: {
-    ...Typography.labelSmall,
-    color: OnSurface.disabled,
-    fontSize: 11,
-  },
-  actionBlock: {
-    marginTop: Spacing.md,
-  },
-});
+const makeQuickCaptureStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.surface.base,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    closeBtn: {
+      padding: Spacing.xs,
+    },
+    headerTitle: {
+      ...Typography.titleLarge,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    content: {
+      padding: Spacing.lg,
+      gap: Spacing.lg,
+    },
+    subtitle: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.variant,
+    },
+    inputContainer: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.lg,
+      padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    textInput: {
+      ...Typography.bodyLarge,
+      color: theme.onSurface.primary,
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    interpretationSection: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.lg,
+      padding: Spacing.lg,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      gap: Spacing.md,
+    },
+    interpretationHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    interpretationTitle: {
+      ...Typography.titleMedium,
+      color: theme.primary.default,
+      fontWeight: '600',
+    },
+    chipsWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.surface.high,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.full,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      gap: 6,
+    },
+    chipActiveAction: {
+      borderColor: theme.primary.default,
+      backgroundColor: theme.primary.container,
+    },
+    chipPerson: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.tertiary.container,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.full,
+      borderWidth: 1,
+      borderColor: theme.tertiary.default,
+      gap: 6,
+    },
+    chipPersonText: {
+      ...Typography.labelMedium,
+      color: theme.tertiary.default,
+      fontWeight: '600',
+    },
+    chipUrgent: {
+      borderColor: theme.error.default,
+      backgroundColor: theme.error.container,
+    },
+    chipText: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.primary,
+    },
+    hint: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.disabled,
+      fontSize: 11,
+    },
+    actionBlock: {
+      marginTop: Spacing.md,
+    },
+  });

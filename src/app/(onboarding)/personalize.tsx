@@ -2,6 +2,7 @@
  * Onboarding — Étape 3 : Personnalisation minimale
  * Demande le prénom et le fuseau horaire. Rien de plus.
  */
+
 import { useState } from 'react';
 import {
   View,
@@ -17,14 +18,13 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getLocales, getCalendars } from 'expo-localization';
 import {
-  Surface,
-  Primary,
-  OnSurface,
-  Outline,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
@@ -53,6 +53,8 @@ function detectTimezone(): string {
 }
 
 export default function OnboardingPersonalize() {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeOnboardingPersonalizeStyles);
   const detectedTz = detectTimezone();
   const [name, setName] = useState('');
   const [timezone, setTimezone] = useState(detectedTz);
@@ -102,7 +104,7 @@ export default function OnboardingPersonalize() {
             value={name}
             onChangeText={setName}
             placeholder="Ex : Marie"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             maxLength={50}
             autoCorrect={false}
             testID="onboarding-name-input"
@@ -124,7 +126,7 @@ export default function OnboardingPersonalize() {
             <Ionicons
               name={showTzPicker ? 'chevron-up' : 'chevron-down'}
               size={16}
-              color={OnSurface.variant}
+              color={palette.onSurface.variant}
             />
           </TouchableOpacity>
 
@@ -151,7 +153,7 @@ export default function OnboardingPersonalize() {
                     {tz.label}
                   </Text>
                   {tz.value === timezone && (
-                    <Ionicons name="checkmark" size={16} color={Primary.default} />
+                    <Ionicons name="checkmark" size={16} color={palette.primary.default} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -181,107 +183,109 @@ export default function OnboardingPersonalize() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  content: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxl,
-    paddingBottom: Spacing.xxxl,
-  },
-  title: {
-    fontSize: 26,
-    fontFamily: 'Outfit-Bold',
-    color: OnSurface.primary,
-    marginBottom: Spacing.sm,
-    lineHeight: 34,
-  },
-  subtitle: {
-    ...Typography.bodyLarge,
-    color: OnSurface.variant,
-    lineHeight: 24,
-    marginBottom: Spacing.xxl,
-  },
-  field: {
-    marginBottom: Spacing.xl,
-  },
-  label: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    marginBottom: Spacing.xs,
-  },
-  hint: {
-    ...Typography.bodySmall,
-    color: OnSurface.disabled,
-    marginBottom: Spacing.sm,
-  },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    color: OnSurface.primary,
-    fontSize: 16,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    minHeight: 48,
-  },
-  tzSelector: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 48,
-  },
-  tzValue: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-    flex: 1,
-  },
-  tzList: {
-    backgroundColor: Surface.high,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    marginTop: Spacing.xs,
-    overflow: 'hidden',
-  },
-  tzItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Outline.variant,
-  },
-  tzItemSelected: {
-    backgroundColor: Primary.container,
-  },
-  tzItemLabel: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-    flex: 1,
-  },
-  tzItemLabelSelected: {
-    color: Primary.onContainer,
-  },
-  tzCheck: {
-    color: Primary.default,
-    fontSize: 16,
-  },
-  actions: {
-    gap: Spacing.sm,
-    alignItems: 'center',
-    marginTop: Spacing.xl,
-  },
-  btnPrimary: {
-    width: '100%',
-  },
-});
+const makeOnboardingPersonalizeStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.surface.base,
+    },
+    content: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xxl,
+      paddingBottom: Spacing.xxxl,
+    },
+    title: {
+      fontSize: 26,
+      fontFamily: 'Outfit-Bold',
+      color: theme.onSurface.primary,
+      marginBottom: Spacing.sm,
+      lineHeight: 34,
+    },
+    subtitle: {
+      ...Typography.bodyLarge,
+      color: theme.onSurface.variant,
+      lineHeight: 24,
+      marginBottom: Spacing.xxl,
+    },
+    field: {
+      marginBottom: Spacing.xl,
+    },
+    label: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      marginBottom: Spacing.xs,
+    },
+    hint: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.disabled,
+      marginBottom: Spacing.sm,
+    },
+    input: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      color: theme.onSurface.primary,
+      fontSize: 16,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      minHeight: 48,
+    },
+    tzSelector: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 48,
+    },
+    tzValue: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+      flex: 1,
+    },
+    tzList: {
+      backgroundColor: theme.surface.high,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      marginTop: Spacing.xs,
+      overflow: 'hidden',
+    },
+    tzItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.outline.variant,
+    },
+    tzItemSelected: {
+      backgroundColor: theme.primary.container,
+    },
+    tzItemLabel: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+      flex: 1,
+    },
+    tzItemLabelSelected: {
+      color: theme.primary.onContainer,
+    },
+    tzCheck: {
+      color: theme.primary.default,
+      fontSize: 16,
+    },
+    actions: {
+      gap: Spacing.sm,
+      alignItems: 'center',
+      marginTop: Spacing.xl,
+    },
+    btnPrimary: {
+      width: '100%',
+    },
+  });
+

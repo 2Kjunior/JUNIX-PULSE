@@ -7,7 +7,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Surface, Primary, OnSurface, Outline, Spacing, Radius, Typography } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -22,12 +25,16 @@ export function ValueBadge({
   icon,
   title,
   subtitle,
-  accentColor = Primary.default,
+  accentColor,
 }: ValueBadgeProps) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeValueBadgeStyles);
+  const effectiveAccent = accentColor ?? palette.primary.default;
+
   return (
     <View style={styles.badge}>
-      <View style={[styles.iconContainer, { borderColor: accentColor + '30' }]}>
-        <Ionicons name={icon} size={20} color={accentColor} />
+      <View style={[styles.iconContainer, { borderColor: effectiveAccent + '30' }]}>
+        <Ionicons name={icon} size={20} color={effectiveAccent} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
@@ -35,38 +42,40 @@ export function ValueBadge({
   );
 }
 
-const styles = StyleSheet.create({
-  badge: {
-    flex: 1,
-    backgroundColor: Surface.container,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    padding: Spacing.md,
-    alignItems: 'center',
-    gap: Spacing.xs,
-    minHeight: 96,
-    justifyContent: 'center',
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(208, 188, 255, 0.08)',
-    marginBottom: 2,
-  },
-  title: {
-    ...Typography.labelMedium,
-    color: OnSurface.primary,
-    textAlign: 'center',
-  },
-  subtitle: {
-    ...Typography.labelSmall,
-    color: OnSurface.disabled,
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-});
+const makeValueBadgeStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    badge: {
+      flex: 1,
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      padding: Spacing.md,
+      alignItems: 'center',
+      gap: Spacing.xs,
+      minHeight: 96,
+      justifyContent: 'center',
+    },
+    iconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: Radius.full,
+      borderWidth: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.primary.container + '33',
+      marginBottom: 2,
+    },
+    title: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.primary,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.disabled,
+      textAlign: 'center',
+      lineHeight: 14,
+    },
+  });
+

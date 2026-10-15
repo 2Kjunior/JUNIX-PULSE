@@ -23,16 +23,19 @@ import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
 import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
 import { useEffect } from "react";
-import { Alert, LogBox, StyleSheet, Text, View } from "react-native";
+import { Alert, Appearance, LogBox, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { Snackbar } from "@/components/feedback/Snackbar";
 import { AnimatedBackgroundGlow } from "@/components/ui/AnimatedBackgroundGlow";
 import { SplashAnimated } from "@/components/ui/SplashAnimated";
-import { OnSurface, Surface } from "@/constants/theme";
+import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
+import { useTheme } from "@/hooks/use-theme";
+import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { NotificationService } from "@/services/notification-service";
 import { useAppStore } from "@/store/app-store";
@@ -55,7 +58,13 @@ export default function RootLayout() {
     setDbError,
     setOnboardingComplete,
     setUserTimezone,
+    themeMode,
+    setThemeMode,
   } = useAppStore();
+
+  const { isDark, mode, surface } = useTheme();
+  const styles = useThemedStyles(makeRootLayoutStyles);
+
 
   const [fontsLoaded, fontError] = useFonts({
     "Inter-Regular": Inter_400Regular,
@@ -85,6 +94,7 @@ export default function RootLayout() {
         const settings = await SettingsRepository.get();
         setOnboardingComplete(settings.onboardingCompleted);
         setUserTimezone(settings.timezone);
+        setThemeMode(settings.appearanceMode);
 
         // 3. Initialiser les notifications (handler + canal Android)
         //    Appelé ici pour garantir que le bridge natif est prêt
@@ -100,6 +110,14 @@ export default function RootLayout() {
 
     initialize();
   }, [appReady]);
+
+  // Synchroniser le thème avec les composants natifs et l'arrière-plan système
+  useEffect(() => {
+    Appearance.setColorScheme(themeMode === "system" ? "unspecified" : mode);
+    SystemUI.setBackgroundColorAsync(surface.base).catch(() => {});
+  }, [themeMode, mode, surface.base]);
+
+
 
   // Écouteurs de notifications pour navigation directe & snooze
   useEffect(() => {
@@ -158,7 +176,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <AnimatedBackgroundGlow />
       <SafeAreaProvider>
-        <StatusBar style="light" />
+        <StatusBar style={isDark ? "light" : "dark"} />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -237,29 +255,30 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  errorContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-    backgroundColor: Surface.base,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: OnSurface.primary,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: OnSurface.variant,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-});
+const makeRootLayoutStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: theme.surface.base,
+    },
+    errorContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 32,
+      backgroundColor: theme.surface.base,
+    },
+    errorTitle: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: theme.onSurface.primary,
+      marginBottom: 12,
+      textAlign: "center",
+    },
+    errorMessage: {
+      fontSize: 14,
+      color: theme.onSurface.variant,
+      textAlign: "center",
+      lineHeight: 20,
+    },
+  });

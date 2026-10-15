@@ -3,14 +3,16 @@
  * Stack simple sans header — l'onboarding a son propre design de navigation.
  */
 import { Stack } from 'expo-router';
-import { Surface } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function OnboardingLayout() {
+  const { palette } = useTheme();
+
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Surface.base },
+        contentStyle: { backgroundColor: palette.surface.base },
         animation: 'slide_from_right',
       }}
     >
@@ -22,3 +24,4 @@ export default function OnboardingLayout() {
     </Stack>
   );
 }
+

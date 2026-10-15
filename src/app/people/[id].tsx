@@ -1,6 +1,6 @@
 /**
  * Détail d'une personne et journal d'interactions (Timeline) — R-10.
- * Design Midnight, dégradé unique sur le bouton d'action principal, zéro emoji.
+ * Design Junix Pulse, zéro emoji, contrastes vérifiés sombre et clair.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -25,22 +25,13 @@ import { PersonRepository } from '@/repositories/person-repository';
 import { PersonUseCases } from '@/use-cases/person-use-cases';
 import { Person, Interaction, InteractionType } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Success,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { styles } from '@/styles/people/person-detail-styles';
+import { makePersonDetailStyles } from '@/styles/people/person-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -63,6 +54,8 @@ export default function PersonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makePersonDetailStyles);
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [person, setPerson] = useState<Person | null>(null);
@@ -183,9 +176,7 @@ export default function PersonDetailScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+      style={[styles.container, { paddingTop: insets.top }]}>
       {/* En-tête */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -193,7 +184,7 @@ export default function PersonDetailScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="chevron-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {person.displayName}
@@ -203,7 +194,7 @@ export default function PersonDetailScreen() {
           onPress={handleDeletePerson}
           accessibilityLabel="Supprimer"
         >
-          <Ionicons name="trash-outline" size={20} color={ErrorColors.default} />
+          <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
       </View>
 
@@ -233,7 +224,7 @@ export default function PersonDetailScreen() {
                 )}
                 {person.importedFromContacts && (
                   <View style={styles.importedBadge}>
-                    <Ionicons name="book-outline" size={11} color={Tertiary.default} />
+                    <Ionicons name="book-outline" size={11} color={theme.tertiary.default} />
                     <Text style={styles.importedText}>Répertoire</Text>
                   </View>
                 )}
@@ -251,12 +242,12 @@ export default function PersonDetailScreen() {
             <Ionicons
               name={isForgotten ? 'time-outline' : 'checkmark-circle-outline'}
               size={18}
-              color={isForgotten ? '#F59E0B' : Success.default}
+              color={isForgotten ? theme.priority.HIGH : theme.success.default}
             />
             <Text
               style={[
                 styles.statusBannerText,
-                { color: isForgotten ? '#F59E0B' : Success.default },
+                { color: isForgotten ? theme.priority.HIGH : theme.success.default },
               ]}
             >
               {daysSinceLast === null
@@ -277,7 +268,7 @@ export default function PersonDetailScreen() {
                     onPress={() => Linking.openURL(`tel:${person.phone}`)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="call-outline" size={18} color={Primary.default} />
+                    <Ionicons name="call-outline" size={18} color={theme.primary.default} />
                     <Text style={styles.quickActionText}>Appeler</Text>
                   </TouchableOpacity>
 
@@ -286,7 +277,7 @@ export default function PersonDetailScreen() {
                     onPress={() => Linking.openURL(`sms:${person.phone}`)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="chatbubble-outline" size={18} color={Primary.default} />
+                    <Ionicons name="chatbubble-outline" size={18} color={theme.primary.default} />
                     <Text style={styles.quickActionText}>SMS</Text>
                   </TouchableOpacity>
 
@@ -307,7 +298,7 @@ export default function PersonDetailScreen() {
                   onPress={() => Linking.openURL(`mailto:${person.email}`)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="mail-outline" size={18} color={Primary.default} />
+                  <Ionicons name="mail-outline" size={18} color={theme.primary.default} />
                   <Text style={styles.quickActionText}>Email</Text>
                 </TouchableOpacity>
               )}
@@ -317,7 +308,7 @@ export default function PersonDetailScreen() {
           {/* Détails supplémentaires (Anniversaire, Notes) */}
           {!!person.birthDate && (
             <View style={styles.detailRow}>
-              <Ionicons name="gift-outline" size={16} color={Tertiary.default} />
+              <Ionicons name="gift-outline" size={16} color={theme.tertiary.default} />
               <Text style={styles.detailText}>
                 Anniversaire :{' '}
                 {format(new Date(person.birthDate + 'T12:00:00'), 'd MMMM', { locale: fr })}
@@ -354,7 +345,7 @@ export default function PersonDetailScreen() {
                       <Ionicons
                         name={item.icon}
                         size={16}
-                        color={isSelected ? Primary.onContainer : OnSurface.variant}
+                        color={isSelected ? theme.primary.onContainer : theme.onSurface.variant}
                       />
                       <Text
                         style={[styles.typeChipText, isSelected && styles.typeChipTextActive]}
@@ -373,7 +364,7 @@ export default function PersonDetailScreen() {
               value={logNotes}
               onChangeText={setLogNotes}
               placeholder="Notes sur l'échange (ex: nouvelles prises, café ensemble...)"
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={theme.onSurface.disabled}
               multiline
               numberOfLines={2}
             />
@@ -399,7 +390,7 @@ export default function PersonDetailScreen() {
           {interactions.length === 0 ? (
             <GlowCard tone="neutral">
               <View style={styles.emptyBoxInner}>
-                <Ionicons name="chatbubbles-outline" size={32} color={OnSurface.disabled} />
+                <Ionicons name="chatbubbles-outline" size={32} color={theme.onSurface.disabled} />
                 <Text style={styles.emptyTitle}>Aucune interaction</Text>
                 <Text style={styles.emptyText}>
                   Enregistrez vos échanges pour maintenir le lien dans la durée.
@@ -415,7 +406,7 @@ export default function PersonDetailScreen() {
                 <GlowCard key={item.id} tone="neutral">
                 <View style={styles.timelineRow}>
                   <View style={styles.timelineIcon}>
-                    <Ionicons name={typeConfig.icon} size={18} color={Primary.default} />
+                    <Ionicons name={typeConfig.icon} size={18} color={theme.primary.default} />
                   </View>
                   <View style={styles.timelineBody}>
                     <View style={styles.timelineHeader}>
@@ -431,7 +422,7 @@ export default function PersonDetailScreen() {
                     style={styles.timelineDelete}
                     accessibilityLabel="Supprimer interaction"
                   >
-                    <Ionicons name="close" size={16} color={OnSurface.disabled} />
+                    <Ionicons name="close" size={16} color={theme.onSurface.disabled} />
                   </TouchableOpacity>
                 </View>
                 </GlowCard>

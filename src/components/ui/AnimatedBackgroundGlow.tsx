@@ -9,7 +9,7 @@
  */
 
 import { memo, useEffect } from 'react';
-import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -20,14 +20,16 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 
-import { Surface } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 function AnimatedBackgroundGlowComponent() {
+  const { palette } = useTheme();
   const reducedMotion = useReducedMotion();
+  const isGlowEnabled = palette.backgroundGlow.enabled;
 
-  // Valeurs partagées Reanimated exécutées sur le thread natif
+  // Valeurs partagées Reanimated exécutées sur le thread natif (mode sombre)
   const glowOpacity1 = useSharedValue(0.40);
   const glowScale1 = useSharedValue(1.0);
 
@@ -35,7 +37,7 @@ function AnimatedBackgroundGlowComponent() {
   const glowScale2 = useSharedValue(1.0);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || !isGlowEnabled) return;
 
     // Respiration douce du halo 1 (Violet) : cycle de 6.5s
     glowOpacity1.value = withRepeat(
@@ -60,7 +62,7 @@ function AnimatedBackgroundGlowComponent() {
       -1,
       true
     );
-  }, [reducedMotion]);
+  }, [reducedMotion, isGlowEnabled]);
 
   const animatedStyle1 = useAnimatedStyle(() => ({
     opacity: glowOpacity1.value,
@@ -72,10 +74,29 @@ function AnimatedBackgroundGlowComponent() {
     transform: [{ scale: glowScale2.value }],
   }));
 
+  // En mode clair (D-14) : fond crème + halo pêche statique doux, zéro orbe animé
+  if (!isGlowEnabled) {
+    return (
+      <View style={styles.root} pointerEvents="none">
+        <View style={[styles.baseCanvas, { backgroundColor: palette.surface.base }]} />
+        {palette.backgroundGlow.staticHaloColor && (
+          <View style={[styles.glowOrb, styles.staticPeachOrb]}>
+            <LinearGradient
+              colors={[palette.backgroundGlow.staticHaloColor, 'rgba(253, 186, 116, 0.0)']}
+              start={{ x: 0.5, y: 0.0 }}
+              end={{ x: 0.5, y: 1.0 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        )}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root} pointerEvents="none">
-      {/* 1. Fond sombre de base */}
-      <View style={styles.baseCanvas} />
+      {/* 1. Fond sombre de base dynamique */}
+      <View style={[styles.baseCanvas, { backgroundColor: palette.surface.base }]} />
 
       {/* 2. Halo 1 (Electric Violet en haut à gauche) */}
       <Animated.View
@@ -116,6 +137,7 @@ export const AnimatedBackgroundGlow = memo(AnimatedBackgroundGlowComponent);
 
 const ORB_SIZE_1 = Math.round(SCREEN_WIDTH * 0.95);
 const ORB_SIZE_2 = Math.round(SCREEN_WIDTH * 0.85);
+const STATIC_PEACH_SIZE = Math.round(SCREEN_WIDTH * 1.1);
 
 const styles = StyleSheet.create({
   root: {
@@ -132,7 +154,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: Surface.base, // #141317 / Midnight Base
   },
   glowOrb: {
     position: 'absolute',
@@ -150,6 +171,12 @@ const styles = StyleSheet.create({
     right: -SCREEN_WIDTH * 0.30,
     width: ORB_SIZE_2,
     height: ORB_SIZE_2,
+  },
+  staticPeachOrb: {
+    top: -SCREEN_HEIGHT * 0.05,
+    alignSelf: 'center',
+    width: STATIC_PEACH_SIZE,
+    height: STATIC_PEACH_SIZE * 0.8,
   },
   reducedOrb1: {
     opacity: 0.5,

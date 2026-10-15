@@ -21,34 +21,24 @@ import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { Task, Subtask } from '@/domain/entities';
 import { isTaskOverdue, calculateTaskProgress } from '@/domain/rules/task-rules';
 import { useAppStore } from '@/store/app-store';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Success,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-  Priority as PriorityColors,
-  Gradient,
   TAB_BAR_TOTAL_HEIGHT,
   type GlowTone,
 } from '@/constants/theme';
+import { ThemePalette } from '@/constants/palettes';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
-import { styles } from '@/styles/tabs/tasks-styles';
+import { makeTasksStyles } from '@/styles/tabs/tasks-styles';
 
 type FilterTab = 'inbox' | 'today' | 'all';
 type ScreenState = 'loading' | 'content' | 'error';
@@ -61,6 +51,8 @@ interface TaskWithSubtasks {
 export default function TasksScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeTasksStyles);
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [activeTab, setActiveTab] = useState<FilterTab>('inbox');
@@ -176,7 +168,7 @@ export default function TasksScreen() {
           onPress={() => router.push('/settings')}
           accessibilityLabel="Paramètres"
         >
-          <Ionicons name="options-outline" size={20} color={OnSurface.variant} />
+          <Ionicons name="options-outline" size={20} color={theme.onSurface.variant} />
         </TouchableOpacity>
       </View>
 
@@ -195,7 +187,7 @@ export default function TasksScreen() {
       <ScrollView
         contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -223,6 +215,8 @@ export default function TasksScreen() {
               key={task.id}
               task={task}
               subtasks={subtasks}
+              theme={theme}
+              styles={styles}
               onToggleComplete={() => handleToggleComplete(task)}
             />
           ))
@@ -244,10 +238,14 @@ export default function TasksScreen() {
 function TaskCardR08({
   task,
   subtasks,
+  theme,
+  styles,
   onToggleComplete,
 }: {
   task: Task;
   subtasks: Subtask[];
+  theme: ThemePalette;
+  styles: ReturnType<typeof makeTasksStyles>;
   onToggleComplete: () => void;
 }) {
   const isCompleted = task.status === 'COMPLETED';
@@ -255,7 +253,7 @@ function TaskCardR08({
   const progress = calculateTaskProgress(task, subtasks);
   const totalSubs = subtasks.length;
   const completedSubs = progress.completed;
-  const priorityColor = PriorityColors[task.priority] ?? Primary.default;
+  const priorityColor = theme.priority[task.priority] ?? theme.primary.default;
 
   // La lueur suit la priorité ou le retard et disparaît sur une tâche terminée
   const glowTone: GlowTone = isCompleted
@@ -277,103 +275,101 @@ function TaskCardR08({
       onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
       accessibilityLabel={`${task.title}${isCompleted ? ', terminée' : ''}${isOverdue ? ', en retard' : ''}`}
     >
-    <View style={[styles.taskRow, isCompleted && styles.taskRowCompleted]}>
-      {/* Case à cocher tactile isolée (44x44px accessible) */}
-      <TouchableOpacity
-        style={styles.checkBtn}
-        onPress={(e) => {
-          e.stopPropagation();
-          onToggleComplete();
-        }}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        activeOpacity={0.65}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: isCompleted }}
-        accessibilityLabel={isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
-      >
-        <Ionicons
-          name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
-          size={24}
-          color={isCompleted ? Success.default : 'rgba(255, 255, 255, 0.40)'}
-        />
-      </TouchableOpacity>
-
-      {/* Corps de la tâche */}
-      <View style={styles.cardContent}>
-        <Text
-          style={[styles.taskTitle, isCompleted && styles.taskTitleCompleted]}
-          numberOfLines={2}
+      <View style={[styles.taskRow, isCompleted && styles.taskRowCompleted]}>
+        {/* Case à cocher tactile isolée (44x44px accessible) */}
+        <TouchableOpacity
+          style={styles.checkBtn}
+          onPress={(e) => {
+            e.stopPropagation();
+            onToggleComplete();
+          }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.65}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isCompleted }}
+          accessibilityLabel={isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
         >
-          {task.title}
-        </Text>
+          <Ionicons
+            name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
+            size={24}
+            color={isCompleted ? theme.success.default : theme.outline.default}
+          />
+        </TouchableOpacity>
 
-        {/* Mini-jauge de progression des sous-tâches (2px) */}
-        {totalSubs > 0 ? (
-          <View
-            style={styles.progressTrack}
-            accessibilityLabel={`Progression : ${progress.percentage}%`}
+        {/* Corps de la tâche */}
+        <View style={styles.cardContent}>
+          <Text
+            style={[styles.taskTitle, isCompleted && styles.taskTitleCompleted]}
+            numberOfLines={2}
           >
-            <View style={[styles.progressFill, { width: `${progress.percentage}%` }]} />
+            {task.title}
+          </Text>
+
+          {/* Mini-jauge de progression des sous-tâches (3px) */}
+          {totalSubs > 0 ? (
+            <View
+              style={styles.progressTrack}
+              accessibilityLabel={`Progression : ${progress.percentage}%`}
+            >
+              <View style={[styles.progressFill, { width: `${progress.percentage}%` }]} />
+            </View>
+          ) : null}
+
+          {/* Ligne des badges d'information (Action-first) */}
+          <View style={styles.metaRow}>
+            {/* Tag de statut/date ou alerte de retard */}
+            {task.scheduledDate ? (
+              <View style={[styles.metaPill, isOverdue && styles.metaPillOverdue]}>
+                <Ionicons
+                  name={isOverdue ? 'alert-circle-outline' : 'calendar-outline'}
+                  size={11}
+                  color={isOverdue ? theme.error.default : theme.tertiary.default}
+                />
+                <Text style={[styles.metaPillText, isOverdue && styles.metaPillTextOverdue]}>
+                  {isOverdue
+                    ? `En retard (${format(new Date(task.scheduledDate), 'd MMM', { locale: fr })})`
+                    : format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.metaPill}>
+                <Ionicons name="file-tray-outline" size={11} color={theme.onSurface.variant} />
+                <Text style={styles.metaPillText}>Inbox</Text>
+              </View>
+            )}
+
+            {/* Sous-tâches */}
+            {totalSubs > 0 && (
+              <View style={styles.metaPill}>
+                <Ionicons name="checkbox-outline" size={11} color={theme.primary.default} />
+                <Text style={styles.metaPillText}>
+                  {completedSubs}/{totalSubs}
+                </Text>
+              </View>
+            )}
+
+            {/* Durée estimée */}
+            {task.estimatedMinutes ? (
+              <View style={styles.metaPill}>
+                <Ionicons name="time-outline" size={11} color={theme.onSurface.variant} />
+                <Text style={styles.metaPillText}>{task.estimatedMinutes} min</Text>
+              </View>
+            ) : null}
+
+            {/* Priorité : chip + libellé toujours visibles pour Urgent/Haute/Normale */}
+            {task.priority !== 'LOW' ? (
+              <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
+                <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+                <Text style={[styles.metaPillText, { color: priorityColor }]}>
+                  {task.priority === 'URGENT' ? 'Urgent' : task.priority === 'HIGH' ? 'Haute' : 'Normale'}
+                </Text>
+              </View>
+            ) : null}
           </View>
-        ) : null}
-
-        {/* Ligne des badges d'information (Action-first) */}
-        <View style={styles.metaRow}>
-          {/* Tag de statut/date ou alerte de retard */}
-          {task.scheduledDate ? (
-            <View style={[styles.metaPill, isOverdue && styles.metaPillOverdue]}>
-              <Ionicons
-                name={isOverdue ? 'alert-circle-outline' : 'calendar-outline'}
-                size={11}
-                color={isOverdue ? ErrorColors.default : Tertiary.default}
-              />
-              <Text style={[styles.metaPillText, isOverdue && styles.metaPillTextOverdue]}>
-                {isOverdue
-                  ? `En retard (${format(new Date(task.scheduledDate), 'd MMM', { locale: fr })})`
-                  : format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.metaPill}>
-              <Ionicons name="file-tray-outline" size={11} color={OnSurface.variant} />
-              <Text style={styles.metaPillText}>Inbox</Text>
-            </View>
-          )}
-
-          {/* Sous-tâches */}
-          {totalSubs > 0 && (
-            <View style={styles.metaPill}>
-              <Ionicons name="checkbox-outline" size={11} color={Primary.default} />
-              <Text style={styles.metaPillText}>
-                {completedSubs}/{totalSubs}
-              </Text>
-            </View>
-          )}
-
-          {/* Durée estimée */}
-          {task.estimatedMinutes ? (
-            <View style={styles.metaPill}>
-              <Ionicons name="time-outline" size={11} color={OnSurface.variant} />
-              <Text style={styles.metaPillText}>{task.estimatedMinutes} min</Text>
-            </View>
-          ) : null}
-
-          {/* Priorité : chip + libellé toujours visibles pour Urgent/Haute/Normale
-              (jamais la couleur seule — règle a11y). Basse n'a pas de chip :
-              elle reste neutre, sans lueur. */}
-          {task.priority !== 'LOW' ? (
-            <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
-              <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
-              <Text style={[styles.metaPillText, { color: priorityColor }]}>
-                {task.priority === 'URGENT' ? 'Urgent' : task.priority === 'HIGH' ? 'Haute' : 'Normale'}
-              </Text>
-            </View>
-          ) : null}
         </View>
-      </View>
 
-      <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
-    </View>
+        <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
+      </View>
     </GlowCard>
   );
 }

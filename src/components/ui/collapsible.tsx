@@ -5,7 +5,9 @@
 import { PropsWithChildren, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Surface, OnSurface, Spacing, Radius, Typography } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 interface CollapsibleProps {
   title: string;
@@ -13,6 +15,7 @@ interface CollapsibleProps {
 
 export function Collapsible({ children, title }: PropsWithChildren<CollapsibleProps>) {
   const [isOpen, setIsOpen] = useState(false);
+  const styles = useThemedStyles(makeCollapsibleStyles);
 
   return (
     <View>
@@ -35,39 +38,41 @@ export function Collapsible({ children, title }: PropsWithChildren<CollapsiblePr
   );
 }
 
-const styles = StyleSheet.create({
-  heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  pressed: { opacity: 0.7 },
-  chevronContainer: {
-    width: Spacing.lg,
-    height: Spacing.lg,
-    borderRadius: Radius.sm,
-    backgroundColor: Surface.high,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chevron: {
-    color: OnSurface.variant,
-    fontSize: 14,
-    transform: [{ rotate: '90deg' }],
-  },
-  chevronOpen: {
-    transform: [{ rotate: '-90deg' }],
-  },
-  title: {
-    ...Typography.bodyMedium,
-    color: OnSurface.primary,
-  },
-  content: {
-    marginTop: Spacing.sm,
-    borderRadius: Radius.md,
-    marginLeft: Spacing.lg,
-    padding: Spacing.md,
-    backgroundColor: Surface.container,
-  },
-});
+const makeCollapsibleStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    heading: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      paddingVertical: Spacing.xs,
+    },
+    pressed: { opacity: 0.7 },
+    chevronContainer: {
+      width: Spacing.lg,
+      height: Spacing.lg,
+      borderRadius: Radius.sm,
+      backgroundColor: theme.surface.high,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    chevron: {
+      color: theme.onSurface.variant,
+      fontSize: 14,
+      transform: [{ rotate: '90deg' }],
+    },
+    chevronOpen: {
+      transform: [{ rotate: '-90deg' }],
+    },
+    title: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+    },
+    content: {
+      marginTop: Spacing.sm,
+      borderRadius: Radius.md,
+      marginLeft: Spacing.lg,
+      padding: Spacing.md,
+      backgroundColor: theme.surface.container,
+    },
+  });
+

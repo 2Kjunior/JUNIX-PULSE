@@ -1,0 +1,132 @@
+/**
+ * Styles de l'écran Planning Personnel (settings/schedule.tsx).
+ * Fabrique thématique pour supporter le mode clair/sombre.
+ */
+
+import { StyleSheet } from 'react-native';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+
+export function makeScheduleStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.surface.base },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingBottom: Spacing.md,
+      backgroundColor: theme.surface.container,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    backBtn: { padding: Spacing.xs },
+    headerTitle: { ...Typography.titleLarge, color: theme.onSurface.primary },
+    addBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: Radius.full,
+      backgroundColor: theme.primary.default,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    daysBar: {
+      flexDirection: 'row',
+      backgroundColor: theme.surface.container,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+      paddingHorizontal: Spacing.xs,
+    },
+    dayTab: {
+      flex: 1,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+    },
+    dayTabActive: { borderBottomColor: theme.primary.default },
+    dayTabText: { ...Typography.labelMedium, color: theme.onSurface.disabled },
+    dayTabTextActive: { color: theme.primary.default, fontWeight: '700' },
+    content: { padding: Spacing.lg, paddingBottom: 100 },
+    dayHeader: { marginBottom: Spacing.lg },
+    dayTitle: { ...Typography.headlineMedium, color: theme.onSurface.primary },
+    daySub: { ...Typography.bodySmall, color: theme.onSurface.variant, marginTop: 2 },
+    emptyCard: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.lg,
+      padding: Spacing.xl,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    emptyTitle: { ...Typography.titleMedium, color: theme.onSurface.primary, marginTop: Spacing.md },
+    emptyDesc: { ...Typography.bodySmall, color: theme.onSurface.variant, textAlign: 'center', marginTop: 4 },
+    blockCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.lg,
+      padding: Spacing.lg,
+      marginBottom: Spacing.md,
+      gap: Spacing.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    blockTypeIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    blockInfo: { flex: 1 },
+    blockLabel: { ...Typography.titleMedium, color: theme.onSurface.primary },
+    blockTime: { ...Typography.bodySmall, color: theme.onSurface.variant, marginTop: 2 },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: theme.surface.container,
+      borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl,
+      padding: Spacing.lg,
+      paddingBottom: 40,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing.lg,
+    },
+    modalTitle: { ...Typography.titleLarge, color: theme.onSurface.primary },
+    modalBody: {},
+    label: { ...Typography.labelMedium, color: theme.onSurface.variant, marginBottom: Spacing.xs },
+    input: {
+      backgroundColor: theme.surface.base,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+    },
+    timeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    timeSep: { ...Typography.bodyMedium, color: theme.onSurface.variant },
+    typeRow: { flexDirection: 'row', paddingVertical: Spacing.xs },
+    typePill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.full,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      marginRight: Spacing.xs,
+      gap: 4,
+    },
+    typePillText: { ...Typography.labelSmall, color: theme.onSurface.primary },
+  });
+}

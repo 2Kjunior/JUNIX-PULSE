@@ -1,5 +1,6 @@
 /**
- * Formulaire de création d'un objectif — Midnight Glassmorphism.
+ * Formulaire de création d'un objectif — Junix Pulse.
+ * Entièrement thématisé avec contrastes parfaits en mode sombre et clair.
  */
 import { useState } from 'react';
 import {
@@ -20,20 +21,19 @@ import { fr } from 'date-fns/locale';
 
 import { GoalUseCases } from '@/use-cases/goal-use-cases';
 import { useAppStore } from '@/store/app-store';
-import {
-  Primary,
-  OnSurface,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
-import { formStyles } from '@/styles/common/form-styles';
+import { makeFormStyles } from '@/styles/common/form-styles';
 
 export default function NewGoalScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const styles = useThemedStyles(makeNewGoalStyles);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -104,7 +104,7 @@ export default function NewGoalScreen() {
           <TextInput
             style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
             placeholder="ex: Lancer mon produit, Courir un marathon..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             value={title}
             onChangeText={t => {
               setTitle(t);
@@ -116,11 +116,11 @@ export default function NewGoalScreen() {
           {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
 
           <View style={formStyles.notesRow}>
-            <Ionicons name="compass-outline" size={18} color={Primary.default} style={formStyles.notesIcon} />
+            <Ionicons name="compass-outline" size={18} color={palette.primary.default} style={formStyles.notesIcon} />
             <TextInput
               style={formStyles.notesInput}
               placeholder="Pourquoi cet objectif compte et quelle est votre stratégie..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -133,7 +133,7 @@ export default function NewGoalScreen() {
         {/* Carte 2 : Date cible (Deadline) */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="calendar-outline" size={14} color={Primary.default} />
+            <Ionicons name="calendar-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Échéance visée</Text>
         </View>
@@ -145,7 +145,7 @@ export default function NewGoalScreen() {
           >
             <View style={formStyles.selectorLeft}>
               <View style={formStyles.selectorIconBadge}>
-                <Ionicons name="flag-outline" size={18} color={Primary.default} />
+                <Ionicons name="flag-outline" size={18} color={palette.primary.default} />
               </View>
               <View>
                 <Text style={formStyles.selectorLabel}>DATE BUTOIR</Text>
@@ -161,10 +161,10 @@ export default function NewGoalScreen() {
                 onPress={() => setDeadline(null)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="close-circle" size={20} color={OnSurface.disabled} />
+                <Ionicons name="close-circle" size={20} color={palette.onSurface.disabled} />
               </TouchableOpacity>
             ) : (
-              <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
+              <Ionicons name="chevron-forward" size={18} color={palette.onSurface.disabled} />
             )}
           </TouchableOpacity>
         </View>
@@ -196,9 +196,11 @@ export default function NewGoalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  inputErrorBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: ErrorColors.default,
-  },
-});
+function makeNewGoalStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    inputErrorBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.error.default,
+    },
+  });
+}

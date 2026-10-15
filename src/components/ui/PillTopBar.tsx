@@ -22,9 +22,10 @@ import {
   Spacing,
   Typography,
   FontFamily,
-  Primary,
-  OnSurface,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 export interface PillTabItem<T extends string = string> {
   key: T;
@@ -46,6 +47,9 @@ export function PillTopBar<T extends string = string>({
   onTabChange,
   style,
 }: PillTopBarProps<T>) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makePillTopBarStyles);
+
   return (
     <View style={[styles.wrapper, style]}>
       <View style={styles.container}>
@@ -65,7 +69,7 @@ export function PillTopBar<T extends string = string>({
                 <Ionicons
                   name={tab.icon}
                   size={14}
-                  color={isActive ? '#E9DDFF' : 'rgba(255, 255, 255, 0.65)'}
+                  color={isActive ? palette.primary.default : palette.onSurface.variant}
                 />
               )}
               <Text style={[styles.label, isActive && styles.labelActive]}>
@@ -86,85 +90,87 @@ export function PillTopBar<T extends string = string>({
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(20, 24, 36, 0.82)',
-    borderRadius: Radius.full,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.35,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 4,
-      },
-      default: {
-        boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.40)',
-      },
-    }),
-  },
-  tabItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-    borderRadius: Radius.full,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  tabItemActive: {
-    backgroundColor: 'rgba(139, 92, 246, 0.22)',
-    borderColor: 'rgba(168, 129, 243, 0.65)',
-  },
-  label: {
-    ...Typography.labelMedium,
-    color: 'rgba(255, 255, 255, 0.70)',
-    fontFamily: FontFamily?.medium,
-    fontSize: 13,
-  },
-  labelActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontFamily: FontFamily?.bold,
-  },
-  badge: {
-    backgroundColor: 'rgba(11, 13, 20, 0.65)',
-    borderRadius: Radius.full,
-    paddingHorizontal: 7,
-    paddingVertical: 1.5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
-    minWidth: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeActive: {
-    borderColor: 'rgba(168, 129, 243, 0.80)',
-    backgroundColor: 'rgba(139, 92, 246, 0.35)',
-  },
-  badgeText: {
-    ...Typography.labelSmall,
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.65)',
-    fontFamily: FontFamily?.medium,
-  },
-  badgeTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontFamily: FontFamily?.bold,
-  },
-});
+const makePillTopBarStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    wrapper: {
+      paddingHorizontal: Spacing.lg,
+      marginBottom: Spacing.md,
+    },
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.full,
+      padding: 4,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: theme.mode === 'dark' ? 0.35 : 0.1,
+          shadowRadius: 10,
+        },
+        android: {
+          elevation: 4,
+        },
+        default: {
+          boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.40)',
+        },
+      }),
+    },
+    tabItem: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 7,
+      paddingHorizontal: 8,
+      borderRadius: Radius.full,
+      gap: 6,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    tabItemActive: {
+      backgroundColor: theme.primary.container,
+      borderColor: theme.primary.default + '80',
+    },
+    label: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.variant,
+      fontFamily: FontFamily?.medium,
+      fontSize: 13,
+    },
+    labelActive: {
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+      fontFamily: FontFamily?.bold,
+    },
+    badge: {
+      backgroundColor: theme.surface.high,
+      borderRadius: Radius.full,
+      paddingHorizontal: 7,
+      paddingVertical: 1.5,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      minWidth: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeActive: {
+      borderColor: theme.primary.default,
+      backgroundColor: theme.primary.container,
+    },
+    badgeText: {
+      ...Typography.labelSmall,
+      fontSize: 10,
+      color: theme.onSurface.variant,
+      fontFamily: FontFamily?.medium,
+    },
+    badgeTextActive: {
+      color: theme.primary.onContainer,
+      fontWeight: '700',
+      fontFamily: FontFamily?.bold,
+    },
+  });
+

@@ -5,6 +5,8 @@
  * Champs : titre, date/heure, priorité, action vectorielle, note, récurrence.
  * Règle A.1 : Zéro emoji (icônes vectorielles exclusives).
  * Règle A.2 : 1 seul bouton dégradé par écran (CTA Créer le rappel).
+ *
+ * Migration P5 : Entièrement thématisé avec contrastes parfaits en mode clair/sombre.
  */
 import { useState } from 'react';
 import {
@@ -29,20 +31,10 @@ import { createReminder } from '@/use-cases/reminder-use-cases';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { Reminder } from '@/domain/entities';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-  Priority as PriorityColors,
-  Gradient,
-} from '@/constants/theme';
-import { styles } from '@/styles/reminders/new-reminder-styles';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { makeNewReminderStyles } from '@/styles/reminders/new-reminder-styles';
 
 type PriorityKey = Reminder['priority'];
 type ActionType = Reminder['actionType'];
@@ -66,6 +58,9 @@ const ACTION_OPTIONS: { key: ActionType; label: string; icon: keyof typeof Ionic
 export default function NewReminderScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeNewReminderStyles);
+
   const { defaultHour, defaultDate } = useLocalSearchParams<{
     defaultHour?: string;
     defaultDate?: string;
@@ -80,16 +75,11 @@ export default function NewReminderScreen() {
       try {
         const parsed = new Date(defaultDate);
         if (!isNaN(parsed.getTime())) d = parsed;
-      } catch {
-        // fallback
-      }
+      } catch {}
     }
-    if (defaultHour !== undefined) {
-      d.setHours(Number(defaultHour), 0, 0, 0);
-    } else {
-      d.setMinutes(d.getMinutes() + 30);
-      d.setSeconds(0, 0);
-    }
+    const h = defaultHour !== undefined ? Number(defaultHour) : d.getHours() + 1;
+    d = setHours(d, h);
+    d = setMinutes(d, 0);
     return d;
   });
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');
@@ -97,25 +87,48 @@ export default function NewReminderScreen() {
   const [hasRecurrence, setHasRecurrence] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
 
-  // UI state
+  // États UI
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [titleError, setTitleError] = useState('');
 
-  function validate(): boolean {
+  // Raccourcis rapides d'échéance
+  const setQuickTime = (type: 'now_10s' | 'tonight' | 'tomorrow') => {
+    const now = new Date();
+    if (type === 'now_10s') {
+      setScheduledAt(new Date(now.getTime() + 10 * 1000));
+    } else if (type === 'tonight') {
+      const tonight = new Date();
+      tonight.setHours(20, 0, 0, 0);
+      setScheduledAt(tonight > now ? tonight : addHours(now, 2));
+    } else if (type === 'tomorrow') {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      setScheduledAt(tomorrow);
+    }
+  };
+
+  const validate = (): boolean => {
     if (!title.trim()) {
       setTitleError('Le titre est requis');
       return false;
     }
+    if (scheduledAt <= new Date()) {
+      showSnackbar("L'échéance doit être dans le futur");
+      return false;
+    }
     setTitleError('');
     return true;
-  }
+  };
 
-  async function handleSave() {
+  const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
+
     try {
       const settings = await SettingsRepository.get();
+
       await createReminder({
         title: title.trim(),
         notes: notes.trim() || undefined,
@@ -124,30 +137,20 @@ export default function NewReminderScreen() {
         priority,
         actionType,
         recurrenceRule: hasRecurrence
-          ? { type: recurrenceType, interval: 1 }
+          ? {
+              type: recurrenceType,
+              interval: 1,
+            }
           : undefined,
         notificationsEnabled: settings.notificationsEnabled,
       });
-      showSnackbar('Rappel créé avec succès.');
+
+      showSnackbar('Rappel créé');
       router.back();
     } catch (e) {
       showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
     } finally {
       setSaving(false);
-    }
-  }
-
-  // Raccourcis temporels pour la commodité (R-05)
-  const setQuickTime = (type: 'now_10s' | 'tonight' | 'tomorrow') => {
-    const now = new Date();
-    if (type === 'now_10s') {
-      setScheduledAt(new Date(now.getTime() + 10_000));
-    } else if (type === 'tonight') {
-      const tonight = setMinutes(setHours(now, 20), 30);
-      setScheduledAt(tonight > now ? tonight : addHours(now, 2));
-    } else {
-      const tomorrow = setMinutes(setHours(new Date(now.getTime() + 24 * 3600 * 1000), 8), 30);
-      setScheduledAt(tomorrow);
     }
   };
 
@@ -155,59 +158,65 @@ export default function NewReminderScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Surface.base }}
+      style={{ flex: 1, backgroundColor: palette.surface.base }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* ─── Barre d'outils R-05 ──────────────────────────────────────────────── */}
+        {/* ─── Barre d'outils modale ───────────────────────────────────────────── */}
         <View style={styles.toolbar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.toolbarBtn}>
+          <TouchableOpacity
+            style={styles.toolbarBtn}
+            onPress={() => router.back()}
+            accessibilityLabel="Annuler"
+          >
             <Text style={styles.toolbarCancel}>Annuler</Text>
           </TouchableOpacity>
-
           <View style={styles.toolbarCenter}>
-            <Text style={styles.toolbarTitle}>Nouveau Rappel</Text>
-            <Text style={styles.toolbarSubtitle}>Sas temporel</Text>
+            <Text style={styles.toolbarTitle}>Nouveau rappel</Text>
+            <Text style={styles.toolbarSubtitle}>Intention & Moment</Text>
           </View>
-
           <TouchableOpacity
-            onPress={handleSave}
             style={styles.toolbarBtn}
+            onPress={handleSave}
             disabled={saving}
+            accessibilityLabel="Créer"
           >
             <Text style={[styles.toolbarSave, saving && styles.toolbarSaveDisabled]}>
-              {saving ? '...' : 'Créer'}
+              {saving ? 'Création...' : 'Créer'}
             </Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + Spacing.xxxl }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ─── Titre & Notes (Groupe 1) ────────────────────────────────────────── */}
+          {/* ─── Carte 1 : Titre & Notes (Midnight Glass) ────────────────────────── */}
           <View style={styles.cardGroup}>
             <TextInput
-              style={[styles.titleInput, titleError && styles.inputError]}
+              style={[styles.titleInput, !!titleError && styles.inputError]}
               value={title}
-              onChangeText={t => { setTitle(t); if (t.trim()) setTitleError(''); }}
-              placeholder="Intitulé du rappel"
-              placeholderTextColor={OnSurface.disabled}
-              maxLength={120}
+              onChangeText={t => {
+                setTitle(t);
+                if (titleError) setTitleError('');
+              }}
+              placeholder="Que devez-vous garder en tête ?"
+              placeholderTextColor={palette.onSurface.disabled}
               autoFocus
+              maxLength={120}
             />
             {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
 
             <View style={styles.notesRow}>
-              <Ionicons name="menu-outline" size={18} color={OnSurface.variant} style={styles.notesIcon} />
+              <Ionicons name="menu-outline" size={18} color={palette.onSurface.variant} style={styles.notesIcon} />
               <TextInput
                 style={styles.notesInput}
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Précisions, liens, contexte (optionnel)"
-                placeholderTextColor={OnSurface.disabled}
+                placeholderTextColor={palette.onSurface.disabled}
                 multiline
                 numberOfLines={3}
                 maxLength={500}
@@ -217,7 +226,7 @@ export default function NewReminderScreen() {
 
           {/* ─── Échéance & Moment (Groupe 2 - R-05) ──────────────────────────────── */}
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="moon-outline" size={16} color={Tertiary.default} />
+            <Ionicons name="moon-outline" size={16} color={palette.tertiary.default} />
             <Text style={styles.sectionHeaderTitle}>Échéance & Moment</Text>
           </View>
 
@@ -225,11 +234,11 @@ export default function NewReminderScreen() {
             {/* Chips rapides */}
             <View style={styles.quickTimesRow}>
               <TouchableOpacity
-                style={[styles.quickTimeChip, { borderColor: 'rgba(208, 188, 255, 0.4)' }]}
+                style={[styles.quickTimeChip, { borderColor: palette.primary.default }]}
                 onPress={() => setQuickTime('now_10s')}
               >
-                <Ionicons name="flash-outline" size={12} color={Primary.default} />
-                <Text style={[styles.quickTimeText, { color: Primary.default, fontWeight: '600' }]}>
+                <Ionicons name="flash-outline" size={12} color={palette.primary.default} />
+                <Text style={[styles.quickTimeText, { color: palette.primary.default, fontWeight: '600' }]}>
                   Dans 10s (Test)
                 </Text>
               </TouchableOpacity>
@@ -237,14 +246,14 @@ export default function NewReminderScreen() {
                 style={styles.quickTimeChip}
                 onPress={() => setQuickTime('tonight')}
               >
-                <Ionicons name="time-outline" size={12} color={OnSurface.variant} />
+                <Ionicons name="time-outline" size={12} color={palette.onSurface.variant} />
                 <Text style={styles.quickTimeText}>Ce soir</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickTimeChip}
                 onPress={() => setQuickTime('tomorrow')}
               >
-                <Ionicons name="sunny-outline" size={12} color={OnSurface.variant} />
+                <Ionicons name="sunny-outline" size={12} color={palette.onSurface.variant} />
                 <Text style={styles.quickTimeText}>Demain</Text>
               </TouchableOpacity>
             </View>
@@ -255,16 +264,16 @@ export default function NewReminderScreen() {
               onPress={() => setShowDatePicker(true)}
             >
               <View style={styles.dateSelectorLeft}>
-                <Ionicons name="calendar-outline" size={18} color={Primary.default} />
+                <Ionicons name="calendar-outline" size={18} color={palette.primary.default} />
                 <Text style={styles.dateValue}>{dateLabel}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+              <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
             </TouchableOpacity>
           </View>
 
           {/* ─── Sphère d'Intention / Action (Groupe 3 - R-05) ────────────────────── */}
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="shapes-outline" size={16} color={OnSurface.variant} />
+            <Ionicons name="shapes-outline" size={16} color={palette.onSurface.variant} />
             <Text style={styles.sectionHeaderTitle}>Sphère d'Intention & Action</Text>
           </View>
 
@@ -284,7 +293,7 @@ export default function NewReminderScreen() {
                   <Ionicons
                     name={opt.icon}
                     size={18}
-                    color={isSelected ? Primary.default : OnSurface.variant}
+                    color={isSelected ? palette.primary.default : palette.onSurface.variant}
                   />
                   <Text
                     style={[
@@ -301,21 +310,21 @@ export default function NewReminderScreen() {
 
           {/* ─── Priorité (Groupe 4 - R-05) ───────────────────────────────────────── */}
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="flash-outline" size={16} color={Primary.default} />
+            <Ionicons name="flash-outline" size={16} color={palette.primary.default} />
             <Text style={styles.sectionHeaderTitle}>Exigence & Priorité</Text>
           </View>
 
           <View style={styles.priorityRow}>
             {PRIORITY_OPTIONS.map(opt => {
               const isSelected = priority === opt.key;
-              const chipColor = PriorityColors[opt.key];
+              const chipColor = palette.priority[opt.key];
               return (
                 <TouchableOpacity
                   key={opt.key}
                   style={[
                     styles.priorityTile,
                     isSelected && {
-                      backgroundColor: Surface.high,
+                      backgroundColor: palette.surface.high,
                       borderColor: chipColor,
                     },
                   ]}
@@ -338,7 +347,7 @@ export default function NewReminderScreen() {
 
           {/* ─── Récurrence & Cadence (Groupe 5) ──────────────────────────────────── */}
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="repeat-outline" size={16} color={Tertiary.default} />
+            <Ionicons name="repeat-outline" size={16} color={palette.tertiary.default} />
             <Text style={styles.sectionHeaderTitle}>Fréquence & Cadence</Text>
           </View>
 
@@ -351,8 +360,8 @@ export default function NewReminderScreen() {
               <Switch
                 value={hasRecurrence}
                 onValueChange={setHasRecurrence}
-                trackColor={{ false: Outline.variant, true: Primary.default }}
-                thumbColor={hasRecurrence ? '#FFFFFF' : OnSurface.disabled}
+                trackColor={{ false: palette.outline.variant, true: palette.primary.default }}
+                thumbColor={hasRecurrence ? '#FFFFFF' : palette.onSurface.disabled}
               />
             </View>
 
@@ -385,7 +394,7 @@ export default function NewReminderScreen() {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+                colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientBtn}
@@ -398,7 +407,7 @@ export default function NewReminderScreen() {
             </TouchableOpacity>
 
             <View style={styles.footerNoteRow}>
-              <Ionicons name="shield-checkmark-outline" size={13} color={OnSurface.disabled} />
+              <Ionicons name="shield-checkmark-outline" size={13} color={palette.onSurface.disabled} />
               <Text style={styles.footerNote}>Rappel stocké localement • Hors-ligne</Text>
             </View>
           </View>

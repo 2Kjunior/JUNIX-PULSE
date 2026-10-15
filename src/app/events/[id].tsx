@@ -1,5 +1,6 @@
 /**
  * Détail d'un événement de l'agenda.
+ * Support dynamique des modes sombre et clair.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -7,7 +8,6 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   Alert,
   Linking,
@@ -22,19 +22,12 @@ import { EventRepository } from '@/repositories/event-repository';
 import { EventUseCases } from '@/use-cases/event-use-cases';
 import { Event, Person } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -42,6 +35,8 @@ export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeEventDetailStyles);
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [event, setEvent] = useState<Event | null>(null);
@@ -125,7 +120,7 @@ export default function EventDetailScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="chevron-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {event.title}
@@ -135,7 +130,7 @@ export default function EventDetailScreen() {
           onPress={handleDelete}
           accessibilityLabel="Supprimer"
         >
-          <Ionicons name="trash-outline" size={20} color={ErrorColors.default} />
+          <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
       </View>
 
@@ -157,7 +152,7 @@ export default function EventDetailScreen() {
               <Text
                 style={[
                   styles.typeText,
-                  { color: event.type === 'BUSY' ? Primary.onContainer : Tertiary.default },
+                  { color: event.type === 'BUSY' ? theme.primary.onContainer : theme.tertiary.default },
                 ]}
               >
                 {event.type === 'BUSY' ? 'Occupé' : 'Libre'}
@@ -167,7 +162,7 @@ export default function EventDetailScreen() {
 
           {/* Date & Horaires */}
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color={Primary.default} />
+            <Ionicons name="calendar-outline" size={20} color={theme.primary.default} />
             <View>
               <Text style={styles.infoTitle}>
                 {format(startD, 'EEEE d MMMM yyyy', { locale: fr })}
@@ -182,7 +177,7 @@ export default function EventDetailScreen() {
           {/* Marge de trajet */}
           {!!event.travelBufferMinutes && event.travelBufferMinutes > 0 && (
             <View style={styles.infoRow}>
-              <Ionicons name="car-outline" size={20} color={Tertiary.default} />
+              <Ionicons name="car-outline" size={20} color={theme.tertiary.default} />
               <Text style={styles.infoTitle}>
                 Marge de trajet : {event.travelBufferMinutes} min avant
               </Text>
@@ -201,7 +196,7 @@ export default function EventDetailScreen() {
                 )
               }
             >
-              <Ionicons name="location-outline" size={20} color={Primary.default} />
+              <Ionicons name="location-outline" size={20} color={theme.primary.default} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoTitle}>{event.location}</Text>
                 <Text style={styles.linkSub}>Ouvrir dans Maps ↗</Text>
@@ -248,7 +243,7 @@ export default function EventDetailScreen() {
                       <Text style={styles.personRelation}>{p.relationship}</Text>
                     )}
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+                  <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
                 </TouchableOpacity>
               );
             })}
@@ -258,78 +253,3 @@ export default function EventDetailScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  headerBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleMedium, color: OnSurface.primary, flex: 1, textAlign: 'center' },
-  content: { padding: Spacing.lg, gap: Spacing.xl },
-  // card -> GlowCard tone="primary" size="hero" ; cardInner = layout interne.
-  cardInner: {
-    gap: Spacing.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  eventTitle: { ...Typography.headlineMedium, color: OnSurface.primary, flex: 1 },
-  typeBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-  },
-  typeBadgeBusy: { backgroundColor: Primary.container },
-  typeBadgeFree: { backgroundColor: Surface.high },
-  typeText: { ...Typography.labelSmall },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Surface.high,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-  },
-  infoTitle: { ...Typography.bodyMedium, color: OnSurface.primary },
-  infoSub: { ...Typography.labelSmall, color: OnSurface.variant, marginTop: 2 },
-  linkSub: { ...Typography.labelSmall, color: Primary.default, marginTop: 2 },
-  notesBox: {
-    backgroundColor: Surface.high,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-  },
-  notesTitle: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: 2 },
-  notesText: { ...Typography.bodySmall, color: OnSurface.primary },
-  section: { gap: Spacing.md },
-  sectionTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  personRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    gap: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  personAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Primary.container,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  personAvatarText: { ...Typography.titleMedium, color: Primary.onContainer },
-  personName: { ...Typography.bodyMedium, color: OnSurface.primary },
-  personRelation: { ...Typography.labelSmall, color: OnSurface.variant },
-});

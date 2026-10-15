@@ -1,7 +1,8 @@
 /**
- * Formulaire de création d'une habitude — Midnight Glassmorphism.
+ * Formulaire de création d'une habitude — Junix Pulse.
+ * Thématisé dynamiquement : mode sombre Midnight Glow et mode clair crème chaleureuse.
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,30 +19,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { HabitUseCases } from '@/use-cases/habit-use-cases';
 import { HabitFrequency } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Primary,
-  Tertiary,
-  OnSurface,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
-import { formStyles } from '@/styles/common/form-styles';
-
-const COLOR_OPTIONS = [
-  { id: 'primary', label: 'Violet', hex: Primary.default },
-  { id: 'tertiary', label: 'Rose', hex: Tertiary.default },
-  { id: 'green', label: 'Vert', hex: '#4CAF50' },
-  { id: 'orange', label: 'Orange', hex: '#FF9800' },
-  { id: 'purple', label: 'Pourpre', hex: '#9C27B0' },
-  { id: 'cyan', label: 'Cyan', hex: '#00BCD4' },
-];
+import { makeFormStyles } from '@/styles/common/form-styles';
 
 export default function NewHabitScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const styles = useThemedStyles(makeNewHabitStyles);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -50,6 +40,15 @@ export default function NewHabitScreen() {
   const [color, setColor] = useState('primary');
   const [saving, setSaving] = useState(false);
   const [titleError, setTitleError] = useState('');
+
+  const colorOptions = useMemo(() => [
+    { id: 'primary', label: 'Violet', hex: palette.primary.default },
+    { id: 'tertiary', label: 'Cyan / Teal', hex: palette.tertiary.default },
+    { id: 'green', label: 'Vert', hex: palette.success.default },
+    { id: 'orange', label: 'Orange', hex: palette.priority.HIGH },
+    { id: 'purple', label: 'Pourpre', hex: '#9C27B0' },
+    { id: 'cyan', label: 'Cyan', hex: '#00BCD4' },
+  ], [palette]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -115,7 +114,7 @@ export default function NewHabitScreen() {
           <TextInput
             style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
             placeholder="ex: Méditation 10 min, Boire 2L d'eau..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             value={title}
             onChangeText={t => {
               setTitle(t);
@@ -127,11 +126,11 @@ export default function NewHabitScreen() {
           {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
 
           <View style={formStyles.notesRow}>
-            <Ionicons name="document-text-outline" size={18} color={OnSurface.variant} style={formStyles.notesIcon} />
+            <Ionicons name="document-text-outline" size={18} color={palette.onSurface.variant} style={formStyles.notesIcon} />
             <TextInput
               style={formStyles.notesInput}
               placeholder="Pourquoi cette habitude et comment la maintenir..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -144,7 +143,7 @@ export default function NewHabitScreen() {
         {/* Carte 2 : Fréquence */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="repeat-outline" size={14} color={Primary.default} />
+            <Ionicons name="repeat-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Rythme & Fréquence</Text>
         </View>
@@ -161,7 +160,7 @@ export default function NewHabitScreen() {
               <Ionicons
                 name="calendar-outline"
                 size={16}
-                color={frequency === 'DAILY' ? Primary.default : OnSurface.variant}
+                color={frequency === 'DAILY' ? palette.primary.default : palette.onSurface.variant}
               />
               <Text
                 style={[
@@ -183,7 +182,7 @@ export default function NewHabitScreen() {
               <Ionicons
                 name="bar-chart-outline"
                 size={16}
-                color={frequency === 'WEEKLY' ? Primary.default : OnSurface.variant}
+                color={frequency === 'WEEKLY' ? palette.primary.default : palette.onSurface.variant}
               />
               <Text
                 style={[
@@ -228,14 +227,14 @@ export default function NewHabitScreen() {
         {/* Carte 3 : Thème Couleur */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="color-palette-outline" size={14} color={Primary.default} />
+            <Ionicons name="color-palette-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Couleur distinctive</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
           <View style={styles.colorRow}>
-            {COLOR_OPTIONS.map(c => (
+            {colorOptions.map(c => (
               <TouchableOpacity
                 key={c.id}
                 style={[
@@ -266,56 +265,60 @@ export default function NewHabitScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  inputErrorBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: ErrorColors.default,
-  },
-  daysSelectorContainer: {
-    marginTop: Spacing.sm,
-    gap: Spacing.xs,
-  },
-  daysSelector: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    marginTop: 4,
-  },
-  dayPill: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(15, 18, 28, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-  },
-  dayPillActive: {
-    backgroundColor: 'rgba(208, 188, 255, 0.20)',
-    borderColor: Primary.default,
-  },
-  dayPillText: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-  },
-  dayPillTextActive: {
-    color: Primary.default,
-    fontWeight: '700',
-  },
-  colorRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  colorCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  colorCircleSelected: {
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-});
+function makeNewHabitStyles(theme: ThemePalette) {
+  const isDark = theme.mode === 'dark';
+
+  return StyleSheet.create({
+    inputErrorBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.error.default,
+    },
+    daysSelectorContainer: {
+      marginTop: Spacing.sm,
+      gap: Spacing.xs,
+    },
+    daysSelector: {
+      flexDirection: 'row',
+      gap: Spacing.xs,
+      marginTop: 4,
+    },
+    dayPill: {
+      flex: 1,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.md,
+      backgroundColor: isDark ? 'rgba(15, 18, 28, 0.85)' : theme.surface.container,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.outline.variant,
+      alignItems: 'center',
+    },
+    dayPillActive: {
+      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.20)' : 'rgba(107, 70, 193, 0.15)',
+      borderColor: theme.primary.default,
+    },
+    dayPillText: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.variant,
+    },
+    dayPillTextActive: {
+      color: theme.primary.default,
+      fontWeight: '700',
+    },
+    colorRow: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+    colorCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: Radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    colorCircleSelected: {
+      borderWidth: 3,
+      borderColor: isDark ? '#FFFFFF' : theme.onSurface.primary,
+    },
+  });
+}

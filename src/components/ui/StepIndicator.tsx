@@ -6,7 +6,9 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Primary, OnSurface, Outline, Spacing, Typography } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 interface StepIndicatorProps {
   total: number;
@@ -15,6 +17,8 @@ interface StepIndicatorProps {
 }
 
 export function StepIndicator({ total, current, showLabel = true }: StepIndicatorProps) {
+  const styles = useThemedStyles(makeStepIndicatorStyles);
+
   return (
     <View style={styles.container}>
       {showLabel && (
@@ -43,32 +47,34 @@ export function StepIndicator({ total, current, showLabel = true }: StepIndicato
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: Spacing.xl,
-  },
-  label: {
-    ...Typography.labelSmall,
-    color: OnSurface.disabled,
-    letterSpacing: 1.2,
-    marginBottom: Spacing.sm,
-  },
-  bars: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  bar: {
-    flex: 1,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Outline.variant,
-  },
-  barDone: {
-    backgroundColor: Primary.default,
-    opacity: 0.5,
-  },
-  barActive: {
-    backgroundColor: Primary.default,
-    opacity: 1,
-  },
-});
+const makeStepIndicatorStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: Spacing.xl,
+    },
+    label: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.disabled,
+      letterSpacing: 1.2,
+      marginBottom: Spacing.sm,
+    },
+    bars: {
+      flexDirection: 'row',
+      gap: 6,
+    },
+    bar: {
+      flex: 1,
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: theme.outline.variant,
+    },
+    barDone: {
+      backgroundColor: theme.primary.default,
+      opacity: 0.5,
+    },
+    barActive: {
+      backgroundColor: theme.primary.default,
+      opacity: 1,
+    },
+  });
+

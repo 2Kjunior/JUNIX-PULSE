@@ -21,35 +21,27 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { differenceInDays } from 'date-fns';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person } from '@/domain/entities';
 import { daysSinceLastInteraction, isPersonForgotten } from '@/domain/rules/person-rules';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Spacing,
-  Radius,
-  Typography,
-  Gradient,
-  TAB_BAR_TOTAL_HEIGHT,
-} from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/constants/theme';
+import { ThemePalette } from '@/constants/palettes';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
-import { styles } from '@/styles/tabs/people-styles';
+import { makePeopleStyles } from '@/styles/tabs/people-styles';
 
 type FilterTab = 'all' | 'forgotten';
 type ScreenState = 'loading' | 'content' | 'error';
 
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makePeopleStyles);
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -105,7 +97,7 @@ export default function PeopleScreen() {
           onPress={() => router.push('/settings')}
           accessibilityLabel="Paramètres"
         >
-          <Ionicons name="options-outline" size={20} color={OnSurface.variant} />
+          <Ionicons name="options-outline" size={20} color={theme.onSurface.variant} />
         </TouchableOpacity>
       </View>
 
@@ -123,7 +115,7 @@ export default function PeopleScreen() {
       <ScrollView
         contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -144,7 +136,14 @@ export default function PeopleScreen() {
             onAction={() => router.push('/people/new')}
           />
         ) : (
-          persons.map(person => <PersonCardR09 key={person.id} person={person} />)
+          persons.map(person => (
+            <PersonCardR09
+              key={person.id}
+              person={person}
+              theme={theme}
+              styles={styles}
+            />
+          ))
         )}
       </ScrollView>
 
@@ -160,7 +159,15 @@ export default function PeopleScreen() {
 
 // ─── Composants locaux ─────────────────────────────────────────────────────────
 
-function PersonCardR09({ person }: { person: Person }) {
+function PersonCardR09({
+  person,
+  theme,
+  styles,
+}: {
+  person: Person;
+  theme: ThemePalette;
+  styles: ReturnType<typeof makePeopleStyles>;
+}) {
   const daysSinceLast = daysSinceLastInteraction(person.lastInteractionAt);
   const isForgotten = isPersonForgotten(person);
 
@@ -215,7 +222,7 @@ function PersonCardR09({ person }: { person: Person }) {
 
           {isForgotten && (
             <View style={styles.forgottenBadge}>
-              <Ionicons name="alert-circle-outline" size={12} color="#F59E0B" />
+              <Ionicons name="alert-circle-outline" size={12} color={theme.priority.HIGH} />
               <Text style={styles.forgottenText}>Relance conseillée</Text>
             </View>
           )}
@@ -231,7 +238,7 @@ function PersonCardR09({ person }: { person: Person }) {
                 accessibilityLabel="Appeler"
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Ionicons name="call-outline" size={16} color={Primary.default} />
+                <Ionicons name="call-outline" size={16} color={theme.primary.default} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -240,12 +247,12 @@ function PersonCardR09({ person }: { person: Person }) {
                 accessibilityLabel="Envoyer un message"
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Ionicons name="chatbubble-outline" size={16} color={Tertiary.default} />
+                <Ionicons name="chatbubble-outline" size={16} color={theme.tertiary.default} />
               </TouchableOpacity>
             </View>
           ) : null}
 
-          <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+          <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
         </View>
       </View>
     </GlowCard>

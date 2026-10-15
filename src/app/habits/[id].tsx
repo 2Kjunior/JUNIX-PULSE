@@ -21,15 +21,12 @@ import { fr } from 'date-fns/locale';
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
-  Primary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme, useThemedStyles } from '@/hooks/use-theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 
@@ -37,6 +34,8 @@ export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeHabitDetailStyles);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -154,13 +153,13 @@ export default function HabitDetailScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {stats.habit.title}
         </Text>
         <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={22} color={ErrorColors.default} />
+          <Ionicons name="trash-outline" size={22} color={palette.error.default} />
         </TouchableOpacity>
       </View>
 
@@ -198,7 +197,7 @@ export default function HabitDetailScreen() {
 
           <GlowCard tone="neutral" style={{ flex: 1 }}>
             <View style={styles.streakBoxInner}>
-              <Ionicons name="trophy" size={28} color={Primary.default} />
+              <Ionicons name="trophy" size={28} color={palette.primary.default} />
               <Text style={styles.streakVal}>{stats.bestStreak}</Text>
               <Text style={styles.streakLabel}>Meilleure série</Text>
             </View>
@@ -219,16 +218,16 @@ export default function HabitDetailScreen() {
                 ]}
                 onPress={() => handleToggleDay(d.dateStr)}
               >
-                <Text style={[styles.dayWeek, d.isCompleted && { color: Surface.base }]}>
+                <Text style={[styles.dayWeek, d.isCompleted && { color: palette.surface.base }]}>
                   {d.weekDayLabel}
                 </Text>
-                <Text style={[styles.dayNum, d.isCompleted && { color: Surface.base }]}>
+                <Text style={[styles.dayNum, d.isCompleted && { color: palette.surface.base }]}>
                   {d.dayLabel}
                 </Text>
                 <Ionicons
                   name={d.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
                   size={18}
-                  color={d.isCompleted ? Surface.base : OnSurface.disabled}
+                  color={d.isCompleted ? palette.surface.base : palette.onSurface.disabled}
                   style={{ marginTop: 4 }}
                 />
               </TouchableOpacity>
@@ -242,7 +241,7 @@ export default function HabitDetailScreen() {
           {stats.habit.status === 'PAUSED' ? (
             <GlowCard tone="neutral" onPress={handleResume}>
               <View style={styles.actionRowInner}>
-                <Ionicons name="play" size={22} color={Primary.default} />
+                <Ionicons name="play" size={22} color={palette.primary.default} />
                 <View style={styles.actionTextCol}>
                   <Text style={styles.actionTitle}>Reprendre l'habitude</Text>
                   <Text style={styles.actionDesc}>Réactiver la validation quotidienne.</Text>
@@ -266,83 +265,81 @@ export default function HabitDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    backgroundColor: Surface.container,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: Spacing.sm,
-  },
-  deleteBtn: { padding: Spacing.xs },
-  content: { padding: Spacing.lg, paddingBottom: 60 },
-  // topCard -> GlowCard tone="neutral" size="hero" ; topCardSpacing = marge externe.
-  topCardSpacing: {
-    marginBottom: Spacing.lg,
-  },
-  title: { ...Typography.headlineMedium, color: OnSurface.primary },
-  desc: { ...Typography.bodyMedium, color: OnSurface.variant, marginTop: Spacing.xs },
-  badgeRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
-  statusBadge: {
-    backgroundColor: Surface.high,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  statusText: { ...Typography.labelMedium, color: OnSurface.primary },
-  freqTag: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  streakGrid: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl },
-  // streakBox -> GlowCard tone="neutral" ; streakBoxInner = layout interne.
-  streakBoxInner: {
-    alignItems: 'center',
-  },
-  streakVal: { ...Typography.headlineLarge, color: OnSurface.primary, marginTop: 4 },
-  streakLabel: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2, textAlign: 'center' },
-  section: { marginBottom: Spacing.xl },
-  sectionTitle: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.md },
-  historyRow: { flexDirection: 'row', paddingVertical: Spacing.xs },
-  dayCard: {
-    width: 48,
-    height: 76,
-    borderRadius: Radius.md,
-    backgroundColor: Surface.container,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  dayCardToday: { borderColor: Primary.default, borderWidth: 2 },
-  dayCardCompleted: { backgroundColor: Primary.default, borderColor: Primary.default },
-  dayWeek: { ...Typography.labelSmall, color: OnSurface.variant, textTransform: 'uppercase' },
-  dayNum: { ...Typography.titleMedium, color: OnSurface.primary, marginTop: 2 },
-  // actionRow -> GlowCard tone="neutral" ; actionRowInner = layout interne.
-  actionRowInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  actionTextCol: { flex: 1 },
-  actionTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  actionDesc: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: 2 },
-});
+const makeHabitDetailStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.surface.base },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingBottom: Spacing.md,
+      backgroundColor: theme.surface.container,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    backBtn: { padding: Spacing.xs },
+    headerTitle: {
+      ...Typography.titleLarge,
+      color: theme.onSurface.primary,
+      flex: 1,
+      textAlign: 'center',
+      marginHorizontal: Spacing.sm,
+    },
+    deleteBtn: { padding: Spacing.xs },
+    content: { padding: Spacing.lg, paddingBottom: 60 },
+    topCardSpacing: {
+      marginBottom: Spacing.lg,
+    },
+    title: { ...Typography.headlineMedium, color: theme.onSurface.primary },
+    desc: { ...Typography.bodyMedium, color: theme.onSurface.variant, marginTop: Spacing.xs },
+    badgeRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
+    statusBadge: {
+      backgroundColor: theme.surface.high,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 4,
+      borderRadius: Radius.full,
+    },
+    statusText: { ...Typography.labelMedium, color: theme.onSurface.primary },
+    freqTag: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.variant,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 4,
+      borderRadius: Radius.full,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    streakGrid: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl },
+    streakBoxInner: {
+      alignItems: 'center',
+    },
+    streakVal: { ...Typography.headlineLarge, color: theme.onSurface.primary, marginTop: 4 },
+    streakLabel: { ...Typography.bodySmall, color: theme.onSurface.variant, marginTop: 2, textAlign: 'center' },
+    section: { marginBottom: Spacing.xl },
+    sectionTitle: { ...Typography.titleMedium, color: theme.onSurface.primary, marginBottom: Spacing.md },
+    historyRow: { flexDirection: 'row', paddingVertical: Spacing.xs },
+    dayCard: {
+      width: 48,
+      height: 76,
+      borderRadius: Radius.md,
+      backgroundColor: theme.surface.container,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: Spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    dayCardToday: { borderColor: theme.primary.default, borderWidth: 2 },
+    dayCardCompleted: { backgroundColor: theme.primary.default, borderColor: theme.primary.default },
+    dayWeek: { ...Typography.labelSmall, color: theme.onSurface.variant, textTransform: 'uppercase' },
+    dayNum: { ...Typography.titleMedium, color: theme.onSurface.primary, marginTop: 2 },
+    actionRowInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    actionTextCol: { flex: 1 },
+    actionTitle: { ...Typography.titleMedium, color: theme.onSurface.primary },
+    actionDesc: { ...Typography.bodySmall, color: theme.onSurface.variant, marginTop: 2 },
+  });

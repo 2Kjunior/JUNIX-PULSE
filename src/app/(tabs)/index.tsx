@@ -8,6 +8,7 @@
  *
  * Règle A.1 : Zéro emoji dans tout le composant.
  * Règle A.2 : Cartes rayon 16px (Radius.lg), 1 seul gradient CTA, palette theme.ts.
+ * Migration P5 : Entièrement accordé sur le thème dynamique (mode sombre et clair).
  */
 
 import { useState, useCallback } from 'react';
@@ -37,28 +38,23 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { seedDatabase } from '@/database/seed';
 import { Reminder, Task, Event, Suggestion } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Primary,
-  Tertiary,
-  OnSurface,
-  Error as ErrorColors,
-  Success,
-  Spacing,
-  Gradient,
-  TAB_BAR_TOTAL_HEIGHT,
-} from '@/constants/theme';
+import { Spacing, TAB_BAR_TOTAL_HEIGHT } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { SummaryChip } from '@/components/today/SummaryChip';
 import { TaskCard } from '@/components/today/TaskCard';
 import { RecoveryAndHrvMetricCard } from '@/components/today/RecoveryAndHrvMetricCard';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { styles } from '@/styles/tabs/today-styles';
+import { makeTodayStyles } from '@/styles/tabs/today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeTodayStyles);
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -228,7 +224,7 @@ export default function TodayScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={Primary.default}
+          tintColor={palette.primary.default}
         />
       }
       showsVerticalScrollIndicator={false}
@@ -247,21 +243,21 @@ export default function TodayScreen() {
             onPress={() => router.push('/capture')}
             accessibilityLabel="Capture rapide"
           >
-            <Ionicons name="flash-outline" size={20} color={Primary.default} />
+            <Ionicons name="flash-outline" size={20} color={palette.primary.default} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerBtn}
             onPress={() => router.push('/search')}
             accessibilityLabel="Recherche globale"
           >
-            <Ionicons name="search-outline" size={20} color={OnSurface.variant} />
+            <Ionicons name="search-outline" size={20} color={palette.onSurface.variant} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerBtn}
             onPress={() => router.push('/settings')}
             accessibilityLabel="Paramètres"
           >
-            <Ionicons name="settings-outline" size={20} color={OnSurface.variant} />
+            <Ionicons name="settings-outline" size={20} color={palette.onSurface.variant} />
           </TouchableOpacity>
         </View>
       </View>
@@ -271,35 +267,35 @@ export default function TodayScreen() {
         <SummaryChip
           count={todayRemindersCount > 0 ? todayRemindersCount : totalActiveReminders}
           label={todayRemindersCount > 0 ? 'rappels (auj.)' : 'rappels'}
-          color={Primary.default}
+          color={palette.primary.default}
           icon="notifications-outline"
           onPress={() => router.push('/reminders')}
         />
         <SummaryChip
           count={totalTasksCount}
           label="tâches"
-          color={Tertiary.default}
+          color={palette.tertiary.default}
           icon="checkmark-circle-outline"
           onPress={() => router.push('/(tabs)/tasks')}
         />
         <SummaryChip
           count={events.length}
           label="événements"
-          color="#38BDF8"
+          color={palette.tertiary.default}
           icon="calendar-outline"
           onPress={() => router.push('/(tabs)/calendar')}
         />
         <SummaryChip
           count={habits.filter(h => h.completedToday).length}
           label={`/ ${habits.length} habitudes`}
-          color="#F59E0B"
+          color={palette.priority.HIGH}
           icon="flame-outline"
           onPress={() => router.push('/habits')}
         />
         <SummaryChip
           count={goals.length}
           label="objectifs"
-          color="#6DD58C"
+          color={palette.success.default}
           icon="flag-outline"
           onPress={() => router.push('/goals')}
         />
@@ -316,7 +312,7 @@ export default function TodayScreen() {
           >
             <View style={styles.demoHeader}>
               <View style={styles.demoBadge}>
-                <Ionicons name="sparkles" size={13} color={Primary.default} />
+                <Ionicons name="sparkles" size={13} color={palette.primary.default} />
                 <Text style={styles.demoBadgeText}>MODE DÉCOUVERTE</Text>
               </View>
             </View>
@@ -330,7 +326,7 @@ export default function TodayScreen() {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+                colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.demoBtnGradient}
@@ -362,7 +358,7 @@ export default function TodayScreen() {
               <View style={styles.urgentContent}>
                 <View style={styles.urgentHeader}>
                   <View style={styles.urgentBadge}>
-                    <Ionicons name="alert-circle" size={14} color={ErrorColors.default} />
+                    <Ionicons name="alert-circle" size={14} color={palette.error.default} />
                     <Text style={styles.urgentBadgeText}>
                       {r.status === 'MISSED' ? 'En retard' : 'Priorité haute'}
                     </Text>
@@ -400,7 +396,7 @@ export default function TodayScreen() {
       {(nextEvent || nextReminder) && (
         <View style={styles.sectionBlock}>
           <View style={styles.blockTitleRow}>
-            <Ionicons name="time-outline" size={16} color={OnSurface.variant} />
+            <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
             <Text style={styles.blockTitle}>Ensuite</Text>
           </View>
 
@@ -422,7 +418,7 @@ export default function TodayScreen() {
                   <Text style={styles.nextTitle} numberOfLines={1}>{nextEvent.title}</Text>
                   {nextEvent.location && (
                     <View style={styles.inlineMeta}>
-                      <Ionicons name="location-outline" size={13} color={OnSurface.variant} />
+                      <Ionicons name="location-outline" size={13} color={palette.onSurface.variant} />
                       <Text style={styles.nextSubtitle}>{nextEvent.location}</Text>
                     </View>
                   )}
@@ -462,7 +458,7 @@ export default function TodayScreen() {
             <View style={styles.suggHeaderRow}>
               {/* Orbe IA distinctif avec halo */}
               <LinearGradient
-                colors={Gradient.primary as unknown as readonly [string, string, ...string[]]}
+                colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.aiOrb}
@@ -501,7 +497,7 @@ export default function TodayScreen() {
       {/* ─── 4. AUJOURD'HUI (Progression des tâches & Habitudes) ──────────────── */}
       <View style={styles.sectionBlock}>
         <View style={styles.blockTitleRow}>
-          <Ionicons name="calendar-outline" size={16} color={OnSurface.variant} />
+          <Ionicons name="calendar-outline" size={16} color={palette.onSurface.variant} />
           <Text style={styles.blockTitle}>Aujourd'hui</Text>
         </View>
 
@@ -572,7 +568,7 @@ export default function TodayScreen() {
                   <Ionicons
                     name={item.completedToday ? 'checkmark-circle' : 'ellipse-outline'}
                     size={22}
-                    color={item.completedToday ? Success.default : OnSurface.variant}
+                    color={item.completedToday ? palette.success.default : palette.onSurface.variant}
                   />
                   <View style={styles.cardBody}>
                     <Text
@@ -584,7 +580,7 @@ export default function TodayScreen() {
                       {item.habit.title}
                     </Text>
                     <View style={styles.streakRow}>
-                      <Ionicons name="flame" size={13} color="#F59E0B" />
+                      <Ionicons name="flame" size={13} color={palette.priority.HIGH} />
                       <Text style={styles.cardSubtitle}>
                         {item.currentStreak} jour{item.currentStreak > 1 ? 's' : ''} consécutif{item.currentStreak > 1 ? 's' : ''}
                       </Text>
@@ -635,7 +631,7 @@ export default function TodayScreen() {
                         styles.progressBarFill,
                         {
                           width: `${item.progress ?? 0}%`,
-                          backgroundColor: '#6DD58C',
+                          backgroundColor: palette.success.default,
                         },
                       ]}
                     />
@@ -666,4 +662,3 @@ function getGreeting(hour: number): string {
   if (hour < 18) return 'Bon après-midi';
   return 'Bonsoir';
 }
-

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -9,7 +10,10 @@ import {
   View,
 } from 'react-native';
 import { Button } from '@/components/ui/Button';
-import { OnSurface, Outline, Primary, Radius, Spacing, Surface, Typography } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 interface BackupPasswordModalProps {
   visible: boolean;
@@ -28,6 +32,8 @@ export function BackupPasswordModal({
   onCancel,
   onSubmit,
 }: BackupPasswordModalProps) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeBackupPasswordModalStyles);
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +84,7 @@ export function BackupPasswordModal({
             value={password}
             onChangeText={setPassword}
             placeholder="Mot de passe, 16 caractères minimum"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
@@ -93,7 +99,7 @@ export function BackupPasswordModal({
               value={confirmation}
               onChangeText={setConfirmation}
               placeholder="Confirmer le mot de passe"
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               secureTextEntry
               autoCapitalize="none"
               autoCorrect={false}
@@ -121,50 +127,51 @@ export function BackupPasswordModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: Spacing.xl,
-    backgroundColor: 'rgba(0, 0, 0, 0.68)',
-  },
-  dialog: {
-    gap: Spacing.md,
-    padding: Spacing.xl,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    backgroundColor: Surface.container,
-  },
-  title: {
-    ...Typography.headlineMedium,
-    color: OnSurface.primary,
-  },
-  description: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-  },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    backgroundColor: Surface.base,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-  },
-  error: {
-    ...Typography.bodySmall,
-    color: Primary.default,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  action: {
-    minWidth: 96,
-  },
-});
+const makeBackupPasswordModalStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: Spacing.xl,
+      backgroundColor: 'rgba(0, 0, 0, 0.68)',
+    },
+    dialog: {
+      gap: Spacing.md,
+      padding: Spacing.xl,
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      backgroundColor: theme.surface.container,
+    },
+    title: {
+      ...Typography.headlineMedium,
+      color: theme.onSurface.primary,
+    },
+    description: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.variant,
+    },
+    input: {
+      minHeight: 48,
+      paddingHorizontal: Spacing.md,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      backgroundColor: theme.surface.base,
+      color: theme.onSurface.primary,
+      ...Typography.bodyMedium,
+    },
+    error: {
+      ...Typography.bodySmall,
+      color: theme.error.default,
+    },
+    actions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: Spacing.sm,
+      marginTop: Spacing.sm,
+    },
+    action: {
+      minWidth: 96,
+    },
+  });

@@ -24,15 +24,12 @@ import { TaskRepository } from '@/repositories/task-repository';
 import { Task } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
-  Primary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme, useThemedStyles } from '@/hooks/use-theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 
@@ -40,6 +37,8 @@ export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeGoalDetailStyles);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -141,13 +140,13 @@ export default function GoalDetailScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {goal.title}
         </Text>
         <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={22} color={ErrorColors.default} />
+          <Ionicons name="trash-outline" size={22} color={palette.error.default} />
         </TouchableOpacity>
       </View>
 
@@ -164,7 +163,7 @@ export default function GoalDetailScreen() {
           <View style={styles.metaRow}>
             {goal.deadline && (
               <View style={styles.metaItem}>
-                <Ionicons name="calendar-outline" size={16} color={OnSurface.variant} />
+                <Ionicons name="calendar-outline" size={16} color={palette.onSurface.variant} />
                 <Text style={styles.metaText}>
                   {format(new Date(goal.deadline), 'd MMMM yyyy', { locale: fr })}
                 </Text>
@@ -174,7 +173,7 @@ export default function GoalDetailScreen() {
               <Text
                 style={[
                   styles.daysBadge,
-                  isOverdue && { color: ErrorColors.default },
+                  isOverdue && { color: palette.error.default },
                 ]}
               >
                 {isOverdue
@@ -202,7 +201,7 @@ export default function GoalDetailScreen() {
                 styles.fill,
                 {
                   width: `${progress ?? 0}%`,
-                  backgroundColor: progress === 100 ? '#6DD58C' : Primary.default,
+                  backgroundColor: progress === 100 ? palette.success.default : palette.primary.default,
                 },
               ]}
             />
@@ -210,7 +209,7 @@ export default function GoalDetailScreen() {
 
           {progress === 100 && (
             <View style={styles.completedBadge}>
-              <Ionicons name="trophy-outline" size={16} color="#6DD58C" />
+              <Ionicons name="trophy-outline" size={16} color={palette.success.default} />
               <Text style={styles.completedBadgeText}>Objectif accompli à 100% !</Text>
             </View>
           )}
@@ -233,7 +232,7 @@ export default function GoalDetailScreen() {
               style={styles.linkBtn}
               onPress={() => setShowTaskPicker(!showTaskPicker)}
             >
-              <Ionicons name="add" size={18} color={Primary.default} />
+              <Ionicons name="add" size={18} color={palette.primary.default} />
               <Text style={styles.linkBtnText}>Lier une tâche</Text>
             </TouchableOpacity>
           </View>
@@ -254,7 +253,7 @@ export default function GoalDetailScreen() {
                     onPress={() => handleLinkTask(t.id)}
                   >
                     <Text style={styles.pickerItemText}>{t.title}</Text>
-                    <Ionicons name="link" size={18} color={Primary.default} />
+                    <Ionicons name="link" size={18} color={palette.primary.default} />
                   </TouchableOpacity>
                 ))
               )}
@@ -283,7 +282,7 @@ export default function GoalDetailScreen() {
                           : 'ellipse-outline'
                       }
                       size={22}
-                      color={t.status === 'COMPLETED' ? '#6DD58C' : OnSurface.disabled}
+                      color={t.status === 'COMPLETED' ? palette.success.default : palette.onSurface.disabled}
                     />
                   </TouchableOpacity>
                   <Text
@@ -296,7 +295,7 @@ export default function GoalDetailScreen() {
                     {t.title}
                   </Text>
                   <TouchableOpacity onPress={() => handleUnlinkTask(t.id, t.title)}>
-                    <Ionicons name="unlink-outline" size={20} color={OnSurface.disabled} />
+                    <Ionicons name="unlink-outline" size={20} color={palette.onSurface.disabled} />
                   </TouchableOpacity>
                 </View>
               </GlowCard>
@@ -309,102 +308,100 @@ export default function GoalDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    backgroundColor: Surface.container,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  backBtn: { padding: Spacing.xs },
-  headerTitle: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: Spacing.sm,
-  },
-  deleteBtn: { padding: Spacing.xs },
-  content: { padding: Spacing.lg, paddingBottom: 60 },
-  // topCard -> GlowCard tone="urgent"|"neutral" size="hero" ; topCardSpacing = marge externe.
-  topCardSpacing: {
-    marginBottom: Spacing.lg,
-  },
-  title: { ...Typography.headlineMedium, color: OnSurface.primary },
-  desc: { ...Typography.bodyMedium, color: OnSurface.variant, marginTop: Spacing.xs },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.md },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { ...Typography.bodySmall, color: OnSurface.variant },
-  daysBadge: { ...Typography.labelMedium, color: Primary.default, fontWeight: '600' },
-  // progressCard -> GlowCard tone="success"|"neutral" ; progressCardSpacing = marge externe.
-  progressCardSpacing: {
-    marginBottom: Spacing.xl,
-  },
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs },
-  progressTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  progressPercent: { ...Typography.titleLarge, color: Primary.default },
-  track: { height: 10, backgroundColor: Surface.high, borderRadius: Radius.full, overflow: 'hidden', marginVertical: Spacing.xs },
-  fill: { height: '100%', borderRadius: Radius.full },
-  progressSub: { ...Typography.bodySmall, color: OnSurface.variant, marginTop: Spacing.xs },
-  section: { marginBottom: Spacing.xl },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
-  sectionTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  linkBtnText: { ...Typography.labelMedium, color: Primary.default, fontWeight: '600' },
-  pickerBox: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Primary.default + '40',
-  },
-  pickerTitle: { ...Typography.labelMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
-  pickerEmpty: { ...Typography.bodySmall, color: OnSurface.variant },
-  pickerItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  pickerItemText: { ...Typography.bodyMedium, color: OnSurface.primary },
-  emptyText: { ...Typography.bodySmall, color: OnSurface.variant, fontStyle: 'italic' },
-  // taskCard -> GlowCard tone="neutral" ; taskCardSpacing = marge externe.
-  taskCardSpacing: {
-    marginBottom: Spacing.xs,
-  },
-  taskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  taskCheckBtn: {
-    padding: 2,
-  },
-  taskTitle: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
-  completedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(109, 213, 140, 0.15)',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(109, 213, 140, 0.3)',
-  },
-  completedBadgeText: {
-    ...Typography.labelSmall,
-    color: '#6DD58C',
-    fontWeight: '700',
-  },
-});
+const makeGoalDetailStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.surface.base },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingBottom: Spacing.md,
+      backgroundColor: theme.surface.container,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    backBtn: { padding: Spacing.xs },
+    headerTitle: {
+      ...Typography.titleLarge,
+      color: theme.onSurface.primary,
+      flex: 1,
+      textAlign: 'center',
+      marginHorizontal: Spacing.sm,
+    },
+    deleteBtn: { padding: Spacing.xs },
+    content: { padding: Spacing.lg, paddingBottom: 60 },
+    topCardSpacing: {
+      marginBottom: Spacing.lg,
+    },
+    title: { ...Typography.headlineMedium, color: theme.onSurface.primary },
+    desc: { ...Typography.bodyMedium, color: theme.onSurface.variant, marginTop: Spacing.xs },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.md },
+    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    metaText: { ...Typography.bodySmall, color: theme.onSurface.variant },
+    daysBadge: { ...Typography.labelMedium, color: theme.primary.default, fontWeight: '600' },
+    progressCardSpacing: {
+      marginBottom: Spacing.xl,
+    },
+    progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs },
+    progressTitle: { ...Typography.titleMedium, color: theme.onSurface.primary },
+    progressPercent: { ...Typography.titleLarge, color: theme.primary.default },
+    track: { height: 10, backgroundColor: theme.surface.high, borderRadius: Radius.full, overflow: 'hidden', marginVertical: Spacing.xs },
+    fill: { height: '100%', borderRadius: Radius.full },
+    progressSub: { ...Typography.bodySmall, color: theme.onSurface.variant, marginTop: Spacing.xs },
+    section: { marginBottom: Spacing.xl },
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+    sectionTitle: { ...Typography.titleMedium, color: theme.onSurface.primary },
+    linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    linkBtnText: { ...Typography.labelMedium, color: theme.primary.default, fontWeight: '600' },
+    pickerBox: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      padding: Spacing.md,
+      marginBottom: Spacing.md,
+      borderWidth: 1,
+      borderColor: theme.primary.default + '40',
+    },
+    pickerTitle: { ...Typography.labelMedium, color: theme.onSurface.primary, marginBottom: Spacing.xs },
+    pickerEmpty: { ...Typography.bodySmall, color: theme.onSurface.variant },
+    pickerItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: Spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    pickerItemText: { ...Typography.bodyMedium, color: theme.onSurface.primary },
+    emptyText: { ...Typography.bodySmall, color: theme.onSurface.variant, fontStyle: 'italic' },
+    taskCardSpacing: {
+      marginBottom: Spacing.xs,
+    },
+    taskRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    taskCheckBtn: {
+      padding: 2,
+    },
+    taskTitle: { flex: 1, ...Typography.bodyMedium, color: theme.onSurface.primary },
+    completedBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: theme.success.container,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 4,
+      borderRadius: Radius.full,
+      alignSelf: 'flex-start',
+      marginTop: 6,
+      borderWidth: 1,
+      borderColor: theme.success.default + '4D',
+    },
+    completedBadgeText: {
+      ...Typography.labelSmall,
+      color: theme.success.default,
+      fontWeight: '700',
+    },
+  });

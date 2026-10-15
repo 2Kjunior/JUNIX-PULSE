@@ -1,7 +1,7 @@
 /**
  * Onglet Calendrier — R-07 Agenda synthétique quotidien et hebdomadaire.
  * Combine événements, rappels et tâches planifiées pour le jour sélectionné.
- * Respect strict du design system Midnight, zéro emoji, dégradé unique sur le FAB.
+ * Respect strict du design system Junix Pulse, zéro emoji, dégradé unique sur le FAB.
  */
 
 import { useState, useCallback } from 'react';
@@ -15,7 +15,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   format,
   addDays,
@@ -30,29 +29,24 @@ import { EventRepository } from '@/repositories/event-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
 import { Event, Reminder, Task } from '@/domain/entities';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Spacing,
-  Radius,
-  Typography,
-  Gradient,
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
-import { styles } from '@/styles/tabs/calendar-styles';
+import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type CalendarViewMode = 'agenda' | 'timetable';
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeCalendarStyles);
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [viewMode, setViewMode] = useState<CalendarViewMode>('agenda');
@@ -153,7 +147,7 @@ export default function CalendarScreen() {
             onPress={handlePrevWeek}
             accessibilityLabel="Semaine précédente"
           >
-            <Ionicons name="chevron-back" size={18} color={OnSurface.primary} />
+            <Ionicons name="chevron-back" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -161,7 +155,7 @@ export default function CalendarScreen() {
             onPress={handleNextWeek}
             accessibilityLabel="Semaine suivante"
           >
-            <Ionicons name="chevron-forward" size={18} color={OnSurface.primary} />
+            <Ionicons name="chevron-forward" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -219,7 +213,7 @@ export default function CalendarScreen() {
           <Ionicons
             name="list-outline"
             size={16}
-            color={viewMode === 'agenda' ? Primary.default : OnSurface.variant}
+            color={viewMode === 'agenda' ? theme.primary.default : theme.onSurface.variant}
           />
           <Text
             style={[
@@ -242,7 +236,7 @@ export default function CalendarScreen() {
           <Ionicons
             name="time-outline"
             size={16}
-            color={viewMode === 'timetable' ? Primary.default : OnSurface.variant}
+            color={viewMode === 'timetable' ? theme.primary.default : theme.onSurface.variant}
           />
           <Text
             style={[
@@ -269,14 +263,14 @@ export default function CalendarScreen() {
         <ScrollView
           contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Primary.default} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />
           }
           showsVerticalScrollIndicator={false}
         >
         {!hasItems ? (
           <View style={styles.emptyCard}>
             <View style={styles.emptyIconCircle}>
-              <Ionicons name="calendar-outline" size={32} color={Primary.default} />
+              <Ionicons name="calendar-outline" size={32} color={theme.primary.default} />
             </View>
             <Text style={styles.emptyTitle}>Journée libre</Text>
             <Text style={styles.emptyDescription}>
@@ -289,7 +283,7 @@ export default function CalendarScreen() {
             {events.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="calendar-outline" size={16} color={Primary.default} />
+                  <Ionicons name="calendar-outline" size={16} color={theme.primary.default} />
                   <Text style={styles.sectionTitle}>
                     Événements ({events.length})
                   </Text>
@@ -316,7 +310,7 @@ export default function CalendarScreen() {
                       <Text style={styles.eventTitle}>{e.title}</Text>
                       {!!e.location && (
                         <View style={styles.metaRow}>
-                          <Ionicons name="location-outline" size={13} color={OnSurface.variant} />
+                          <Ionicons name="location-outline" size={13} color={theme.onSurface.variant} />
                           <Text style={styles.eventLocation} numberOfLines={1}>
                             {e.location}
                           </Text>
@@ -324,7 +318,7 @@ export default function CalendarScreen() {
                       )}
                       {!!e.travelBufferMinutes && e.travelBufferMinutes > 0 && (
                         <View style={styles.metaRow}>
-                          <Ionicons name="car-outline" size={13} color={Tertiary.default} />
+                          <Ionicons name="car-outline" size={13} color={theme.tertiary.default} />
                           <Text style={styles.eventBufferText}>
                             Trajet : {e.travelBufferMinutes} min avant
                           </Text>
@@ -352,7 +346,7 @@ export default function CalendarScreen() {
             {reminders.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="notifications-outline" size={16} color="#F59E0B" />
+                  <Ionicons name="notifications-outline" size={16} color={theme.priority.HIGH} />
                   <Text style={styles.sectionTitle}>
                     Rappels ({reminders.length})
                   </Text>
@@ -367,7 +361,7 @@ export default function CalendarScreen() {
                   >
                   <View style={styles.itemRow}>
                     <View style={styles.reminderIconCircle}>
-                      <Ionicons name="notifications" size={16} color="#F59E0B" />
+                      <Ionicons name="notifications" size={16} color={theme.priority.HIGH} />
                     </View>
                     <View style={styles.itemBody}>
                       <Text style={styles.itemTitle}>{r.title}</Text>
@@ -375,7 +369,7 @@ export default function CalendarScreen() {
                         {format(new Date(r.scheduledAt), 'HH:mm')}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+                    <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
                   </View>
                   </GlowCard>
                 ))}
@@ -386,15 +380,12 @@ export default function CalendarScreen() {
             {tasks.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="checkbox-outline" size={16} color={Tertiary.default} />
+                  <Ionicons name="checkbox-outline" size={16} color={theme.tertiary.default} />
                   <Text style={styles.sectionTitle}>
                     Tâches planifiées ({tasks.length})
                   </Text>
                 </View>
                 {tasks.map(t => (
-                  // tone="neutral" ici : aucune priorité n'est affichée dans cette
-                  // sous-liste du calendrier (contrairement à l'écran Tâches), donc
-                  // pas de couleur sémantique sans chip/libellé visible (règle a11y).
                   <GlowCard
                     key={t.id}
                     tone="neutral"
@@ -403,18 +394,18 @@ export default function CalendarScreen() {
                   >
                   <View style={styles.itemRow}>
                     <View style={styles.taskIconCircle}>
-                      <Ionicons name="checkbox-outline" size={16} color={Tertiary.default} />
+                      <Ionicons name="checkbox-outline" size={16} color={theme.tertiary.default} />
                     </View>
                     <View style={styles.itemBody}>
                       <Text style={styles.itemTitle}>{t.title}</Text>
                       {t.estimatedMinutes && (
                         <View style={styles.metaRow}>
-                          <Ionicons name="time-outline" size={13} color={OnSurface.variant} />
+                          <Ionicons name="time-outline" size={13} color={theme.onSurface.variant} />
                           <Text style={styles.itemTime}>{t.estimatedMinutes} min</Text>
                         </View>
                       )}
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+                    <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
                   </View>
                   </GlowCard>
                 ))}

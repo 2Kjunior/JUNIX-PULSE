@@ -1,15 +1,15 @@
 /**
  * TaskCard — Carte de tâche avec checkbox et navigation.
- * Utilisé dans l'écran Aujourd'hui.
+ * Utilisé dans l'écran Aujourd'hui. Thématisé dynamiquement.
  */
 
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Task } from '@/domain/entities';
-import { OnSurface, Success } from '@/constants/theme';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/today-styles';
+import { useTheme } from '@/hooks/use-theme';
 
 interface TaskCardProps {
   task: Task;
@@ -17,11 +17,11 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onComplete }: TaskCardProps) {
+  const { palette } = useTheme();
   const isCompleted = task.status === 'COMPLETED';
 
-  // tone="neutral" : aucune priorité n'est affichée sur cette carte (pas de
-  // chip visible), donc pas de couleur sémantique — règle d'accessibilité
-  // du spec. Les tâches terminées restent neutres, texte atténué, sans lueur.
+  // tone="neutral" : aucune priorité n'est affichée sur cette carte.
+  // Les tâches terminées restent neutres, texte atténué, sans lueur.
   return (
     <GlowCard tone="neutral">
       <View style={[styles.taskRow, isCompleted && { opacity: 0.6 }]}>
@@ -37,7 +37,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           <Ionicons
             name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
             size={22}
-            color={isCompleted ? Success.default : OnSurface.variant}
+            color={isCompleted ? palette.success.default : palette.onSurface.variant}
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -56,12 +56,11 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           </Text>
           {task.estimatedMinutes ? (
             <View style={styles.inlineMeta}>
-              <Ionicons name="time-outline" size={12} color={OnSurface.variant} />
+              <Ionicons name="time-outline" size={12} color={palette.onSurface.variant} />
               <Text style={styles.cardSubtitle}>{task.estimatedMinutes} min</Text>
             </View>
           ) : null}
         </TouchableOpacity>
-        <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
       </View>
     </GlowCard>
   );

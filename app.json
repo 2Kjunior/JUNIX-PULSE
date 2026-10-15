@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "junixpulse",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.junix.pulse"
@@ -40,7 +40,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#D0BCFF"
+          "color": "#8B5CF6"
         }
       ],
       "expo-image",
@@ -50,7 +50,8 @@
         {
           "contactsPermission": "Autoriser Junix Pulse à accéder à vos contacts pour importer vos proches."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

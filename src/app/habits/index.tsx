@@ -23,32 +23,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
 import { useAppStore } from '@/store/app-store';
 import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
   Spacing,
   Radius,
   Typography,
-  Gradient,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme, useThemedStyles } from '@/hooks/use-theme';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 
 const COLOR_PRESETS: Record<string, string> = {
-  primary: Primary.default,
-  tertiary: Tertiary.default,
   green: '#4CAF50',
   orange: '#FF9800',
   purple: '#9C27B0',
   cyan: '#00BCD4',
 };
 
+function resolveHabitColor(colorKey: string | undefined | null, palette: ThemePalette): string {
+  if (!colorKey) return palette.tertiary.default;
+  if (colorKey === 'primary') return palette.primary.default;
+  if (colorKey === 'tertiary') return palette.tertiary.default;
+  return COLOR_PRESETS[colorKey] || colorKey;
+}
+
 export default function HabitsListScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeHabitsStyles);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -118,7 +121,7 @@ export default function HabitsListScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Habitudes & Streaks</Text>
         <View style={{ width: 40 }} />
@@ -133,7 +136,7 @@ export default function HabitsListScreen() {
               setRefreshing(true);
               loadData();
             }}
-            tintColor={Primary.default}
+            tintColor={palette.primary.default}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -151,7 +154,7 @@ export default function HabitsListScreen() {
           </GlowCard>
           <GlowCard tone="neutral" style={{ flex: 1 }}>
             <View style={styles.summaryCardInner}>
-              <Ionicons name="checkmark-circle" size={24} color={Primary.default} />
+              <Ionicons name="checkmark-circle" size={24} color={palette.primary.default} />
               <Text style={styles.summaryVal}>
                 {activeHabits.filter(s => s.completedToday).length} / {activeHabits.length}
               </Text>
@@ -169,7 +172,7 @@ export default function HabitsListScreen() {
           <GlowCard tone="neutral">
             <View style={styles.emptyContent}>
               <View style={styles.emptyIconCircle}>
-                <Ionicons name="repeat-outline" size={32} color={Primary.default} />
+                <Ionicons name="repeat-outline" size={32} color={palette.primary.default} />
               </View>
               <Text style={styles.emptyTitle}>Aucune habitude active</Text>
               <Text style={styles.emptyDescription}>
@@ -179,9 +182,7 @@ export default function HabitsListScreen() {
           </GlowCard>
         ) : (
           activeHabits.map(item => {
-            const habitColor = item.habit.color
-              ? (COLOR_PRESETS[item.habit.color] || item.habit.color)
-              : Tertiary.default;
+            const habitColor = resolveHabitColor(item.habit.color, palette);
             return (
               // tone="success" (soft) une fois cochée, sinon neutral — règle du spec.
               // La couleur personnalisée de l'habitude (habitColor) reste sur le
@@ -205,7 +206,7 @@ export default function HabitsListScreen() {
                   <Ionicons
                     name="checkmark"
                     size={20}
-                    color={item.completedToday ? Surface.base : 'transparent'}
+                    color={item.completedToday ? palette.surface.base : 'transparent'}
                   />
                 </TouchableOpacity>
 
@@ -243,7 +244,7 @@ export default function HabitsListScreen() {
               <GlowCard key={item.habit.id} tone="neutral">
                 <View style={styles.pausedRow}>
                   <View style={styles.habitInfo}>
-                    <Text style={[styles.habitTitle, { color: OnSurface.variant }]}>
+                    <Text style={[styles.habitTitle, { color: palette.onSurface.variant }]}>
                       {item.habit.title}
                     </Text>
                     <Text style={styles.pausedSub}>Streak conservé ({item.currentStreak} j)</Text>
@@ -253,7 +254,7 @@ export default function HabitsListScreen() {
                     onPress={() => handleResume(item.habit.id, item.habit.title)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="play" size={16} color={Primary.default} />
+                    <Ionicons name="play" size={16} color={palette.primary.default} />
                     <Text style={styles.resumeText}>Reprendre</Text>
                   </TouchableOpacity>
                 </View>
@@ -274,177 +275,151 @@ export default function HabitsListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    backgroundColor: Surface.container,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  backBtn: {
-    padding: Spacing.xs,
-  },
-  headerTitle: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    padding: Spacing.lg,
-  },
-  summaryBar: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  // summaryCard -> GlowCard tone="neutral" ; summaryCardInner = layout interne.
-  summaryCardInner: {
-    alignItems: 'center',
-  },
-  summaryVal: {
-    ...Typography.headlineMedium,
-    color: OnSurface.primary,
-    marginTop: Spacing.xs,
-    fontWeight: '700',
-  },
-  summarySub: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    marginTop: 2,
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    marginBottom: Spacing.md,
-    fontWeight: '600',
-  },
-  // emptyCard -> GlowCard tone="neutral" ; emptyContent = layout interne.
-  emptyContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-  },
-  emptyIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.high,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
-    ...Typography.titleLarge,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  emptyDescription: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-    textAlign: 'center',
-  },
-  // habitCard -> GlowCard tone="success"|"neutral" ; habitRow = layout interne.
-  habitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  checkCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  habitInfo: {
-    flex: 1,
-  },
-  habitTitle: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    fontWeight: '600',
-  },
-  habitDesc: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    marginTop: 2,
-  },
-  habitFreq: {
-    ...Typography.labelSmall,
-    color: OnSurface.disabled,
-    marginTop: 4,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.high,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-    gap: 4,
-  },
-  streakText: {
-    ...Typography.labelLarge,
-    color: OnSurface.primary,
-    fontWeight: '700',
-  },
-  // pausedCard -> GlowCard tone="neutral" ; pausedRow = layout interne.
-  pausedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    opacity: 0.8,
-  },
-  pausedSub: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    marginTop: 2,
-  },
-  resumeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Primary.container,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    gap: 4,
-  },
-  resumeText: {
-    ...Typography.labelMedium,
-    color: Primary.onContainer,
-    fontWeight: '600',
-  },
-  fabContainer: {
-    position: 'absolute',
-    right: Spacing.lg,
-    borderRadius: Radius.full,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.full,
-    gap: 6,
-  },
-  fabText: {
-    ...Typography.titleMedium,
-    color: '#141317',
-    fontWeight: '700',
-  },
-});
+const makeHabitsStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.surface.base,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingBottom: Spacing.md,
+      backgroundColor: theme.surface.container,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    backBtn: {
+      padding: Spacing.xs,
+    },
+    headerTitle: {
+      ...Typography.titleLarge,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    scrollContent: {
+      padding: Spacing.lg,
+    },
+    summaryBar: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+      marginBottom: Spacing.xl,
+    },
+    summaryCardInner: {
+      alignItems: 'center',
+    },
+    summaryVal: {
+      ...Typography.headlineMedium,
+      color: theme.onSurface.primary,
+      marginTop: Spacing.xs,
+      fontWeight: '700',
+    },
+    summarySub: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      marginTop: 2,
+    },
+    sectionTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      marginBottom: Spacing.md,
+      fontWeight: '600',
+    },
+    emptyContent: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.xs,
+    },
+    emptyIconCircle: {
+      width: 60,
+      height: 60,
+      borderRadius: Radius.full,
+      backgroundColor: theme.surface.high,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: Spacing.xs,
+    },
+    emptyTitle: {
+      ...Typography.titleLarge,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    emptyDescription: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.variant,
+      textAlign: 'center',
+    },
+    habitRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    checkCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: Radius.full,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    habitInfo: {
+      flex: 1,
+    },
+    habitTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '600',
+    },
+    habitDesc: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      marginTop: 2,
+    },
+    habitFreq: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.disabled,
+      marginTop: 4,
+    },
+    streakBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.surface.high,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.full,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      gap: 4,
+    },
+    streakText: {
+      ...Typography.labelLarge,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    pausedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      opacity: 0.8,
+    },
+    pausedSub: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      marginTop: 2,
+    },
+    resumeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.primary.container,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.md,
+      gap: 4,
+    },
+    resumeText: {
+      ...Typography.labelMedium,
+      color: theme.primary.onContainer,
+      fontWeight: '600',
+    },
+  });

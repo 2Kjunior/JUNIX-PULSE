@@ -25,7 +25,8 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { PulseLogo } from '@/components/ui/PulseLogo';
-import { Surface, OnSurface } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 interface SplashAnimatedProps {
   /** Quand true, le splash fait un fondu sortant */
@@ -35,6 +36,7 @@ interface SplashAnimatedProps {
 export function SplashAnimated({ isReady }: SplashAnimatedProps) {
   const [logoMode, setLogoMode] = useState<'draw' | 'idle'>('draw');
   const opacity = useSharedValue(1);
+  const styles = useThemedStyles(makeSplashStyles);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -67,33 +69,35 @@ export function SplashAnimated({ isReady }: SplashAnimatedProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: Surface.base,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 999,
-  },
-  logoWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
-  },
-  textBlock: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  appName: {
-    fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
-    color: OnSurface.variant,
-    letterSpacing: 3,
-  },
-  status: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: OnSurface.disabled,
-    letterSpacing: 0.3,
-  },
-});
+const makeSplashStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: theme.surface.base,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 999,
+    },
+    logoWrapper: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 40,
+    },
+    textBlock: {
+      alignItems: 'center',
+      gap: 8,
+    },
+    appName: {
+      fontSize: 13,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.onSurface.variant,
+      letterSpacing: 3,
+    },
+    status: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.onSurface.disabled,
+      letterSpacing: 0.3,
+    },
+  });
+

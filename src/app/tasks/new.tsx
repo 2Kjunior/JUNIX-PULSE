@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,23 +19,12 @@ import { fr } from 'date-fns/locale';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { useAppStore } from '@/store/app-store';
 import { ReminderPriority } from '@/domain/entities';
-import {
-  Primary,
-  OnSurface,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
-import { formStyles } from '@/styles/common/form-styles';
-
-const PRIORITY_OPTIONS: { key: ReminderPriority; label: string; color: string }[] = [
-  { key: 'LOW', label: 'Faible', color: OnSurface.variant },
-  { key: 'NORMAL', label: 'Normale', color: Primary.default },
-  { key: 'HIGH', label: 'Haute', color: '#FFB74D' },
-  { key: 'URGENT', label: 'Urgente', color: ErrorColors.default },
-];
+import { makeFormStyles } from '@/styles/common/form-styles';
 
 const ESTIMATED_TIME_OPTIONS: { minutes?: number; label: string }[] = [
   { minutes: undefined, label: 'Aucune' },
@@ -49,6 +38,9 @@ const ESTIMATED_TIME_OPTIONS: { minutes?: number; label: string }[] = [
 export default function NewTaskScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const styles = useThemedStyles(makeNewTaskStyles);
   const params = useLocalSearchParams<{ defaultDate?: string }>();
 
   // Champs de saisie
@@ -73,6 +65,14 @@ export default function NewTaskScreen() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
   const nextWeekStr = format(addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1), 'yyyy-MM-dd');
+
+  // Options de priorité thématiques
+  const priorityOptions = useMemo(() => [
+    { key: 'LOW' as ReminderPriority, label: 'Faible', color: palette.priority.LOW },
+    { key: 'NORMAL' as ReminderPriority, label: 'Normale', color: palette.priority.NORMAL },
+    { key: 'HIGH' as ReminderPriority, label: 'Haute', color: palette.priority.HIGH },
+    { key: 'URGENT' as ReminderPriority, label: 'Urgente', color: palette.priority.URGENT },
+  ], [palette]);
 
   function addSubtask() {
     const trimmed = subtaskInput.trim();
@@ -123,7 +123,7 @@ export default function NewTaskScreen() {
       style={[formStyles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* En-tête harmonisé Midnight */}
+      {/* En-tête harmonisé Midnight / Crème */}
       <View style={formStyles.toolbar}>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
@@ -164,19 +164,19 @@ export default function NewTaskScreen() {
               if (titleError) setTitleError('');
             }}
             placeholder="Que devez-vous accomplir ?"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             autoFocus
           />
           {!!titleError && <Text style={formStyles.errorText}>{titleError}</Text>}
 
           <View style={formStyles.notesRow}>
-            <Ionicons name="document-text-outline" size={18} color={OnSurface.variant} style={formStyles.notesIcon} />
+            <Ionicons name="document-text-outline" size={18} color={palette.onSurface.variant} style={formStyles.notesIcon} />
             <TextInput
               style={formStyles.notesInput}
               value={description}
               onChangeText={setDescription}
               placeholder="Contextes, notes, liens utiles..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -187,14 +187,14 @@ export default function NewTaskScreen() {
         {/* Carte 2 : Priorité */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="flag-outline" size={14} color={Primary.default} />
+            <Ionicons name="flag-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Priorité d'exécution</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
           <View style={formStyles.chipsRow}>
-            {PRIORITY_OPTIONS.map(opt => {
+            {priorityOptions.map(opt => {
               const isSelected = priority === opt.key;
               return (
                 <TouchableOpacity
@@ -221,7 +221,7 @@ export default function NewTaskScreen() {
         {/* Carte 3 : Planification */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="calendar-outline" size={14} color={Primary.default} />
+            <Ionicons name="calendar-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Date planifiée</Text>
         </View>
@@ -235,7 +235,7 @@ export default function NewTaskScreen() {
               <Ionicons
                 name="file-tray-outline"
                 size={14}
-                color={!scheduledDateStr ? Primary.default : OnSurface.variant}
+                color={!scheduledDateStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, !scheduledDateStr && formStyles.chipTextActive]}>
                 Inbox (sans date)
@@ -249,7 +249,7 @@ export default function NewTaskScreen() {
               <Ionicons
                 name="today-outline"
                 size={14}
-                color={scheduledDateStr === todayStr ? Primary.default : OnSurface.variant}
+                color={scheduledDateStr === todayStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, scheduledDateStr === todayStr && formStyles.chipTextActive]}>
                 Aujourd'hui
@@ -263,7 +263,7 @@ export default function NewTaskScreen() {
               <Ionicons
                 name="arrow-forward-outline"
                 size={14}
-                color={scheduledDateStr === tomorrowStr ? Primary.default : OnSurface.variant}
+                color={scheduledDateStr === tomorrowStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, scheduledDateStr === tomorrowStr && formStyles.chipTextActive]}>
                 Demain
@@ -277,7 +277,7 @@ export default function NewTaskScreen() {
               <Ionicons
                 name="calendar-outline"
                 size={14}
-                color={scheduledDateStr === nextWeekStr ? Primary.default : OnSurface.variant}
+                color={scheduledDateStr === nextWeekStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, scheduledDateStr === nextWeekStr && formStyles.chipTextActive]}>
                 Lundi prochain
@@ -293,7 +293,7 @@ export default function NewTaskScreen() {
               ]}
               onPress={() => setShowDatePicker(true)}
             >
-              <Ionicons name="calendar-number-outline" size={14} color={Primary.default} />
+              <Ionicons name="calendar-number-outline" size={14} color={palette.primary.default} />
               <Text
                 style={[
                   formStyles.chipText,
@@ -313,7 +313,7 @@ export default function NewTaskScreen() {
         {/* Carte 4 : Durée estimée */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="hourglass-outline" size={14} color={Primary.default} />
+            <Ionicons name="hourglass-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Durée estimée</Text>
         </View>
@@ -340,7 +340,7 @@ export default function NewTaskScreen() {
         {/* Carte 5 : Sous-tâches */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
-            <Ionicons name="list-outline" size={14} color={Primary.default} />
+            <Ionicons name="list-outline" size={14} color={palette.primary.default} />
           </View>
           <Text style={formStyles.sectionHeaderTitle}>Sous-tâches ({subtasks.length})</Text>
         </View>
@@ -348,10 +348,10 @@ export default function NewTaskScreen() {
         <View style={formStyles.cardGroup}>
           {subtasks.map((st, index) => (
             <View key={index} style={styles.subtaskItem}>
-              <Ionicons name="ellipse-outline" size={16} color={Primary.default} />
+              <Ionicons name="ellipse-outline" size={16} color={palette.primary.default} />
               <Text style={styles.subtaskLabel}>{st}</Text>
               <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.subtaskRemoveBtn}>
-                <Ionicons name="close-circle" size={18} color={ErrorColors.default} />
+                <Ionicons name="close-circle" size={18} color={palette.error.default} />
               </TouchableOpacity>
             </View>
           ))}
@@ -362,7 +362,7 @@ export default function NewTaskScreen() {
               value={subtaskInput}
               onChangeText={setSubtaskInput}
               placeholder="Ajouter une étape (ex: Rédiger le plan)..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               onSubmitEditing={addSubtask}
               returnKeyType="done"
             />
@@ -401,53 +401,57 @@ export default function NewTaskScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  inputErrorBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: ErrorColors.default,
-  },
-  subtaskItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 18, 28, 0.85)',
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-    gap: Spacing.sm,
-  },
-  subtaskLabel: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    color: '#FFFFFF',
-  },
-  subtaskRemoveBtn: {
-    padding: 2,
-  },
-  subtaskAdderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: 4,
-  },
-  subtaskInputField: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 18, 28, 0.85)',
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    ...Typography.bodyMedium,
-  },
-  subtaskAddIconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: Radius.md,
-    backgroundColor: Primary.default,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+function makeNewTaskStyles(theme: ThemePalette) {
+  const isDark = theme.mode === 'dark';
+
+  return StyleSheet.create({
+    inputErrorBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.error.default,
+    },
+    subtaskItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? 'rgba(15, 18, 28, 0.85)' : theme.surface.container,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : theme.outline.variant,
+      gap: Spacing.sm,
+    },
+    subtaskLabel: {
+      flex: 1,
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+    },
+    subtaskRemoveBtn: {
+      padding: 2,
+    },
+    subtaskAdderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      marginTop: 4,
+    },
+    subtaskInputField: {
+      flex: 1,
+      backgroundColor: isDark ? 'rgba(15, 18, 28, 0.85)' : theme.surface.container,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm + 2,
+      color: theme.onSurface.primary,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.outline.variant,
+      ...Typography.bodyMedium,
+    },
+    subtaskAddIconButton: {
+      width: 38,
+      height: 38,
+      borderRadius: Radius.md,
+      backgroundColor: theme.primary.default,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
+}

@@ -2,18 +2,17 @@
  * Onboarding — Étape 4 : Préférences de planification
  * Heure de fin de journée et résumé matin. Minimal et utile.
  */
+
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import {
-  Surface,
-  Primary,
-  OnSurface,
-  Outline,
   Spacing,
   Radius,
   Typography,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
@@ -22,6 +21,7 @@ const END_OF_DAY_OPTIONS = [17, 18, 19, 20, 21, 22];
 const MORNING_OPTIONS = [6, 7, 8, 9, 10];
 
 export default function OnboardingSchedule() {
+  const styles = useThemedStyles(makeOnboardingScheduleStyles);
   const [endOfDayHour, setEndOfDayHour] = useState(20);
   const [morningHour, setMorningHour] = useState(8);
   const [saving, setSaving] = useState(false);
@@ -117,53 +117,55 @@ export default function OnboardingSchedule() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  content: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxl,
-    paddingBottom: Spacing.xxxl,
-  },
-  title: {
-    fontSize: 26,
-    fontFamily: 'Outfit-Bold',
-    color: OnSurface.primary,
-    marginBottom: Spacing.sm,
-    lineHeight: 34,
-  },
-  subtitle: {
-    ...Typography.bodyLarge,
-    color: OnSurface.variant,
-    lineHeight: 24,
-    marginBottom: Spacing.xxl,
-  },
-  section: { marginBottom: Spacing.xxl },
-  sectionLabel: { ...Typography.titleMedium, color: OnSurface.primary, marginBottom: Spacing.xs },
-  sectionHint: {
-    ...Typography.bodySmall,
-    color: OnSurface.disabled,
-    lineHeight: 18,
-    marginBottom: Spacing.md,
-  },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  chipSelected: { backgroundColor: Primary.container, borderColor: Primary.default },
-  chipLabel: { ...Typography.labelLarge, color: OnSurface.variant },
-  chipLabelSelected: { color: Primary.onContainer },
-  note: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  noteText: { ...Typography.bodySmall, color: OnSurface.disabled, lineHeight: 18 },
-  actions: { gap: Spacing.sm, alignItems: 'center' },
-  btnPrimary: { width: '100%' },
-});
+const makeOnboardingScheduleStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.surface.base },
+    content: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xxl,
+      paddingBottom: Spacing.xxxl,
+    },
+    title: {
+      fontSize: 26,
+      fontFamily: 'Outfit-Bold',
+      color: theme.onSurface.primary,
+      marginBottom: Spacing.sm,
+      lineHeight: 34,
+    },
+    subtitle: {
+      ...Typography.bodyLarge,
+      color: theme.onSurface.variant,
+      lineHeight: 24,
+      marginBottom: Spacing.xxl,
+    },
+    section: { marginBottom: Spacing.xxl },
+    sectionLabel: { ...Typography.titleMedium, color: theme.onSurface.primary, marginBottom: Spacing.xs },
+    sectionHint: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.disabled,
+      lineHeight: 18,
+      marginBottom: Spacing.md,
+    },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+    chip: {
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.full,
+      backgroundColor: theme.surface.container,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    chipSelected: { backgroundColor: theme.primary.container, borderColor: theme.primary.default },
+    chipLabel: { ...Typography.labelLarge, color: theme.onSurface.variant },
+    chipLabelSelected: { color: theme.primary.onContainer },
+    note: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      padding: Spacing.md,
+      marginBottom: Spacing.xl,
+    },
+    noteText: { ...Typography.bodySmall, color: theme.onSurface.disabled, lineHeight: 18 },
+    actions: { gap: Spacing.sm, alignItems: 'center' },
+    btnPrimary: { width: '100%' },
+  });
+

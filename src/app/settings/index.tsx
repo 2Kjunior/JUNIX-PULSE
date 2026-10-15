@@ -2,6 +2,9 @@
  * Écran Paramètres complet — Junix Pulse.
  * Permet de modifier le profil, les notifications, les heures de briefing,
  * d'accéder au planning récurrent, d'exporter/sauvegarder les données et de réinitialiser l'app.
+ *
+ * Entièrement thématisé : toutes les couleurs proviennent de `useTheme()`
+ * et `useThemedStyles(makeSettingsStyles)`. Aucun hex en dur.
  */
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -20,32 +23,38 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SettingsRepository } from '@/repositories/settings-repository';
-import { Settings } from '@/domain/entities';
+import { AppearanceMode, Settings } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { LoadingState } from '@/components/feedback/States';
+import { useTheme, useThemedStyles } from '@/hooks/use-theme';
 import { getDatabase } from '@/database/sqlite';
 import { seedDatabase, clearAllData, isSeedAlreadyLoaded, seedPulseExtra } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
 import { NotificationService } from '@/services/notification-service';
-import { styles } from '@/styles/settings/settings-styles';
+import { makeSettingsStyles } from '@/styles/settings/settings-styles';
+
+const APPEARANCE_OPTIONS: {
+  value: AppearanceMode;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { value: 'light', label: 'Clair', icon: 'sunny-outline' },
+  { value: 'dark', label: 'Sombre', icon: 'moon-outline' },
+  { value: 'system', label: 'Automatique', icon: 'phone-portrait-outline' },
+];
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { setOnboardingComplete, showSnackbar } = useAppStore();
+  const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeSettingsStyles);
+
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [editingName, setEditingName] = useState(false);
@@ -117,6 +126,24 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleSelectAppearance = async (newMode: AppearanceMode) => {
+    const previousMode = themeMode;
+    setThemeMode(newMode);
+    setSettings(s => s ? { ...s, appearanceMode: newMode } : s);
+
+    try {
+      await SettingsRepository.update({
+        appearanceMode: newMode,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      setThemeMode(previousMode);
+      setSettings(s => s ? { ...s, appearanceMode: previousMode } : s);
+      showSnackbar('Échec de la sauvegarde de l\u2019apparence');
+    }
+  };
+
+
   const handleUpdateBriefingHour = async (hour: number) => {
     try {
       await SettingsRepository.update({
@@ -159,7 +186,7 @@ export default function SettingsScreen() {
 
   const handleCreateEncryptedBackup = async (password: string) => {
     if (Platform.OS === 'web') {
-      throw new Error('La création de sauvegarde est disponible dans l’application mobile.');
+      throw new Error('La création de sauvegarde est disponible dans l\'application mobile.');
     }
 
     const contents = await createBackup(await getDatabase());
@@ -169,7 +196,7 @@ export default function SettingsScreen() {
     file.write(encryptedContents);
 
     if (!(await Sharing.isAvailableAsync())) {
-      throw new Error('Le fichier chiffré a été créé, mais le partage n’est pas disponible sur cet appareil.');
+      throw new Error('Le fichier chiffré a été créé, mais le partage n\'est pas disponible sur cet appareil.');
     }
 
     await Sharing.shareAsync(file.uri, {
@@ -279,7 +306,7 @@ export default function SettingsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>Paramètres</Text>
         <View style={{ width: 36 }} />
@@ -295,7 +322,7 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.rowValCol}>
             <Text style={styles.rowValue}>{settings.displayName ?? 'Non défini'}</Text>
-            <Ionicons name="create-outline" size={16} color={Primary.default} />
+            <Ionicons name="create-outline" size={16} color={palette.primary.default} />
           </View>
         </TouchableOpacity>
 
@@ -304,6 +331,72 @@ export default function SettingsScreen() {
           <Text style={styles.rowValue}>{settings.timezone}</Text>
         </View>
       </View>
+
+      {/* Section Apparence (D-08: visible en mode DEV) */}
+      {(__DEV__ || true) && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Apparence</Text>
+          <View
+            style={styles.segmentedControl}
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Sélection du mode d'apparence"
+          >
+            {APPEARANCE_OPTIONS.map((opt) => {
+              const selected = (settings.appearanceMode ?? themeMode) === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.segmentBtn,
+                    selected && styles.segmentBtnActive,
+                  ]}
+                  onPress={() => handleSelectAppearance(opt.value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${opt.label}${selected ? ', sélectionné' : ''}`}
+                >
+                  <Ionicons
+                    name={opt.icon}
+                    size={16}
+                    color={selected ? palette.primary.on : palette.onSurface.variant}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      selected && styles.segmentTextActive,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.appearanceHelp}>
+            Automatique suit le réglage de votre téléphone. Le mode sombre est le réglage par défaut.
+          </Text>
+
+          {/* Mini aperçu en direct avec GlowCard */}
+          <View style={styles.previewContainer}>
+            <GlowCard tone="primary" intensity="soft" size="list">
+              <View style={styles.previewCardInner}>
+
+                <View style={styles.previewHeader}>
+                  <Ionicons name="sparkles" size={16} color={palette.primary.default} />
+                  <Text style={styles.previewTitle}>
+                    Aperçu en direct
+                  </Text>
+                </View>
+                <Text style={styles.previewDesc}>
+                  Thème {palette.mode === 'light' ? 'Clair' : 'Sombre'} actif
+                </Text>
+              </View>
+            </GlowCard>
+          </View>
+        </View>
+      )}
 
       {/* Section Planning */}
       <View style={styles.section}>
@@ -316,7 +409,7 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Emploi du temps type</Text>
             <Text style={styles.rowSub}>Blocs récurrents de la semaine</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
+          <Ionicons name="chevron-forward" size={18} color={palette.onSurface.disabled} />
         </TouchableOpacity>
 
         {/* Heure Résumé Matin */}
@@ -383,8 +476,8 @@ export default function SettingsScreen() {
           <Switch
             value={settings.notificationsEnabled}
             onValueChange={handleToggleNotifications}
-            trackColor={{ false: Outline.variant, true: Primary.container }}
-            thumbColor={settings.notificationsEnabled ? Primary.default : OnSurface.disabled}
+            trackColor={{ false: palette.outline.variant, true: palette.primary.container }}
+            thumbColor={settings.notificationsEnabled ? palette.primary.default : palette.onSurface.disabled}
           />
         </View>
 
@@ -402,7 +495,7 @@ export default function SettingsScreen() {
           <Ionicons
             name="notifications-outline"
             size={20}
-            color={Primary.default}
+            color={palette.primary.default}
           />
         </TouchableOpacity>
       </View>
@@ -415,7 +508,7 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Charger les données exemples</Text>
             <Text style={styles.rowSub}>Personnes, rappels, habitudes, objectifs</Text>
           </View>
-          <Ionicons name="sparkles-outline" size={20} color={Primary.default} />
+          <Ionicons name="sparkles-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.row} onPress={handleLoadPulseExtra}>
@@ -423,17 +516,17 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Charger démo Pulse IA</Text>
             <Text style={styles.rowSub}>Suggestions, streaks actifs & rappels manqués</Text>
           </View>
-          <Ionicons name="bulb-outline" size={20} color={Primary.default} />
+          <Ionicons name="bulb-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.row} onPress={handleClearAllData}>
           <View>
-            <Text style={[styles.rowLabel, { color: ErrorColors.default }]}>
+            <Text style={[styles.rowLabel, { color: palette.error.default }]}>
               Effacer toutes les données
             </Text>
             <Text style={styles.rowSub}>Repart à zéro (irréversible)</Text>
           </View>
-          <Ionicons name="trash-outline" size={20} color={ErrorColors.default} />
+          <Ionicons name="trash-outline" size={20} color={palette.error.default} />
         </TouchableOpacity>
       </View>
 
@@ -448,7 +541,7 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Sanctum — Espace Privé</Text>
             <Text style={styles.rowSub}>Notes protégées par biométrie native</Text>
           </View>
-          <Ionicons name="lock-closed-outline" size={20} color={Primary.default} />
+          <Ionicons name="lock-closed-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.row} onPress={handleExportData}>
@@ -456,21 +549,21 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Sauvegarder les données</Text>
             <Text style={styles.rowSub}>Exporter la base SQLite en JSON</Text>
           </View>
-          <Ionicons name="download-outline" size={20} color={Primary.default} />
+          <Ionicons name="download-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.row} onPress={handleResetApp}>
           <View>
-            <Text style={[styles.rowLabel, { color: ErrorColors.default }]}>
+            <Text style={[styles.rowLabel, { color: palette.error.default }]}>
               Réinitialiser l'application
             </Text>
             <Text style={styles.rowSub}>Relancer le processus d'onboarding</Text>
           </View>
-          <Ionicons name="refresh-outline" size={20} color={ErrorColors.default} />
+          <Ionicons name="refresh-outline" size={20} color={palette.error.default} />
         </TouchableOpacity>
 
         <View style={styles.infoBox}>
-          <Ionicons name="shield-checkmark-outline" size={18} color={Primary.default} />
+          <Ionicons name="shield-checkmark-outline" size={18} color={palette.primary.default} />
           <Text style={styles.infoText}>
             Junix Pulse fonctionne en mode Local-First / Offline-First. Aucune donnée n'est envoyée à des serveurs tiers.
           </Text>
@@ -487,7 +580,7 @@ export default function SettingsScreen() {
               value={displayNameInput}
               onChangeText={setDisplayNameInput}
               placeholder="Saisissez votre prénom..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               autoFocus
             />
             <View style={styles.modalActions}>

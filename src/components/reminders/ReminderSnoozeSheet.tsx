@@ -10,9 +10,11 @@ import { fr } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { SnoozeInput } from '@/use-cases/reminder-use-cases';
-import { Primary, Tertiary, OnSurface, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { SNOOZE_OPTIONS_MINUTES } from '@/domain/rules/reminder-rules';
-import { styles } from '@/styles/reminders/reminder-detail-styles';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { makeReminderDetailStyles } from '@/styles/reminders/reminder-detail-styles';
 
 type SnoozeSheetMode = 'hidden' | 'picker';
 
@@ -37,6 +39,9 @@ export function ReminderSnoozeSheet({
   onClose,
   onSnooze,
 }: ReminderSnoozeSheetProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeReminderDetailStyles);
+
   return (
     <View style={styles.snoozeOverlay}>
       <TouchableOpacity style={styles.snoozeBackdrop} onPress={onClose} />
@@ -54,7 +59,7 @@ export function ReminderSnoozeSheet({
               onPress={() => onSnooze({ kind: 'quick', minutes })}
               activeOpacity={0.7}
             >
-              <Ionicons name="timer-outline" size={16} color={Tertiary.default} />
+              <Ionicons name="timer-outline" size={16} color={theme.tertiary.default} />
               <Text style={styles.snoozeTileText}>
                 {minutes < 60 ? `${minutes} min` : `${minutes / 60}h`}
               </Text>
@@ -71,7 +76,7 @@ export function ReminderSnoozeSheet({
             activeOpacity={0.7}
           >
             <View style={styles.snoozeOptionLeft}>
-              <Ionicons name="sunny-outline" size={18} color="#F59E0B" />
+              <Ionicons name="sunny-outline" size={18} color={theme.priority.HIGH} />
               <View>
                 <Text style={styles.snoozeOptionLabel}>Demain même heure</Text>
                 <Text style={styles.snoozeOptionHint}>
@@ -81,7 +86,7 @@ export function ReminderSnoozeSheet({
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+            <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
           </TouchableOpacity>
 
           {/* Date personnalisée */}
@@ -94,10 +99,10 @@ export function ReminderSnoozeSheet({
             activeOpacity={0.7}
           >
             <View style={styles.snoozeOptionLeft}>
-              <Ionicons name="calendar-outline" size={18} color={Primary.default} />
+              <Ionicons name="calendar-outline" size={18} color={theme.primary.default} />
               <Text style={styles.snoozeOptionLabel}>Choisir une date & heure</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={OnSurface.disabled} />
+            <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
           </TouchableOpacity>
         </View>
 

@@ -26,37 +26,26 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import {
-  Surface,
-  Primary,
-  Tertiary,
-  Success,
-  OnSurface,
   Spacing,
-  Gradient,
   TAB_BAR_TOTAL_HEIGHT,
   type GlowTone,
 } from '@/constants/theme';
+import { ThemePalette } from '@/constants/palettes';
 import { HabitUseCases } from '@/use-cases/habit-use-cases';
 import { GoalUseCases } from '@/use-cases/goal-use-cases';
 import { SuggestionUseCases } from '@/use-cases/suggestion-use-cases';
 import { Suggestion } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { PulseLogo } from '@/components/ui/PulseLogo';
-import { styles } from '@/styles/tabs/pulse-styles';
+import { makePulseStyles } from '@/styles/tabs/pulse-styles';
 
 // ─── Helpers visuels ─────────────────────────────────────────────────────────
 
-/**
- * Mappe un type de suggestion vers :
- * - tone GlowCard sémantique
- * - label du chip pill
- * - couleur du chip
- * - icône
- */
 type SuggMeta = {
   tone: GlowTone;
   label: string;
@@ -65,38 +54,40 @@ type SuggMeta = {
   icon: 'person-outline' | 'alarm-outline' | 'repeat-outline' | 'bulb-outline';
 };
 
-function getSuggMeta(type: Suggestion['type']): SuggMeta {
+function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
+  const isLight = theme.mode === 'light';
+
   switch (type) {
     case 'FORGOTTEN_CONTACT':
       return {
         tone: 'info',
         label: 'Contact',
-        bg: 'rgba(56, 189, 248, 0.15)',
-        fg: '#38BDF8',
+        bg: isLight ? 'rgba(2, 132, 199, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+        fg: isLight ? '#0284C7' : '#38BDF8',
         icon: 'person-outline',
       };
     case 'RESCHEDULE_REMINDER':
       return {
         tone: 'attention',
         label: 'Rappel',
-        bg: 'rgba(251, 191, 36, 0.15)',
-        fg: '#FBBF24',
+        bg: isLight ? 'rgba(217, 119, 6, 0.15)' : 'rgba(251, 191, 36, 0.15)',
+        fg: isLight ? '#D97706' : '#FBBF24',
         icon: 'alarm-outline',
       };
     case 'HABIT_REMINDER':
       return {
         tone: 'success',
         label: 'Habitude',
-        bg: 'rgba(109, 213, 140, 0.15)',
-        fg: '#6DD58C',
+        bg: isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(109, 213, 140, 0.15)',
+        fg: isLight ? '#059669' : '#6DD58C',
         icon: 'repeat-outline',
       };
     default:
       return {
         tone: 'primary',
         label: 'Suggestion',
-        bg: 'rgba(208, 188, 255, 0.15)',
-        fg: Primary.default,
+        bg: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.15)',
+        fg: theme.primary.default,
         icon: 'bulb-outline',
       };
   }
@@ -107,6 +98,9 @@ function getSuggMeta(type: Suggestion['type']): SuggMeta {
 export default function PulseScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makePulseStyles);
+  const isLight = theme.mode === 'light';
 
   const [refreshing, setRefreshing] = useState(false);
   const [habitCount, setHabitCount] = useState<number | null>(null);
@@ -170,16 +164,16 @@ export default function PulseScreen() {
       icon: 'repeat-outline' as const,
       label: 'Habitudes & Streaks',
       desc: habitCount !== null ? `${habitCount} habitudes actives` : 'Suivez vos pratiques quotidiennes.',
-      color: Tertiary.default,
-      bg: 'rgba(123, 208, 255, 0.12)',
+      color: theme.tertiary.default,
+      bg: isLight ? theme.tertiary.container : 'rgba(123, 208, 255, 0.12)',
       route: '/habits',
     },
     {
       icon: 'flag-outline' as const,
       label: 'Objectifs & Progression',
       desc: goalCount !== null ? `${goalCount} objectifs en cours` : 'Progression liée à vos tâches.',
-      color: Success.default,
-      bg: 'rgba(109, 213, 140, 0.12)',
+      color: theme.success.default,
+      bg: isLight ? theme.success.container : 'rgba(109, 213, 140, 0.12)',
       route: '/goals',
     },
   ];
@@ -200,7 +194,7 @@ export default function PulseScreen() {
             setRefreshing(true);
             loadData();
           }}
-          tintColor={Primary.default}
+          tintColor={theme.primary.default}
         />
       }
       showsVerticalScrollIndicator={false}
@@ -242,7 +236,7 @@ export default function PulseScreen() {
       {/* ── Suggestions proactives ── */}
       <View style={styles.sectionRow}>
         <View style={styles.sectionTitleRow}>
-          <Ionicons name="sparkles" size={16} color={Primary.default} />
+          <Ionicons name="sparkles" size={16} color={theme.primary.default} />
           <Text style={styles.sectionTitle}>Suggestions</Text>
           {suggestions.length > 0 && (
             <Text style={styles.suggCount}>{suggestions.length}</Text>
@@ -254,7 +248,7 @@ export default function PulseScreen() {
         /* État vide */
         <View style={styles.emptyCard}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="checkmark-circle-outline" size={26} color={Primary.default} />
+            <Ionicons name="checkmark-circle-outline" size={26} color={theme.primary.default} />
           </View>
           <Text style={styles.emptyTitle}>Tout est sous contrôle</Text>
           <Text style={styles.emptyDesc}>
@@ -266,7 +260,7 @@ export default function PulseScreen() {
         /* Cartes de suggestion */
         <View style={styles.suggestionsList}>
           {suggestions.map(s => {
-            const meta = getSuggMeta(s.type);
+            const meta = getSuggMeta(s.type, theme);
             return (
               <GlowCard
                 key={s.id}
@@ -304,7 +298,7 @@ export default function PulseScreen() {
                       onPress={() => handleAccept(s.id, s.title)}
                       accessibilityLabel={`Accepter : ${s.title}`}
                     >
-                      <Ionicons name="checkmark" size={14} color={Primary.default} />
+                      <Ionicons name="checkmark" size={14} color={isLight ? theme.primary.onContainer : theme.primary.default} />
                       <Text style={styles.acceptText}>Accepter</Text>
                     </TouchableOpacity>
                   </View>
@@ -318,8 +312,8 @@ export default function PulseScreen() {
       {/* ── Modules raccourcis ── */}
       <View style={styles.modulesSection}>
         <View style={[styles.sectionTitleRow, { marginBottom: Spacing.md }]}>
-          <Ionicons name="grid-outline" size={16} color={OnSurface.variant} />
-          <Text style={[styles.sectionTitle, { color: OnSurface.variant }]}>Modules</Text>
+          <Ionicons name="grid-outline" size={16} color={theme.onSurface.variant} />
+          <Text style={[styles.sectionTitle, { color: theme.onSurface.variant }]}>Modules</Text>
         </View>
 
         {MODULES.map(m => (
@@ -337,7 +331,7 @@ export default function PulseScreen() {
               <Text style={styles.moduleLabel}>{m.label}</Text>
               <Text style={styles.moduleDesc}>{m.desc}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
+            <Ionicons name="chevron-forward" size={18} color={theme.onSurface.disabled} />
           </TouchableOpacity>
         ))}
       </View>

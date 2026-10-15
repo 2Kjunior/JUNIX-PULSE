@@ -21,16 +21,15 @@ import { router } from 'expo-router';
 
 import { Event, Reminder, Task } from '@/domain/entities';
 import {
-  Primary,
-  Tertiary,
-  OnSurface,
-  Surface,
   Spacing,
   Radius,
   Typography,
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { ThemePalette, darkPalette } from '@/constants/palettes';
 
 interface CalendarTimetableProps {
   selectedDate: Date;
@@ -48,6 +47,14 @@ export const CalendarTimetable = memo(function CalendarTimetable({
   reminders,
   tasks,
 }: CalendarTimetableProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeTimetableStyles);
+  const isLight = theme.mode === 'light';
+
+  // Couleurs d'accent adaptées pour contraste texte/badge
+  const eventAccentColor = isLight ? '#0284C7' : '#38BDF8';
+  const taskAccentColor = isLight ? '#059669' : '#34D399';
+
   const isSelectedToday = isToday(selectedDate);
   const now = new Date();
   const currentHour = now.getHours();
@@ -115,15 +122,15 @@ export const CalendarTimetable = memo(function CalendarTimetable({
         {/* Badges de légende */}
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#38BDF8' }]} />
+            <View style={[styles.legendDot, { backgroundColor: eventAccentColor }]} />
             <Text style={styles.legendText}>Événement</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Primary.default }]} />
+            <View style={[styles.legendDot, { backgroundColor: theme.primary.default }]} />
             <Text style={styles.legendText}>Rappel</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#34D399' }]} />
+            <View style={[styles.legendDot, { backgroundColor: taskAccentColor }]} />
             <Text style={styles.legendText}>Tâche</Text>
           </View>
         </View>
@@ -133,8 +140,10 @@ export const CalendarTimetable = memo(function CalendarTimetable({
       {tasks.length > 0 && (
         <View style={styles.tasksSection}>
           <View style={styles.tasksHeader}>
-            <Ionicons name="checkbox-outline" size={16} color="#34D399" />
-            <Text style={styles.tasksTitle}>Objectifs & Tâches du jour ({tasks.length})</Text>
+            <Ionicons name="checkbox-outline" size={16} color={taskAccentColor} />
+            <Text style={[styles.tasksTitle, { color: taskAccentColor }]}>
+              Objectifs & Tâches du jour ({tasks.length})
+            </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tasksScroll}>
             {tasks.map(t => (
@@ -149,13 +158,15 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   <Ionicons
                     name={t.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
                     size={16}
-                    color="#34D399"
+                    color={taskAccentColor}
                   />
                   <Text style={styles.taskMiniTitle} numberOfLines={1}>
                     {t.title}
                   </Text>
                   {t.estimatedMinutes ? (
-                    <Text style={styles.taskMiniDuration}>{t.estimatedMinutes}m</Text>
+                    <Text style={[styles.taskMiniDuration, { color: taskAccentColor }]}>
+                      {t.estimatedMinutes}m
+                    </Text>
                   ) : null}
                 </View>
               </GlowCard>
@@ -188,7 +199,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   <View
                     style={[
                       styles.nowLineContainer,
-                      { top: (currentMinute / 60) * 100 }, // position relative dans l'heure
+                      { top: (currentMinute / 60) * 100 },
                     ]}
                   >
                     <View style={styles.nowBadge}>
@@ -224,8 +235,10 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                         >
                           <View style={styles.cardHeaderRow}>
                             <View style={styles.eventBadge}>
-                              <Ionicons name="calendar" size={11} color="#38BDF8" />
-                              <Text style={styles.eventBadgeText}>ÉVÉNEMENT</Text>
+                              <Ionicons name="calendar" size={11} color={eventAccentColor} />
+                              <Text style={[styles.eventBadgeText, { color: eventAccentColor }]}>
+                                ÉVÉNEMENT
+                              </Text>
                             </View>
                             <Text style={styles.cardTimeText}>{timeStr}</Text>
                           </View>
@@ -236,7 +249,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
 
                           {e.location ? (
                             <View style={styles.cardMetaRow}>
-                              <Ionicons name="location-outline" size={13} color={OnSurface.variant} />
+                              <Ionicons name="location-outline" size={13} color={theme.onSurface.variant} />
                               <Text style={styles.cardMetaText} numberOfLines={1}>
                                 {e.location}
                               </Text>
@@ -270,7 +283,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                               <Ionicons
                                 name="notifications"
                                 size={11}
-                                color={isUrgent ? '#F87171' : Primary.default}
+                                color={isUrgent ? theme.error.default : theme.primary.default}
                               />
                               <Text
                                 style={[
@@ -299,7 +312,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                               style={styles.reminderSnoozeBtn}
                               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
                             >
-                              <Ionicons name="timer-outline" size={12} color={Primary.default} />
+                              <Ionicons name="timer-outline" size={12} color={theme.primary.default} />
                               <Text style={styles.reminderSnoozeText}>Options & Snooze</Text>
                             </TouchableOpacity>
                           </View>
@@ -316,7 +329,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   >
                     <View style={styles.freeSlotInner}>
                       <Text style={styles.freeSlotText}>Créneau disponible • Choisir une action</Text>
-                      <Ionicons name="add" size={14} color={Primary.default} />
+                      <Ionicons name="add" size={14} color={theme.primary.default} />
                     </View>
                   </TouchableOpacity>
                 )}
@@ -352,7 +365,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                 style={styles.sheetCloseBtn}
                 onPress={() => setSelectedSlotHour(null)}
               >
-                <Ionicons name="close" size={20} color={OnSurface.variant} />
+                <Ionicons name="close" size={20} color={theme.onSurface.variant} />
               </TouchableOpacity>
             </View>
 
@@ -363,7 +376,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
             <View style={styles.optionsGrid}>
               {/* Option 1: Événement */}
               <TouchableOpacity
-                style={[styles.optionCard, { borderColor: 'rgba(56, 189, 248, 0.35)' }]}
+                style={[styles.optionCard, { borderColor: eventAccentColor + '55' }]}
                 onPress={() => {
                   const hour = selectedSlotHour;
                   const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -375,19 +388,19 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                 }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.optionIconCircle, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
-                  <Ionicons name="calendar" size={20} color="#38BDF8" />
+                <View style={[styles.optionIconCircle, { backgroundColor: eventAccentColor + '20' }]}>
+                  <Ionicons name="calendar" size={20} color={eventAccentColor} />
                 </View>
                 <View style={styles.optionTextCol}>
                   <Text style={styles.optionTitle}>Événement</Text>
                   <Text style={styles.optionDesc}>Rendez-vous, réunion ou bloc fixe</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="rgba(56, 189, 248, 0.6)" />
+                <Ionicons name="chevron-forward" size={16} color={eventAccentColor} />
               </TouchableOpacity>
 
               {/* Option 2: Rappel */}
               <TouchableOpacity
-                style={[styles.optionCard, { borderColor: 'rgba(208, 188, 255, 0.35)' }]}
+                style={[styles.optionCard, { borderColor: theme.primary.default + '55' }]}
                 onPress={() => {
                   const hour = selectedSlotHour;
                   const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -399,19 +412,19 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                 }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.optionIconCircle, { backgroundColor: 'rgba(208, 188, 255, 0.15)' }]}>
-                  <Ionicons name="notifications" size={20} color={Primary.default} />
+                <View style={[styles.optionIconCircle, { backgroundColor: theme.primary.default + '20' }]}>
+                  <Ionicons name="notifications" size={20} color={theme.primary.default} />
                 </View>
                 <View style={styles.optionTextCol}>
                   <Text style={styles.optionTitle}>Rappel</Text>
                   <Text style={styles.optionDesc}>Alerte sonore et notification précise</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="rgba(208, 188, 255, 0.6)" />
+                <Ionicons name="chevron-forward" size={16} color={theme.primary.default} />
               </TouchableOpacity>
 
               {/* Option 3: Tâche */}
               <TouchableOpacity
-                style={[styles.optionCard, { borderColor: 'rgba(52, 211, 153, 0.35)' }]}
+                style={[styles.optionCard, { borderColor: taskAccentColor + '55' }]}
                 onPress={() => {
                   const dateStr = format(selectedDate, 'yyyy-MM-dd');
                   setSelectedSlotHour(null);
@@ -422,14 +435,14 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                 }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.optionIconCircle, { backgroundColor: 'rgba(52, 211, 153, 0.15)' }]}>
-                  <Ionicons name="checkbox" size={20} color="#34D399" />
+                <View style={[styles.optionIconCircle, { backgroundColor: taskAccentColor + '20' }]}>
+                  <Ionicons name="checkbox" size={20} color={taskAccentColor} />
                 </View>
                 <View style={styles.optionTextCol}>
                   <Text style={styles.optionTitle}>Tâche du jour</Text>
                   <Text style={styles.optionDesc}>Action à cocher avec durée estimée</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="rgba(52, 211, 153, 0.6)" />
+                <Ionicons name="chevron-forward" size={16} color={taskAccentColor} />
               </TouchableOpacity>
             </View>
           </View>
@@ -439,380 +452,382 @@ export const CalendarTimetable = memo(function CalendarTimetable({
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  content: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xs,
-  },
-  summaryBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(26, 30, 46, 0.85)',
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.16)',
-    marginBottom: Spacing.md,
-  },
-  summaryInfo: {
-    gap: 2,
-  },
-  summaryTitle: {
-    ...Typography.titleMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  summarySub: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 10,
-  },
-  legendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  legendDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  legendText: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 10,
-  },
-  tasksSection: {
-    marginBottom: Spacing.md,
-    gap: Spacing.xs,
-  },
-  tasksHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 4,
-  },
-  tasksTitle: {
-    ...Typography.labelMedium,
-    color: '#34D399',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  tasksScroll: {
-    paddingVertical: 4,
-  },
-  taskMiniCard: {
-    marginRight: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    minWidth: 140,
-    maxWidth: 200,
-  },
-  taskMiniContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  taskMiniTitle: {
-    ...Typography.bodySmall,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    flex: 1,
-  },
-  taskMiniDuration: {
-    ...Typography.labelSmall,
-    color: 'rgba(52, 211, 153, 0.9)',
-    fontSize: 10,
-  },
-  timelineGrid: {
-    gap: Spacing.md,
-  },
-  hourRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    minHeight: 64,
-  },
-  hourCol: {
-    width: 52,
-    paddingTop: 4,
-  },
-  hourText: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  hourTextCurrent: {
-    color: Primary.default,
-    fontWeight: '800',
-  },
-  slotCol: {
-    flex: 1,
-    position: 'relative',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: Spacing.xs,
-    minHeight: 56,
-  },
-  nowLineContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  nowBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Primary.default,
-    borderRadius: Radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginRight: 4,
-  },
-  nowPulseDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#FFFFFF',
-  },
-  nowBadgeText: {
-    ...Typography.labelSmall,
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 9,
-  },
-  nowLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: Primary.default,
-    shadowColor: Primary.default,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-  },
-  itemsStack: {
-    gap: Spacing.xs + 2,
-  },
-  eventCard: {
-    marginBottom: 4,
-  },
-  eventBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-    borderRadius: Radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  eventBadgeText: {
-    ...Typography.labelSmall,
-    color: '#38BDF8',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  cardTimeText: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 10,
-    fontVariant: ['tabular-nums'],
-  },
-  eventTitle: {
-    ...Typography.titleMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  cardMetaText: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    fontSize: 11,
-  },
-  reminderCard: {
-    marginBottom: 4,
-  },
-  reminderBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(208, 188, 255, 0.15)',
-    borderRadius: Radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  reminderBadgeUrgent: {
-    backgroundColor: 'rgba(248, 113, 113, 0.18)',
-  },
-  reminderBadgeText: {
-    ...Typography.labelSmall,
-    color: Primary.default,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  reminderBadgeTextUrgent: {
-    color: '#F87171',
-  },
-  reminderTitle: {
-    ...Typography.titleMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  reminderNotes: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    fontSize: 11,
-  },
-  reminderFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginTop: 6,
-  },
-  reminderSnoozeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(208, 188, 255, 0.10)',
-    borderRadius: Radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  reminderSnoozeText: {
-    ...Typography.labelSmall,
-    color: Primary.default,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  freeSlot: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: 'rgba(255, 255, 255, 0.015)',
-    justifyContent: 'center',
-    minHeight: 40,
-  },
-  freeSlotInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  freeSlotText: {
-    ...Typography.labelSmall,
-    color: 'rgba(255, 255, 255, 0.45)',
-    fontSize: 11,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.70)',
-    justifyContent: 'flex-end',
-  },
-  slotActionSheet: {
-    backgroundColor: 'rgba(20, 24, 38, 0.96)',
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl + 10,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.20)',
-    gap: Spacing.md,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sheetHeaderCol: {
-    gap: 2,
-  },
-  sheetTitle: {
-    ...Typography.headlineMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  sheetSub: {
-    ...Typography.labelSmall,
-    color: Primary.default,
-    textTransform: 'capitalize',
-    fontSize: 11,
-  },
-  sheetCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetQuestion: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-    marginTop: -2,
-  },
-  optionsGrid: {
-    gap: Spacing.sm,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(26, 30, 48, 0.85)',
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    gap: Spacing.md,
-  },
-  optionIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  optionTitle: {
-    ...Typography.titleMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  optionDesc: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    fontSize: 11,
-  },
-});
+export function makeTimetableStyles(theme: ThemePalette) {
+  const isLight = theme.mode === 'light';
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: 'transparent',
+    },
+    content: {
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.xs,
+    },
+    summaryBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isLight ? theme.surface.container : 'rgba(26, 30, 46, 0.85)',
+      borderRadius: Radius.lg,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm + 2,
+      borderWidth: 1,
+      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.16)',
+      marginBottom: Spacing.md,
+    },
+    summaryInfo: {
+      gap: 2,
+    },
+    summaryTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    summarySub: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      fontSize: 10,
+    },
+    legendRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    legendItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    legendDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+    },
+    legendText: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      fontSize: 10,
+    },
+    tasksSection: {
+      marginBottom: Spacing.md,
+      gap: Spacing.xs,
+    },
+    tasksHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 4,
+    },
+    tasksTitle: {
+      ...Typography.labelMedium,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    tasksScroll: {
+      paddingVertical: 4,
+    },
+    taskMiniCard: {
+      marginRight: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      minWidth: 140,
+      maxWidth: 200,
+    },
+    taskMiniContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    taskMiniTitle: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.primary,
+      fontWeight: '600',
+      flex: 1,
+    },
+    taskMiniDuration: {
+      ...Typography.labelSmall,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    timelineGrid: {
+      gap: Spacing.md,
+    },
+    hourRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      minHeight: 64,
+    },
+    hourCol: {
+      width: 52,
+      paddingTop: 4,
+    },
+    hourText: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.variant,
+      fontWeight: '600',
+      fontVariant: ['tabular-nums'],
+    },
+    hourTextCurrent: {
+      color: theme.primary.default,
+      fontWeight: '800',
+    },
+    slotCol: {
+      flex: 1,
+      position: 'relative',
+      borderTopWidth: 1,
+      borderTopColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.08)',
+      paddingTop: Spacing.xs,
+      minHeight: 56,
+    },
+    nowLineContainer: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    nowBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.primary.default,
+      borderRadius: Radius.full,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      marginRight: 4,
+    },
+    nowPulseDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 2.5,
+      backgroundColor: '#FFFFFF',
+    },
+    nowBadgeText: {
+      ...Typography.labelSmall,
+      color: '#FFFFFF',
+      fontWeight: '800',
+      fontSize: 9,
+    },
+    nowLine: {
+      flex: 1,
+      height: 2,
+      backgroundColor: theme.primary.default,
+      shadowColor: theme.primary.default,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.8,
+      shadowRadius: 4,
+    },
+    itemsStack: {
+      gap: Spacing.xs + 2,
+    },
+    eventCard: {
+      marginBottom: 4,
+    },
+    eventBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: isLight ? 'rgba(2, 132, 199, 0.12)' : 'rgba(56, 189, 248, 0.15)',
+      borderRadius: Radius.sm,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    eventBadgeText: {
+      ...Typography.labelSmall,
+      fontSize: 9,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    cardHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
+    cardTimeText: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      fontSize: 10,
+      fontVariant: ['tabular-nums'],
+    },
+    eventTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    cardMetaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 4,
+    },
+    cardMetaText: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      fontSize: 11,
+    },
+    reminderCard: {
+      marginBottom: 4,
+    },
+    reminderBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.15)',
+      borderRadius: Radius.sm,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    reminderBadgeUrgent: {
+      backgroundColor: isLight ? theme.error.container : 'rgba(248, 113, 113, 0.18)',
+    },
+    reminderBadgeText: {
+      ...Typography.labelSmall,
+      color: theme.primary.default,
+      fontSize: 9,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    reminderBadgeTextUrgent: {
+      color: theme.error.default,
+    },
+    reminderTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    reminderNotes: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      fontSize: 11,
+    },
+    reminderFooterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginTop: 6,
+    },
+    reminderSnoozeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.10)',
+      borderRadius: Radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    reminderSnoozeText: {
+      ...Typography.labelSmall,
+      color: theme.primary.default,
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    freeSlot: {
+      paddingVertical: Spacing.xs,
+      paddingHorizontal: Spacing.sm,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.08)',
+      backgroundColor: isLight ? theme.surface.high : 'rgba(255, 255, 255, 0.015)',
+      justifyContent: 'center',
+      minHeight: 40,
+    },
+    freeSlotInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    freeSlotText: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.disabled,
+      fontSize: 11,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.70)',
+      justifyContent: 'flex-end',
+    },
+    slotActionSheet: {
+      backgroundColor: isLight ? theme.surface.base : 'rgba(20, 24, 38, 0.96)',
+      borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl,
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.xxl + 10,
+      borderWidth: 1,
+      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.20)',
+      gap: Spacing.md,
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sheetHeaderCol: {
+      gap: 2,
+    },
+    sheetTitle: {
+      ...Typography.headlineMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    sheetSub: {
+      ...Typography.labelSmall,
+      color: theme.primary.default,
+      textTransform: 'capitalize',
+      fontSize: 11,
+    },
+    sheetCloseBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: Radius.full,
+      backgroundColor: isLight ? theme.surface.high : 'rgba(255, 255, 255, 0.08)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sheetQuestion: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.variant,
+      marginTop: -2,
+    },
+    optionsGrid: {
+      gap: Spacing.sm,
+    },
+    optionCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isLight ? theme.surface.container : 'rgba(26, 30, 48, 0.85)',
+      borderRadius: Radius.lg,
+      padding: Spacing.md,
+      borderWidth: 1,
+      gap: Spacing.md,
+    },
+    optionIconCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: Radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    optionTextCol: {
+      flex: 1,
+      gap: 2,
+    },
+    optionTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    optionDesc: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      fontSize: 11,
+    },
+  });
+}

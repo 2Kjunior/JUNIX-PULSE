@@ -14,7 +14,10 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
-import { Surface, Primary, Tertiary, OnSurface, Spacing, Radius, Typography } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { PulseLogo } from '@/components/ui/PulseLogo';
@@ -28,6 +31,8 @@ import { decryptBackup, importBackup, parseBackup } from '@/services/backup-serv
 const { height } = Dimensions.get('window');
 
 export default function OnboardingWelcome() {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeOnboardingWelcomeStyles);
   const setOnboardingComplete = useAppStore(state => state.setOnboardingComplete);
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
   const [pendingBackupContents, setPendingBackupContents] = useState<string | null>(null);
@@ -152,19 +157,19 @@ export default function OnboardingWelcome() {
           icon="moon-outline"
           title="Serein"
           subtitle="Zéro surcharge"
-          accentColor={Primary.default}
+          accentColor={palette.primary.default}
         />
         <ValueBadge
           icon="shield-checkmark-outline"
           title="Privé"
           subtitle="100 % Hors-ligne"
-          accentColor={Tertiary.default}
+          accentColor={palette.tertiary.default}
         />
         <ValueBadge
           icon="pulse-outline"
           title="Rhythm"
           subtitle="IA au repos"
-          accentColor="#A078FF"
+          accentColor={palette.primary.default}
         />
       </View>
 
@@ -195,101 +200,103 @@ export default function OnboardingWelcome() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: height * 0.06,
-    paddingBottom: Spacing.xxl,
-  },
+const makeOnboardingWelcomeStyles = (theme: ThemePalette) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.surface.base,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: height * 0.06,
+      paddingBottom: Spacing.xxl,
+    },
 
-  // ─── En-tête ──────────────────────────────────────────────────────────────
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  skipBtn: {
-    paddingVertical: Spacing.xs,
-    paddingLeft: Spacing.md,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  skipText: {
-    ...Typography.bodyMedium,
-    color: OnSurface.disabled,
-  },
+    // ─── En-tête ──────────────────────────────────────────────────────────────
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    skipBtn: {
+      paddingVertical: Spacing.xs,
+      paddingLeft: Spacing.md,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    skipText: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.disabled,
+    },
 
-  // ─── Hero ─────────────────────────────────────────────────────────────────
-  heroSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  logoOrb: {
-    width: 120,
-    height: 120,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(208, 188, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xl,
-  },
-  headline: {
-    fontSize: 28,
-    fontFamily: 'Outfit-Bold',
-    color: OnSurface.primary,
-    textAlign: 'center',
-    lineHeight: 36,
-    marginBottom: Spacing.sm,
-  },
-  headlineAccent: {
-    color: Primary.default,
-    fontFamily: 'Outfit-Bold',
-  },
-  subheadline: {
-    ...Typography.titleMedium,
-    color: OnSurface.primary,
-    textAlign: 'center',
-    marginBottom: Spacing.xs,
-  },
-  description: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+    // ─── Hero ─────────────────────────────────────────────────────────────────
+    heroSection: {
+      alignItems: 'center',
+      marginBottom: Spacing.xl,
+    },
+    logoOrb: {
+      width: 120,
+      height: 120,
+      borderRadius: Radius.full,
+      backgroundColor: theme.primary.container + '33',
+      borderWidth: 1,
+      borderColor: theme.primary.default + '33',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: Spacing.xl,
+    },
+    headline: {
+      fontSize: 28,
+      fontFamily: 'Outfit-Bold',
+      color: theme.onSurface.primary,
+      textAlign: 'center',
+      lineHeight: 36,
+      marginBottom: Spacing.sm,
+    },
+    headlineAccent: {
+      color: theme.primary.default,
+      fontFamily: 'Outfit-Bold',
+    },
+    subheadline: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      textAlign: 'center',
+      marginBottom: Spacing.xs,
+    },
+    description: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.variant,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
 
-  // ─── Badges ───────────────────────────────────────────────────────────────
-  badges: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xl,
-  },
+    // ─── Badges ───────────────────────────────────────────────────────────────
+    badges: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginBottom: Spacing.xl,
+    },
 
-  // ─── Actions ──────────────────────────────────────────────────────────────
-  actions: {
-    gap: Spacing.md,
-    alignItems: 'center',
-  },
-  btnPrimary: {
-    width: '100%',
-  },
-  restoreBtn: {
-    paddingVertical: Spacing.xs,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  restoreText: {
-    ...Typography.bodySmall,
-    color: OnSurface.disabled,
-    textAlign: 'center',
-  },
-  restoreLink: {
-    color: Primary.default,
-    textDecorationLine: 'underline',
-  },
-});
+    // ─── Actions ──────────────────────────────────────────────────────────────
+    actions: {
+      gap: Spacing.md,
+      alignItems: 'center',
+    },
+    btnPrimary: {
+      width: '100%',
+    },
+    restoreBtn: {
+      paddingVertical: Spacing.xs,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    restoreText: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.disabled,
+      textAlign: 'center',
+    },
+    restoreLink: {
+      color: theme.primary.default,
+      textDecorationLine: 'underline',
+    },
+  });
+

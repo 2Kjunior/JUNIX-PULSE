@@ -1,5 +1,6 @@
 /**
  * Formulaire de création d'une nouvelle personne / contact.
+ * Thématisé dynamiquement : mode sombre Midnight Glow et mode clair crème chaleureuse.
  */
 
 import { useState } from 'react';
@@ -24,17 +25,10 @@ import { Contact, requestPermissionsAsync } from 'expo-contacts';
 
 import { PersonUseCases } from '@/use-cases/person-use-cases';
 import { useAppStore } from '@/store/app-store';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Error as ErrorColors,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 
 const RELATIONSHIP_OPTIONS = [
@@ -57,6 +51,8 @@ const THRESHOLD_OPTIONS = [
 export default function NewPersonScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeNewPersonStyles);
 
   const [displayName, setDisplayName] = useState('');
   const [relationship, setRelationship] = useState('Ami·e');
@@ -184,7 +180,7 @@ export default function NewPersonScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Fermer"
         >
-          <Ionicons name="close" size={24} color={OnSurface.primary} />
+          <Ionicons name="close" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nouvelle personne</Text>
         <TouchableOpacity
@@ -216,7 +212,7 @@ export default function NewPersonScreen() {
             <Ionicons
               name={importedFromContacts ? 'checkmark' : 'person-add-outline'}
               size={18}
-              color={importedFromContacts ? '#10B981' : Primary.default}
+              color={importedFromContacts ? palette.success.default : palette.primary.default}
             />
           </View>
           <View style={styles.importTextCol}>
@@ -234,7 +230,7 @@ export default function NewPersonScreen() {
           <Ionicons
             name={importedFromContacts ? 'checkmark-circle' : 'chevron-forward'}
             size={18}
-            color={importedFromContacts ? '#10B981' : OnSurface.variant}
+            color={importedFromContacts ? palette.success.default : palette.onSurface.variant}
           />
         </TouchableOpacity>
 
@@ -249,7 +245,7 @@ export default function NewPersonScreen() {
               if (nameError) setNameError('');
             }}
             placeholder="Ex: Alexandre Dupont"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             autoFocus
           />
           {!!nameError && <Text style={styles.errorText}>{nameError}</Text>}
@@ -285,7 +281,7 @@ export default function NewPersonScreen() {
               value={phone}
               onChangeText={setPhone}
               placeholder="06 12 34 56 78"
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               keyboardType="phone-pad"
             />
           </View>
@@ -297,7 +293,7 @@ export default function NewPersonScreen() {
               value={email}
               onChangeText={setEmail}
               placeholder="alex@example.com"
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={palette.onSurface.disabled}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -311,7 +307,7 @@ export default function NewPersonScreen() {
             style={styles.inputSelect}
             onPress={() => setShowDatePicker(true)}
           >
-            <Ionicons name="gift-outline" size={20} color={Tertiary.default} />
+            <Ionicons name="gift-outline" size={20} color={palette.tertiary.default} />
             <Text style={styles.inputSelectText}>
               {birthDate
                 ? format(new Date(birthDate + 'T12:00:00'), 'd MMMM yyyy', { locale: fr })
@@ -319,7 +315,7 @@ export default function NewPersonScreen() {
             </Text>
             {birthDate && (
               <TouchableOpacity onPress={() => setBirthDate(undefined)}>
-                <Ionicons name="close-circle" size={18} color={OnSurface.disabled} />
+                <Ionicons name="close-circle" size={18} color={palette.onSurface.disabled} />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -354,7 +350,7 @@ export default function NewPersonScreen() {
             value={notes}
             onChangeText={setNotes}
             placeholder="Goûts, sujets de discussion, contexte, adresses..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={palette.onSurface.disabled}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
@@ -389,96 +385,159 @@ export default function NewPersonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Surface.base },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Outline.variant,
-  },
-  closeBtn: { padding: Spacing.xs },
-  headerTitle: { ...Typography.titleMedium, color: OnSurface.primary },
-  saveBtnText: { ...Typography.titleMedium, color: Primary.default },
-  saveBtnDisabled: { color: OnSurface.disabled },
-  content: { padding: Spacing.lg, gap: Spacing.xl },
-  field: { gap: Spacing.xs },
-  fieldRow: { flexDirection: 'row', gap: Spacing.md },
-  label: { ...Typography.labelMedium, color: OnSurface.variant, marginBottom: 4 },
-  input: {
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    color: OnSurface.primary,
-    ...Typography.bodyMedium,
-  },
-  multilineInput: { minHeight: 90 },
-  inputError: { borderWidth: 1, borderColor: ErrorColors.default },
-  errorText: { ...Typography.labelSmall, color: ErrorColors.default, marginTop: 4 },
-  inputSelect: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Surface.container,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  inputSelectText: { flex: 1, ...Typography.bodyMedium, color: OnSurface.primary },
-  chipRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Surface.container,
-    borderWidth: 1,
-    borderColor: Outline.variant,
-  },
-  chipActive: { backgroundColor: Primary.container, borderColor: Primary.default },
-  chipText: { ...Typography.labelMedium, color: OnSurface.variant },
-  chipTextActive: { color: Primary.onContainer },
-  submitBtn: { marginTop: Spacing.md },
-  importBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  importBtnActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    borderColor: 'rgba(16, 185, 129, 0.35)',
-  },
-  importIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(160, 120, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  importIconCircleActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-  },
-  importTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  importTitle: {
-    ...Typography.labelMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  importSubtitle: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    fontSize: 12,
-  },
-});
+function makeNewPersonStyles(theme: ThemePalette) {
+  const isDark = theme.mode === 'dark';
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.surface.base,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.outline.variant,
+    },
+    closeBtn: {
+      padding: Spacing.xs,
+    },
+    headerTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    saveBtnText: {
+      ...Typography.titleMedium,
+      color: theme.primary.default,
+      fontWeight: '700',
+    },
+    saveBtnDisabled: {
+      color: theme.onSurface.disabled,
+    },
+    content: {
+      padding: Spacing.lg,
+      gap: Spacing.xl,
+    },
+    field: {
+      gap: Spacing.xs,
+    },
+    fieldRow: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+    },
+    label: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.variant,
+      marginBottom: 4,
+    },
+    input: {
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+      color: theme.onSurface.primary,
+      borderWidth: 1,
+      borderColor: isDark ? 'transparent' : theme.outline.variant,
+      ...Typography.bodyMedium,
+    },
+    multilineInput: {
+      minHeight: 90,
+    },
+    inputError: {
+      borderWidth: 1,
+      borderColor: theme.error.default,
+    },
+    errorText: {
+      ...Typography.labelSmall,
+      color: theme.error.default,
+      marginTop: 4,
+    },
+    inputSelect: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+      gap: Spacing.sm,
+      borderWidth: 1,
+      borderColor: isDark ? 'transparent' : theme.outline.variant,
+    },
+    inputSelectText: {
+      flex: 1,
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+    },
+    chipRowWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    chip: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.full,
+      backgroundColor: theme.surface.container,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    chipActive: {
+      backgroundColor: theme.primary.container,
+      borderColor: theme.primary.default,
+    },
+    chipText: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.variant,
+    },
+    chipTextActive: {
+      color: theme.primary.onContainer,
+      fontWeight: '700',
+    },
+    submitBtn: {
+      marginTop: Spacing.md,
+    },
+    importBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.surface.container,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.outline.variant,
+      borderRadius: Radius.lg,
+      padding: Spacing.md,
+      gap: Spacing.sm,
+    },
+    importBtnActive: {
+      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(5, 150, 105, 0.10)',
+      borderColor: isDark ? 'rgba(16, 185, 129, 0.35)' : theme.success.default,
+    },
+    importIconCircle: {
+      width: 36,
+      height: 36,
+      borderRadius: Radius.full,
+      backgroundColor: isDark ? 'rgba(160, 120, 255, 0.12)' : 'rgba(107, 70, 193, 0.12)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    importIconCircleActive: {
+      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(5, 150, 105, 0.15)',
+    },
+    importTextCol: {
+      flex: 1,
+      gap: 2,
+    },
+    importTitle: {
+      ...Typography.labelMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '700',
+    },
+    importSubtitle: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      fontSize: 12,
+    },
+  });
+}

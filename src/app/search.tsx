@@ -7,7 +7,7 @@
  * - Recherches récentes avec possibilité de les effacer
  * - Résultats groupés par type d'entité avec icônes vectorielles dédiées
  * - Navigation directe 1-tap vers l'écran de détail de l'entité
- * - Zéro emoji, respect strict de la palette Midnight (Partie A & B)
+ * - Zéro emoji, respect strict de la palette dynamique Midnight / Crème
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -27,18 +27,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '@/utils/logger';
 
 import { getDatabase } from '@/database/sqlite';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { styles } from '@/styles/search-styles';
+import { makeSearchStyles } from '@/styles/search-styles';
 
 type SearchFilter = 'ALL' | 'REMINDERS' | 'TASKS' | 'PERSONS' | 'EVENTS' | 'GOALS';
 
@@ -65,6 +57,9 @@ const FILTER_ITEMS: { key: SearchFilter; label: string; icon: keyof typeof Ionic
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeSearchStyles);
+  const isLight = theme.mode === 'light';
 
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<SearchFilter>('ALL');
@@ -122,7 +117,7 @@ export default function SearchScreen() {
             subtitle: r.due_at ? `Échéance : ${r.due_at.substring(0, 10)}` : 'Rappel sans date',
             route: `/reminders/${r.id}`,
             icon: 'notifications-outline',
-            color: Primary.default,
+            color: theme.primary.default,
             typeLabel: 'Rappel',
           });
         });
@@ -148,7 +143,7 @@ export default function SearchScreen() {
             subtitle: t.status === 'COMPLETED' ? 'Terminée' : 'À faire',
             route: `/tasks/${t.id}`,
             icon: 'checkmark-circle-outline',
-            color: Tertiary.default,
+            color: theme.tertiary.default,
             typeLabel: 'Tâche',
           });
         });
@@ -156,26 +151,25 @@ export default function SearchScreen() {
         // 3. Personnes
         const persons = await db.getAllAsync<{
           id: string;
-          display_name: string;
+          displayName: string;
           relationship: string | null;
-          notes: string | null;
         }>(
-          `SELECT id, display_name, relationship, notes 
+          `SELECT id, displayName, relationship 
            FROM persons 
-           WHERE deleted_at IS NULL AND (display_name LIKE ? OR notes LIKE ? OR relationship LIKE ?)
-           ORDER BY display_name ASC LIMIT 10`,
-          [searchPattern, searchPattern, searchPattern]
+           WHERE deleted_at IS NULL AND (displayName LIKE ? OR relationship LIKE ?)
+           ORDER BY displayName ASC LIMIT 10`,
+          [searchPattern, searchPattern]
         );
         persons.forEach((p) => {
           found.push({
             id: p.id,
             type: 'PERSON',
-            title: p.display_name,
-            subtitle: p.relationship || 'Contact',
+            title: p.displayName,
+            subtitle: p.relationship ?? 'Contact',
             route: `/people/${p.id}`,
             icon: 'person-outline',
-            color: '#FBBF24',
-            typeLabel: 'Personne',
+            color: isLight ? '#0284C7' : '#38BDF8',
+            typeLabel: 'Contact',
           });
         });
 
@@ -183,10 +177,10 @@ export default function SearchScreen() {
         const events = await db.getAllAsync<{
           id: string;
           title: string;
-          start_at: string;
           location: string | null;
+          start_at: string;
         }>(
-          `SELECT id, title, start_at, location 
+          `SELECT id, title, location, start_at 
            FROM events 
            WHERE deleted_at IS NULL AND (title LIKE ? OR location LIKE ?)
            ORDER BY start_at ASC LIMIT 10`,
@@ -197,10 +191,10 @@ export default function SearchScreen() {
             id: e.id,
             type: 'EVENT',
             title: e.title,
-            subtitle: e.start_at ? `${e.start_at.substring(0, 10)}${e.location ? ` • ${e.location}` : ''}` : 'Événement',
+            subtitle: e.start_at ? e.start_at.substring(0, 16).replace('T', ' ') : undefined,
             route: `/events/${e.id}`,
             icon: 'calendar-outline',
-            color: '#38BDF8',
+            color: theme.primary.default,
             typeLabel: 'Événement',
           });
         });
@@ -209,40 +203,40 @@ export default function SearchScreen() {
         const goals = await db.getAllAsync<{
           id: string;
           title: string;
-          deadline: string | null;
+          category: string | null;
           status: string;
         }>(
-          `SELECT id, title, deadline, status 
+          `SELECT id, title, category, status 
            FROM goals 
-           WHERE deleted_at IS NULL AND title LIKE ?
+           WHERE deleted_at IS NULL AND (title LIKE ? OR category LIKE ?)
            ORDER BY created_at DESC LIMIT 10`,
-          [searchPattern]
+          [searchPattern, searchPattern]
         );
         goals.forEach((g) => {
           found.push({
             id: g.id,
             type: 'GOAL',
             title: g.title,
-            subtitle: g.deadline ? `Objectif jusqu'au ${g.deadline.substring(0, 10)}` : 'Objectif en cours',
+            subtitle: g.category ?? 'Objectif actif',
             route: `/goals/${g.id}`,
             icon: 'flag-outline',
-            color: '#34D399',
+            color: theme.success.default,
             typeLabel: 'Objectif',
           });
         });
 
         setResults(found);
-      } catch {
-        logger.error('Erreur lors de la recherche SQLite');
+      } catch (err) {
+        logger.error('Erreur recherche globale :', err);
       } finally {
         setLoading(false);
       }
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [query]);
+  }, [query, theme, isLight]);
 
-  // Filtrage selon le chip sélectionné
+  // Filtrage selon le filtre sélectionné
   const filteredResults = results.filter((item) => {
     if (activeFilter === 'ALL') return true;
     if (activeFilter === 'REMINDERS') return item.type === 'REMINDER';
@@ -279,32 +273,36 @@ export default function SearchScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Retour"
         >
-          <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+          <Ionicons name="arrow-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
 
         {/* L'unique gradient discret de l'écran en contour subtil de la barre de recherche */}
         <LinearGradient
-          colors={['rgba(208, 188, 255, 0.35)', 'rgba(123, 208, 255, 0.2)']}
+          colors={
+            isLight
+              ? ['rgba(107, 70, 193, 0.35)', 'rgba(14, 116, 144, 0.2)']
+              : ['rgba(208, 188, 255, 0.35)', 'rgba(123, 208, 255, 0.2)']
+          }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.searchBarBorder}
         >
           <View style={styles.searchBarInner}>
-            <Ionicons name="search-outline" size={20} color={OnSurface.variant} style={styles.searchIcon} />
+            <Ionicons name="search-outline" size={20} color={theme.onSurface.variant} style={styles.searchIcon} />
             <TextInput
               ref={inputRef}
               style={styles.input}
               value={query}
               onChangeText={setQuery}
               placeholder="Rechercher rappels, tâches, contacts..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={theme.onSurface.disabled}
               returnKeyType="search"
               autoCapitalize="none"
               autoCorrect={false}
             />
             {query.length > 0 && (
               <TouchableOpacity onPress={() => setQuery('')} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={18} color={OnSurface.disabled} />
+                <Ionicons name="close-circle" size={18} color={theme.onSurface.disabled} />
               </TouchableOpacity>
             )}
           </View>
@@ -325,7 +323,7 @@ export default function SearchScreen() {
                 <Ionicons
                   name={filter.icon}
                   size={14}
-                  color={isSelected ? OnSurface.primary : OnSurface.variant}
+                  color={isSelected ? (isLight ? theme.primary.onContainer : theme.onSurface.primary) : theme.onSurface.variant}
                 />
                 <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
                   {filter.label}
@@ -359,7 +357,7 @@ export default function SearchScreen() {
                     style={styles.recentChip}
                     onPress={() => handleSelectRecent(term)}
                   >
-                    <Ionicons name="time-outline" size={14} color={OnSurface.disabled} />
+                    <Ionicons name="time-outline" size={14} color={theme.onSurface.disabled} />
                     <Text style={styles.recentChipText}>{term}</Text>
                   </TouchableOpacity>
                 ))}
@@ -370,7 +368,7 @@ export default function SearchScreen() {
           {/* Guide de recherche transversal */}
           <GlowCard tone="neutral">
             <View style={styles.infoCardInner}>
-              <Ionicons name="sparkles-outline" size={24} color={Primary.default} />
+              <Ionicons name="sparkles-outline" size={24} color={theme.primary.default} />
               <Text style={styles.infoCardTitle}>Recherche unifiée locale</Text>
               <Text style={styles.infoCardText}>
                 Tapez un mot-clé pour chercher simultanément dans vos rappels, vos tâches quotidiennes, vos contacts de confiance, vos rendez-vous et vos objectifs.
@@ -386,10 +384,6 @@ export default function SearchScreen() {
           contentContainerStyle={styles.resultsList}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            // Ton derive du type de resultat (le typeLabel reste toujours visible
-            // a cote de la lueur - jamais de couleur seule) : rappel->attention,
-            // evenement->primary, le reste (tache/personne/objectif)->neutral
-            // (pas de contexte de priorite/relance dans un resultat de recherche).
             <GlowCard
               tone={
                 item.type === 'REMINDER' ? 'attention' : item.type === 'EVENT' ? 'primary' : 'neutral'
@@ -398,23 +392,23 @@ export default function SearchScreen() {
               onPress={() => handleSelectResult(item)}
               accessibilityLabel={`${item.title}, ${item.typeLabel}`}
             >
-            <View style={styles.resultRow}>
-              <View style={[styles.typeIconContainer, { backgroundColor: `${item.color}1F` }]}>
-                <Ionicons name={item.icon} size={20} color={item.color} />
-              </View>
-
-              <View style={styles.resultInfo}>
-                <View style={styles.resultMetaRow}>
-                  <Text style={[styles.typeBadge, { color: item.color }]}>{item.typeLabel}</Text>
-                  {item.subtitle ? <Text style={styles.resultSubtitle}>{item.subtitle}</Text> : null}
+              <View style={styles.resultRow}>
+                <View style={[styles.typeIconContainer, { backgroundColor: `${item.color}1F` }]}>
+                  <Ionicons name={item.icon} size={20} color={item.color} />
                 </View>
-                <Text style={styles.resultTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-              </View>
 
-              <Ionicons name="chevron-forward" size={18} color={OnSurface.disabled} />
-            </View>
+                <View style={styles.resultInfo}>
+                  <View style={styles.resultMetaRow}>
+                    <Text style={[styles.typeBadge, { color: item.color }]}>{item.typeLabel}</Text>
+                    {item.subtitle ? <Text style={styles.resultSubtitle}>{item.subtitle}</Text> : null}
+                  </View>
+                  <Text style={styles.resultTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                </View>
+
+                <Ionicons name="chevron-forward" size={18} color={theme.onSurface.disabled} />
+              </View>
             </GlowCard>
           )}
         />
@@ -422,7 +416,7 @@ export default function SearchScreen() {
         /* État vide si aucun résultat */
         <View style={styles.emptyState}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="search-outline" size={36} color={OnSurface.disabled} />
+            <Ionicons name="search-outline" size={36} color={theme.onSurface.disabled} />
           </View>
           <Text style={styles.emptyTitle}>Aucun résultat trouvé</Text>
           <Text style={styles.emptySubtitle}>
