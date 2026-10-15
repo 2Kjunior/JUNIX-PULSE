@@ -4,8 +4,6 @@
  * Les repositories traduisent entre ces types et les lignes de base de données.
  */
 
-export * from '../enums';
-
 import {
   ReminderStatus,
   ReminderPriority,
@@ -23,6 +21,8 @@ import {
   PlanningStatus,
   InteractionType,
 } from '../enums';
+
+export * from '../enums';
 
 // ─── Règle de récurrence ──────────────────────────────────────────────────────
 export interface RecurrenceRule {
@@ -241,6 +241,8 @@ export interface Suggestion {
   createdAt: string;
 }
 
+export type AppearanceMode = 'system' | 'light' | 'dark';
+
 // ─── Paramètres utilisateur ──────────────────────────────────────────────────
 export interface Settings {
   id: string;                  // Toujours '1' (ligne unique)
@@ -251,7 +253,16 @@ export interface Settings {
   forgottenContactThresholdDays: number;
   endOfDayHour: number;        // Heure à laquelle Junix propose de gérer les tâches restantes (ex: 20)
   morningBriefingHour: number; // Heure du résumé matin (ex: 8)
+  /**
+   * Mode d'apparence choisi : suit le système, clair, ou sombre.
+   * Valeur par défaut : 'dark'.
+   */
+  appearanceMode: AppearanceMode;
+  /**
+   * @deprecated Conservé pour la rétro-compatibilité des sauvegardes. Utiliser `appearanceMode`.
+   */
   appearanceDark: boolean;
   createdAt: string;
   updatedAt: string;
 }
+

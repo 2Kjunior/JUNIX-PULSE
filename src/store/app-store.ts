@@ -5,6 +5,7 @@
  */
 
 import { create } from 'zustand';
+import { AppearanceMode } from '@/domain/entities';
 
 // ─── Snackbar (undo de suppression, confirmations) ────────────────────────────
 
@@ -28,6 +29,10 @@ interface AppStore {
   // Onboarding
   onboardingComplete: boolean;
   setOnboardingComplete: (complete: boolean) => void;
+
+  // Thème & Apparence
+  themeMode: AppearanceMode;
+  setThemeMode: (mode: AppearanceMode) => void;
 
   // Snackbar global
   snackbar: SnackbarState | null;
@@ -54,6 +59,10 @@ export const useAppStore = create<AppStore>((set) => ({
   onboardingComplete: false,
   setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
 
+  // Thème & Apparence (valeur par défaut : sombre)
+  themeMode: 'dark',
+  setThemeMode: (mode) => set({ themeMode: mode }),
+
   // Snackbar
   snackbar: null,
   showSnackbar: (message, options = {}) => set({
@@ -71,3 +80,4 @@ export const useAppStore = create<AppStore>((set) => ({
   userTimezone: 'UTC',
   setUserTimezone: (tz) => set({ userTimezone: tz }),
 }));
+

@@ -47,7 +47,7 @@ const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   planning_blocks: ['id', 'schedule_id', 'label', 'type', 'day_of_week', 'start_time', 'end_time', 'color', 'created_at', 'updated_at'],
   interactions: ['id', 'person_id', 'type', 'occurred_at', 'notes', 'reminder_id', 'created_at'],
   suggestions: ['id', 'type', 'status', 'title', 'explanation', 'target_id', 'target_type', 'proposed_data', 'generated_at', 'expires_at', 'decided_at', 'created_at'],
-  settings: ['id', 'display_name', 'timezone', 'onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'created_at', 'updated_at'],
+  settings: ['id', 'display_name', 'timezone', 'onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'appearance_mode', 'created_at', 'updated_at'],
   sanctum_notes: ['id', 'title', 'content', 'folder', 'created_at', 'updated_at'],
 };
 
@@ -113,6 +113,9 @@ const ENUM_COLUMNS: Partial<Record<BackupTable, Record<string, readonly string[]
     type: ['RESCHEDULE_REMINDER', 'POSTPONE_TASK', 'FORGOTTEN_CONTACT', 'BIRTHDAY_REMINDER', 'OVERLOADED_DAY', 'HABIT_REMINDER', 'PLANNING_CONFLICT'],
     status: ['PENDING', 'ACCEPTED', 'MODIFIED', 'REFUSED', 'EXPIRED'],
   },
+  settings: {
+    appearance_mode: ['system', 'light', 'dark'],
+  },
 };
 
 const SqlValueSchema = z.union([z.string(), z.number().finite(), z.null()]);
@@ -163,7 +166,7 @@ function validateRows(data: BackupData): void {
 
     for (const [rowIndex, row] of data[table].entries()) {
       const rowKeys = Object.keys(row);
-      if (rowKeys.length !== columns.length || rowKeys.some(key => !expected.has(key))) {
+      if (rowKeys.some(key => !expected.has(key))) {
         throw new Error(`Format de sauvegarde invalide : colonnes incorrectes dans ${table}.`);
       }
 
@@ -175,21 +178,21 @@ function validateRows(data: BackupData): void {
 
       for (const column of integerColumns) {
         const value = row[column];
-        if (value !== null && (typeof value !== 'number' || !Number.isInteger(value))) {
+        if (value !== null && value !== undefined && (typeof value !== 'number' || !Number.isInteger(value))) {
           throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} doit être un entier.`);
         }
       }
 
       for (const column of columns) {
         const value = row[column];
-        if (value !== null && !integerColumns.has(column) && typeof value !== 'string') {
+        if (value !== null && value !== undefined && !integerColumns.has(column) && typeof value !== 'string') {
           throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} doit être du texte.`);
         }
       }
 
       for (const [column, allowedValues] of Object.entries(ENUM_COLUMNS[table] ?? {})) {
         const value = row[column];
-        if (value !== null && (typeof value !== 'string' || !allowedValues.includes(value))) {
+        if (value !== null && value !== undefined && (typeof value !== 'string' || !allowedValues.includes(value))) {
           throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} contient une valeur inconnue.`);
         }
       }
@@ -238,7 +241,12 @@ export async function importBackup(db: SQLiteDatabase, data: BackupData): Promis
         const columns = TABLE_COLUMNS[table];
         const result = await transaction.runAsync(
           `INSERT OR IGNORE INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
-          columns.map(column => row[column])
+          columns.map(column => {
+            const val = row[column];
+            if (val !== undefined) return val;
+            if (column === 'appearance_mode') return 'dark';
+            return null;
+          })
         );
         if (result.changes > 0) inserted += 1;
         else skipped += 1;

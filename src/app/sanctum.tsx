@@ -18,7 +18,6 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -45,21 +44,14 @@ import {
   DEFAULT_SANCTUM_FOLDERS,
   type SanctumNoteItem,
 } from '@/domain/rules/sanctum-rules';
-import {
-  Surface,
-  Primary,
-  Tertiary,
-  OnSurface,
-  Outline,
-  Spacing,
-  Radius,
-  Typography,
-  Success,
-} from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { PulseLogo } from '@/components/ui/PulseLogo';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
-import { formStyles } from '@/styles/common/form-styles';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { makeSanctumStyles } from '@/styles/sanctum/sanctum-styles';
+import { makeFormStyles } from '@/styles/common/form-styles';
 import { getDatabase } from '@/database/sqlite';
 
 // ─── Types locaux ────────────────────────────────────────────────────────────
@@ -93,6 +85,9 @@ async function getSavedPinHashFromDb(): Promise<string | null> {
 export default function SanctumScreen() {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeSanctumStyles);
+  const formStyles = useThemedStyles(makeFormStyles);
 
   // ─── Etat global ────────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState<SanctumView>('locked');
@@ -138,26 +133,36 @@ export default function SanctumScreen() {
     return () => sub.remove();
   }, [currentView]);
 
-  // ─── Vérifier les capacités d'authentification ─────────────────────────
+  // ─── Détection capacités de l'appareil à l'ouverture ───────────────────
   useEffect(() => {
-    (async () => {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      setHasBiometrics(hasHardware && isEnrolled);
+    async function checkSecurityCapabilities() {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        const biometricsAvailable = hasHardware && isEnrolled;
+        setHasBiometrics(biometricsAvailable);
 
-      const existingHash = await getSavedPinHashFromDb();
-      setHasPinConfigured(!!existingHash);
-    })();
+        const savedPin = await getSavedPinHashFromDb();
+        setHasPinConfigured(!!savedPin);
+
+        // Si biométrie disponible, déclencher authentification automatique
+        if (biometricsAvailable) {
+          authenticateBiometric();
+        }
+      } catch (err) {
+        setHasBiometrics(false);
+      }
+    }
+    checkSecurityCapabilities();
   }, []);
 
-  // ─── Authentification biométrique native ───────────────────────────────
-  const authenticateBiometric = useCallback(async () => {
+  // ─── Authentification Biométrique native ──────────────────────────────
+  const authenticateBiometric = async () => {
     setAuthenticating(true);
     setAuthError('');
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Accéder à votre Sanctuaire',
-        fallbackLabel: 'Utiliser le code de l\'appareil',
+        promptMessage: 'Accéder au Sanctuaire privé',
         cancelLabel: 'Annuler',
         disableDeviceFallback: false,
       });
@@ -165,32 +170,31 @@ export default function SanctumScreen() {
       if (result.success) {
         await onAuthSuccess();
       } else {
-        setAuthError('Authentification non réussie.');
+        if (result.error !== 'user_cancel') {
+          setAuthError('Authentification échouée');
+        }
       }
     } catch (e) {
-      setAuthError(e instanceof Error ? e.message : 'Erreur d\'authentification');
+      setAuthError('Erreur d’authentification biométrique');
     } finally {
       setAuthenticating(false);
     }
-  }, []);
-
-  // ─── Succès d'authentification commun ──────────────────────────────────
-  const onAuthSuccess = async () => {
-    await SanctumRepository.migrateLegacyNote();
-    const allNotes = await SanctumRepository.getAllNotes();
-    setNotes(allNotes.filter((n) => n.id !== '__pin_hash__'));
-    setCurrentView('list');
   };
 
-  // ─── Déclenchement automatique au premier affichage ────────────────────
-  useEffect(() => {
-    if (hasBiometrics) {
-      authenticateBiometric();
+  // ─── Transition succès d'authentification ─────────────────────────────
+  const onAuthSuccess = async () => {
+    try {
+      const allNotes = await SanctumRepository.getAllNotes();
+      // Filtrer la note interne spéciale du hash PIN
+      setNotes(allNotes.filter((n) => n.id !== '__pin_hash__'));
+      setCurrentView('list');
+      setAuthError('');
+    } catch (e) {
+      showSnackbar('Erreur lors du déchiffrement des notes');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasBiometrics]);
+  };
 
-  // ─── Gestion PIN : configuration initiale ─────────────────────────────
+  // ─── Gestion PIN : configuration ──────────────────────────────────────
   const handlePinSetup = async () => {
     if (pinStep === 'enter') {
       const validation = validateSanctumPin(pinInput);
@@ -279,7 +283,7 @@ export default function SanctumScreen() {
       showSnackbar(editingNote ? 'Carnet mis à jour' : 'Nouveau carnet créé');
       setCurrentView('list');
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur de sauvegarde');
+      showSnackbar('Erreur lors de l’enregistrement');
     } finally {
       setSaving(false);
     }
@@ -287,8 +291,8 @@ export default function SanctumScreen() {
 
   const handleDeleteNote = (note: SanctumNote) => {
     Alert.alert(
-      'Supprimer ce carnet',
-      `"${note.title || 'Sans titre'}" sera définitivement supprimé.`,
+      'Supprimer le carnet',
+      `Êtes-vous sûr de vouloir supprimer définitivement « ${note.title || 'ce carnet'} » ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -336,7 +340,7 @@ export default function SanctumScreen() {
 
           {!!authError && (
             <View style={styles.errorBadge}>
-              <Ionicons name="alert-circle-outline" size={16} color="#FF5252" />
+              <Ionicons name="alert-circle-outline" size={16} color={theme.error.default} />
               <Text style={styles.errorText}>{authError}</Text>
             </View>
           )}
@@ -397,7 +401,7 @@ export default function SanctumScreen() {
                 setCurrentView('pin_verify');
               }}
             >
-              <Ionicons name="keypad-outline" size={16} color={OnSurface.variant} />
+              <Ionicons name="keypad-outline" size={16} color={theme.onSurface.variant} />
               <Text style={styles.altAuthText}>Utiliser le code PIN</Text>
             </TouchableOpacity>
           )}
@@ -418,7 +422,7 @@ export default function SanctumScreen() {
       <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
         <View style={styles.glassLockCard}>
           <View style={styles.pinIconBadge}>
-            <Ionicons name="key-outline" size={32} color={Primary.default} />
+            <Ionicons name="key-outline" size={32} color={theme.primary.default} />
           </View>
           <Text style={styles.lockTitle}>
             {pinStep === 'enter' ? 'Créer un code PIN' : 'Confirmer le code'}
@@ -434,7 +438,7 @@ export default function SanctumScreen() {
             value={pinStep === 'enter' ? pinInput : pinConfirm}
             onChangeText={pinStep === 'enter' ? setPinInput : setPinConfirm}
             placeholder="Code PIN"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={theme.onSurface.disabled}
             keyboardType="number-pad"
             secureTextEntry
             maxLength={8}
@@ -443,7 +447,7 @@ export default function SanctumScreen() {
 
           {!!pinError && (
             <View style={styles.errorBadge}>
-              <Ionicons name="alert-circle-outline" size={16} color="#FF5252" />
+              <Ionicons name="alert-circle-outline" size={16} color={theme.error.default} />
               <Text style={styles.errorText}>{pinError}</Text>
             </View>
           )}
@@ -481,7 +485,7 @@ export default function SanctumScreen() {
       <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
         <View style={styles.glassLockCard}>
           <View style={styles.pinIconBadge}>
-            <Ionicons name="keypad-outline" size={32} color={Primary.default} />
+            <Ionicons name="keypad-outline" size={32} color={theme.primary.default} />
           </View>
           <Text style={styles.lockTitle}>Code PIN</Text>
           <Text style={styles.lockSubtitle}>
@@ -493,7 +497,7 @@ export default function SanctumScreen() {
             value={pinInput}
             onChangeText={setPinInput}
             placeholder="Code PIN"
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={theme.onSurface.disabled}
             keyboardType="number-pad"
             secureTextEntry
             maxLength={8}
@@ -502,7 +506,7 @@ export default function SanctumScreen() {
 
           {!!pinError && (
             <View style={styles.errorBadge}>
-              <Ionicons name="alert-circle-outline" size={16} color="#FF5252" />
+              <Ionicons name="alert-circle-outline" size={16} color={theme.error.default} />
               <Text style={styles.errorText}>{pinError}</Text>
             </View>
           )}
@@ -544,7 +548,7 @@ export default function SanctumScreen() {
             onPress={() => router.back()}
             accessibilityLabel="Retour"
           >
-            <Ionicons name="arrow-back" size={24} color={OnSurface.primary} />
+            <Ionicons name="arrow-back" size={24} color={theme.onSurface.primary} />
           </TouchableOpacity>
           <View style={formStyles.toolbarCenter}>
             <Text style={formStyles.toolbarTitle}>Sanctuaire</Text>
@@ -556,14 +560,14 @@ export default function SanctumScreen() {
             accessibilityLabel="Verrouiller"
           >
             <View style={styles.lockIconBadge}>
-              <Ionicons name="lock-closed" size={16} color={Primary.default} />
+              <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Badge sécurité */}
         <View style={styles.secureBadgeCentered}>
-          <Ionicons name="shield-checkmark" size={14} color={Success.default} />
+          <Ionicons name="shield-checkmark" size={14} color={theme.success.default} />
           <Text style={styles.secureBadgeText}>
             Espace chiffré & déverrouillé
           </Text>
@@ -571,17 +575,17 @@ export default function SanctumScreen() {
 
         {/* Barre de recherche Glassmorphism */}
         <View style={styles.searchContainer}>
-          <Ionicons name="search-outline" size={18} color={Primary.default} />
+          <Ionicons name="search-outline" size={18} color={theme.primary.default} />
           <TextInput
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Rechercher dans vos carnets..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={theme.onSurface.disabled}
           />
           {!!searchQuery && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color={OnSurface.disabled} />
+              <Ionicons name="close-circle" size={18} color={theme.onSurface.disabled} />
             </TouchableOpacity>
           )}
         </View>
@@ -617,7 +621,7 @@ export default function SanctumScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <View style={styles.emptyIconBadge}>
-                <Ionicons name="document-text-outline" size={40} color={OnSurface.disabled} />
+                <Ionicons name="document-text-outline" size={40} color={theme.onSurface.disabled} />
               </View>
               <Text style={styles.emptyTitle}>
                 {searchQuery ? 'Aucun résultat trouvé' : 'Aucun carnet secret'}
@@ -638,13 +642,13 @@ export default function SanctumScreen() {
             >
               <View style={styles.noteCardHeader}>
                 <View style={styles.noteCardTitleRow}>
-                  <Ionicons name="lock-closed" size={16} color={Primary.default} />
+                  <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
                   <Text style={styles.noteCardTitle} numberOfLines={1}>
                     {item.title || 'Sans titre'}
                   </Text>
                 </View>
                 <View style={styles.folderTag}>
-                  <Ionicons name="folder-outline" size={12} color={Tertiary.default} />
+                  <Ionicons name="folder-outline" size={12} color={theme.tertiary.default} />
                   <Text style={styles.folderTagText}>{item.folder}</Text>
                 </View>
               </View>
@@ -701,7 +705,7 @@ export default function SanctumScreen() {
               accessibilityLabel="Supprimer"
               style={{ padding: 4 }}
             >
-              <Ionicons name="trash-outline" size={20} color="#FF5252" />
+              <Ionicons name="trash-outline" size={20} color={theme.error.default} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -730,7 +734,7 @@ export default function SanctumScreen() {
             value={editorTitle}
             onChangeText={setEditorTitle}
             placeholder="Titre du carnet secret..."
-            placeholderTextColor={OnSurface.disabled}
+            placeholderTextColor={theme.onSurface.disabled}
             maxLength={100}
             autoFocus
           />
@@ -741,7 +745,7 @@ export default function SanctumScreen() {
             onPress={() => setShowFolderPicker(!showFolderPicker)}
           >
             <View style={styles.folderBadgeSmall}>
-              <Ionicons name="folder-outline" size={16} color={Primary.default} />
+              <Ionicons name="folder-outline" size={16} color={theme.primary.default} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.folderLabelSmall}>DOSSIER</Text>
@@ -750,7 +754,7 @@ export default function SanctumScreen() {
             <Ionicons
               name={showFolderPicker ? 'chevron-up' : 'chevron-down'}
               size={18}
-              color={OnSurface.variant}
+              color={theme.onSurface.variant}
             />
           </TouchableOpacity>
 
@@ -777,7 +781,7 @@ export default function SanctumScreen() {
                     {folder}
                   </Text>
                   {editorFolder === folder && (
-                    <Ionicons name="checkmark" size={16} color={Primary.default} />
+                    <Ionicons name="checkmark" size={16} color={theme.primary.default} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -788,13 +792,13 @@ export default function SanctumScreen() {
         {/* Carte 2 : Contenu Confidentiel */}
         <View style={formStyles.cardGroup}>
           <View style={styles.editorTextRow}>
-            <Ionicons name="key-outline" size={18} color={Primary.default} style={{ marginTop: 2 }} />
+            <Ionicons name="key-outline" size={18} color={theme.primary.default} style={{ marginTop: 2 }} />
             <TextInput
               style={styles.editorTextInput}
               value={editorContent}
               onChangeText={setEditorContent}
               placeholder="Écrivez vos pensées, idées secrètes, réflexions ou informations strictement confidentielles..."
-              placeholderTextColor={OnSurface.disabled}
+              placeholderTextColor={theme.onSurface.disabled}
               multiline
               numberOfLines={12}
               textAlignVertical="top"
@@ -832,348 +836,3 @@ function formatRelativeDate(iso: string): string {
   if (diffD < 7) return `Il y a ${diffD}j`;
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-// STYLES HARMONISÉS MIDNIGHT GLASSMORPHISM
-// ═════════════════════════════════════════════════════════════════════════════
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Surface.base,
-  },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.xl,
-  },
-
-  // ─── Lock screen Glass Card ─────────────────────────────────────────────
-  glassLockCard: {
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: 'rgba(24, 28, 42, 0.88)',
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.18)',
-    gap: Spacing.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.45,
-        shadowRadius: 18,
-      },
-      android: {
-        elevation: 8,
-      },
-      default: {},
-    }),
-  },
-  pinIconBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(208, 188, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lockIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(208, 188, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lockTitle: {
-    ...Typography.headlineLarge,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    marginTop: Spacing.xs,
-  },
-  lockSubtitle: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  unlockBtn: {
-    width: '100%',
-    marginTop: Spacing.md,
-  },
-  altAuthLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    padding: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  altAuthText: {
-    ...Typography.labelMedium,
-    color: Primary.default,
-    fontWeight: '600',
-  },
-  errorBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 82, 82, 0.12)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 82, 82, 0.30)',
-  },
-  errorText: {
-    ...Typography.labelSmall,
-    color: '#FF5252',
-  },
-  backLink: {
-    padding: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  backLinkText: {
-    ...Typography.labelMedium,
-    color: OnSurface.variant,
-  },
-
-  // ─── PIN ────────────────────────────────────────────────────────────────
-  pinInput: {
-    width: '100%',
-    backgroundColor: 'rgba(15, 18, 28, 0.90)',
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    ...Typography.headlineLarge,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    letterSpacing: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.22)',
-    marginTop: Spacing.xs,
-  },
-
-  // ─── Security badge ────────────────────────────────────────────────────
-  secureBadgeCentered: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: Spacing.xs,
-    backgroundColor: 'rgba(109, 213, 140, 0.10)',
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(109, 213, 140, 0.25)',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  secureBadgeText: {
-    ...Typography.labelSmall,
-    color: Success.default,
-    fontWeight: '600',
-  },
-
-  // ─── Search ─────────────────────────────────────────────────────────────
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(18, 22, 34, 0.85)',
-    borderRadius: Radius.md,
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.14)',
-  },
-  searchInput: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    color: '#FFFFFF',
-    padding: 0,
-  },
-
-  // ─── Folder chips ──────────────────────────────────────────────────────
-  folderChipsScroll: {
-    maxHeight: 48,
-    marginTop: Spacing.sm,
-  },
-  folderChipsContent: {
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.xs,
-  },
-
-  // ─── Note cards ────────────────────────────────────────────────────────
-  listContent: {
-    padding: Spacing.md,
-    gap: Spacing.md,
-  },
-  noteCard: {
-    backgroundColor: 'rgba(24, 28, 42, 0.82)',
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.16)',
-    gap: Spacing.xs,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.30,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 3,
-      },
-      default: {},
-    }),
-  },
-  noteCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  noteCardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    flex: 1,
-  },
-  noteCardTitle: {
-    ...Typography.titleMedium,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    flex: 1,
-  },
-  noteCardSnippet: {
-    ...Typography.bodySmall,
-    color: OnSurface.variant,
-    marginTop: 2,
-    lineHeight: 18,
-  },
-  noteCardDate: {
-    ...Typography.labelSmall,
-    color: OnSurface.disabled,
-    marginTop: Spacing.xs,
-    fontSize: 11,
-  },
-  folderTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(123, 208, 255, 0.12)',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(123, 208, 255, 0.25)',
-  },
-  folderTagText: {
-    ...Typography.labelSmall,
-    color: Tertiary.default,
-    fontWeight: '600',
-  },
-
-  // ─── Empty state ───────────────────────────────────────────────────────
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl,
-    gap: Spacing.sm,
-  },
-  emptyIconBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
-    ...Typography.titleMedium,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  emptySubtitle: {
-    ...Typography.bodySmall,
-    color: OnSurface.disabled,
-    textAlign: 'center',
-  },
-
-  // ─── Editor Elements ───────────────────────────────────────────────────
-  folderSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: 'rgba(15, 18, 28, 0.80)',
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.18)',
-    marginTop: Spacing.xs,
-  },
-  folderBadgeSmall: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    backgroundColor: 'rgba(208, 188, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  folderLabelSmall: {
-    ...Typography.labelSmall,
-    color: OnSurface.variant,
-    fontSize: 9,
-    letterSpacing: 0.5,
-  },
-  folderSelectorText: {
-    ...Typography.bodyMedium,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  folderPickerList: {
-    backgroundColor: 'rgba(18, 22, 34, 0.95)',
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(208, 188, 255, 0.18)',
-    overflow: 'hidden',
-    marginTop: 4,
-  },
-  folderPickerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  folderPickerItemActive: {
-    backgroundColor: 'rgba(208, 188, 255, 0.16)',
-  },
-  folderPickerItemText: {
-    ...Typography.bodyMedium,
-    color: OnSurface.variant,
-  },
-  folderPickerItemTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  editorTextRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    minHeight: 220,
-  },
-  editorTextInput: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    color: '#FFFFFF',
-    minHeight: 220,
-    lineHeight: 22,
-  },
-});

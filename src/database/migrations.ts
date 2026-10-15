@@ -419,4 +419,16 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_sanctum_notes_updated_at ON sanctum_notes(updated_at);
     `,
   },
+  {
+    version: 22,
+    name: 'add_appearance_mode',
+    sql: `
+      -- Ajout de la colonne appearance_mode ('system' | 'light' | 'dark')
+      ALTER TABLE settings ADD COLUMN appearance_mode TEXT NOT NULL DEFAULT 'dark';
+
+      -- Initialisation cohérente depuis l'ancien booléen appearance_dark
+      UPDATE settings SET appearance_mode = CASE WHEN appearance_dark = 1 THEN 'dark' ELSE 'light' END;
+    `,
+  },
 ];
+
