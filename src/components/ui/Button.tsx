@@ -83,7 +83,6 @@ export function Button({
         style={({ pressed }) => [
           styles.base,
           styles.primaryBase,
-          styles[`size_${size}`],
           isDisabled && styles.disabled,
           style,
           pressed && !isDisabled && styles.pressed,
@@ -153,7 +152,8 @@ export function makeButtonStyles(theme: ThemePalette) {
           shadowRadius: 14,
         },
         android: {
-          elevation: 6,
+          // DEF-07 : Pas d'élévation sur conteneur avec overflow: 'hidden' pour supprimer l'anneau sombre Android
+          elevation: 0,
         },
         default: {
           boxShadow: isDark

@@ -34,6 +34,9 @@ import {
   Typography,
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
+import type { ThemePalette } from '@/constants/palettes';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 export interface GlassFloatingActionButtonProps {
   label: string;
@@ -56,6 +59,9 @@ export function GlassFloatingActionButton({
   accessibilityLabel,
   style,
 }: GlassFloatingActionButtonProps) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeGlassFabStyles);
+
   // Valeur d'expansion : 1 = étendu (largeur ~168px), 0 = compact (cercle 52x52)
   const expandAnim = useRef(new Animated.Value(1)).current;
   // Valeur d'échelle 3D (touch press)
@@ -163,7 +169,7 @@ export function GlassFloatingActionButton({
           ]}
         >
           <LinearGradient
-            colors={['#8B5CF6', '#6D28D9']}
+            colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.gradient}
@@ -198,55 +204,60 @@ export function GlassFloatingActionButton({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    right: 20,
-    zIndex: 999,
-    // Ombre 3D et halo volumétrique Electric Violet
-    ...Platform.select({
-      ios: {
-        shadowColor: '#8B5CF6',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.45,
-        shadowRadius: 14,
-      },
-      android: {
-        elevation: 8,
-      },
-      default: {
-        boxShadow: '0 8px 24px -2px rgba(139, 92, 246, 0.45)',
-      },
-    }),
-  },
-  touchableWrapper: {
-    height: 52,
-    borderRadius: 26,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.38)', // Reflet verre 3D supérieur
-    borderLeftColor: 'rgba(255, 255, 255, 0.22)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.35)',    // Ombre de tranche inférieure
-    borderRightColor: 'rgba(0, 0, 0, 0.20)',
-  },
-  gradient: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
-    paddingHorizontal: 8,
-  },
-  label: {
-    ...Typography.labelLarge,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-});
+export function makeGlassFabStyles(theme: ThemePalette) {
+  const isDark = theme.mode === 'dark';
+
+  return StyleSheet.create({
+    container: {
+      position: 'absolute',
+      right: 20,
+      zIndex: 999,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.shadow.color,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.45 : 0.25,
+          shadowRadius: 14,
+        },
+        android: {
+          elevation: 6,
+        },
+        default: {
+          boxShadow: isDark
+            ? '0 8px 24px -2px rgba(124, 58, 237, 0.45)'
+            : '0 8px 20px -2px rgba(107, 70, 193, 0.25)',
+        },
+      }),
+    },
+    touchableWrapper: {
+      height: 52,
+      borderRadius: 26,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(255, 255, 255, 0.60)',
+      borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.40)',
+      borderBottomColor: isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(107, 70, 193, 0.40)',
+      borderRightColor: isDark ? 'rgba(0, 0, 0, 0.20)' : 'rgba(107, 70, 193, 0.30)',
+    },
+    gradient: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    contentRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      height: '100%',
+      paddingHorizontal: 8,
+    },
+    label: {
+      ...Typography.labelLarge,
+      color: '#FFFFFF',
+      fontWeight: '700',
+      letterSpacing: -0.2,
+    },
+  });
+}
