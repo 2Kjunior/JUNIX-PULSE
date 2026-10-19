@@ -208,16 +208,15 @@ export default function SettingsScreen() {
 
   const handleResetApp = () => {
     Alert.alert(
-      'Réinitialiser l\'application',
-      'ATTENTION : Cette action va réinitialiser l\'application et relancer l\'onboarding. Êtes-vous sûr ?',
+      "Recommencer l'onboarding ?",
+      "Cela va relancer la visite d'accueil de l'application. Toutes vos données existantes seront conservées.",
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Réinitialiser',
-          style: 'destructive',
+          text: 'Recommencer',
           onPress: async () => {
             setOnboardingComplete(false);
-            showSnackbar('Application réinitialisée');
+            showSnackbar("Visite d'accueil relancée");
             router.replace('/(onboarding)');
           },
         },
@@ -406,8 +405,8 @@ export default function SettingsScreen() {
           onPress={() => router.push('/settings/schedule')}
         >
           <View>
-            <Text style={styles.rowLabel}>Emploi du temps type</Text>
-            <Text style={styles.rowSub}>Blocs récurrents de la semaine</Text>
+            <Text style={styles.rowLabel}>Blocs hebdomadaires de vie</Text>
+            <Text style={styles.rowSub}>Travail, repos, sommeil et temps libre</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={palette.onSurface.disabled} />
         </TouchableOpacity>
@@ -543,8 +542,8 @@ export default function SettingsScreen() {
           onPress={() => router.push('/sanctum')}
         >
           <View>
-            <Text style={styles.rowLabel}>Sanctum — Espace Privé</Text>
-            <Text style={styles.rowSub}>Notes protégées par biométrie native</Text>
+            <Text style={styles.rowLabel}>Sanctuaire — Espace Privé</Text>
+            <Text style={styles.rowSub}>Notes chiffrées et protégées par biométrie</Text>
           </View>
           <Ionicons name="lock-closed-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
@@ -559,12 +558,12 @@ export default function SettingsScreen() {
 
         <TouchableOpacity style={styles.row} onPress={handleResetApp}>
           <View>
-            <Text style={[styles.rowLabel, { color: palette.error.default }]}>
-              Réinitialiser l'application
+            <Text style={[styles.rowLabel, { color: palette.primary.default }]}>
+              Recommencer l'onboarding
             </Text>
-            <Text style={styles.rowSub}>Relancer le processus d'onboarding</Text>
+            <Text style={styles.rowSub}>Revoir la visite d'accueil sans perdre vos données</Text>
           </View>
-          <Ionicons name="refresh-outline" size={20} color={palette.error.default} />
+          <Ionicons name="refresh-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
         <View style={styles.infoBox}>

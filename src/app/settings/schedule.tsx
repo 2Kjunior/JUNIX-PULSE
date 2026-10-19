@@ -146,7 +146,7 @@ export default function PersonalScheduleScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Emploi du temps type</Text>
+        <Text style={styles.headerTitle}>Blocs hebdomadaires</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
           <Ionicons name="add" size={24} color={palette.surface.base} />
         </TouchableOpacity>
