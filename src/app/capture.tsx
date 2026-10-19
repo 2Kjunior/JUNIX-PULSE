@@ -167,8 +167,14 @@ export default function QuickCaptureScreen() {
     return d;
   }, [targetDate, targetTime]);
 
+  const isDateTimePast = computedDateTime <= new Date();
+
   const handleCreate = async () => {
     if (!cleanTitle.trim()) return;
+    if (computedDateTime <= new Date()) {
+      showSnackbar("L'échéance doit être dans le futur. Modifiez la date ou l'heure.");
+      return;
+    }
     setSaving(true);
     try {
       await createReminder({
@@ -343,6 +349,12 @@ export default function QuickCaptureScreen() {
             <Text style={styles.hint}>
               Astuce : Touchez un badge pour changer l'action ou la priorité.
             </Text>
+
+            {isDateTimePast && (
+              <Text style={[styles.hint, { color: palette.error.default, marginTop: 8 }]}>
+                ⚠️ Cette heure est déjà passée aujourd'hui. Touchez la date pour choisir demain ou un autre jour.
+              </Text>
+            )}
           </View>
         )}
 

@@ -140,6 +140,7 @@ export default function NewReminderScreen() {
           ? {
               type: recurrenceType,
               interval: 1,
+              dayOfMonth: recurrenceType === 'MONTHLY' ? scheduledAt.getDate() : undefined,
             }
           : undefined,
         notificationsEnabled: settings.notificationsEnabled,

@@ -70,8 +70,8 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     }
   }
 
-  // 4. Planifier la notification si activée
-  if (input.notificationsEnabled) {
+  // 4. Planifier la notification si activée et dans le futur (DEF-09)
+  if (input.notificationsEnabled && input.scheduledAt > new Date()) {
     try {
       const notifId = await NotificationService.scheduleReminder({
         id: reminderId,
@@ -79,11 +79,13 @@ export async function createReminder(input: CreateReminderInput): Promise<string
         body: input.notes,
         scheduledAt: input.scheduledAt,
       });
-      await ReminderRepository.update({
-        id: reminderId,
-        notificationId: notifId,
-        updatedAt: new Date().toISOString(),
-      });
+      if (notifId) {
+        await ReminderRepository.update({
+          id: reminderId,
+          notificationId: notifId,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     } catch {
       // La notification a échoué mais le rappel est sauvé en base
       // L'utilisateur peut toujours voir le rappel dans l'app
@@ -130,19 +132,21 @@ export async function updateReminder(input: UpdateReminderInput): Promise<void> 
     updatedAt: now,
   });
 
-  // Replanifier si une nouvelle date est fournie
-  if (input.scheduledAt && input.notificationsEnabled && input.title) {
+  // Replanifier si une nouvelle date future est fournie (DEF-09)
+  if (input.scheduledAt && input.notificationsEnabled && input.title && input.scheduledAt > new Date()) {
     try {
       const notifId = await NotificationService.scheduleReminder({
         id: input.id,
         title: input.title,
         scheduledAt: input.scheduledAt,
       });
-      await ReminderRepository.update({
-        id: input.id,
-        notificationId: notifId,
-        updatedAt: new Date().toISOString(),
-      });
+      if (notifId) {
+        await ReminderRepository.update({
+          id: input.id,
+          notificationId: notifId,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     } catch { /* ignore */ }
   }
 }
@@ -170,11 +174,11 @@ export async function completeReminder(
     updatedAt: now,
   });
 
-  // 2. Si récurrent, créer la prochaine occurrence
+  // 2. Si récurrent, créer la prochaine occurrence (strictement future par rapport à maintenant)
   if (reminder.recurrenceRuleId) {
     const rule = await ReminderRepository.findRecurrenceRule(reminder.recurrenceRuleId);
     if (rule) {
-      const nextDate = getNextOccurrence(reminder.scheduledAt, rule);
+      const nextDate = getNextOccurrence(reminder.scheduledAt, rule, new Date());
       if (nextDate) {
         await createReminder({
           title: reminder.title,
@@ -224,7 +228,7 @@ export async function snoozeReminder(
       snoozedUntil = computeSnoozeUntil(input.minutes);
       break;
     case 'tomorrow':
-      snoozedUntil = computeSnoozeTomorrowSameTime(reminder.scheduledAt);
+      snoozedUntil = computeSnoozeTomorrowSameTime(reminder.scheduledAt, new Date());
       break;
     case 'custom':
       snoozedUntil = input.until.toISOString();
@@ -249,8 +253,8 @@ export async function snoozeReminder(
     updatedAt: now,
   });
 
-  // Replanifier avec la nouvelle heure
-  if (notificationsEnabled) {
+  // Replanifier avec la nouvelle heure si dans le futur (DEF-09)
+  if (notificationsEnabled && snoozedUntilDate > new Date()) {
     try {
       const notifId = await NotificationService.scheduleReminder({
         id: reminder.id,
@@ -258,11 +262,13 @@ export async function snoozeReminder(
         body: `Rappel reporté — ${reminder.notes ?? ''}`,
         scheduledAt: snoozedUntilDate,
       });
-      await ReminderRepository.update({
-        id: reminder.id,
-        notificationId: notifId,
-        updatedAt: new Date().toISOString(),
-      });
+      if (notifId) {
+        await ReminderRepository.update({
+          id: reminder.id,
+          notificationId: notifId,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     } catch { /* ignore */ }
   }
 }
@@ -302,4 +308,61 @@ export async function deleteReminder(
       // (simplifié : l'utilisateur devra ré-ouvrir le rappel pour replanifier)
     },
   };
+}
+
+// ─── Réconciliation au démarrage (DEF-03 / I-11) ─────────────────────────────
+
+/**
+ * Avance tous les rappels récurrents en retard vers leur prochaine occurrence future.
+ * Appelée une seule fois au démarrage de l'app, après l'initialisation de la base.
+ *
+ * Algorithme :
+ * 1. Chercher les rappels UPCOMING/SNOOZED avec une recurrenceRuleId dont scheduledAt < now
+ * 2. Pour chacun, calculer la prochaine occurrence strictement future via getNextOccurrence
+ * 3a. Si une occurrence existe → mettre à jour scheduledAt + status = UPCOMING
+ * 3b. Si la règle est expirée (null) → marquer COMPLETED
+ *
+ * Retourne le nombre de rappels réconciliés (utile pour les logs / tests).
+ */
+export async function reconcileOverdueRecurringReminders(): Promise<number> {
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  // 1. Trouver tous les rappels récurrents en retard
+  const overdueReminders = await ReminderRepository.findOverdueRecurring(nowIso);
+
+  let reconciled = 0;
+
+  for (const reminder of overdueReminders) {
+    if (!reminder.recurrenceRuleId) continue;
+
+    const rule = await ReminderRepository.findRecurrenceRule(reminder.recurrenceRuleId);
+    if (!rule) continue;
+
+    // 2. Calculer la prochaine occurrence strictement future
+    const nextDate = getNextOccurrence(reminder.scheduledAt, rule, now);
+
+    if (nextDate) {
+      // 3a. Avancer le rappel à la prochaine occurrence future
+      await ReminderRepository.update({
+        id: reminder.id,
+        scheduledAt: nextDate,
+        status: 'UPCOMING',
+        snoozedUntil: undefined,
+        updatedAt: nowIso,
+      });
+    } else {
+      // 3b. Règle expirée → marquer comme complété
+      await ReminderRepository.update({
+        id: reminder.id,
+        status: 'COMPLETED',
+        completedAt: nowIso,
+        updatedAt: nowIso,
+      });
+    }
+
+    reconciled++;
+  }
+
+  return reconciled;
 }

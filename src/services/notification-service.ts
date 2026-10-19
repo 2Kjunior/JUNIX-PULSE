@@ -79,8 +79,9 @@ export const NotificationService = {
 
   /**
    * Planifie une notification locale pour un rappel.
+   * Retourne l'identifiant de notification ou null si la date est passée (DEF-09).
    */
-  async scheduleReminder(params: ScheduleReminderParams): Promise<string> {
+  async scheduleReminder(params: ScheduleReminderParams): Promise<string | null> {
     if (!Notifications) {
       return `mock-notif-${params.id}-${Date.now()}`;
     }
@@ -91,8 +92,12 @@ export const NotificationService = {
 
       const triggerDate = params.scheduledAt;
       const now = new Date();
-      const effectiveDate =
-        triggerDate <= now ? new Date(now.getTime() + 10_000) : triggerDate;
+      if (triggerDate <= now) {
+        logger.warn(
+          `[NotificationService] triggerDate (${triggerDate.toISOString()}) <= now (${now.toISOString()}) — notification ignorée (DEF-09)`
+        );
+        return null;
+      }
 
       return await Notifications.scheduleNotificationAsync({
         identifier: `reminder-${params.id}`,
@@ -109,7 +114,7 @@ export const NotificationService = {
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: effectiveDate,
+          date: triggerDate,
           channelId: Platform.OS === "android" ? "reminders" : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });

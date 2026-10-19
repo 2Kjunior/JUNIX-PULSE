@@ -39,6 +39,7 @@ import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { NotificationService } from "@/services/notification-service";
 import { useAppStore } from "@/store/app-store";
+import { reconcileOverdueRecurringReminders } from "@/use-cases/reminder-use-cases";
 
 // Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
 LogBox.ignoreLogs([
@@ -99,6 +100,10 @@ export default function RootLayout() {
         // 3. Initialiser les notifications (handler + canal Android)
         //    Appelé ici pour garantir que le bridge natif est prêt
         await NotificationService.initialize();
+
+        // 4. Réconcilier les rappels récurrents en retard (DEF-03)
+        //    Avance les occurrences passées vers la prochaine date future
+        await reconcileOverdueRecurringReminders();
 
         setDbReady(true);
       } catch (error) {

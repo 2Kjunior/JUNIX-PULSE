@@ -221,6 +221,24 @@ export const ReminderRepository = {
     return rows.map(rowToReminder);
   },
 
+  /**
+   * Rappels récurrents actifs dont scheduledAt est dans le passé (DEF-03).
+   * Utilisé par la réconciliation au démarrage pour avancer les occurrences en retard.
+   */
+  async findOverdueRecurring(nowIso: string): Promise<Reminder[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM reminders
+       WHERE deleted_at IS NULL
+         AND status IN ('UPCOMING', 'SNOOZED')
+         AND recurrence_rule_id IS NOT NULL
+         AND scheduled_at < ?
+       ORDER BY scheduled_at ASC`,
+      nowIso
+    );
+    return rows.map(rowToReminder);
+  },
+
   // ─── Checklist ─────────────────────────────────────────────────────────────
 
   async createChecklistItem(item: Omit<ReminderChecklistItem, 'isCompleted'>): Promise<void> {
