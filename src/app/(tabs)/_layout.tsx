@@ -157,6 +157,8 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
             focused ? styles.tabLabelFocused : styles.tabLabelInactive,
           ]}
           numberOfLines={1}
+          ellipsizeMode="tail"
+          maxFontSizeMultiplier={1.2}
         >
           {tab.title}
         </Text>
@@ -279,7 +281,7 @@ const makeTabsLayoutStyles = (theme: ThemePalette) =>
       backgroundColor: theme.surface.container,
       borderRadius: Radius.full,
       paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingHorizontal: 4,
       borderWidth: 1,
       borderColor: theme.outline.variant,
     },
@@ -291,8 +293,8 @@ const makeTabsLayoutStyles = (theme: ThemePalette) =>
     tabItemContent: {
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      paddingVertical: 4,
+      paddingHorizontal: 2,
       borderRadius: Radius.full,
       position: "relative",
       minHeight: 48,
@@ -311,9 +313,10 @@ const makeTabsLayoutStyles = (theme: ThemePalette) =>
 
     tabLabel: {
       fontSize: 10,
-      letterSpacing: 0.2,
+      letterSpacing: 0,
       marginTop: 2,
       textAlign: "center",
+      paddingHorizontal: 2,
     },
     tabLabelFocused: {
       color: theme.primary.default,
