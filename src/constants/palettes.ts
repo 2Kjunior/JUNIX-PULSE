@@ -34,6 +34,7 @@ export interface ThemePalette {
   readonly onSurface: {
     readonly primary: string;   // titres, corps principal
     readonly variant: string;   // sous-titres, métadonnées
+    readonly inactive: string;  // contrôles disponibles non sélectionnés
     readonly disabled: string;  // états désactivés
   };
 
@@ -143,6 +144,7 @@ export const darkPalette: ThemePalette = {
   onSurface: {
     primary: '#E6E1E7',   // contraste 13.2:1 sur #141317
     variant: '#CAC4D0',   // contraste 9.8:1 sur #141317
+    inactive: '#CAC4D0',  // contraste 9.6:1 sur #211F23 (onglets disponibles)
     disabled: '#6B6572',  // contraste 3.5:1 sur #141317 (décoratif uniquement)
   },
 
@@ -186,7 +188,7 @@ export const darkPalette: ThemePalette = {
   },
 
   gradient: {
-    primary: ['#8B5CF6', '#6D28D9'],
+    primary: ['#7C3AED', '#6D28D9'], // ajusté WCAG 2.2 AA (contraste ≥ 4.5:1 avec texte blanc)
   },
 
   glowCard: {
@@ -240,11 +242,12 @@ export const lightPalette: ThemePalette = {
   onSurface: {
     primary: '#1C1917',   // contraste 15.8:1 sur #FBF7F2
     variant: '#57534E',   // contraste 6.0:1 sur #FBF7F2
-    disabled: '#A8A29E',  // contraste 2.7:1 sur #FBF7F2 (décoratif uniquement)
+    inactive: '#57534E',  // contraste 6.5:1 sur #F2EDE8 (onglets disponibles)
+    disabled: '#736D68',  // contraste 4.6:1 sur #FBF7F2 (conforme WCAG 2.2 AA strict ≥ 4.5:1)
   },
 
   outline: {
-    default: '#A8A29E',
+    default: '#736D68',   // contraste 4.6:1 sur #FBF7F2 (conforme WCAG 2.2 AA strict ≥ 4.5:1)
     variant: '#D6D3D1',
   },
 

@@ -134,8 +134,22 @@ export default function TaskDetailScreen() {
   }
 
   async function handleDeleteSubtask(subtaskId: string) {
-    setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
-    await TaskUseCases.deleteSubtask(subtaskId);
+    Alert.alert(
+      'Supprimer cette sous-tâche ?',
+      'Cette action est irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
+            await TaskUseCases.deleteSubtask(subtaskId);
+            showSnackbar('Sous-tâche supprimée');
+          },
+        },
+      ]
+    );
   }
 
   // ─── Actions Tâche ─────────────────────────────────────────────────────────
@@ -227,6 +241,7 @@ export default function TaskDetailScreen() {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={() => router.back()}
+          accessibilityRole="button"
           accessibilityLabel="Retour"
         >
           <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
@@ -235,7 +250,8 @@ export default function TaskDetailScreen() {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={handleDelete}
-          accessibilityLabel="Supprimer"
+          accessibilityRole="button"
+          accessibilityLabel="Supprimer la tâche"
         >
           <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
@@ -328,6 +344,9 @@ export default function TaskDetailScreen() {
             <TouchableOpacity
               style={[styles.chip, !scheduledDateStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(undefined)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: !scheduledDateStr }}
+              accessibilityLabel={`Inbox${!scheduledDateStr ? ', sélectionné' : ''}`}
             >
               <Ionicons
                 name="file-tray-outline"
@@ -342,6 +361,9 @@ export default function TaskDetailScreen() {
             <TouchableOpacity
               style={[styles.chip, scheduledDateStr === todayStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(todayStr)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: scheduledDateStr === todayStr }}
+              accessibilityLabel={`Aujourd'hui${scheduledDateStr === todayStr ? ', sélectionné' : ''}`}
             >
               <Ionicons
                 name="today-outline"
@@ -356,6 +378,9 @@ export default function TaskDetailScreen() {
             <TouchableOpacity
               style={[styles.chip, scheduledDateStr === tomorrowStr && styles.chipActive]}
               onPress={() => setScheduledDateStr(tomorrowStr)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: scheduledDateStr === tomorrowStr }}
+              accessibilityLabel={`Demain${scheduledDateStr === tomorrowStr ? ', sélectionné' : ''}`}
             >
               <Ionicons
                 name="arrow-forward-outline"
@@ -375,6 +400,12 @@ export default function TaskDetailScreen() {
                   styles.chipActive,
               ]}
               onPress={() => setShowDatePicker(true)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                scheduledDateStr && ![todayStr, tomorrowStr].includes(scheduledDateStr)
+                  ? `Date personnalisée : ${format(new Date(scheduledDateStr + 'T12:00:00'), 'd MMMM yyyy', { locale: fr })}`
+                  : 'Choisir une autre date'
+              }
             >
               <Ionicons name="calendar-outline" size={16} color={theme.onSurface.variant} />
               <Text style={styles.chipText}>
@@ -405,6 +436,9 @@ export default function TaskDetailScreen() {
                   <TouchableOpacity
                     onPress={() => handleToggleSubtask(s.id, s.isCompleted)}
                     style={styles.subtaskCheck}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: s.isCompleted }}
+                    accessibilityLabel={s.isCompleted ? `Marquer sous-tâche ${s.title} non terminée` : `Marquer sous-tâche ${s.title} terminée`}
                   >
                     <Ionicons
                       name={s.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
@@ -423,6 +457,8 @@ export default function TaskDetailScreen() {
                   <TouchableOpacity
                     onPress={() => handleDeleteSubtask(s.id)}
                     style={styles.subtaskDelete}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Supprimer la sous-tâche ${s.title}`}
                   >
                     <Ionicons name="close" size={18} color={theme.onSurface.disabled} />
                   </TouchableOpacity>
@@ -442,7 +478,12 @@ export default function TaskDetailScreen() {
               onSubmitEditing={handleAddSubtask}
               returnKeyType="done"
             />
-            <TouchableOpacity style={styles.subtaskAddBtn} onPress={handleAddSubtask}>
+            <TouchableOpacity
+              style={styles.subtaskAddBtn}
+              onPress={handleAddSubtask}
+              accessibilityRole="button"
+              accessibilityLabel="Ajouter la sous-tâche"
+            >
               <Ionicons name="add" size={20} color={theme.primary.on} />
             </TouchableOpacity>
           </View>

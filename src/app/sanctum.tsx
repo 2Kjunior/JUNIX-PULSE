@@ -398,13 +398,20 @@ export default function SanctumScreen() {
                 setPinError('');
                 setCurrentView('pin_verify');
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Utiliser le code PIN"
             >
               <Ionicons name="keypad-outline" size={16} color={theme.onSurface.variant} />
               <Text style={styles.altAuthText}>Utiliser le code PIN</Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backLink}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Retourner à l'application"
+          >
             <Text style={styles.backLinkText}>Retourner à l'application</Text>
           </TouchableOpacity>
         </View>
@@ -467,6 +474,8 @@ export default function SanctumScreen() {
               setPinError('');
               setCurrentView('locked');
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Annuler la configuration du code PIN"
           >
             <Text style={styles.backLinkText}>Annuler</Text>
           </TouchableOpacity>
@@ -525,6 +534,8 @@ export default function SanctumScreen() {
               setPinError('');
               setCurrentView('locked');
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Retour à l'écran de verrouillage"
           >
             <Text style={styles.backLinkText}>Retour</Text>
           </TouchableOpacity>
@@ -544,6 +555,7 @@ export default function SanctumScreen() {
           <TouchableOpacity
             style={formStyles.toolbarBtn}
             onPress={() => router.back()}
+            accessibilityRole="button"
             accessibilityLabel="Retour"
           >
             <Ionicons name="arrow-back" size={24} color={theme.onSurface.primary} />
@@ -555,7 +567,8 @@ export default function SanctumScreen() {
           <TouchableOpacity
             style={[formStyles.toolbarBtn, { alignItems: 'flex-end' }]}
             onPress={handleLock}
-            accessibilityLabel="Verrouiller"
+            accessibilityRole="button"
+            accessibilityLabel="Verrouiller le Sanctuaire"
           >
             <View style={styles.lockIconBadge}>
               <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
@@ -582,7 +595,11 @@ export default function SanctumScreen() {
             placeholderTextColor={theme.onSurface.disabled}
           />
           {!!searchQuery && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              accessibilityRole="button"
+              accessibilityLabel="Effacer la recherche"
+            >
               <Ionicons name="close-circle" size={18} color={theme.onSurface.disabled} />
             </TouchableOpacity>
           )}
@@ -602,6 +619,9 @@ export default function SanctumScreen() {
                 key={folder}
                 style={[formStyles.chip, isActive && formStyles.chipActive]}
                 onPress={() => setActiveFolder(folder)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={`Dossier ${folder}${isActive ? ', sélectionné' : ''}`}
               >
                 <Text style={[formStyles.chipText, isActive && formStyles.chipTextActive]}>
                   {folder}
@@ -637,6 +657,8 @@ export default function SanctumScreen() {
               onPress={() => handleEditNote(item)}
               onLongPress={() => handleDeleteNote(item)}
               activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={`Carnet ${item.title || 'Sans titre'}, dossier ${item.folder}`}
             >
               <View style={styles.noteCardHeader}>
                 <View style={styles.noteCardTitleRow}>
@@ -686,7 +708,8 @@ export default function SanctumScreen() {
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={() => setCurrentView('list')}
-          accessibilityLabel="Retour"
+          accessibilityRole="button"
+          accessibilityLabel="Annuler et retourner à la liste"
         >
           <Text style={formStyles.toolbarCancel}>Annuler</Text>
         </TouchableOpacity>
@@ -700,7 +723,8 @@ export default function SanctumScreen() {
           {editingNote && (
             <TouchableOpacity
               onPress={() => handleDeleteNote(editingNote)}
-              accessibilityLabel="Supprimer"
+              accessibilityRole="button"
+              accessibilityLabel="Supprimer ce carnet secret"
               style={{ padding: 4 }}
             >
               <Ionicons name="trash-outline" size={20} color={theme.error.default} />
@@ -710,7 +734,8 @@ export default function SanctumScreen() {
             style={formStyles.toolbarBtn}
             onPress={handleSaveNote}
             disabled={saving}
-            accessibilityLabel="Enregistrer"
+            accessibilityRole="button"
+            accessibilityLabel="Enregistrer le carnet secret"
           >
             <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
               {saving ? 'Enregistrement...' : 'Créer'}
@@ -741,6 +766,8 @@ export default function SanctumScreen() {
           <TouchableOpacity
             style={styles.folderSelector}
             onPress={() => setShowFolderPicker(!showFolderPicker)}
+            accessibilityRole="button"
+            accessibilityLabel={`Dossier sélectionné : ${editorFolder}. Appuyer pour changer de dossier.`}
           >
             <View style={styles.folderBadgeSmall}>
               <Ionicons name="folder-outline" size={16} color={theme.primary.default} />
@@ -769,6 +796,9 @@ export default function SanctumScreen() {
                     setEditorFolder(folder);
                     setShowFolderPicker(false);
                   }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: editorFolder === folder }}
+                  accessibilityLabel={`Dossier ${folder}${editorFolder === folder ? ', sélectionné' : ''}`}
                 >
                   <Text
                     style={[

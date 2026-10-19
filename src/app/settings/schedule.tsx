@@ -143,11 +143,21 @@ export default function PersonalScheduleScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Retour aux réglages"
+        >
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Blocs hebdomadaires</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => setShowModal(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Ajouter un bloc hebdomadaire"
+        >
           <Ionicons name="add" size={24} color={palette.surface.base} />
         </TouchableOpacity>
       </View>
@@ -162,6 +172,9 @@ export default function PersonalScheduleScreen() {
               selectedDay === d.num && styles.dayTabActive,
             ]}
             onPress={() => setSelectedDay(d.num)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: selectedDay === d.num }}
+            accessibilityLabel={`${d.label}${selectedDay === d.num ? ', sélectionné' : ''}`}
           >
             <Text
               style={[
@@ -222,6 +235,8 @@ export default function PersonalScheduleScreen() {
                 <TouchableOpacity
                   onPress={() => handleDeleteBlock(block.id, block.label)}
                   style={{ padding: Spacing.xs }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Supprimer le bloc ${block.label}`}
                 >
                   <Ionicons name="trash-outline" size={18} color={palette.error.default} />
                 </TouchableOpacity>
@@ -239,7 +254,11 @@ export default function PersonalScheduleScreen() {
               <Text style={styles.modalTitle}>
                 Nouveau bloc — {selectedDayInfo.full}
               </Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
+              <TouchableOpacity
+                onPress={() => setShowModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer la boîte de dialogue"
+              >
                 <Ionicons name="close" size={24} color={palette.onSurface.primary} />
               </TouchableOpacity>
             </View>
@@ -285,6 +304,9 @@ export default function PersonalScheduleScreen() {
                       blockType === t.type && { backgroundColor: t.color, borderColor: t.color },
                     ]}
                     onPress={() => setBlockType(t.type)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: blockType === t.type }}
+                    accessibilityLabel={`${t.label}${blockType === t.type ? ', sélectionné' : ''}`}
                   >
                     <Ionicons
                       name={t.icon}

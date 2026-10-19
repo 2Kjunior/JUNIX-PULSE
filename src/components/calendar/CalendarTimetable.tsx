@@ -153,6 +153,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                 intensity="soft"
                 style={styles.taskMiniCard}
                 onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}
+                accessibilityLabel={`Tâche : ${t.title}${t.status === 'COMPLETED' ? ', terminée' : ''}`}
               >
                 <View style={styles.taskMiniContent}>
                   <Ionicons
@@ -232,6 +233,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                           intensity="default"
                           style={styles.eventCard}
                           onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
+                          accessibilityLabel={`Événement : ${e.title}, horaire ${timeStr}${e.location ? `, lieu ${e.location}` : ''}`}
                         >
                           <View style={styles.cardHeaderRow}>
                             <View style={styles.eventBadge}>
@@ -277,6 +279,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                           intensity="default"
                           style={styles.reminderCard}
                           onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
+                          accessibilityLabel={`Rappel : ${r.title}, heure ${reminderTimeStr}${isUrgent ? ', urgent' : ''}`}
                         >
                           <View style={styles.cardHeaderRow}>
                             <View style={[styles.reminderBadge, isUrgent && styles.reminderBadgeUrgent]}>
@@ -311,6 +314,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                             <TouchableOpacity
                               style={styles.reminderSnoozeBtn}
                               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Options et report pour le rappel ${r.title}`}
                             >
                               <Ionicons name="timer-outline" size={12} color={theme.primary.default} />
                               <Text style={styles.reminderSnoozeText}>Options & Snooze</Text>
@@ -326,6 +331,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                     style={styles.freeSlot}
                     onPress={() => setSelectedSlotHour(hour)}
                     activeOpacity={0.65}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Créneau de ${hour}h disponible. Appuyer pour choisir une action.`}
                   >
                     <View style={styles.freeSlotInner}>
                       <Text style={styles.freeSlotText}>Créneau disponible • Choisir une action</Text>
@@ -350,6 +357,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setSelectedSlotHour(null)}
+          accessibilityRole="button"
+          accessibilityLabel="Fermer la boîte de sélection"
         >
           <View style={styles.slotActionSheet}>
             <View style={styles.sheetHeader}>
@@ -364,6 +373,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
               <TouchableOpacity
                 style={styles.sheetCloseBtn}
                 onPress={() => setSelectedSlotHour(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer la sélection du créneau"
               >
                 <Ionicons name="close" size={20} color={theme.onSurface.variant} />
               </TouchableOpacity>
@@ -387,6 +398,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   });
                 }}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Créer un événement : rendez-vous, réunion ou bloc fixe"
               >
                 <View style={[styles.optionIconCircle, { backgroundColor: eventAccentColor + '20' }]}>
                   <Ionicons name="calendar" size={20} color={eventAccentColor} />
@@ -411,6 +424,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   });
                 }}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Créer un rappel : alerte sonore et notification précise"
               >
                 <View style={[styles.optionIconCircle, { backgroundColor: theme.primary.default + '20' }]}>
                   <Ionicons name="notifications" size={20} color={theme.primary.default} />
@@ -434,6 +449,8 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                   });
                 }}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Créer une tâche du jour : action à cocher avec durée estimée"
               >
                 <View style={[styles.optionIconCircle, { backgroundColor: taskAccentColor + '20' }]}>
                   <Ionicons name="checkbox" size={20} color={taskAccentColor} />

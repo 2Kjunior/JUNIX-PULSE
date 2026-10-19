@@ -139,13 +139,23 @@ export default function GoalDetailScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Retour à la liste des objectifs"
+        >
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {goal.title}
         </Text>
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={handleDelete}
+          accessibilityRole="button"
+          accessibilityLabel="Supprimer cet objectif"
+        >
           <Ionicons name="trash-outline" size={22} color={palette.error.default} />
         </TouchableOpacity>
       </View>
@@ -231,6 +241,8 @@ export default function GoalDetailScreen() {
             <TouchableOpacity
               style={styles.linkBtn}
               onPress={() => setShowTaskPicker(!showTaskPicker)}
+              accessibilityRole="button"
+              accessibilityLabel="Lier une tâche à cet objectif"
             >
               <Ionicons name="add" size={18} color={palette.primary.default} />
               <Text style={styles.linkBtnText}>Lier une tâche</Text>
@@ -251,6 +263,8 @@ export default function GoalDetailScreen() {
                     key={t.id}
                     style={styles.pickerItem}
                     onPress={() => handleLinkTask(t.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Associer la tâche ${t.title}`}
                   >
                     <Text style={styles.pickerItemText}>{t.title}</Text>
                     <Ionicons name="link" size={18} color={palette.primary.default} />
@@ -274,6 +288,9 @@ export default function GoalDetailScreen() {
                     onPress={() => handleToggleTask(t.id)}
                     style={styles.taskCheckBtn}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: t.status === 'COMPLETED' }}
+                    accessibilityLabel={t.status === 'COMPLETED' ? `Marquer la tâche ${t.title} non terminée` : `Marquer la tâche ${t.title} terminée`}
                   >
                     <Ionicons
                       name={
@@ -294,7 +311,11 @@ export default function GoalDetailScreen() {
                   >
                     {t.title}
                   </Text>
-                  <TouchableOpacity onPress={() => handleUnlinkTask(t.id, t.title)}>
+                  <TouchableOpacity
+                    onPress={() => handleUnlinkTask(t.id, t.title)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Dissocier la tâche ${t.title} de cet objectif`}
+                  >
                     <Ionicons name="unlink-outline" size={20} color={palette.onSurface.disabled} />
                   </TouchableOpacity>
                 </View>

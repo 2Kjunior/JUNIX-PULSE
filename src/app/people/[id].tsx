@@ -50,6 +50,20 @@ const INTERACTION_TYPES: InteractionTypeConfig[] = [
   { type: 'OTHER', label: 'Autre', icon: 'document-text-outline' },
 ];
 
+function formatWhatsAppUrl(rawPhone?: string): string {
+  if (!rawPhone) return '';
+  let clean = rawPhone.trim().replace(/[^0-9+]/g, '');
+  if (clean.startsWith('+')) {
+    clean = clean.substring(1);
+  } else if (clean.startsWith('00')) {
+    clean = clean.substring(2);
+  } else if (clean.startsWith('0') && clean.length === 10) {
+    // Numéro national 10 chiffres (Côte d'Ivoire / Afrique de l'Ouest)
+    clean = '225' + clean;
+  }
+  return `https://wa.me/${clean}`;
+}
+
 export default function PersonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
@@ -121,9 +135,22 @@ export default function PersonDetailScreen() {
   // ─── Supprimer une interaction ─────────────────────────────────────────────
 
   async function handleDeleteInteraction(interactionId: string) {
-    await PersonUseCases.deleteInteraction(interactionId);
-    showSnackbar('Interaction supprimée');
-    await load();
+    Alert.alert(
+      'Supprimer cette interaction ?',
+      'Cette interaction sera définitivement retirée de l\'historique.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            await PersonUseCases.deleteInteraction(interactionId);
+            showSnackbar('Interaction supprimée');
+            await load();
+          },
+        },
+      ]
+    );
   }
 
   // ─── Supprimer la personne ──────────────────────────────────────────────────
@@ -182,6 +209,7 @@ export default function PersonDetailScreen() {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={() => router.back()}
+          accessibilityRole="button"
           accessibilityLabel="Retour"
         >
           <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
@@ -192,7 +220,8 @@ export default function PersonDetailScreen() {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={handleDeletePerson}
-          accessibilityLabel="Supprimer"
+          accessibilityRole="button"
+          accessibilityLabel="Supprimer le contact"
         >
           <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
@@ -283,7 +312,7 @@ export default function PersonDetailScreen() {
 
                   <TouchableOpacity
                     style={styles.quickActionBtn}
-                    onPress={() => Linking.openURL(`https://wa.me/${person.phone?.replace(/[^0-9]/g, '')}`)}
+                    onPress={() => Linking.openURL(formatWhatsAppUrl(person.phone))}
                     activeOpacity={0.7}
                   >
                     <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
@@ -341,6 +370,9 @@ export default function PersonDetailScreen() {
                       style={[styles.typeChip, isSelected && styles.typeChipActive]}
                       onPress={() => setSelectedType(item.type)}
                       activeOpacity={0.7}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={`${item.label}${isSelected ? ', sélectionné' : ''}`}
                     >
                       <Ionicons
                         name={item.icon}
@@ -420,7 +452,8 @@ export default function PersonDetailScreen() {
                   <TouchableOpacity
                     onPress={() => handleDeleteInteraction(item.id)}
                     style={styles.timelineDelete}
-                    accessibilityLabel="Supprimer interaction"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Supprimer l'interaction ${typeConfig.label} du ${format(new Date(item.occurredAt), 'd MMMM yyyy', { locale: fr })}`}
                   >
                     <Ionicons name="close" size={16} color={theme.onSurface.disabled} />
                   </TouchableOpacity>

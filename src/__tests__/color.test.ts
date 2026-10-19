@@ -130,6 +130,14 @@ describe('contrastRatio', () => {
   test('texte primaire sombre (#E6E1E7) sur surface (#141317) → ≥ 10', () => {
     expect(contrastRatio('#E6E1E7', '#141317')).toBeGreaterThan(10);
   });
+
+  test('texte blanc (#FFFFFF) sur début dégradé sombre (#7C3AED) → ≥ 4.5 (WCAG AA)', () => {
+    expect(contrastRatio('#FFFFFF', darkPalette.gradient.primary[0])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('texte disabled clair (#736D68) sur crème (#FBF7F2) → ≥ 4.5 (WCAG AA)', () => {
+    expect(contrastRatio(lightPalette.onSurface.disabled, lightPalette.surface.base)).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 // ─── resolveAccent ───────────────────────────────────────────────────────────

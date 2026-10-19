@@ -146,7 +146,7 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
           <Ionicons
             name={focused ? tab.iconFocused : tab.icon}
             size={focused ? 22 : 21}
-            color={focused ? palette.primary.default : palette.onSurface.disabled}
+            color={focused ? palette.primary.default : palette.onSurface.inactive}
           />
         </Animated.View>
 
@@ -321,7 +321,7 @@ const makeTabsLayoutStyles = (theme: ThemePalette) =>
       fontWeight: "700",
     },
     tabLabelInactive: {
-      color: theme.onSurface.disabled,
+      color: theme.onSurface.inactive,
       fontFamily: "Inter-Medium",
     },
   });

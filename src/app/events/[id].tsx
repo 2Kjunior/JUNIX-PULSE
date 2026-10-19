@@ -118,6 +118,7 @@ export default function EventDetailScreen() {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={() => router.back()}
+          accessibilityRole="button"
           accessibilityLabel="Retour"
         >
           <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
@@ -128,7 +129,8 @@ export default function EventDetailScreen() {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={handleDelete}
-          accessibilityLabel="Supprimer"
+          accessibilityRole="button"
+          accessibilityLabel="Supprimer l'événement"
         >
           <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
@@ -195,6 +197,8 @@ export default function EventDetailScreen() {
                   )}`
                 )
               }
+              accessibilityRole="button"
+              accessibilityLabel={`Ouvrir le lieu ${event.location} dans Google Maps`}
             >
               <Ionicons name="location-outline" size={20} color={theme.primary.default} />
               <View style={{ flex: 1 }}>
@@ -225,14 +229,16 @@ export default function EventDetailScreen() {
                 .split(' ')
                 .map(w => w[0])
                 .join('')
-                .substring(0, 2)
-                .toUpperCase();
+                .toUpperCase()
+                .substring(0, 2);
 
               return (
                 <TouchableOpacity
                   key={p.id}
                   style={styles.personRow}
                   onPress={() => router.push({ pathname: '/people/[id]', params: { id: p.id } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Voir le contact ${p.displayName}${p.relationship ? `, relation : ${p.relationship}` : ''}`}
                 >
                   <View style={styles.personAvatar}>
                     <Text style={styles.personAvatarText}>{initials}</Text>
