@@ -8,12 +8,39 @@
  *     1. Parsing et validation d'une sauvegarde moderne avec appearance_mode ('system'|'light'|'dark').
  *     2. Rétro-compatibilité : parsing réussi d'une sauvegarde antérieure SANS appearance_mode.
  *     3. Rejet strict si appearance_mode contient une valeur inconnue.
+ * - clearAllData : annulation des notifications OS + vidage atomique des 19 tables.
  */
 
 import { MIGRATIONS } from '../database/migrations';
 import { getDatabase } from '../database/sqlite';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { parseBackup } from '../services/backup-service';
+
+// Imports APRÈS les jest.mock — Jest les hisse automatiquement, mais
+// la résolution de module doit atteindre les mocks, pas les vrais modules.
+import { clearAllData } from '../database/seed';
+import { NotificationService } from '../services/notification-service';
+
+// ── Mocks de modules natifs ──────────────────────────────────────────────────
+// Jest hisse jest.mock() AU-DESSUS de toutes les déclarations de variables.
+// On ne peut donc pas référencer une variable externe dans la factory :
+// les jest.fn() doivent être créés DIRECTEMENT dans la factory.
+
+jest.mock('../services/notification-service', () => ({
+  NotificationService: {
+    cancelAll: jest.fn().mockResolvedValue(undefined),
+    isAvailable: jest.fn().mockReturnValue(true),
+    initialize: jest.fn().mockResolvedValue(undefined),
+    scheduleReminder: jest.fn().mockResolvedValue('mock-notif-id'),
+    cancelReminder: jest.fn().mockResolvedValue(undefined),
+    getAllScheduled: jest.fn().mockResolvedValue([]),
+    checkPermissions: jest.fn().mockResolvedValue(true),
+    requestPermissions: jest.fn().mockResolvedValue(true),
+    sendTestNotification: jest.fn().mockResolvedValue({ success: true }),
+    addForegroundListener: jest.fn().mockReturnValue(() => {}),
+    addResponseListener: jest.fn().mockReturnValue(() => {}),
+  },
+}));
 
 jest.mock('../services/backup-crypto', () => ({
   encryptBackupContents: jest.fn(),
@@ -23,8 +50,6 @@ jest.mock('../services/backup-crypto', () => ({
 jest.mock('../database/sqlite', () => ({
   getDatabase: jest.fn(),
 }));
-
-
 
 describe('Phase P2 — Persistance & Sauvegarde', () => {
   describe('Migration v22', () => {
@@ -251,5 +276,58 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
       );
     });
   });
+
+  describe('clearAllData — Réinitialisation complète et atomique (DEF-02)', () => {
+    const mockDb = {
+      runAsync: jest.fn().mockResolvedValue({ changes: 0 }),
+      withTransactionAsync: jest.fn(async (callback: () => Promise<void>) => {
+        await callback();
+      }),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (getDatabase as jest.Mock).mockResolvedValue(mockDb);
+    });
+
+    it('annule toutes les notifications OS et vide les 19 tables sous transaction', async () => {
+      await clearAllData();
+
+      // 1. Annulation des alarmes OS
+      expect(NotificationService.cancelAll).toHaveBeenCalledTimes(1);
+
+      // 2. Encapsulation transactionnelle
+      expect(mockDb.withTransactionAsync).toHaveBeenCalledTimes(1);
+
+      // 3. Vérification de la présence des 19 tables critiques (dont les 5 précédemment oubliées)
+      const expectedTables = [
+        'habit_completions',
+        'habit_pauses',
+        'habits',
+        'goal_tasks',
+        'goals',
+        'reminder_checklist_items',
+        'reminders',
+        'recurrence_rules',
+        'subtasks',
+        'tasks',
+        'event_persons',
+        'events',
+        'interactions',
+        'persons',
+        'suggestions',
+        'planning_blocks',
+        'personal_schedules',
+        'settings',
+        'sanctum_notes',
+      ];
+
+      expect(mockDb.runAsync).toHaveBeenCalledTimes(expectedTables.length);
+      expectedTables.forEach((table) => {
+        expect(mockDb.runAsync).toHaveBeenCalledWith(`DELETE FROM ${table}`);
+      });
+    });
+  });
 });
+
 

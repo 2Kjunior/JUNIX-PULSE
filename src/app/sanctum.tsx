@@ -13,7 +13,7 @@
  * Auto-verrouillage au passage en arrière-plan (AppState listener).
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -31,9 +31,9 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import * as Crypto from 'expo-crypto';
 
 import { SanctumRepository, type SanctumNote } from '@/repositories/sanctum-repository';
+import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { useAppStore } from '@/store/app-store';
 import {
   filterSanctumNotes,
@@ -52,34 +52,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { makeSanctumStyles } from '@/styles/sanctum/sanctum-styles';
 import { makeFormStyles } from '@/styles/common/form-styles';
-import { getDatabase } from '@/database/sqlite';
 
 // ─── Types locaux ────────────────────────────────────────────────────────────
 type SanctumView = 'locked' | 'pin_setup' | 'pin_verify' | 'list' | 'editor';
-
-// ─── Helpers PIN hashé (SHA-256 avec sel fixe par appareil) ──────────────────
-async function hashPin(pin: string): Promise<string> {
-  const salted = `sanctum_salt_jp_${pin}`;
-  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, salted);
-}
-
-async function savePinHash(hash: string): Promise<void> {
-  const db = await getDatabase();
-  await db.runAsync(
-    `INSERT INTO sanctum_notes (id, title, content, folder, created_at, updated_at)
-     VALUES ('__pin_hash__', '__system__', ?, '__system__', datetime('now'), datetime('now'))
-     ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at`,
-    hash
-  );
-}
-
-async function getSavedPinHashFromDb(): Promise<string | null> {
-  const db = await getDatabase();
-  const row = await db.getFirstAsync<{ content: string }>(
-    `SELECT content FROM sanctum_notes WHERE id = '__pin_hash__'`
-  );
-  return row?.content ?? null;
-}
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function SanctumScreen() {
@@ -88,6 +63,9 @@ export default function SanctumScreen() {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeSanctumStyles);
   const formStyles = useThemedStyles(makeFormStyles);
+
+  // ─── Clé cryptographique active en mémoire volatile (jamais persistée en clair) ───
+  const activeKeyRef = useRef<Uint8Array | null>(null);
 
   // ─── Etat global ────────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState<SanctumView>('locked');
@@ -115,13 +93,14 @@ export default function SanctumScreen() {
   const [saving, setSaving] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
 
-  // ─── Auto-lock quand l'app passe en arrière-plan ───────────────────────
+  // ─── Auto-lock quand l'app passe en arrière-plan (purge la clé en RAM) ──
   const appState = useRef(AppState.currentState);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
       if (appState.current === 'active' && nextState.match(/inactive|background/)) {
         if (currentView !== 'locked' && currentView !== 'pin_setup' && currentView !== 'pin_verify') {
+          activeKeyRef.current = null;
           setCurrentView('locked');
           setNotes([]);
           setEditingNote(null);
@@ -142,14 +121,14 @@ export default function SanctumScreen() {
         const biometricsAvailable = hasHardware && isEnrolled;
         setHasBiometrics(biometricsAvailable);
 
-        const savedPin = await getSavedPinHashFromDb();
-        setHasPinConfigured(!!savedPin);
+        const pinConfigured = await SanctumAuthService.isPinConfigured();
+        setHasPinConfigured(pinConfigured);
 
-        // Si biométrie disponible, déclencher authentification automatique
-        if (biometricsAvailable) {
+        // Si biométrie disponible et configurée, déclencher authentification automatique
+        if (biometricsAvailable && pinConfigured) {
           authenticateBiometric();
         }
-      } catch (err) {
+      } catch {
         setHasBiometrics(false);
       }
     }
@@ -168,13 +147,20 @@ export default function SanctumScreen() {
       });
 
       if (result.success) {
-        await onAuthSuccess();
+        const bioKey = await SanctumAuthService.getStoredBiometricKey();
+        if (bioKey) {
+          activeKeyRef.current = bioKey;
+          await onAuthSuccess(bioKey);
+        } else {
+          // Si aucune clé biométrique stockée, demander la saisie du PIN
+          setCurrentView('pin_verify');
+        }
       } else {
         if (result.error !== 'user_cancel') {
           setAuthError('Authentification échouée');
         }
       }
-    } catch (e) {
+    } catch {
       setAuthError('Erreur d’authentification biométrique');
     } finally {
       setAuthenticating(false);
@@ -182,19 +168,19 @@ export default function SanctumScreen() {
   };
 
   // ─── Transition succès d'authentification ─────────────────────────────
-  const onAuthSuccess = async () => {
+  const onAuthSuccess = async (key?: Uint8Array) => {
     try {
-      const allNotes = await SanctumRepository.getAllNotes();
-      // Filtrer la note interne spéciale du hash PIN
-      setNotes(allNotes.filter((n) => n.id !== '__pin_hash__'));
+      const currentKey = key ?? activeKeyRef.current;
+      const allNotes = await SanctumRepository.getAllNotes(currentKey ?? undefined);
+      setNotes(allNotes);
       setCurrentView('list');
       setAuthError('');
-    } catch (e) {
+    } catch {
       showSnackbar('Erreur lors du déchiffrement des notes');
     }
   };
 
-  // ─── Gestion PIN : configuration ──────────────────────────────────────
+  // ─── Gestion PIN : configuration scrypt + SecureStore ─────────────────
   const handlePinSetup = async () => {
     if (pinStep === 'enter') {
       const validation = validateSanctumPin(pinInput);
@@ -214,18 +200,22 @@ export default function SanctumScreen() {
       return;
     }
 
-    const hash = await hashPin(pinInput);
-    await savePinHash(hash);
-    setHasPinConfigured(true);
-    setPinInput('');
-    setPinConfirm('');
-    setPinStep('enter');
-    setPinError('');
-    showSnackbar('Code PIN Sanctuaire configuré');
-    await onAuthSuccess();
+    try {
+      const masterKey = await SanctumAuthService.setupPin(pinInput);
+      activeKeyRef.current = masterKey;
+      setHasPinConfigured(true);
+      setPinInput('');
+      setPinConfirm('');
+      setPinStep('enter');
+      setPinError('');
+      showSnackbar('Code PIN Sanctuaire configuré & espace chiffré');
+      await onAuthSuccess(masterKey);
+    } catch {
+      setPinError('Erreur lors de la configuration du code PIN');
+    }
   };
 
-  // ─── Gestion PIN : vérification ───────────────────────────────────────
+  // ─── Gestion PIN : vérification scrypt + Poly1305 ──────────────────────
   const handlePinVerify = async () => {
     const validation = validateSanctumPin(pinInput);
     if (!validation.valid) {
@@ -233,15 +223,19 @@ export default function SanctumScreen() {
       return;
     }
 
-    const hash = await hashPin(pinInput);
-    const savedHash = await getSavedPinHashFromDb();
-
-    if (hash === savedHash) {
-      setPinInput('');
-      setPinError('');
-      await onAuthSuccess();
-    } else {
-      setPinError('Code PIN incorrect');
+    try {
+      const result = await SanctumAuthService.verifyAndUnlockWithPin(pinInput);
+      if (result.success && result.key) {
+        activeKeyRef.current = result.key;
+        setPinInput('');
+        setPinError('');
+        await onAuthSuccess(result.key);
+      } else {
+        setPinError(result.error ?? 'Code PIN incorrect');
+        setPinInput('');
+      }
+    } catch {
+      setPinError('Erreur lors de la vérification du code PIN');
       setPinInput('');
     }
   };
@@ -272,17 +266,20 @@ export default function SanctumScreen() {
 
     setSaving(true);
     try {
-      await SanctumRepository.saveNote({
-        id: editingNote?.id,
-        title: editorTitle.trim() || 'Sans titre',
-        content: editorContent,
-        folder: editorFolder,
-      });
-      const allNotes = await SanctumRepository.getAllNotes();
-      setNotes(allNotes.filter((n) => n.id !== '__pin_hash__'));
-      showSnackbar(editingNote ? 'Carnet mis à jour' : 'Nouveau carnet créé');
+      await SanctumRepository.saveNote(
+        {
+          id: editingNote?.id,
+          title: editorTitle.trim() || 'Sans titre',
+          content: editorContent,
+          folder: editorFolder,
+        },
+        activeKeyRef.current ?? undefined
+      );
+      const allNotes = await SanctumRepository.getAllNotes(activeKeyRef.current ?? undefined);
+      setNotes(allNotes);
+      showSnackbar(editingNote ? 'Carnet mis à jour' : 'Nouveau carnet chiffré créé');
       setCurrentView('list');
-    } catch (e) {
+    } catch {
       showSnackbar('Erreur lors de l’enregistrement');
     } finally {
       setSaving(false);
@@ -300,8 +297,8 @@ export default function SanctumScreen() {
           style: 'destructive',
           onPress: async () => {
             await SanctumRepository.deleteNote(note.id);
-            const allNotes = await SanctumRepository.getAllNotes();
-            setNotes(allNotes.filter((n) => n.id !== '__pin_hash__'));
+            const allNotes = await SanctumRepository.getAllNotes(activeKeyRef.current ?? undefined);
+            setNotes(allNotes);
             showSnackbar('Carnet supprimé');
             if (currentView === 'editor') {
               setCurrentView('list');
@@ -314,6 +311,7 @@ export default function SanctumScreen() {
 
   // ─── Verrouillage manuel ──────────────────────────────────────────────
   const handleLock = () => {
+    activeKeyRef.current = null;
     setCurrentView('locked');
     setNotes([]);
     setEditingNote(null);

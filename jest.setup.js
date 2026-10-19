@@ -42,3 +42,17 @@ jest.mock('expo-linear-gradient', () => {
 jest.mock('@/hooks/use-color-scheme', () => ({
   useColorScheme: () => 'dark',
 }));
+
+// Mock expo-secure-store (stockage chiffré natif en mémoire pour Jest)
+const mockSecureStoreMap = new Map();
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(async (key) => mockSecureStoreMap.get(key) ?? null),
+  setItemAsync: jest.fn(async (key, value) => {
+    mockSecureStoreMap.set(key, String(value));
+  }),
+  deleteItemAsync: jest.fn(async (key) => {
+    mockSecureStoreMap.delete(key);
+  }),
+  isAvailableAsync: jest.fn(async () => true),
+  __resetMockStorage: () => mockSecureStoreMap.clear(),
+}));

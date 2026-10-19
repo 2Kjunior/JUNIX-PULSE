@@ -6,8 +6,9 @@
  * BR-022 : les changements de schéma passent par migration.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'expo-crypto';
 import { getDatabase } from '../database/sqlite';
+import { encryptSanctumNote, decryptSanctumNote } from '../services/sanctum-crypto';
 
 export interface SanctumNote {
   id: string;
@@ -21,46 +22,79 @@ export interface SanctumNote {
 export const SanctumRepository = {
   /**
    * Récupère toutes les notes secrètes, triées par date de modification décroissante.
+   * Filtre la ligne interne '__pin_hash__' et déchiffre le contenu avec la clé fournie.
    */
-  async getAllNotes(): Promise<SanctumNote[]> {
+  async getAllNotes(key?: Uint8Array): Promise<SanctumNote[]> {
     const db = await getDatabase();
-    return db.getAllAsync<SanctumNote>(
-      'SELECT id, title, content, folder, created_at, updated_at FROM sanctum_notes ORDER BY updated_at DESC'
+    const rows = await db.getAllAsync<SanctumNote>(
+      `SELECT id, title, content, folder, created_at, updated_at FROM sanctum_notes WHERE id != '__pin_hash__' ORDER BY updated_at DESC`
     );
+
+    if (!key) {
+      return rows;
+    }
+
+    const decryptedNotes: SanctumNote[] = [];
+    for (const row of rows) {
+      try {
+        const plainContent = await decryptSanctumNote(row.content, key);
+        decryptedNotes.push({ ...row, content: plainContent });
+      } catch {
+        // En cas d'erreur de déchiffrement, préserver la ligne brute
+        decryptedNotes.push(row);
+      }
+    }
+    return decryptedNotes;
   },
 
   /**
-   * Récupère une note secrète par son identifiant.
+   * Récupère une note secrète par son identifiant et déchiffre son contenu si la clé est fournie.
    */
-  async getNoteById(id: string): Promise<SanctumNote | null> {
+  async getNoteById(id: string, key?: Uint8Array): Promise<SanctumNote | null> {
+    if (id === '__pin_hash__') return null;
     const db = await getDatabase();
     const row = await db.getFirstAsync<SanctumNote>(
       'SELECT id, title, content, folder, created_at, updated_at FROM sanctum_notes WHERE id = ?',
       id
     );
-    return row ?? null;
+    if (!row) return null;
+
+    if (key) {
+      try {
+        const plainContent = await decryptSanctumNote(row.content, key);
+        return { ...row, content: plainContent };
+      } catch {
+        return row;
+      }
+    }
+    return row;
   },
 
   /**
-   * Crée ou met à jour une note secrète.
-   * Si l'id existe, on met à jour titre, contenu, dossier et updated_at.
+   * Crée ou met à jour une note secrète en chiffrant son contenu avec XChaCha20-Poly1305.
+   * Si l'id existe, on met à jour titre, contenu chiffré, dossier et updated_at.
    * Sinon, on insère une nouvelle note avec un UUID et des timestamps frais.
    */
-  async saveNote(note: {
-    id?: string;
-    title: string;
-    content: string;
-    folder: string;
-  }): Promise<SanctumNote> {
+  async saveNote(
+    note: {
+      id?: string;
+      title: string;
+      content: string;
+      folder: string;
+    },
+    key?: Uint8Array
+  ): Promise<SanctumNote> {
     const db = await getDatabase();
     const now = new Date().toISOString();
+
+    const storedContent = key ? await encryptSanctumNote(note.content, key) : note.content;
 
     if (note.id) {
       // Mise à jour
       await db.runAsync(
         `UPDATE sanctum_notes SET title = ?, content = ?, folder = ?, updated_at = ? WHERE id = ?`,
         note.title,
-        note.content,
+        storedContent,
         note.folder,
         now,
         note.id
@@ -76,12 +110,12 @@ export const SanctumRepository = {
     }
 
     // Création
-    const id = uuidv4();
+    const id = randomUUID();
     await db.runAsync(
       `INSERT INTO sanctum_notes (id, title, content, folder, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
       id,
       note.title,
-      note.content,
+      storedContent,
       note.folder,
       now,
       now

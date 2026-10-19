@@ -15,6 +15,8 @@ import { PersonRepository } from '@/repositories/person-repository';
 import { EventRepository } from '@/repositories/event-repository';
 import { HabitRepository } from '@/repositories/habit-repository';
 import { GoalRepository } from '@/repositories/goal-repository';
+import { NotificationService } from '@/services/notification-service';
+import { SanctumAuthService } from '@/services/sanctum-auth-service';
 
 // ─── Utilitaires ─────────────────────────────────────────────────────────────
 
@@ -56,19 +58,41 @@ export async function isSeedAlreadyLoaded(): Promise<boolean> {
 // ─── Effacer TOUTES les données existantes ────────────────────────────────────
 
 export async function clearAllData(): Promise<void> {
+  // 1. Annuler toutes les notifications planifiées auprès de l'OS
+  await NotificationService.cancelAll();
+
+  // 2. Réinitialiser les clés et secrets du Sanctuaire hors SQLite (SecureStore)
+  await SanctumAuthService.clearSanctumSecrets();
+
+  // 3. Vider toutes les 19 tables SQLite de manière ordonnée et transactionnelle
   const db = await getDatabase();
   const tables = [
-    'habit_completions', 'habit_pauses', 'habits',
-    'goal_tasks', 'goals',
-    'reminder_checklist_items', 'reminders',
-    'subtasks', 'tasks',
-    'event_persons', 'events',
-    'interactions', 'persons',
+    'habit_completions',
+    'habit_pauses',
+    'habits',
+    'goal_tasks',
+    'goals',
+    'reminder_checklist_items',
+    'reminders',
+    'recurrence_rules',
+    'subtasks',
+    'tasks',
+    'event_persons',
+    'events',
+    'interactions',
+    'persons',
     'suggestions',
+    'planning_blocks',
+    'personal_schedules',
+    'settings',
+    'sanctum_notes',
   ];
-  for (const t of tables) {
-    await db.runAsync(`DELETE FROM ${t}`);
-  }
+
+  await db.withTransactionAsync(async () => {
+    for (const t of tables) {
+      await db.runAsync(`DELETE FROM ${t}`);
+    }
+  });
 }
 
 // ─── Seed principal ───────────────────────────────────────────────────────────

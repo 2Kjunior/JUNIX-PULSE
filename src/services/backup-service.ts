@@ -203,7 +203,13 @@ function validateRows(data: BackupData): void {
 export async function createBackup(db: SQLiteDatabase): Promise<string> {
   const data = {} as BackupData;
   for (const table of BACKUP_TABLES) {
-    data[table] = await db.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
+    if (table === 'sanctum_notes') {
+      data[table] = await db.getAllAsync<BackupRow>(
+        `SELECT * FROM sanctum_notes WHERE id != '__pin_hash__'`
+      );
+    } else {
+      data[table] = await db.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
+    }
   }
 
   return JSON.stringify({
@@ -238,6 +244,9 @@ export async function importBackup(db: SQLiteDatabase, data: BackupData): Promis
   await db.withExclusiveTransactionAsync(async transaction => {
     for (const table of BACKUP_TABLES) {
       for (const row of data[table]) {
+        if (table === 'sanctum_notes' && row.id === '__pin_hash__') {
+          continue;
+        }
         const columns = TABLE_COLUMNS[table];
         const result = await transaction.runAsync(
           `INSERT OR IGNORE INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
