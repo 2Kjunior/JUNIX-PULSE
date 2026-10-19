@@ -134,22 +134,18 @@ export default function TaskDetailScreen() {
   }
 
   async function handleDeleteSubtask(subtaskId: string) {
-    Alert.alert(
-      'Supprimer cette sous-tâche ?',
-      'Cette action est irréversible.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
-            await TaskUseCases.deleteSubtask(subtaskId);
-            showSnackbar('Sous-tâche supprimée');
-          },
-        },
-      ]
-    );
+    const deleted = subtasks.find(s => s.id === subtaskId);
+    setSubtasks(prev => prev.filter(s => s.id !== subtaskId));
+    await TaskUseCases.deleteSubtask(subtaskId);
+    showSnackbar('Sous-tâche supprimée', {
+      actionLabel: 'Annuler',
+      onAction: async () => {
+        if (deleted && id) {
+          await TaskUseCases.addSubtask(id, deleted.title);
+          load();
+        }
+      },
+    });
   }
 
   // ─── Actions Tâche ─────────────────────────────────────────────────────────
@@ -200,28 +196,16 @@ export default function TaskDetailScreen() {
 
   async function handleDelete() {
     if (!task) return;
-    Alert.alert(
-      'Supprimer cette tâche ?',
-      'Vous pourrez annuler cette action pendant 30 secondes.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            await TaskUseCases.deleteTask(task.id);
-            showSnackbar('Tâche supprimée', {
-              actionLabel: 'Annuler (30s)',
-              onAction: async () => {
-                await TaskUseCases.undoDelete(task.id);
-                load();
-              },
-            });
-            router.back();
-          },
-        },
-      ]
-    );
+    await TaskUseCases.deleteTask(task.id);
+    showSnackbar('Tâche supprimée', {
+      actionLabel: 'Annuler (30s)',
+      onAction: async () => {
+        await TaskUseCases.undoDelete(task.id);
+        load();
+      },
+      durationMs: 30000,
+    });
+    router.back();
   }
 
   if (screenState === 'loading') return <LoadingState />;

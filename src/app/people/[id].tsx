@@ -135,50 +135,25 @@ export default function PersonDetailScreen() {
   // ─── Supprimer une interaction ─────────────────────────────────────────────
 
   async function handleDeleteInteraction(interactionId: string) {
-    Alert.alert(
-      'Supprimer cette interaction ?',
-      'Cette interaction sera définitivement retirée de l\'historique.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            await PersonUseCases.deleteInteraction(interactionId);
-            showSnackbar('Interaction supprimée');
-            await load();
-          },
-        },
-      ]
-    );
+    await PersonUseCases.deleteInteraction(interactionId);
+    showSnackbar('Interaction supprimée');
+    await load();
   }
 
   // ─── Supprimer la personne ──────────────────────────────────────────────────
 
   async function handleDeletePerson() {
     if (!person) return;
-    Alert.alert(
-      'Supprimer ce contact ?',
-      'Cette personne et son historique seront masqués.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            await PersonUseCases.deletePerson(person.id);
-            showSnackbar('Contact supprimé', {
-              actionLabel: 'Annuler (30s)',
-              onAction: async () => {
-                await PersonUseCases.undoDelete(person.id);
-                load();
-              },
-            });
-            router.back();
-          },
-        },
-      ]
-    );
+    await PersonUseCases.deletePerson(person.id);
+    showSnackbar('Contact supprimé', {
+      actionLabel: 'Annuler (30s)',
+      onAction: async () => {
+        await PersonUseCases.undoDelete(person.id);
+        load();
+      },
+      durationMs: 30000,
+    });
+    router.back();
   }
 
   if (screenState === 'loading') return <LoadingState />;

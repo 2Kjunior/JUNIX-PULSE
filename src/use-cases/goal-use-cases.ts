@@ -59,9 +59,15 @@ export const GoalUseCases = {
     return GoalRepository.findById(params.id);
   },
 
-  async deleteGoal(id: string): Promise<void> {
+  async deleteGoal(id: string): Promise<{ undo: () => Promise<void> }> {
     const now = new Date().toISOString();
     await GoalRepository.delete(id, now);
+    return {
+      undo: async () => {
+        const undoNow = new Date().toISOString();
+        await GoalRepository.undoDelete(id, undoNow);
+      },
+    };
   },
 
   async linkTask(goalId: string, taskId: string): Promise<void> {

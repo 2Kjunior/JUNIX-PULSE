@@ -67,9 +67,15 @@ export const HabitUseCases = {
     return HabitRepository.findById(params.id);
   },
 
-  async deleteHabit(id: string): Promise<void> {
+  async deleteHabit(id: string): Promise<{ undo: () => Promise<void> }> {
     const now = new Date().toISOString();
     await HabitRepository.delete(id, now);
+    return {
+      undo: async () => {
+        const undoNow = new Date().toISOString();
+        await HabitRepository.undoDelete(id, undoNow);
+      },
+    };
   },
 
   async toggleHabitCompletion(habitId: string, dateStr?: string): Promise<boolean> {

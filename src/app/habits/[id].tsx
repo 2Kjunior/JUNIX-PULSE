@@ -105,24 +105,18 @@ export default function HabitDetailScreen() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!id || !stats) return;
-    Alert.alert(
-      'Supprimer l\'habitude',
-      `Êtes-vous sûr de vouloir supprimer "${stats.habit.title}" ? L'historique sera supprimé.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            await HabitUseCases.deleteHabit(id);
-            showSnackbar('Habitude supprimée');
-            router.back();
-          },
-        },
-      ]
-    );
+    const result = await HabitUseCases.deleteHabit(id);
+    showSnackbar('Habitude supprimée', {
+      actionLabel: 'Annuler (30s)',
+      onAction: async () => {
+        await result.undo();
+        loadData();
+      },
+      durationMs: 30000,
+    });
+    router.back();
   };
 
   if (loading) {

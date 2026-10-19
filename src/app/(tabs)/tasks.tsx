@@ -38,6 +38,7 @@ import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/Stat
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
+import { SwipeableItem } from '@/components/ui/SwipeableItem';
 import { makeTasksStyles } from '@/styles/tabs/tasks-styles';
 
 type FilterTab = 'inbox' | 'today' | 'all';
@@ -151,6 +152,25 @@ export default function TasksScreen() {
     }
   }
 
+  async function handleDeleteTask(task: Task) {
+    try {
+      // Retrait optimiste de la liste
+      setItems(prev => prev.filter(item => item.task.id !== task.id));
+      const result = await TaskUseCases.deleteTask(task.id);
+      showSnackbar('Tâche supprimée.', {
+        actionLabel: 'Annuler (30s)',
+        onAction: async () => {
+          await result.undo();
+          load();
+        },
+        durationMs: 30000,
+      });
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : 'Erreur');
+      load();
+    }
+  }
+
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
@@ -211,14 +231,21 @@ export default function TasksScreen() {
           />
         ) : (
           items.map(({ task, subtasks }) => (
-            <TaskCardR08
+            <SwipeableItem
               key={task.id}
-              task={task}
-              subtasks={subtasks}
-              theme={theme}
-              styles={styles}
-              onToggleComplete={() => handleToggleComplete(task)}
-            />
+              onDelete={() => handleDeleteTask(task)}
+              onComplete={() => handleToggleComplete(task)}
+              completeLabel={task.status === 'COMPLETED' ? 'Réouvrir' : 'Terminer'}
+              deleteLabel="Supprimer"
+            >
+              <TaskCardR08
+                task={task}
+                subtasks={subtasks}
+                theme={theme}
+                styles={styles}
+                onToggleComplete={() => handleToggleComplete(task)}
+              />
+            </SwipeableItem>
           ))
         )}
       </ScrollView>

@@ -125,11 +125,17 @@ export const TaskUseCases = {
   },
 
   /**
-   * Marque une tâche comme supprimée (soft delete).
+   * Marque une tâche comme supprimée (soft delete) avec fonction d'annulation réversible.
    */
-  async deleteTask(id: string): Promise<void> {
+  async deleteTask(id: string): Promise<{ undo: () => Promise<void> }> {
     const now = new Date().toISOString();
     await TaskRepository.softDelete(id, now);
+    return {
+      undo: async () => {
+        const undoNow = new Date().toISOString();
+        await TaskRepository.undoDelete(id, undoNow);
+      },
+    };
   },
 
   /**

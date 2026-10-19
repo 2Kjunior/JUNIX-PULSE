@@ -135,7 +135,7 @@ export default function TodayScreen() {
       );
       load();
     } catch (error: unknown) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de mettre à jour l’habitude.');
+      showSnackbar(error instanceof Error ? error.message : 'Impossible de mettre à jour l’habitude.');
     }
   };
 
@@ -145,7 +145,7 @@ export default function TodayScreen() {
       showSnackbar(`Tâche "${task.title}" mise à jour.`);
       load();
     } catch (error: unknown) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de mettre à jour la tâche.');
+      showSnackbar(error instanceof Error ? error.message : 'Impossible de mettre à jour la tâche.');
     }
   };
 
@@ -155,7 +155,7 @@ export default function TodayScreen() {
       showSnackbar(`Action appliquée : ${sugg.title}`);
       load();
     } catch (error: unknown) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible d’accepter la suggestion.');
+      showSnackbar(error instanceof Error ? error.message : 'Impossible d’accepter la suggestion.');
     }
   };
 
@@ -165,7 +165,7 @@ export default function TodayScreen() {
       showSnackbar('Suggestion ignorée.');
       load();
     } catch (error: unknown) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible d’ignorer la suggestion.');
+      showSnackbar(error instanceof Error ? error.message : 'Impossible d’ignorer la suggestion.');
     }
   };
 
@@ -175,7 +175,7 @@ export default function TodayScreen() {
       showSnackbar('Données de démo chargées avec succès !');
       await load();
     } catch (error: unknown) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de charger les données de démonstration.');
+      showSnackbar(error instanceof Error ? error.message : 'Impossible de charger les données de démonstration.');
     }
   };
 

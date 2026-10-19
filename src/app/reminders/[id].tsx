@@ -148,28 +148,15 @@ export default function ReminderDetailScreen() {
 
   async function handleDelete() {
     if (!reminder) return;
-    Alert.alert(
-      'Supprimer ce rappel ?',
-      'Cette action peut être annulée pendant 30 secondes.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await deleteReminder(reminder);
-            showSnackbar('Rappel supprimé', {
-              actionLabel: 'Annuler (30s)',
-              onAction: async () => {
-                await result.undo();
-              },
-              durationMs: 30_000,
-            });
-            router.back();
-          },
-        },
-      ]
-    );
+    const result = await deleteReminder(reminder);
+    showSnackbar('Rappel supprimé', {
+      actionLabel: 'Annuler (30s)',
+      onAction: async () => {
+        await result.undo();
+      },
+      durationMs: 30_000,
+    });
+    router.back();
   }
 
   async function toggleChecklistItem(item: ReminderChecklistItem) {

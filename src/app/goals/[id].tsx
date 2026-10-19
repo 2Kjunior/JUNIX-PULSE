@@ -105,24 +105,18 @@ export default function GoalDetailScreen() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!id || !details) return;
-    Alert.alert(
-      'Supprimer l\'objectif',
-      `Êtes-vous sûr de vouloir supprimer "${details.goal.title}" ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            await GoalUseCases.deleteGoal(id);
-            showSnackbar('Objectif supprimé');
-            router.back();
-          },
-        },
-      ]
-    );
+    const result = await GoalUseCases.deleteGoal(id);
+    showSnackbar('Objectif supprimé', {
+      actionLabel: 'Annuler (30s)',
+      onAction: async () => {
+        await result.undo();
+        loadData();
+      },
+      durationMs: 30000,
+    });
+    router.back();
   };
 
   if (loading) {

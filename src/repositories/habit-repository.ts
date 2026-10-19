@@ -82,6 +82,11 @@ export const HabitRepository = {
     await db.runAsync('UPDATE habits SET deleted_at = ?, updated_at = ? WHERE id = ?', deletedAt, deletedAt, id);
   },
 
+  async undoDelete(id: string, now: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync('UPDATE habits SET deleted_at = NULL, updated_at = ? WHERE id = ?', now, id);
+  },
+
   async findById(id: string): Promise<Habit | null> {
     const db = await getDatabase();
     const row = await db.getFirstAsync<Record<string, unknown>>(
