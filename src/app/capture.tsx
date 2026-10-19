@@ -35,15 +35,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { useTheme, useThemedStyles } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/Button';
 
-const DAY_MAP: Record<string, Day> = {
-  dimanche: 0,
-  lundi: 1,
-  mardi: 2,
-  mercredi: 3,
-  jeudi: 4,
-  vendredi: 5,
-  samedi: 6,
-};
+import { parseQuickCapture } from '@/domain/rules/capture-rules';
 
 export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();
@@ -76,87 +68,15 @@ export default function QuickCaptureScreen() {
     loadContacts();
   }, []);
 
-  // Analyseur en langage naturel (local & déterministe)
+  // Analyseur en langage naturel (local, déterministe et testé — DEF-10)
   useEffect(() => {
-    const raw = input.trim();
-    if (!raw) {
-      setCleanTitle('');
-      return;
-    }
-
-    const lower = raw.toLowerCase();
-
-    // 1. Détecter l'action
-    let detectedAction: ActionType = 'NONE';
-    if (/\b(appeler|téléphoner|coup de fil)\b/i.test(lower)) {
-      detectedAction = 'CALL';
-    } else if (/\b(sms|message|écrire un message|whatsapp)\b/i.test(lower)) {
-      detectedAction = 'MESSAGE';
-    } else if (/\b(mail|email|courriel|envoyer un mail)\b/i.test(lower)) {
-      detectedAction = 'EMAIL';
-    } else if (/\b(café|déjeuner|dîner|voir|rencontrer|rdv)\b/i.test(lower)) {
-      detectedAction = 'MEET';
-    } else if (/\b(faire|acheter|préparer|payer|ranger)\b/i.test(lower)) {
-      detectedAction = 'TASK';
-    }
-    setActionType(detectedAction);
-
-    // 2. Détecter la personne
-    let matchedPerson: Person | null = null;
-    for (const p of persons) {
-      const pName = p.displayName.toLowerCase();
-      const firstName = pName.split(' ')[0];
-      if (lower.includes(pName) || (firstName.length >= 3 && lower.includes(firstName))) {
-        matchedPerson = p;
-        break;
-      }
-    }
-    setTargetPerson(matchedPerson);
-
-    // 3. Détecter la date
-    let newDate = new Date();
-    if (lower.includes('aujourd') || lower.includes('ce soir')) {
-      newDate = new Date();
-    } else if (lower.includes('demain')) {
-      newDate = addDays(new Date(), 1);
-    } else if (lower.includes('après-demain')) {
-      newDate = addDays(new Date(), 2);
-    } else {
-      for (const [dayName, dayIndex] of Object.entries(DAY_MAP)) {
-        if (lower.includes(dayName)) {
-          newDate = nextDay(new Date(), dayIndex);
-          break;
-        }
-      }
-    }
-    setTargetDate(newDate);
-
-    // 4. Détecter l'heure
-    let newTime = '09:00';
-    if (lower.includes('ce soir') || lower.includes('soir')) {
-      newTime = '20:30';
-    } else if (lower.includes('midi')) {
-      newTime = '12:00';
-    } else if (lower.includes('matin')) {
-      newTime = '08:30';
-    } else {
-      const timeMatch = lower.match(/\b([0-2]?[0-9])(?:h|:)?([0-5][0-9])?\b/);
-      if (timeMatch && lower.includes('h')) {
-        const hours = timeMatch[1].padStart(2, '0');
-        const mins = (timeMatch[2] || '00').padStart(2, '0');
-        newTime = `${hours}:${mins}`;
-      }
-    }
-    setTargetTime(newTime);
-
-    // 5. Priorité
-    if (/\b(urgent|important|critique|asap)\b/i.test(lower)) {
-      setPriority('URGENT');
-    } else {
-      setPriority('NORMAL');
-    }
-
-    setCleanTitle(raw);
+    const parsed = parseQuickCapture(input, persons);
+    setCleanTitle(parsed.cleanTitle);
+    setActionType(parsed.actionType);
+    setTargetPerson(parsed.targetPerson ?? null);
+    setTargetDate(parsed.targetDate);
+    setTargetTime(parsed.targetTime);
+    setPriority(parsed.priority);
   }, [input, persons]);
 
   // Construire la date finale combinée

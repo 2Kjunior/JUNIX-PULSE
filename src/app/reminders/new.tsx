@@ -234,15 +234,17 @@ export default function NewReminderScreen() {
           <View style={styles.cardGroup}>
             {/* Chips rapides */}
             <View style={styles.quickTimesRow}>
-              <TouchableOpacity
-                style={[styles.quickTimeChip, { borderColor: palette.primary.default }]}
-                onPress={() => setQuickTime('now_10s')}
-              >
-                <Ionicons name="flash-outline" size={12} color={palette.primary.default} />
-                <Text style={[styles.quickTimeText, { color: palette.primary.default, fontWeight: '600' }]}>
-                  Dans 10s (Test)
-                </Text>
-              </TouchableOpacity>
+              {__DEV__ && (
+                <TouchableOpacity
+                  style={[styles.quickTimeChip, { borderColor: palette.primary.default }]}
+                  onPress={() => setQuickTime('now_10s')}
+                >
+                  <Ionicons name="flash-outline" size={12} color={palette.primary.default} />
+                  <Text style={[styles.quickTimeText, { color: palette.primary.default, fontWeight: '600' }]}>
+                    Dans 10s (Test)
+                  </Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={styles.quickTimeChip}
                 onPress={() => setQuickTime('tonight')}

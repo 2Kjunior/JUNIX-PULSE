@@ -500,25 +500,30 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Section Données de démo */}
+      {/* Section Données de démo (masquée en production — DEF-14) */}
+      {__DEV__ && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Données de démonstration (Dev)</Text>
+          <TouchableOpacity style={styles.row} onPress={handleLoadSeed}>
+            <View>
+              <Text style={styles.rowLabel}>Charger les données exemples</Text>
+              <Text style={styles.rowSub}>Personnes, rappels, habitudes, objectifs</Text>
+            </View>
+            <Ionicons name="sparkles-outline" size={20} color={palette.primary.default} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.row} onPress={handleLoadPulseExtra}>
+            <View>
+              <Text style={styles.rowLabel}>Charger démo Pulse IA</Text>
+              <Text style={styles.rowSub}>Suggestions, streaks actifs & rappels manqués</Text>
+            </View>
+            <Ionicons name="bulb-outline" size={20} color={palette.primary.default} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Section Zone de danger */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Données de démonstration</Text>
-        <TouchableOpacity style={styles.row} onPress={handleLoadSeed}>
-          <View>
-            <Text style={styles.rowLabel}>Charger les données exemples</Text>
-            <Text style={styles.rowSub}>Personnes, rappels, habitudes, objectifs</Text>
-          </View>
-          <Ionicons name="sparkles-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row} onPress={handleLoadPulseExtra}>
-          <View>
-            <Text style={styles.rowLabel}>Charger démo Pulse IA</Text>
-            <Text style={styles.rowSub}>Suggestions, streaks actifs & rappels manqués</Text>
-          </View>
-          <Ionicons name="bulb-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.row} onPress={handleClearAllData}>
           <View>
             <Text style={[styles.rowLabel, { color: palette.error.default }]}>
