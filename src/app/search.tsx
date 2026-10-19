@@ -100,13 +100,13 @@ export default function SearchScreen() {
           id: string;
           title: string;
           notes: string | null;
-          due_at: string;
+          scheduled_at: string;
           priority: string;
         }>(
-          `SELECT id, title, notes, due_at, priority 
+          `SELECT id, title, notes, scheduled_at, priority
            FROM reminders 
            WHERE deleted_at IS NULL AND (title LIKE ? OR notes LIKE ?)
-           ORDER BY due_at ASC LIMIT 10`,
+            ORDER BY scheduled_at ASC LIMIT 10`,
           [searchPattern, searchPattern]
         );
         reminders.forEach((r) => {
@@ -114,7 +114,7 @@ export default function SearchScreen() {
             id: r.id,
             type: 'REMINDER',
             title: r.title,
-            subtitle: r.due_at ? `Échéance : ${r.due_at.substring(0, 10)}` : 'Rappel sans date',
+            subtitle: `Échéance : ${r.scheduled_at.substring(0, 10)}`,
             route: `/reminders/${r.id}`,
             icon: 'notifications-outline',
             color: theme.primary.default,
@@ -154,10 +154,10 @@ export default function SearchScreen() {
           displayName: string;
           relationship: string | null;
         }>(
-          `SELECT id, displayName, relationship 
+          `SELECT id, display_name AS displayName, relationship 
            FROM persons 
-           WHERE deleted_at IS NULL AND (displayName LIKE ? OR relationship LIKE ?)
-           ORDER BY displayName ASC LIMIT 10`,
+           WHERE deleted_at IS NULL AND (display_name LIKE ? OR relationship LIKE ?)
+           ORDER BY display_name ASC LIMIT 10`,
           [searchPattern, searchPattern]
         );
         persons.forEach((p) => {
@@ -203,12 +203,13 @@ export default function SearchScreen() {
         const goals = await db.getAllAsync<{
           id: string;
           title: string;
-          category: string | null;
+          description: string | null;
           status: string;
+          deadline: string | null;
         }>(
-          `SELECT id, title, category, status 
+          `SELECT id, title, description, status, deadline
            FROM goals 
-           WHERE deleted_at IS NULL AND (title LIKE ? OR category LIKE ?)
+            WHERE deleted_at IS NULL AND (title LIKE ? OR description LIKE ?)
            ORDER BY created_at DESC LIMIT 10`,
           [searchPattern, searchPattern]
         );
@@ -217,7 +218,11 @@ export default function SearchScreen() {
             id: g.id,
             type: 'GOAL',
             title: g.title,
-            subtitle: g.category ?? 'Objectif actif',
+            subtitle: g.deadline
+              ? `Échéance : ${g.deadline.substring(0, 10)}`
+              : g.status === 'COMPLETED'
+                ? 'Objectif terminé'
+                : 'Objectif actif',
             route: `/goals/${g.id}`,
             icon: 'flag-outline',
             color: theme.success.default,
