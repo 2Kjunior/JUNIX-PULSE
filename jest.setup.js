@@ -97,3 +97,6 @@ jest.mock('expo-secure-store', () => ({
   isAvailableAsync: jest.fn(async () => true),
   __resetMockStorage: () => mockSecureStoreMap.clear(),
 }));
+
+// Timeout global à 30s pour absorber la charge CPU des tests cryptographiques en environnement Windows
+jest.setTimeout(30000);
