@@ -74,7 +74,7 @@ export default function OnboardingPermissions() {
           <View style={styles.permInfo}>
             <Text style={styles.permTitle}>Notifications</Text>
             <Text style={styles.permDesc}>
-              Indispensable pour recevoir vos rappels même quand l&apos;application est fermée.
+              Indispensable pour recevoir vos rappels même quand l’application est fermée.
             </Text>
           </View>
         </View>
@@ -109,13 +109,13 @@ export default function OnboardingPermissions() {
           <Text style={styles.noteTitle}>Contacts</Text>
         </View>
         <Text style={styles.noteDesc}>
-          L&apos;accès aux contacts sera demandé uniquement si vous souhaitez importer
-          des personnes depuis votre répertoire. Ce n&apos;est pas requis maintenant.
+          L’accès aux contacts sera demandé uniquement si vous souhaitez importer
+          des personnes depuis votre répertoire. Ce n’est pas requis maintenant.
         </Text>
       </View>
 
       <View style={styles.ready}>
-        <Text style={styles.readyTitle}>Vous êtes prêt·e !</Text>
+        <Text style={styles.readyTitle}>Tout est prêt&nbsp;!</Text>
         <Text style={styles.readyDesc}>
           Junix Pulse est configuré pour vous. Commencez par créer votre premier rappel
           ou explorez librement.

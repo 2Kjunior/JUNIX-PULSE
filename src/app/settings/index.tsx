@@ -208,8 +208,8 @@ export default function SettingsScreen() {
 
   const handleResetApp = () => {
     Alert.alert(
-      "Recommencer l'onboarding ?",
-      "Cela va relancer la visite d'accueil de l'application. Toutes vos données existantes seront conservées.",
+      "Recommencer l’onboarding\u00A0?",
+      "Cela va relancer la visite d’accueil de l’application. Toutes vos données existantes seront conservées.",
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -217,7 +217,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             await SettingsRepository.resetOnboarding(new Date().toISOString());
             setOnboardingComplete(false);
-            showSnackbar("Visite d'accueil relancée");
+            showSnackbar("Visite d’accueil relancée");
             router.replace('/(onboarding)');
           },
         },

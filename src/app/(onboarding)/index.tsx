@@ -176,7 +176,7 @@ export default function OnboardingWelcome() {
       {/* Actions */}
       <View style={styles.actions}>
         <Button
-          label="Commencer l'expérience"
+          label="Commencer l’expérience"
           onPress={() => router.push('/(onboarding)/discover')}
           variant="primary"
           size="lg"
@@ -191,7 +191,7 @@ export default function OnboardingWelcome() {
           style={styles.restoreBtn}
         >
           <Text style={styles.restoreText}>
-            Déjà utilisateur de Junix Pulse ?{' '}
+            Vous utilisez déjà Junix Pulse&nbsp;?{' '}
             <Text style={styles.restoreLink}>Restaurer une sauvegarde</Text>
           </Text>
         </TouchableOpacity>

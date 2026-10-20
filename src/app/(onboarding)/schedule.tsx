@@ -88,7 +88,7 @@ export default function OnboardingSchedule() {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Résumé du matin</Text>
         <Text style={styles.sectionHint}>
-          Sur l'écran Aujourd'hui, votre journée sera prête à cette heure.
+          Sur l’écran Aujourd’hui, votre journée sera prête à cette heure.
         </Text>
         <View style={styles.chipRow}>
           {MORNING_OPTIONS.map(h => (

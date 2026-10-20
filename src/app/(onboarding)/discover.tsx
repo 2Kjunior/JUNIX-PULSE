@@ -43,15 +43,15 @@ export default function OnboardingDiscover() {
       bgColor: palette.primary.container + '33',
       title: 'Rappels',
       desc: 'Une chose à ne pas oublier à un moment précis. Peut être ponctuel ou récurrent, lié à une personne, avec un snooze si besoin.',
-      example: 'Ex : Appeler maman vendredi 18h',
+      example: 'Ex\u00A0: Appeler maman vendredi 18h',
     },
     {
       icon: 'checkmark-circle-outline',
       accentColor: palette.tertiary.default,
       bgColor: palette.tertiary.container + '33',
       title: 'Tâches',
-      desc: "Une intention d'agir, avec ou sans date. Les tâches sans date vivent dans votre Inbox jusqu'à ce que vous les planifiiez.",
-      example: 'Ex : Préparer la réunion de lundi',
+      desc: 'Une intention d’agir, avec ou sans date. Les tâches sans date vivent dans votre Inbox jusqu’à ce que vous les planifiiez.',
+      example: 'Ex\u00A0: Préparer la réunion de lundi',
     },
     {
       icon: 'calendar-outline',
@@ -59,7 +59,7 @@ export default function OnboardingDiscover() {
       bgColor: palette.success.container + '33',
       title: 'Événements',
       desc: 'Un rendez-vous ou une occupation avec une durée. Peut inclure un lieu, des personnes et un temps de trajet.',
-      example: "Ex : Réunion d'équipe 14h–15h30",
+      example: 'Ex\u00A0: Réunion d’équipe 14h–15h30',
     },
   ];
 
@@ -106,7 +106,7 @@ export default function OnboardingDiscover() {
           </View>
           <Text style={styles.distinctionText}>
             Un rappel déclenche une attention.{'\n'}
-            Une tâche attend d'être accomplie.{'\n'}
+            Une tâche attend d’être accomplie.{'\n'}
             Un événement occupe une période dans le temps.
           </Text>
         </View>

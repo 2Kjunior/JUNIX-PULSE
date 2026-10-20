@@ -113,7 +113,7 @@ export default function OnboardingPersonalize() {
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Ex : Marie"
+            placeholder="Ex&nbsp;: Camille"
             placeholderTextColor={palette.onSurface.disabled}
             maxLength={50}
             autoCorrect={false}
