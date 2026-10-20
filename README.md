@@ -64,16 +64,18 @@ Elle est conçue selon le principe **Local-First / Offline-First** : 100% de vos
 
 | Élément | Technologie |
 |---|---|
-| **Framework** | React Native (Expo SDK 57) |
-| **Routing** | Expo Router v4 (File-based navigation) |
+| **Framework** | React Native `0.86.3` (Expo SDK `~57.0.30`) |
+| **Routing** | Expo Router v4 (`~57.0.28`, File-based navigation) |
 | **Language** | TypeScript (Strict mode) |
-| **Base de données** | SQLite via `expo-sqlite` (WAL Mode, Migrations versionnées 001-019) |
+| **Base de données** | SQLite via `expo-sqlite` (WAL Mode, Migrations versionnées 001-020) |
+| **Sécurité** | XChaCha20-Poly1305 + scrypt ($N=32768$) + `expo-secure-store` |
 | **State Management** | Zustand (Store UI & Snackbar) |
-| **Design System** | Tokens MD3 personnalisés sombre (`src/constants/theme.ts`) |
+| **Design System** | Tokens Midnight Glassmorphism (`src/constants/theme.ts`) |
+| **Tests Automatisés** | Jest + React Test Renderer (25 suites, 299 tests) |
 
 ---
 
-## 💻 Lancement en Développement
+## 💻 Lancement en Développement & Validation Qualité
 
 ### 1. Installation des dépendances
 ```bash
@@ -85,9 +87,19 @@ npm install
 npx expo start --clear
 ```
 
-### 3. Vérification du typage TypeScript
+### 3. Conformité Expo SDK 57
+```bash
+npx expo-doctor
+```
+
+### 4. Vérification du typage TypeScript
 ```bash
 npx tsc --noEmit
+```
+
+### 5. Exécution de la suite de tests automatisés
+```bash
+npx jest --no-coverage
 ```
 
 ---

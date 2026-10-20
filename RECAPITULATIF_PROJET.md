@@ -27,15 +27,16 @@
 
 | Composant                    | Technologie                                                      | Rôle & Justification                                                           |
 | :--------------------------- | :--------------------------------------------------------------- | :----------------------------------------------------------------------------- |
-| **Framework Mobile**         | React Native `0.86.3` / Expo SDK `57.0.19`                       | Écosystème moderne multiplateforme, support New Architecture.                  |
-| **Routage**                  | Expo Router `~57.0.18` (v4 file-based)                           | Navigation déclarative basée sur les dossiers et fichiers (`src/app`).         |
-| **Base de Données**          | `expo-sqlite` `~57.0.2`                                          | Moteur SQLite natif, mode WAL (Write-Ahead Logging), migrations immuables.     |
+| **Framework Mobile**         | React Native `0.86.3` / Expo SDK `~57.0.30`                      | Écosystème moderne multiplateforme, support New Architecture.                  |
+| **Routage**                  | Expo Router `~57.0.28` (v4 file-based)                           | Navigation déclarative basée sur les dossiers et fichiers (`src/app`).         |
+| **Base de Données**          | `expo-sqlite` `~57.0.4`                                          | Moteur SQLite natif, mode WAL (Write-Ahead Logging), migrations immuables.     |
 | **Gestion d'État UI**        | `zustand` `^5.0.15`                                              | Store léger pour l'état d'interface (Snackbar, initialisation DB, onboarding). |
 | **Animations**               | `react-native-reanimated` `4.5.1` & `react-native-svg` `15.15.4` | Logo SVG tracé en temps réel, halo respirant, battements cardiaques.           |
 | **Date & Heure**             | `date-fns` `^4.4.0`                                              | Manipulation déterministe et immuable des dates et fuseaux.                    |
 | **Formulaires & Validation** | `react-hook-form` `^7.87.0`, `zod` `^4.6.1`                      | Schémas de validation stricts pour la création d'entités.                      |
-| **Notifications**            | `expo-notifications` `~57.0.17`                                  | Notifications locales planifiées (100% compatibles Expo Go et builds natifs).  |
+| **Notifications**            | `expo-notifications` `~57.0.23`                                  | Notifications locales planifiées (100% compatibles Expo Go et builds natifs).  |
 | **Typographie**              | `@expo-google-fonts/inter` + `@expo-google-fonts/outfit`         | Inter pour le texte courant, Outfit pour les grands titres et l'onboarding.    |
+| **Tests Automatisés**        | `jest` `^29.7.0` + `react-test-renderer` `19.2.3`                 | 25 suites de tests unitaires et d'intégration (299 tests, 100% passants).       |
 
 ---
 
@@ -211,60 +212,58 @@ Conformément à la spécification produit issue de l'audit Stitch :
 
 ---
 
-## 8. 🔍 État des Lieux des Modifications Récentes (Git Log & Uncommitted)
+## 8. 🔍 Plan de Correction & Audit IHM — Résolution Intégrale des 14 Lots
 
-### Commits récents notables sur `master` :
+Le plan de correction issu de l'Audit IHM (`AUDIT_IHM/07_PLAN_DE_CORRECTION_PROPOSE.md`) a été intégralement implémenté, validé et commité sur `master` :
 
-- `8c124b3` : _fix: calendrier — exclure rappels terminés et inclure événements multi-jours_
-- `3191790` : _feat: implémenter les 3 formes de snooze (rapide, demain même heure, personnalisé)_
-- `1a6f3c4` : _refactor: retirer l'import inutile CreateReminderParams dans reminder-use-cases.ts_
-- `6b1f84f` : _fix: activer expo-notifications dans Expo Go (seul le push est bloqué, les notifs locales fonctionnent)_
-- `44c3aea` : _refactor: supprimer calculateSnoozeUntil (code mort)_
-- `fcfc324` : _chore: supprimer client.ts et schema.ts obsolètes au profit de sqlite.ts + migrations.ts_
-- `4593652` : _feat: finalisation V1.0 - Settings, Documentation, and App Config_
-
-### Onboarding & branding (désormais sur `master`)
-
-La refonte Stitch (PulseLogo, SplashAnimated, StepIndicator, ValueBadge, onboarding 5 étapes, tokens glass) est **commitée**. Ne plus la traiter comme un travail en attente.
+| Lot | Domaine | Défauts résolus & Réalisations | Statut |
+| :--- | :--- | :--- | :---: |
+| **Lot 1** | Sécurité, vie privée & intégrité (P1) | `DEF-01`, `DEF-02` : Chiffrement XChaCha20-Poly1305 de `sanctum_notes`, dérivation KDF via `expo-secure-store`, `clearAllData` atomique SQLite multi-tables, `NotificationService.cancelAll()`. | ✅ Fait |
+| **Lot 2** | Fiabilité rappels & notifications (P1-P2) | `DEF-03`, `DEF-04`, `DEF-09`, `DEF-15` : Conciliation au démarrage (`reconcileOverdueRecurringReminders`), calcul `max(scheduledAt, now)` sur snooze et getNextOccurrence strictly future, garde contre reprogrammation silencieuse +10s, fixation `dayOfMonth`. | ✅ Fait |
+| **Lot 3** | Parcours essentiels, parsing NLP (P2) | `DEF-10`, `DEF-14` : Priorisation NLP (« après-demain » avant « demain », heures explicites avant raccourcis flous, frontières de mots `\b${name}\b`), masquage des boutons démo sous gardes `__DEV__`. | ✅ Fait |
+| **Lot 4** | Architecture de l'info & navigation (P2-P3) | Unification terminologique « Sanctuaire », distinction des 3 écrans de planning (heures de briefing, blocs hebdomadaires, grille horaire), clarification de la réinitialisation d'onboarding. | ✅ Fait |
+| **Lot 5** | Accessibilité numérique (WCAG 2.2 AA) | `DEF-05`, `DEF-12` : Ajout exhaustif de `accessibilityRole` et `accessibilityLabel` sur tous les boutons icônes et sélecteurs, harmonisation des contrastes textuels $\ge 4.5:1$ dans `palettes.ts`. | ✅ Fait |
+| **Lot 6** | Design system & boutons verre (P2-P3) | `DEF-07`, `DEF-17` : Élimination du double padding et de l'anneau Android sur `Button.tsx`, thématisation Midnight Glass de `GlassFloatingActionButton.tsx`. | ✅ Fait |
+| **Lot 7** | Barres et composition d'écran (P2-P3) | `DEF-16`, `U-06` : Redéfinition du bouton Aujourd'hui visible, harmonisation des fonds de modules Pulse (`theme.surface.container`), sécurisation des libellés d'onglets. | ✅ Fait |
+| **Lot 8** | Gestes swipe & suppression douce (P2) | `DEF-08`, `DEF-13` : Composant `SwipeableItem` réutilisable, suppression douce réversible 30s avec Snackbar Undo, élimination de 40+ alertes modales bloquantes. | ✅ Fait |
+| **Lot 9** | Identité visuelle & lancement (P2) | `DEF-06` : Régénération des assets `splash-icon.png` et `android-icon-foreground.png` à fond 100% transparent (alpha = 0), séquence directe Option A sans écran animé redondant. | ✅ Fait |
+| **Lot 10** | Animations & accessibilité moteur (P2) | `DEF-11` : Migration du repli FAB vers Reanimated 4 sur le thread UI, création du hook central `useSafeReducedMotion()`. | ✅ Fait |
+| **Lot 11** | Onboarding & replay (P3) | Transitions harmonisées `slide_from_right`, raccourcis « Passer » vers permissions sur toutes les étapes, persistance BDD de `resetOnboarding` pour le replay depuis les Réglages. | ✅ Fait |
+| **Lot 12** | Qualité linguistique & neutralité (P3) | Remplacement des apostrophes droites par des apostrophes typographiques `’`, espaces insécables avant ponctuations doubles, relecture inclusive. | ✅ Fait |
+| **Lot 13** | Performance & mémoire mobile (P2-P3) | Réduction du coût scrypt à $N=32768$ (32 Mo max au lieu de 64 Mo, prévient les OOM sur Android modeste) avec compatibilité descendante $N=65536$, virtualisation `FlatList` (`windowSize=5`, `maxToRenderPerBatch=10`). | ✅ Fait |
+| **Lot 14** | Tests de régression & conformité (P2) | Tests Jest couvrant les cas limites de récurrence (multi-jours, années bissextiles), conformité `expo-doctor` (21/21 ok), synchronisation documentation. | ✅ Fait |
 
 ---
 
 ## 9. 🚦 Validation Technique & Zéro Régression
 
-Le contrôle le plus strict a été exécuté :
+Tous les contrôles qualité automatisés les plus stricts ont été exécutés avec succès :
 
 ```bash
+# 1. Vérification de conformité de l'écosystème Expo
+npx expo-doctor
+# Résultat : 21/21 checks passed. No issues detected!
+
+# 2. Vérification du typage TypeScript strict
 npx tsc --noEmit
 # Résultat : Code 0 (0 erreur de compilation sur l'ensemble du projet)
+
+# 3. Suite complète de tests Jest automatisés
+npx jest --no-coverage
+# Résultat : 25 suites passées, 299 tests unitaires et d'intégration validés (100% passants)
 ```
 
-Toutes les entités, use cases, repositories, composants et écrans respectent rigoureusement les types TypeScript en mode strict.
+---
+
+## 10. 🎯 Synthèse & Perspectives V2
+
+L'application **Junix Pulse V1.0** est désormais entièrement stabilisée, sécurisée, accessible, performante et couverte par une suite de tests unitaires rigoureuse.
+
+### Perspectives pour la V2 :
+1. **Import Natif des Contacts** : Branchement de `expo-contacts` dans `people/new.tsx` pour préremplir les contacts depuis le carnet du téléphone.
+2. **Focus Timer / Pomodoro (V2)** : Minuteur de concentration relié aux blocs horaires de l'emploi du temps.
+3. **Synchronisation P2P chiffrée** : Partage local chiffré de pair-à-pair sans serveur central.
 
 ---
 
-## 10. 🎯 Feuille de Route
-
-### Déjà en place (vérifié dans le code, 25 septembre 2026)
-
-1. **Édition des rappels** : la route `src/app/reminders/edit/[id].tsx` existe et appelle `updateReminder`.
-2. **Onboarding Stitch** : composants `PulseLogo`, `SplashAnimated`, `StepIndicator`, `ValueBadge` et les 5 étapes sont sur `master`.
-3. **Modules transversaux V1** : Capture rapide (`capture.tsx`), Sanctum (`sanctum.tsx` + migration 020), Recherche (`search.tsx`).
-4. **Sauvegarde et restauration** : export complet chiffré par mot de passe (XChaCha20-Poly1305 + scrypt, 64 Mio) et partageable depuis les paramètres ; import déchiffré et validé avant écriture, fusion sans écrasement et transaction SQLite depuis l'onboarding.
-
-### Priorité Moyenne (Consolidation & Robustesse)
-
-1. **Tests Unitaires Automatisés des Règles Métier** :
-   - _Constat_ : les règles pures (`reminder-rules.ts`, `habit-rules.ts`, `goal-rules.ts`) n'ont pas de runner (Jest / Vitest absent de `package.json`).
-   - _Action_ : couvrir les cas limites (année bissextile, pauses d'habitudes en fin de mois, snooze « lendemain » basé sur `scheduledAt`).
-2. **Import Natif des Contacts du Répertoire Téléphonique** :
-   - _Constat_ : le champ `importedFromContacts` existe en SQLite ; `expo-contacts` n'est pas importé dans `people/new.tsx`.
-   - _Action_ : option « Importer depuis le carnet d'adresses » avec permission contextuelle.
-
-### Priorité Basse / Roadmap V2
-
-3. **Focus Timer / Pomodoro (V2)** :
-   - Aucun écran ni module minuteur n'existe dans `src/` (vérifié par recherche). À relier plus tard aux blocs du planning personnel.
-
----
-
-_Ce document reflète l'état du codebase au 28 septembre 2026. Les items restants correspondent à une absence vérifiée dans le code, pas à une supposition._
+_Ce document reflète l'état certifié du codebase Junix Pulse V1.0 (20 octobre 2026)._

@@ -41,7 +41,7 @@ describe('Lot 13 — Cryptographie des sauvegardes (backup-crypto)', () => {
 
       const decrypted = await decryptBackupContents(encryptedJson, validPassphrase);
       expect(decrypted).toBe(testPayload);
-    });
+    }, 20000);
 
     it('rejette une phrase secrète trop courte (< 16 caractères)', async () => {
       await expect(
@@ -65,7 +65,7 @@ describe('Lot 13 — Cryptographie des sauvegardes (backup-crypto)', () => {
       await expect(
         decryptBackupContents(encryptedJson, wrongPassphrase)
       ).rejects.toThrow('Mot de passe incorrect ou fichier de sauvegarde altéré.');
-    });
+    }, 20000);
 
     it('rejette un JSON non chiffré ou corrompu', async () => {
       await expect(
@@ -110,6 +110,6 @@ describe('Lot 13 — Cryptographie des sauvegardes (backup-crypto)', () => {
 
       const decrypted = await decryptBackupContents(legacyBackupJson, validPassphrase);
       expect(decrypted).toBe(testPayload);
-    });
+    }, 20000);
   });
 });

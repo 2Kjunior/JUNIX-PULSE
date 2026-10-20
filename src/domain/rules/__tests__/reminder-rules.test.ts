@@ -147,7 +147,7 @@ describe('getNextOccurrence (BR-004)', () => {
 
   it('DEF-15 : MONTHLY préserve le jour d’origine du mois (dayOfMonth) sans dérive', () => {
     const rule: RecurrenceRule = { id: 'r-monthly', type: 'MONTHLY', interval: 1 };
-    // Le 31 janvier
+    // Le 31 janvier 2025 (non bissextile)
     const jan31 = '2025-01-31T10:00:00.000Z';
     const nextFeb = getNextOccurrence(jan31, rule);
     expect(nextFeb).not.toBeNull();
@@ -155,6 +155,40 @@ describe('getNextOccurrence (BR-004)', () => {
     // Février a 28 jours en 2025 -> 28 février
     expect(dFeb.getUTCDate()).toBe(28);
     expect(dFeb.getUTCMonth()).toBe(1); // février
+  });
+
+  it('DEF-15 : MONTHLY sur une année bissextile (2024) gère correctement le 29 février', () => {
+    const rule: RecurrenceRule = { id: 'r-leap', type: 'MONTHLY', interval: 1, dayOfMonth: 31 };
+    const jan31Leap = '2024-01-31T10:00:00.000Z';
+    const nextFebLeap = getNextOccurrence(jan31Leap, rule);
+    expect(nextFebLeap).not.toBeNull();
+    const dFeb = new Date(nextFebLeap!);
+    // 2024 est bissextile -> 29 février
+    expect(dFeb.getUTCDate()).toBe(29);
+    expect(dFeb.getUTCMonth()).toBe(1);
+  });
+
+  it('WEEKLY multi-jours (Lun, Mer, Ven) en retard de 3 semaines saute vers le prochain jour futur', () => {
+    // Règle : Lundi (1), Mercredi (3), Vendredi (5)
+    const rule: RecurrenceRule = {
+      id: 'r-weekly-multi',
+      type: 'WEEKLY',
+      interval: 1,
+      daysOfWeek: [1, 3, 5],
+    };
+    // Échéance initiale : Mercredi 4 juin 2025 à 09:00 UTC
+    // Référence Now : Vendredi 20 juin 2025 à 11:00 UTC (le créneau de 9h est passé)
+    const initial = '2025-06-04T09:00:00.000Z';
+    const referenceNow = new Date('2025-06-20T11:00:00.000Z');
+
+    const next = getNextOccurrence(initial, rule, referenceNow);
+    expect(next).not.toBeNull();
+    const nextDate = new Date(next!);
+    // Le prochain créneau doit être Lundi 23 juin 2025 à 09:00
+    expect(nextDate.getUTCDay()).toBe(1); // Lundi
+    expect(nextDate.getUTCDate()).toBe(23);
+    expect(nextDate.getUTCHours()).toBe(9);
+    expect(nextDate.getTime()).toBeGreaterThan(referenceNow.getTime());
   });
 });
 
