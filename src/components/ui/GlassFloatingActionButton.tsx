@@ -15,17 +15,23 @@
  *    - Duo Electric Violet / Royal Indigo (#8B5CF6 / #6D28D9) sans la nuance 3 couleurs.
  */
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
-  Animated,
   Text,
   TouchableOpacity,
   StyleSheet,
   Platform,
   ViewStyle,
   StyleProp,
-  Easing,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
@@ -37,6 +43,7 @@ import {
 import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
 
 export interface GlassFloatingActionButtonProps {
   label: string;
@@ -61,13 +68,13 @@ export function GlassFloatingActionButton({
 }: GlassFloatingActionButtonProps) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeGlassFabStyles);
+  const reduceMotion = useSafeReducedMotion();
 
-  // Valeur d'expansion : 1 = étendu (largeur ~168px), 0 = compact (cercle 52x52)
-  const expandAnim = useRef(new Animated.Value(1)).current;
+  // Valeur d'expansion Reanimated : 1 = étendu (largeur ~168px), 0 = compact (cercle 52x52)
+  const expandAnim = useSharedValue(reduceMotion ? 0 : 1);
   // Valeur d'échelle 3D (touch press)
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useSharedValue(1);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isExpanded, setIsExpanded] = useState(true);
 
   // Déclenché à chaque fois que l'écran/onglet devient actif
   useFocusEffect(
@@ -77,19 +84,19 @@ export function GlassFloatingActionButton({
         clearTimeout(timerRef.current);
       }
 
-      // 2. Déplier immédiatement dans l'état étendu complet
-      expandAnim.setValue(1);
-      setIsExpanded(true);
+      if (reduceMotion) {
+        expandAnim.value = 0;
+        return;
+      }
 
-      // 3. Programmer la réduction après 10 secondes (10000ms)
+      // 2. Déplier immédiatement dans l'état étendu complet
+      expandAnim.value = 1;
+
+      // 3. Programmer la réduction sur le thread UI après collapseDelayMs
       timerRef.current = setTimeout(() => {
-        Animated.timing(expandAnim, {
-          toValue: 0,
-          duration: 420,
+        expandAnim.value = withTiming(0, {
+          duration: 380,
           easing: Easing.bezier(0.4, 0, 0.2, 1),
-          useNativeDriver: false,
-        }).start(() => {
-          setIsExpanded(false);
         });
       }, collapseDelayMs);
 
@@ -98,59 +105,38 @@ export function GlassFloatingActionButton({
           clearTimeout(timerRef.current);
         }
       };
-    }, [collapseDelayMs, expandAnim])
+    }, [collapseDelayMs, expandAnim, reduceMotion])
   );
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.90,
-      friction: 6,
-      tension: 120,
-      useNativeDriver: true,
-    }).start();
+    scaleAnim.value = withSpring(0.92, { damping: 14, stiffness: 220 });
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1.0,
-      friction: 5,
-      tension: 80,
-      useNativeDriver: true,
-    }).start();
+    scaleAnim.value = withSpring(1.0, { damping: 14, stiffness: 220 });
   };
 
-  // Interpolation de la largeur totale du bouton (52px = cercle parfait, 168px = capsule étendue)
-  const animatedWidth = expandAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [52, 168],
-  });
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
 
-  // Interpolation de l'opacité du texte (s'estompe rapidement au début de la rétractation)
-  const labelOpacity = expandAnim.interpolate({
-    inputRange: [0, 0.35, 1],
-    outputRange: [0, 0, 1],
-  });
+  const animatedWrapperStyle = useAnimatedStyle(() => ({
+    width: interpolate(expandAnim.value, [0, 1], [52, 168]),
+  }));
 
-  // Interpolation de la largeur du conteneur texte
-  const labelWidth = expandAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 98],
-  });
-
-  // Espacement entre l'icône et le texte
-  const labelMarginLeft = expandAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 6],
-  });
+  const animatedLabelWrapperStyle = useAnimatedStyle(() => ({
+    width: interpolate(expandAnim.value, [0, 1], [0, 98]),
+    opacity: interpolate(expandAnim.value, [0, 0.35, 1], [0, 0, 1]),
+    marginLeft: interpolate(expandAnim.value, [0, 1], [0, 6]),
+    transform: [{ scale: interpolate(expandAnim.value, [0, 1], [0.85, 1]) }],
+  }));
 
   return (
     <Animated.View
       style={[
         styles.container,
-        {
-          bottom: bottomOffset,
-          transform: [{ scale: scaleAnim }],
-        },
+        { bottom: bottomOffset },
+        animatedContainerStyle,
         style,
       ]}
     >
@@ -162,12 +148,7 @@ export function GlassFloatingActionButton({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel || label}
       >
-        <Animated.View
-          style={[
-            styles.touchableWrapper,
-            { width: animatedWidth },
-          ]}
-        >
+        <Animated.View style={[styles.touchableWrapper, animatedWrapperStyle]}>
           <LinearGradient
             colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
@@ -180,13 +161,10 @@ export function GlassFloatingActionButton({
 
               {/* Texte rétractable avec masquage overflow strict */}
               <Animated.View
-                style={{
-                  width: labelWidth,
-                  opacity: labelOpacity,
-                  marginLeft: labelMarginLeft,
-                  overflow: 'hidden',
-                  justifyContent: 'center',
-                }}
+                style={[
+                  styles.labelContainer,
+                  animatedLabelWrapperStyle,
+                ]}
               >
                 <Text
                   style={styles.label}
@@ -252,6 +230,10 @@ export function makeGlassFabStyles(theme: ThemePalette) {
       width: '100%',
       height: '100%',
       paddingHorizontal: 8,
+    },
+    labelContainer: {
+      overflow: 'hidden',
+      justifyContent: 'center',
     },
     label: {
       ...Typography.labelLarge,

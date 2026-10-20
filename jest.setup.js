@@ -18,6 +18,11 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: (initialValue) => ({ value: initialValue }),
     useAnimatedStyle: (styleFunc) => styleFunc(),
     useAnimatedProps: (propsFunc) => propsFunc(),
+    interpolate: (value, input, output) => {
+      if (value <= input[0]) return output[0];
+      if (value >= input[input.length - 1]) return output[output.length - 1];
+      return output[0] + ((value - input[0]) * (output[output.length - 1] - output[0])) / (input[input.length - 1] - input[0]);
+    },
     withTiming: (toValue, _config, cb) => {
       if (cb) cb(true);
       return toValue;
