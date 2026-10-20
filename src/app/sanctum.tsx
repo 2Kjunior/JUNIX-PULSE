@@ -635,6 +635,10 @@ export default function SanctumScreen() {
         <FlatList
           data={filteredNotes}
           keyExtractor={(item) => item.id}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
           ListEmptyComponent={
             <View style={styles.emptyState}>

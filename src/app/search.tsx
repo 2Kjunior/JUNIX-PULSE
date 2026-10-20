@@ -19,6 +19,7 @@ import {
   ScrollView,
   FlatList,
   Keyboard,
+  Platform,
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -386,6 +387,10 @@ export default function SearchScreen() {
         <FlatList
           data={filteredResults}
           keyExtractor={(item) => `${item.type}-${item.id}`}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           contentContainerStyle={styles.resultsList}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (

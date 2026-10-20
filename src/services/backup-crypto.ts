@@ -7,13 +7,19 @@ const EncryptedBackupSchema = z.object({
   version: z.literal(1),
   cipher: z.literal('xchacha20-poly1305'),
   kdf: z.literal('scrypt'),
-  scrypt: z.object({ n: z.literal(65536), r: z.literal(8), p: z.literal(1) }).strict(),
+  scrypt: z.object({
+    n: z.union([z.literal(32768), z.literal(65536)]),
+    r: z.literal(8),
+    p: z.literal(1),
+  }).strict(),
   salt: z.string().regex(/^[0-9a-f]{32}$/),
   nonce: z.string().regex(/^[0-9a-f]{48}$/),
   ciphertext: z.string().regex(/^(?:[0-9a-f]{2}){16,}$/),
 }).strict();
 
-const SCRYPT_PARAMETERS = { N: 65536, r: 8, p: 1, dkLen: 32 } as const;
+// Paramètres par défaut pour le chiffrement mobile :
+// N=32768 (32 Mo de RAM max au lieu de 64 Mo, prévient les OOM sur Android tout en assurant une haute résistance cryptographique).
+const DEFAULT_SCRYPT_PARAMETERS = { N: 32768, r: 8, p: 1, dkLen: 32 } as const;
 
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
@@ -44,7 +50,7 @@ export async function encryptBackupContents(
     throw new Error('Paramètres cryptographiques invalides.');
   }
 
-  const key = await scryptAsync(new TextEncoder().encode(passphrase), salt, SCRYPT_PARAMETERS);
+  const key = await scryptAsync(new TextEncoder().encode(passphrase), salt, DEFAULT_SCRYPT_PARAMETERS);
   const ciphertext = xchacha20poly1305(key, nonce).encrypt(new TextEncoder().encode(contents));
 
   return JSON.stringify({
@@ -52,7 +58,7 @@ export async function encryptBackupContents(
     version: 1,
     cipher: 'xchacha20-poly1305',
     kdf: 'scrypt',
-    scrypt: { n: 65536, r: 8, p: 1 },
+    scrypt: { n: DEFAULT_SCRYPT_PARAMETERS.N, r: 8, p: 1 },
     salt: bytesToHex(salt),
     nonce: bytesToHex(nonce),
     ciphertext: bytesToHex(ciphertext),
@@ -78,7 +84,7 @@ export async function decryptBackupContents(contents: string, passphrase: string
     const key = await scryptAsync(
       new TextEncoder().encode(passphrase),
       hexToBytes(parsed.data.salt),
-      SCRYPT_PARAMETERS
+      { N: parsed.data.scrypt.n, r: parsed.data.scrypt.r, p: parsed.data.scrypt.p, dkLen: 32 }
     );
     const plaintext = xchacha20poly1305(
       key,
