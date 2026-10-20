@@ -11,5 +11,7 @@
     "**/ios/**",
     "**/dist/**",
     "**/.expo/**"
-  ]
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }
