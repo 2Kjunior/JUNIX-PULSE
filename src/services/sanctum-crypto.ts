@@ -72,10 +72,14 @@ export async function generateRandomBytes(length: number): Promise<Uint8Array> {
     }
   }
 
-  // 3. Environnement Node.js (tests Jest)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const nodeCrypto = require('crypto');
-  return new Uint8Array(nodeCrypto.randomBytes(length));
+  // 3. Fallback expo-crypto synchrone (Crypto.getRandomValues)
+  if (typeof Crypto.getRandomValues === 'function') {
+    const array = new Uint8Array(length);
+    Crypto.getRandomValues(array);
+    return array;
+  }
+
+  throw new Error('Aucun générateur cryptographique aléatoire sécurisé disponible.');
 }
 
 /**
