@@ -46,7 +46,17 @@ export default function OnboardingSchedule() {
       contentContainerStyle={styles.content}
     >
       {/* Indicateur d'étape */}
-      <StepIndicator total={5} current={4} />
+      <View style={styles.headerRow}>
+        <StepIndicator total={5} current={4} />
+        <TouchableOpacity
+          onPress={() => router.push('/(onboarding)/permissions')}
+          style={styles.skipBtn}
+          accessibilityLabel="Passer à la dernière étape"
+          accessibilityRole="button"
+        >
+          <Text style={styles.skipText}>Passer</Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.title}>Votre rythme</Text>
       <Text style={styles.subtitle}>
@@ -124,6 +134,21 @@ const makeOnboardingScheduleStyles = (theme: ThemePalette) =>
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.xxl,
       paddingBottom: Spacing.xxxl,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    skipBtn: {
+      paddingVertical: Spacing.xs,
+      paddingLeft: Spacing.md,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    skipText: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.disabled,
     },
     title: {
       fontSize: 26,

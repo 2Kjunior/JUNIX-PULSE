@@ -88,7 +88,17 @@ export default function OnboardingPersonalize() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Indicateur d'étape */}
-        <StepIndicator total={5} current={3} />
+        <View style={styles.headerRow}>
+          <StepIndicator total={5} current={3} />
+          <TouchableOpacity
+            onPress={() => router.push('/(onboarding)/permissions')}
+            style={styles.skipBtn}
+            accessibilityLabel="Passer les étapes restantes"
+            accessibilityRole="button"
+          >
+            <Text style={styles.skipText}>Passer</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.title}>Quelques préférences</Text>
         <Text style={styles.subtitle}>
@@ -193,6 +203,21 @@ const makeOnboardingPersonalizeStyles = (theme: ThemePalette) =>
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.xxl,
       paddingBottom: Spacing.xxxl,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    skipBtn: {
+      paddingVertical: Spacing.xs,
+      paddingLeft: Spacing.md,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    skipText: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.disabled,
     },
     title: {
       fontSize: 26,

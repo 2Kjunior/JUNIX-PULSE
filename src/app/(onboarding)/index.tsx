@@ -121,7 +121,7 @@ export default function OnboardingWelcome() {
       <View style={styles.topRow}>
         <StepIndicator total={5} current={1} showLabel={true} />
         <TouchableOpacity
-          onPress={() => router.push('/(onboarding)/personalize')}
+          onPress={() => router.push('/(onboarding)/permissions')}
           style={styles.skipBtn}
           accessibilityLabel="Passer l'onboarding"
           accessibilityRole="button"

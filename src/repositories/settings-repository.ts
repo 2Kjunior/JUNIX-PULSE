@@ -90,4 +90,16 @@ export const SettingsRepository = {
       now
     );
   },
+
+  /**
+   * Remet le flag onboarding_completed à 0 pour rejouer la visite d'accueil.
+   * Les données utilisateur sont conservées.
+   */
+  async resetOnboarding(now: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `UPDATE settings SET onboarding_completed = 0, updated_at = ? WHERE id = '1'`,
+      now
+    );
+  },
 };

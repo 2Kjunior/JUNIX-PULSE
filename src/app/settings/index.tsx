@@ -215,6 +215,7 @@ export default function SettingsScreen() {
         {
           text: 'Recommencer',
           onPress: async () => {
+            await SettingsRepository.resetOnboarding(new Date().toISOString());
             setOnboardingComplete(false);
             showSnackbar("Visite d'accueil relancée");
             router.replace('/(onboarding)');

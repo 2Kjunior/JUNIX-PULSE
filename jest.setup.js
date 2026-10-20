@@ -37,12 +37,31 @@ jest.mock('react-native-reanimated', () => {
     useReducedMotion: () => false,
     Easing: {
       bezier: () => (t) => t,
+      in: (fn) => fn,
+      out: (fn) => fn,
       inOut: (fn) => fn,
       ease: (t) => t,
+      linear: (t) => t,
+      quad: (t) => t,
+      cubic: (t) => t,
+      sin: (t) => t,
+      circle: (t) => t,
+      exp: (t) => t,
     },
     runOnJS: (fn) => fn,
     // Animated components
     View,
+  };
+});
+
+// Mock @expo/vector-icons (évite le chargement asynchrone des polices en environnement de test)
+jest.mock('@expo/vector-icons', () => {
+  const { View } = require('react-native');
+  return {
+    Ionicons: View,
+    MaterialIcons: View,
+    FontAwesome: View,
+    Feather: View,
   };
 });
 

@@ -7,7 +7,7 @@
  * - Titre en Outfit Bold (règle A.2)
  * - StepIndicator harmonisé (barre, pas dots)
  */
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -67,7 +67,17 @@ export default function OnboardingDiscover() {
     <View style={styles.container}>
       {/* En-tête */}
       <View style={styles.header}>
-        <StepIndicator total={5} current={2} />
+        <View style={styles.headerRow}>
+          <StepIndicator total={5} current={2} />
+          <TouchableOpacity
+            onPress={() => router.push('/(onboarding)/permissions')}
+            style={styles.skipBtn}
+            accessibilityLabel="Passer les étapes restantes"
+            accessibilityRole="button"
+          >
+            <Text style={styles.skipText}>Passer</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.title}>Comment ça fonctionne</Text>
         <Text style={styles.subtitle}>Trois concepts, une cohérence.</Text>
       </View>
@@ -133,6 +143,21 @@ const makeOnboardingDiscoverStyles = (theme: ThemePalette) =>
     },
     header: {
       marginBottom: Spacing.lg,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    skipBtn: {
+      paddingVertical: Spacing.xs,
+      paddingLeft: Spacing.md,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    skipText: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.disabled,
     },
     title: {
       fontSize: 26,
