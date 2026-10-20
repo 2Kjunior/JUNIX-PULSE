@@ -209,23 +209,22 @@ export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseL
         */}
         <AnimatedPath
           d={[
-            // Tige verticale gauche du P
-            'M 30 78',
-            'L 30 22',
-            // Boucle du haut du P (demi-cercle droit)
-            'C 30 22 30 16 36 16',
-            'L 54 16',
-            'C 66 16 66 28 66 34',
-            'C 66 40 60 48 54 48',
-            'L 30 48',
-            // Ligne de pouls (signature cardiaque)
-            'M 30 62',
-            'L 40 62',
-            'L 45 54',
-            'L 52 72',
-            'L 58 56',
-            'L 62 62',
-            'L 72 62',
+            // Tige verticale et boucle du P équilibrée
+            'M 28 80',
+            'L 28 20',
+            'C 28 14 34 14 42 14',
+            'L 56 14',
+            'C 70 14 74 24 74 34',
+            'C 74 44 68 50 56 50',
+            'L 28 50',
+            // Ligne de pouls centrée (signature cardiaque)
+            'M 24 64',
+            'L 38 64',
+            'L 44 54',
+            'L 52 74',
+            'L 60 56',
+            'L 65 64',
+            'L 76 64',
           ].join(' ')}
           stroke={`url(#${gradId})`}
           strokeWidth={4.5}

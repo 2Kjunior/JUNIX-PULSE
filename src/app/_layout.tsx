@@ -31,7 +31,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { Snackbar } from "@/components/feedback/Snackbar";
 import { AnimatedBackgroundGlow } from "@/components/ui/AnimatedBackgroundGlow";
-import { SplashAnimated } from "@/components/ui/SplashAnimated";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
 import { useTheme } from "@/hooks/use-theme";
@@ -79,12 +78,8 @@ export default function RootLayout() {
   const appReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
-    // Masquer le splash natif dès que les fonts sont prêtes,
-    // puis afficher SplashAnimated à la place pendant l'init DB
+    // Option A : Masquer le splash natif une fois que les polices ET la base sont prêtes (DEF-06)
     if (!appReady) return;
-
-    // Masquer immédiatement le splash natif Expo
-    SplashScreen.hideAsync();
 
     async function initialize() {
       try {
@@ -110,6 +105,9 @@ export default function RootLayout() {
         const message =
           error instanceof Error ? error.message : "Erreur base de données";
         setDbError(message);
+      } finally {
+        // Révéler directement l'application sans écran animé redondant (Option A)
+        await SplashScreen.hideAsync();
       }
     }
 
@@ -253,8 +251,6 @@ export default function RootLayout() {
         </Stack>
         {/* Snackbar global (au-dessus de tout le contenu) */}
         <Snackbar />
-        {/* Splash animé (par-dessus l'app, fondu sortant quand prêt) */}
-        <SplashAnimated isReady={dbReady} />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

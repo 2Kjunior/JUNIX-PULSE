@@ -17,8 +17,25 @@ jest.mock('react-native-reanimated', () => {
     },
     useSharedValue: (initialValue) => ({ value: initialValue }),
     useAnimatedStyle: (styleFunc) => styleFunc(),
-    withTiming: (toValue) => toValue,
+    useAnimatedProps: (propsFunc) => propsFunc(),
+    withTiming: (toValue, _config, cb) => {
+      if (cb) cb(true);
+      return toValue;
+    },
+    withSpring: (toValue, _config, cb) => {
+      if (cb) cb(true);
+      return toValue;
+    },
+    withRepeat: (anim) => anim,
+    withSequence: (...anims) => anims[0],
+    withDelay: (_delay, anim) => anim,
     useReducedMotion: () => false,
+    Easing: {
+      bezier: () => (t) => t,
+      inOut: (fn) => fn,
+      ease: (t) => t,
+    },
+    runOnJS: (fn) => fn,
     // Animated components
     View,
   };
