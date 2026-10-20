@@ -12,7 +12,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Linking,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';

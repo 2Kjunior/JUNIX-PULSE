@@ -4,7 +4,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { PersonRepository } from '../repositories/person-repository';
-import { Person, Interaction, InteractionType } from '../domain/entities';
+import { Interaction, InteractionType } from '../domain/entities';
 
 export interface CreatePersonInput {
   displayName: string;

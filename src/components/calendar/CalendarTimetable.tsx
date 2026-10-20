@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Platform,
   Modal,
 } from 'react-native';
 import { format, isToday, parseISO } from 'date-fns';
@@ -29,7 +28,7 @@ import {
 import { GlowCard } from '@/components/ui/GlowCard';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
-import { ThemePalette, darkPalette } from '@/constants/palettes';
+import { ThemePalette } from '@/constants/palettes';
 
 interface CalendarTimetableProps {
   selectedDate: Date;

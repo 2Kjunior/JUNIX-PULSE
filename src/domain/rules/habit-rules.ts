@@ -12,7 +12,6 @@ import {
   startOfDay,
   subDays,
   isWithinInterval,
-  isAfter,
   isBefore,
   isSameDay,
 } from 'date-fns';

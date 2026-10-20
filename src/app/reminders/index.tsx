@@ -28,12 +28,6 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { deleteReminder, completeReminder, snoozeReminder } from '@/use-cases/reminder-use-cases';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import {
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
-import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';

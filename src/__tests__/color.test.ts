@@ -11,7 +11,7 @@
  * - resolveScheme : 3 modes × 4 valeurs système.
  */
 
-import { darkPalette, lightPalette, type ThemePalette } from '../constants/palettes';
+import { darkPalette, lightPalette } from '../constants/palettes';
 import {
   hexToRgba,
   withAlpha,

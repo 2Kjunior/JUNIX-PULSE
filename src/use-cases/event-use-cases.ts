@@ -4,7 +4,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { EventRepository } from '../repositories/event-repository';
-import { Event, EventType } from '../domain/entities';
+import { EventType } from '../domain/entities';
 
 export interface CreateEventInput {
   title: string;

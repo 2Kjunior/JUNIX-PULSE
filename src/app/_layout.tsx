@@ -51,7 +51,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const {
-    dbReady,
+    dbReady: _dbReady,
     dbError,
     onboardingComplete,
     setDbReady,

@@ -36,7 +36,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import {
-  Radius,
   Typography,
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';

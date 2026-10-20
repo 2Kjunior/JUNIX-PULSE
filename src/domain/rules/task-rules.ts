@@ -4,9 +4,8 @@
  * Fonctions déterministes et testables indépendamment de l'UI et de SQLite.
  */
 
-import { format, parseISO, isBefore, startOfDay } from 'date-fns';
-import { Task, Subtask } from '../entities';
-import { TaskStatus } from '../enums';
+import { format } from 'date-fns';
+import { Task, Subtask, TaskStatus } from '../entities';
 
 /**
  * Détermine le statut cible lors de la réouverture d'une tâche terminée.

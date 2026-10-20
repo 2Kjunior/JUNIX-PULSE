@@ -4,7 +4,6 @@
  */
 
 import { Task, Goal } from '../entities';
-import { TaskStatus } from '../enums';
 
 /**
  * Calcule le pourcentage de progression d'un objectif (0–100).

@@ -6,8 +6,7 @@
  */
 
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationService } from '@/services/notification-service';
 import {

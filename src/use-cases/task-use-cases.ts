@@ -5,7 +5,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { TaskRepository } from '../repositories/task-repository';
-import { Task, Subtask, TaskStatus, ReminderPriority } from '../domain/entities';
+import { Subtask, TaskStatus, ReminderPriority } from '../domain/entities';
 import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
 
 // ─── Interfaces d'entrée ──────────────────────────────────────────────────────

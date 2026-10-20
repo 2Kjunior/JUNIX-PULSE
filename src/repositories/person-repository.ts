@@ -121,7 +121,6 @@ export const PersonRepository = {
    * Retourne les personnes non contactées depuis leur seuil d'oubli (forgotten_threshold_days).
    */
   async findForgotten(): Promise<Person[]> {
-    const db = await getDatabase();
     const all = await this.findAll();
     const now = new Date();
 

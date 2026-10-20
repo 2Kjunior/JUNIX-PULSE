@@ -131,7 +131,7 @@ export default function PulseScreen() {
     }, [loadData])
   );
 
-  const handleAccept = async (id: string, title: string) => {
+  const handleAccept = async (id: string, _title: string) => {
     try {
       await SuggestionUseCases.acceptSuggestion(id);
       showSnackbar(`Suggestion acceptée.`);

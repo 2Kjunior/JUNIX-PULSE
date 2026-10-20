@@ -11,7 +11,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  View,
   Platform,
 } from 'react-native';
 import { Radius, Spacing, Typography } from '@/constants/theme';

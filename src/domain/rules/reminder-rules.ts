@@ -14,11 +14,9 @@ import {
   parseISO,
   isBefore,
   isAfter,
-  startOfDay,
-  format,
 } from 'date-fns';
 import { ReminderStatus, WeekPosition } from '../enums';
-import { RecurrenceRule, Reminder } from '../entities';
+import { RecurrenceRule } from '../entities';
 
 /**
  * Détermine si un rappel est dans un état terminal (pas de nouvelle occurrence possible).

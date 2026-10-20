@@ -136,10 +136,10 @@ export default function SettingsScreen() {
         appearanceMode: newMode,
         updatedAt: new Date().toISOString(),
       });
-    } catch (e) {
+    } catch {
       setThemeMode(previousMode);
       setSettings(s => s ? { ...s, appearanceMode: previousMode } : s);
-      showSnackbar('Échec de la sauvegarde de l\u2019apparence');
+      showSnackbar('Échec de la sauvegarde de l’apparence');
     }
   };
 

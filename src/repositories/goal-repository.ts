@@ -3,7 +3,7 @@
  */
 
 import { getDatabase } from '../database/sqlite';
-import { Goal, GoalTask, Task } from '../domain/entities';
+import { Goal, Task } from '../domain/entities';
 
 function rowToGoal(row: Record<string, unknown>): Goal {
   return {
