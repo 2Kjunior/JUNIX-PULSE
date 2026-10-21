@@ -131,6 +131,30 @@ export const SanctumRepository = {
   },
 
   /**
+   * Re-chiffre l'ensemble des notes existantes avec une nouvelle clé symétrique
+   * lors d'une modification de code PIN.
+   */
+  async reencryptAllNotes(oldKey: Uint8Array, newKey: Uint8Array): Promise<void> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<SanctumNote>(
+      `SELECT id, title, content, folder, created_at, updated_at FROM sanctum_notes WHERE id != '__pin_hash__'`
+    );
+    for (const row of rows) {
+      try {
+        const plain = await decryptSanctumNote(row.content, oldKey);
+        const reencrypted = await encryptSanctumNote(plain, newKey);
+        await db.runAsync(
+          `UPDATE sanctum_notes SET content = ? WHERE id = ?`,
+          reencrypted,
+          row.id
+        );
+      } catch {
+        // En cas d'erreur de déchiffrement, préserver la ligne brute
+      }
+    }
+  },
+
+  /**
    * Supprime une note secrète par son identifiant.
    */
   async deleteNote(id: string): Promise<void> {

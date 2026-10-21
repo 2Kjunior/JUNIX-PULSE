@@ -40,6 +40,10 @@ jest.mock('../database/sqlite', () => {
           const [title, content, folder, updated_at, id] = params;
           const existing = notesTable.get(id) || {};
           notesTable.set(id, { ...existing, title, content, folder, updated_at });
+        } else if (query.includes('UPDATE sanctum_notes SET content = ? WHERE id = ?')) {
+          const [content, id] = params;
+          const existing = notesTable.get(id) || {};
+          notesTable.set(id, { ...existing, content });
         } else if (query.startsWith('DELETE FROM sanctum_notes WHERE id = ?')) {
           const [id] = params;
           notesTable.delete(id);
@@ -146,4 +150,31 @@ describe('SanctumRepository — Persistance chiffrée XChaCha20-Poly1305', () =>
     const noteById = await SanctumRepository.getNoteById('__pin_hash__', masterKey);
     expect(noteById).toBeNull();
   });
+
+  it('re-chiffre toutes les notes lors du changement de clé', async () => {
+    const plainText = 'Secret important devant être conservé lors du changement de clé.';
+    const saved = await SanctumRepository.saveNote(
+      {
+        title: 'Note confidentielle',
+        content: plainText,
+        folder: 'Confidentiel',
+      },
+      masterKey
+    );
+
+    const newKey = await deriveSanctumKey('9876', mockSalt);
+
+    // Re-chiffrer avec la nouvelle clé
+    await SanctumRepository.reencryptAllNotes(masterKey, newKey);
+
+    // L'ancienne clé ne doit plus pouvoir déchiffrer la note (le texte brut est retourné sans déchiffrement valide)
+    const oldKeyNotes = await SanctumRepository.getAllNotes(masterKey);
+    expect(oldKeyNotes[0].content).not.toBe(plainText);
+
+    // La nouvelle clé doit déchiffrer le secret fidèlement
+    const newKeyNotes = await SanctumRepository.getAllNotes(newKey);
+    expect(newKeyNotes.length).toBe(1);
+    expect(newKeyNotes[0].content).toBe(plainText);
+  });
 });
+

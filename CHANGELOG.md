@@ -14,6 +14,11 @@ Toutes les modifications notables apportées à ce projet sont documentées dans
 - **Points d'accès fluides** : accès en un tap depuis la carte Aujourd'hui, l'en-tête de l'onglet Tâches et la vue détaillée d'une tâche.
 - **Tests unitaires exhaustifs** : 17 tests déterministes validant toutes les transitions d'état et règles de bornage (total : 316 tests automatisés à 100% passants).
 
+### 🔐 Refonte de l'Accès & Gestion du Code PIN du Sanctuaire
+- **Enrôlement initial obligatoire** (`src/app/sanctum.tsx`) : à la première ouverture, guidage direct vers la création du code PIN secret (4 à 8 chiffres + confirmation) sans déclencher d'empreinte prématurée vouée à l'échec.
+- **Déverrouillage biométrique direct sans double vérification** : si l'authentification par empreinte/FaceID réussit, accès immédiat au coffre sans redemander le code PIN. Le PIN sert uniquement de solution de repli (fallback) en cas d'échec ou d'annulation.
+- **Modification du PIN & Re-chiffrement transparent** (`src/services/sanctum-auth-service.ts`, `src/repositories/sanctum-repository.ts`) : ajout d'un écran dédié permettant de changer son code PIN avec validation de l'ancien code, mise à jour du trousseau `expo-secure-store` et re-chiffrement automatique de toutes les notes existantes.
+
 ### 👥 Module Personnes & Contacts
 - **Import natif depuis le carnet d'adresses** (`src/app/people/new.tsx`) : intégration de `expo-contacts` avec sélecteur natif et pré-remplissage des coordonnées (nom, téléphones, emails, anniversaire).
 

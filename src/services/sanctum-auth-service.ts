@@ -12,6 +12,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { getDatabase } from '../database/sqlite';
+import { SanctumRepository } from '../repositories/sanctum-repository';
 import {
   deriveSanctumKey,
   encryptSanctumNote,
@@ -175,6 +176,51 @@ export const SanctumAuthService = {
   },
 
   /**
+   * Modifie le code PIN en vérifiant au préalable l'ancien code PIN.
+   * Re-chiffre toutes les notes existantes avec la nouvelle clé maîtresse.
+   */
+  async changePin(
+    oldPin: string,
+    newPin: string
+  ): Promise<{ success: boolean; newKey?: Uint8Array; error?: string }> {
+    const unlockResult = await this.verifyAndUnlockWithPin(oldPin);
+    if (!unlockResult.success || !unlockResult.key) {
+      return { success: false, error: unlockResult.error ?? 'Ancien code PIN incorrect' };
+    }
+    return this.changePinWithActiveKey(unlockResult.key, newPin);
+  },
+
+  /**
+   * Modifie le code PIN lorsque la session est déjà active et déverrouillée (clé active en mémoire).
+   * Re-chiffre toutes les notes existantes avec la nouvelle clé maîtresse et met à jour SecureStore.
+   */
+  async changePinWithActiveKey(
+    activeKey: Uint8Array,
+    newPin: string
+  ): Promise<{ success: boolean; newKey?: Uint8Array; error?: string }> {
+    try {
+      // 1. Génération du nouveau sel et dérivation de la nouvelle clé
+      const newSalt = await generateRandomBytes(SANCTUM_CRYPTO_CONSTANTS.SALT_LENGTH);
+      const newMasterKey = await deriveSanctumKey(newPin, newSalt);
+
+      // 2. Re-chiffrement transparent de toutes les notes avec la nouvelle clé
+      await SanctumRepository.reencryptAllNotes(activeKey, newMasterKey);
+
+      // 3. Mise à jour du vérificateur
+      const newVerifierPayload = await encryptSanctumNote(VERIFIER_SENTINEL, newMasterKey);
+
+      // 4. Stockage dans SecureStore
+      await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, bytesToHex(newSalt));
+      await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, newVerifierPayload);
+      await SecureStore.setItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY, bytesToHex(newMasterKey));
+
+      return { success: true, newKey: newMasterKey };
+    } catch {
+      return { success: false, error: 'Échec lors du changement de code PIN' };
+    }
+  },
+
+  /**
    * Efface l'ensemble des clés et secrets du Sanctuaire de SecureStore.
    * Appelable lors d'une réinitialisation complète des données (DEF-02).
    */
@@ -184,3 +230,4 @@ export const SanctumAuthService = {
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY);
   },
 };
+

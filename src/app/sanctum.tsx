@@ -54,7 +54,7 @@ import { makeSanctumStyles } from '@/styles/sanctum/sanctum-styles';
 import { makeFormStyles } from '@/styles/common/form-styles';
 
 // ─── Types locaux ────────────────────────────────────────────────────────────
-type SanctumView = 'locked' | 'pin_setup' | 'pin_verify' | 'list' | 'editor';
+type SanctumView = 'locked' | 'pin_setup' | 'pin_verify' | 'pin_change' | 'list' | 'editor';
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function SanctumScreen() {
@@ -74,11 +74,18 @@ export default function SanctumScreen() {
   const [hasBiometrics, setHasBiometrics] = useState(true);
   const [hasPinConfigured, setHasPinConfigured] = useState(false);
 
-  // ─── PIN state ──────────────────────────────────────────────────────────
+  // ─── PIN state (Création & Déverrouillage) ──────────────────────────────
   const [pinInput, setPinInput] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinStep, setPinStep] = useState<'enter' | 'confirm'>('enter');
   const [pinError, setPinError] = useState('');
+
+  // ─── PIN Change state (Modification depuis le Sanctuaire) ──────────────
+  const [oldPinInput, setOldPinInput] = useState('');
+  const [newPinInput, setNewPinInput] = useState('');
+  const [newPinConfirm, setNewPinConfirm] = useState('');
+  const [changingPin, setChangingPin] = useState(false);
+  const [pinChangeError, setPinChangeError] = useState('');
 
   // ─── Liste carnets ─────────────────────────────────────────────────────
   const [notes, setNotes] = useState<SanctumNote[]>([]);
@@ -99,7 +106,11 @@ export default function SanctumScreen() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
       if (appState.current === 'active' && nextState.match(/inactive|background/)) {
-        if (currentView !== 'locked' && currentView !== 'pin_setup' && currentView !== 'pin_verify') {
+        if (
+          currentView !== 'locked' &&
+          currentView !== 'pin_setup' &&
+          currentView !== 'pin_verify'
+        ) {
           activeKeyRef.current = null;
           setCurrentView('locked');
           setNotes([]);
@@ -124,7 +135,13 @@ export default function SanctumScreen() {
         const pinConfigured = await SanctumAuthService.isPinConfigured();
         setHasPinConfigured(pinConfigured);
 
-        // Si biométrie disponible et configurée, déclencher authentification automatique
+        if (!pinConfigured) {
+          // Premier accès obligatoire : l'utilisateur doit d'abord enregistrer son code PIN
+          setCurrentView('pin_setup');
+          return;
+        }
+
+        // Si biométrie disponible et PIN configuré, tenter l'authentification biométrique directe
         if (biometricsAvailable && pinConfigured) {
           authenticateBiometric();
         }
@@ -143,21 +160,22 @@ export default function SanctumScreen() {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Accéder au Sanctuaire privé',
         cancelLabel: 'Annuler',
-        disableDeviceFallback: false,
+        disableDeviceFallback: true,
       });
 
       if (result.success) {
+        // En cas de succès biométrique, déverrouillage direct SANS redemander de PIN
         const bioKey = await SanctumAuthService.getStoredBiometricKey();
         if (bioKey) {
           activeKeyRef.current = bioKey;
           await onAuthSuccess(bioKey);
-        } else {
-          // Si aucune clé biométrique stockée, demander la saisie du PIN
-          setCurrentView('pin_verify');
+          return;
         }
+        // Si aucune clé stockée (cas théorique de premier accès non finalisé), demander le PIN
+        setCurrentView('pin_verify');
       } else {
         if (result.error !== 'user_cancel') {
-          setAuthError('Authentification échouée');
+          setAuthError('Empreinte non reconnue. Utilisez votre code PIN.');
         }
       }
     } catch {
@@ -208,10 +226,54 @@ export default function SanctumScreen() {
       setPinConfirm('');
       setPinStep('enter');
       setPinError('');
-      showSnackbar('Code PIN Sanctuaire configuré & espace chiffré');
+      showSnackbar('Code PIN initial configuré avec succès');
       await onAuthSuccess(masterKey);
     } catch {
       setPinError('Erreur lors de la configuration du code PIN');
+    }
+  };
+
+  // ─── Gestion PIN : modification depuis le Sanctuaire ──────────────────
+  const handleChangePin = async () => {
+    setPinChangeError('');
+    if (!oldPinInput) {
+      setPinChangeError('Veuillez entrer votre code PIN actuel');
+      return;
+    }
+    const validation = validateSanctumPin(newPinInput);
+    if (!validation.valid) {
+      setPinChangeError(validation.error ?? 'Nouveau code PIN invalide (4 à 8 chiffres)');
+      return;
+    }
+    if (newPinInput !== newPinConfirm) {
+      setPinChangeError('Les nouveaux codes ne correspondent pas');
+      return;
+    }
+    if (oldPinInput === newPinInput) {
+      setPinChangeError('Le nouveau code doit être différent de l’ancien');
+      return;
+    }
+
+    setChangingPin(true);
+    try {
+      const result = await SanctumAuthService.changePin(oldPinInput, newPinInput);
+      if (result.success && result.newKey) {
+        activeKeyRef.current = result.newKey;
+        setOldPinInput('');
+        setNewPinInput('');
+        setNewPinConfirm('');
+        setPinChangeError('');
+        showSnackbar('Code PIN modifié & carnets re-chiffrés');
+        const allNotes = await SanctumRepository.getAllNotes(result.newKey);
+        setNotes(allNotes);
+        setCurrentView('list');
+      } else {
+        setPinChangeError(result.error ?? 'Échec lors du changement de code PIN');
+      }
+    } catch {
+      setPinChangeError('Erreur inattendue lors du changement de code PIN');
+    } finally {
+      setChangingPin(false);
     }
   };
 
@@ -343,38 +405,10 @@ export default function SanctumScreen() {
             </View>
           )}
 
-          {/* Bouton biométrie (toujours affiché si disponible) */}
-          {hasBiometrics && (
+          {/* Premier accès : configuration obligatoire du code PIN */}
+          {!hasPinConfigured && (
             <Button
-              label={authenticating ? 'Vérification...' : 'Déverrouiller'}
-              onPress={authenticateBiometric}
-              variant="primary"
-              size="lg"
-              loading={authenticating}
-              icon={<Ionicons name="finger-print" size={20} color="#FFFFFF" />}
-              style={styles.unlockBtn}
-            />
-          )}
-
-          {/* Fallback PIN */}
-          {!hasBiometrics && hasPinConfigured && (
-            <Button
-              label="Entrer le code PIN"
-              onPress={() => {
-                setPinInput('');
-                setPinError('');
-                setCurrentView('pin_verify');
-              }}
-              variant="primary"
-              size="lg"
-              icon={<Ionicons name="keypad-outline" size={20} color="#FFFFFF" />}
-              style={styles.unlockBtn}
-            />
-          )}
-
-          {!hasBiometrics && !hasPinConfigured && (
-            <Button
-              label="Configurer un code PIN"
+              label="Configurer le code PIN"
               onPress={() => {
                 setPinInput('');
                 setPinConfirm('');
@@ -389,7 +423,36 @@ export default function SanctumScreen() {
             />
           )}
 
-          {/* Si biométrie disponible mais PIN aussi configuré */}
+          {/* Biométrie disponible avec PIN déjà configuré : accès direct en 1 touche */}
+          {hasPinConfigured && hasBiometrics && (
+            <Button
+              label={authenticating ? 'Vérification...' : 'Déverrouiller avec l’empreinte'}
+              onPress={authenticateBiometric}
+              variant="primary"
+              size="lg"
+              loading={authenticating}
+              icon={<Ionicons name="finger-print" size={20} color="#FFFFFF" />}
+              style={styles.unlockBtn}
+            />
+          )}
+
+          {/* Appareil sans biométrie : saisie directe du code PIN */}
+          {hasPinConfigured && !hasBiometrics && (
+            <Button
+              label="Entrer le code PIN"
+              onPress={() => {
+                setPinInput('');
+                setPinError('');
+                setCurrentView('pin_verify');
+              }}
+              variant="primary"
+              size="lg"
+              icon={<Ionicons name="keypad-outline" size={20} color="#FFFFFF" />}
+              style={styles.unlockBtn}
+            />
+          )}
+
+          {/* Fallback de secours : si la biométrie échoue ou n'est pas souhaitée */}
           {hasBiometrics && hasPinConfigured && (
             <TouchableOpacity
               style={styles.altAuthLink}
@@ -399,10 +462,10 @@ export default function SanctumScreen() {
                 setCurrentView('pin_verify');
               }}
               accessibilityRole="button"
-              accessibilityLabel="Utiliser le code PIN"
+              accessibilityLabel="Utiliser le code PIN de secours"
             >
               <Ionicons name="keypad-outline" size={16} color={theme.onSurface.variant} />
-              <Text style={styles.altAuthText}>Utiliser le code PIN</Text>
+              <Text style={styles.altAuthText}>Utiliser le code PIN de secours</Text>
             </TouchableOpacity>
           )}
 
@@ -420,7 +483,7 @@ export default function SanctumScreen() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // VUE PIN SETUP
+  // VUE PIN SETUP (Premier accès ou initialisation)
   // ═══════════════════════════════════════════════════════════════════════
   if (currentView === 'pin_setup') {
     return (
@@ -430,12 +493,12 @@ export default function SanctumScreen() {
             <Ionicons name="key-outline" size={32} color={theme.primary.default} />
           </View>
           <Text style={styles.lockTitle}>
-            {pinStep === 'enter' ? 'Créer un code PIN' : 'Confirmer le code'}
+            {pinStep === 'enter' ? 'Initialiser votre PIN' : 'Confirmer le PIN'}
           </Text>
           <Text style={styles.lockSubtitle}>
             {pinStep === 'enter'
-              ? 'Choisissez un code de 4 à 8 chiffres pour protéger votre Sanctuaire.'
-              : 'Entrez à nouveau votre code pour le confirmer.'}
+              ? 'Choisissez un code de 4 à 8 chiffres pour chiffrer et protéger votre Sanctuaire.'
+              : 'Entrez à nouveau votre code confidentiel pour valider la configuration.'}
           </Text>
 
           <TextInput
@@ -458,7 +521,7 @@ export default function SanctumScreen() {
           )}
 
           <Button
-            label={pinStep === 'enter' ? 'Suivant' : 'Confirmer et créer'}
+            label={pinStep === 'enter' ? 'Suivant' : 'Confirmer et chiffrer'}
             onPress={handlePinSetup}
             variant="primary"
             size="lg"
@@ -472,7 +535,11 @@ export default function SanctumScreen() {
               setPinConfirm('');
               setPinStep('enter');
               setPinError('');
-              setCurrentView('locked');
+              if (!hasPinConfigured) {
+                router.back();
+              } else {
+                setCurrentView('locked');
+              }
             }}
             accessibilityRole="button"
             accessibilityLabel="Annuler la configuration du code PIN"
@@ -485,7 +552,99 @@ export default function SanctumScreen() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // VUE PIN VERIFY
+  // VUE PIN CHANGE (Modification depuis le Sanctuaire déverrouillé)
+  // ═══════════════════════════════════════════════════════════════════════
+  if (currentView === 'pin_change') {
+    return (
+      <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
+        <View style={styles.glassLockCard}>
+          <View style={styles.pinIconBadge}>
+            <Ionicons name="key-outline" size={32} color={theme.primary.default} />
+          </View>
+          <Text style={styles.lockTitle}>Modifier le code PIN</Text>
+          <Text style={styles.lockSubtitle}>
+            Entrez votre code actuel puis définissez votre nouveau code secret (4 à 8 chiffres).
+          </Text>
+
+          <View style={styles.pinFormGroup}>
+            <Text style={styles.pinFieldLabel}>Code PIN actuel</Text>
+            <TextInput
+              style={styles.pinFieldInput}
+              value={oldPinInput}
+              onChangeText={setOldPinInput}
+              placeholder="••••"
+              placeholderTextColor={theme.onSurface.disabled}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={8}
+            />
+          </View>
+
+          <View style={styles.pinFormGroup}>
+            <Text style={styles.pinFieldLabel}>Nouveau code PIN</Text>
+            <TextInput
+              style={styles.pinFieldInput}
+              value={newPinInput}
+              onChangeText={setNewPinInput}
+              placeholder="••••"
+              placeholderTextColor={theme.onSurface.disabled}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={8}
+            />
+          </View>
+
+          <View style={styles.pinFormGroup}>
+            <Text style={styles.pinFieldLabel}>Confirmer le nouveau code</Text>
+            <TextInput
+              style={styles.pinFieldInput}
+              value={newPinConfirm}
+              onChangeText={setNewPinConfirm}
+              placeholder="••••"
+              placeholderTextColor={theme.onSurface.disabled}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={8}
+            />
+          </View>
+
+          {!!pinChangeError && (
+            <View style={styles.errorBadge}>
+              <Ionicons name="alert-circle-outline" size={16} color={theme.error.default} />
+              <Text style={styles.errorText}>{pinChangeError}</Text>
+            </View>
+          )}
+
+          <Button
+            label={changingPin ? 'Modification...' : 'Enregistrer le nouveau PIN'}
+            onPress={handleChangePin}
+            variant="primary"
+            size="lg"
+            loading={changingPin}
+            style={styles.unlockBtn}
+          />
+
+          <TouchableOpacity
+            style={styles.backLink}
+            onPress={() => {
+              setOldPinInput('');
+              setNewPinInput('');
+              setNewPinConfirm('');
+              setPinChangeError('');
+              setCurrentView('list');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Annuler la modification du code PIN"
+          >
+            <Text style={styles.backLinkText}>Annuler</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // VUE PIN VERIFY (Déverrouillage par code de secours)
   // ═══════════════════════════════════════════════════════════════════════
   if (currentView === 'pin_verify') {
     return (
@@ -564,16 +723,34 @@ export default function SanctumScreen() {
             <Text style={formStyles.toolbarTitle}>Sanctuaire</Text>
             <Text style={formStyles.toolbarSubtitle}>Espace Privé Sécurisé</Text>
           </View>
-          <TouchableOpacity
-            style={[formStyles.toolbarBtn, { alignItems: 'flex-end' }]}
-            onPress={handleLock}
-            accessibilityRole="button"
-            accessibilityLabel="Verrouiller le Sanctuaire"
-          >
-            <View style={styles.lockIconBadge}>
-              <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
-            </View>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+            <TouchableOpacity
+              style={formStyles.toolbarBtn}
+              onPress={() => {
+                setOldPinInput('');
+                setNewPinInput('');
+                setNewPinConfirm('');
+                setPinChangeError('');
+                setCurrentView('pin_change');
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Modifier le code PIN"
+            >
+              <View style={styles.lockIconBadge}>
+                <Ionicons name="key-outline" size={16} color={theme.primary.default} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={formStyles.toolbarBtn}
+              onPress={handleLock}
+              accessibilityRole="button"
+              accessibilityLabel="Verrouiller le Sanctuaire"
+            >
+              <View style={styles.lockIconBadge}>
+                <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Badge sécurité */}

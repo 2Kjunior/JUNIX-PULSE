@@ -135,6 +135,29 @@ export function makeSanctumStyles(theme: ThemePalette) {
       borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.22)',
       marginTop: Spacing.xs,
     },
+    pinFormGroup: {
+      width: '100%',
+      gap: 4,
+      marginTop: Spacing.xs,
+    },
+    pinFieldLabel: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      fontWeight: '600',
+    },
+    pinFieldInput: {
+      width: '100%',
+      backgroundColor: isLight ? theme.surface.high : 'rgba(15, 18, 28, 0.90)',
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      color: theme.onSurface.primary,
+      textAlign: 'center',
+      letterSpacing: 8,
+      fontSize: 18,
+      borderWidth: 1,
+      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.22)',
+    },
 
     // ─── Security badge ────────────────────────────────────────────────────
     secureBadgeCentered: {
