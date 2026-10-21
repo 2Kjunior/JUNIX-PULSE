@@ -25,7 +25,7 @@ import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { Task, Subtask, TaskStatus, ReminderPriority } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
@@ -268,6 +268,38 @@ export default function TaskDetailScreen() {
             />
           </View>
         </GlowCard>
+
+        {/* Lancer une session Focus Pomodoro sur cette tâche */}
+        {task.status !== 'COMPLETED' && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: theme.surface.container,
+              padding: Spacing.md,
+              borderRadius: Radius.lg,
+              borderWidth: 1,
+              borderColor: theme.outline.variant,
+            }}
+            onPress={() =>
+              router.push({
+                pathname: '/focus' as any,
+                params: { taskId: task.id, taskTitle: task.title },
+              })
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Lancer une session focus sur cette tâche"
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <Ionicons name="timer-outline" size={20} color={theme.tertiary.default} />
+              <Text style={{ ...Typography.labelLarge, color: theme.onSurface.primary }}>
+                Session Focus Pomodoro
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={theme.onSurface.inactive} />
+          </TouchableOpacity>
+        )}
 
         {/* Titre */}
         <View style={styles.field}>

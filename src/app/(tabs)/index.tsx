@@ -387,6 +387,7 @@ export default function TodayScreen() {
             metricLabel="FOCUS"
             metricValue={totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : `${completedActions}`}
             metricUnit={totalTasksCount > 0 ? 'tâches' : 'actions'}
+            onPress={() => router.push('/focus' as any)}
           />
         )}
       </View>
