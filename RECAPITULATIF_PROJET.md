@@ -36,7 +36,7 @@
 | **Formulaires & Validation** | `react-hook-form` `^7.87.0`, `zod` `^4.6.1`                      | Schémas de validation stricts pour la création d'entités.                      |
 | **Notifications**            | `expo-notifications` `~57.0.23`                                  | Notifications locales planifiées (100% compatibles Expo Go et builds natifs).  |
 | **Typographie**              | `@expo-google-fonts/inter` + `@expo-google-fonts/outfit`         | Inter pour le texte courant, Outfit pour les grands titres et l'onboarding.    |
-| **Tests Automatisés**        | `jest` `^29.7.0` + `react-test-renderer` `19.2.3`                 | 25 suites de tests unitaires et d'intégration (299 tests, 100% passants).       |
+| **Tests Automatisés**        | `jest` `^29.7.0` + `react-test-renderer` `19.2.3`                 | 26 suites de tests unitaires et d'intégration (316 tests, 100% passants).       |
 
 ---
 
@@ -72,6 +72,7 @@ junix-pulse/
 │   │   ├── settings/             # Paramètres système & Emploi du temps type
 │   │   ├── capture.tsx           # Capture rapide (R-11)
 │   │   ├── sanctum.tsx           # Coffre-fort biométrique (R-12)
+│   │   ├── focus.tsx             # Minuteur Pomodoro & Sessions Focus (V1.1)
 │   │   └── search.tsx            # Recherche globale (R-13)
 │   ├── components/               # Composants UI réutilisables
 │   │   ├── feedback/             # Snackbar global, LoadingState, ErrorState, EmptyState
@@ -250,19 +251,19 @@ npx tsc --noEmit
 
 # 3. Suite complète de tests Jest automatisés
 npx jest --no-coverage
-# Résultat : 25 suites passées, 299 tests unitaires et d'intégration validés (100% passants)
+# Résultat : 26 suites passées, 316 tests unitaires et d'intégration validés (100% passants)
 ```
 
 ---
 
 ## 10. 🎯 Synthèse & Perspectives V2
 
-L'application **Junix Pulse V1.0** est désormais entièrement stabilisée, sécurisée, accessible, performante et couverte par une suite de tests unitaires rigoureuse.
+L'application **Junix Pulse V1.1** est désormais entièrement stabilisée, sécurisée, accessible, performante et enrichie par son module Pomodoro :
 
-### Perspectives pour la V2 :
-1. **Import Natif des Contacts** : Branchement de `expo-contacts` dans `people/new.tsx` pour préremplir les contacts depuis le carnet du téléphone.
-2. **Focus Timer / Pomodoro (V2)** : Minuteur de concentration relié aux blocs horaires de l'emploi du temps.
+1. **Import Natif des Contacts** : ✅ Complété via `expo-contacts` dans `people/new.tsx`.
+2. **Focus Timer / Pomodoro** : ✅ Complété avec sélection exclusive presets/custom (`src/app/focus.tsx`, `focus-rules.ts`).
 3. **Synchronisation P2P chiffrée** : Partage local chiffré de pair-à-pair sans serveur central.
+4. **Widgets & Complications Système** : Widgets d'écran d'accueil iOS et Android.
 
 ---
 
