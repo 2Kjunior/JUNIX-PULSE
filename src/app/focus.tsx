@@ -53,7 +53,7 @@ export default function FocusScreen() {
   const insets = useSafeAreaInsets();
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeFocusStyles);
-  const { showSnackbar } = useAppStore();
+  const { showSnackbar, addFocusMinutes } = useAppStore();
 
   const params = useLocalSearchParams<{ taskId?: string; taskTitle?: string }>();
 
@@ -74,6 +74,7 @@ export default function FocusScreen() {
         setSession((prev) => {
           const next = tickFocusSession(prev);
           if (next.state === 'completed' && prev.state === 'running') {
+            addFocusMinutes(prev.durationMinutes);
             showSnackbar('Session de focus terminée avec succès !');
             NotificationService.sendTestNotification({
               title: 'Temps écoulé !',

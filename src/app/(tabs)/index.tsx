@@ -51,7 +51,7 @@ type ScreenState = 'loading' | 'content' | 'error';
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const { showSnackbar } = useAppStore();
+  const { showSnackbar, todayFocusMinutes } = useAppStore();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
 
@@ -380,13 +380,21 @@ export default function TodayScreen() {
             statusLabel={rhythmStatus}
             title="Rythme Quotidien"
             subtitle={
-              totalActions > 0
+              todayFocusMinutes > 0
+                ? `${todayFocusMinutes} min de focus • ${completedActions}/${totalActions} actions`
+                : totalActions > 0
                 ? `${completedActions}/${totalActions} actions complétées aujourd’hui`
-                : 'Aucun rappel urgent • Journée sereine'
+                : 'Appuyez pour démarrer un Focus • Journée sereine'
             }
             metricLabel="FOCUS"
-            metricValue={totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : `${completedActions}`}
-            metricUnit={totalTasksCount > 0 ? 'tâches' : 'actions'}
+            metricValue={
+              todayFocusMinutes > 0
+                ? `${todayFocusMinutes}m`
+                : totalTasksCount > 0
+                ? `${completedTasksCount}/${totalTasksCount}`
+                : `${completedActions}`
+            }
+            metricUnit={todayFocusMinutes > 0 ? 'focus' : totalTasksCount > 0 ? 'tâches' : 'actions'}
             onPress={() => router.push('/focus' as any)}
           />
         )}

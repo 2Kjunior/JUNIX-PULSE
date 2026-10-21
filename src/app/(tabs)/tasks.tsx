@@ -30,6 +30,7 @@ import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import {
+  Spacing,
   TAB_BAR_TOTAL_HEIGHT,
   type GlowTone,
 } from '@/constants/theme';
@@ -183,13 +184,25 @@ export default function TasksScreen() {
           <Text style={styles.subtitle}>Gestion d'action • Focus</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.settingsBtn}
-          onPress={() => router.push('/settings')}
-          accessibilityLabel="Paramètres"
-        >
-          <Ionicons name="options-outline" size={20} color={theme.onSurface.variant} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push('/focus' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Minuteur Focus Pomodoro"
+          >
+            <Ionicons name="timer-outline" size={20} color={theme.tertiary.default} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push('/settings')}
+            accessibilityRole="button"
+            accessibilityLabel="Paramètres"
+          >
+            <Ionicons name="options-outline" size={20} color={theme.onSurface.variant} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ─── Segmented Control R-08 ────────────────────────────────────────────── */}
