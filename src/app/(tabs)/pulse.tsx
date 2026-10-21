@@ -97,7 +97,7 @@ function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
 
 export default function PulseScreen() {
   const insets = useSafeAreaInsets();
-  const { showSnackbar } = useAppStore();
+  const { showSnackbar, todayFocusMinutes } = useAppStore();
   const { theme } = useTheme();
   const styles = useThemedStyles(makePulseStyles);
   const isLight = theme.mode === 'light';
@@ -160,6 +160,17 @@ export default function PulseScreen() {
 
   // Modules raccourcis vers les sous-écrans
   const MODULES = [
+    {
+      icon: 'timer-outline' as const,
+      label: 'Focus & Pomodoro',
+      desc:
+        todayFocusMinutes > 0
+          ? `${todayFocusMinutes} min de concentration aujourd’hui.`
+          : 'Minuteur immersif et sessions de travail.',
+      color: theme.primary.default,
+      bg: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.12)',
+      route: '/focus',
+    },
     {
       icon: 'repeat-outline' as const,
       label: 'Habitudes & Streaks',
