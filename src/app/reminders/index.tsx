@@ -340,7 +340,6 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
                   reminder={item}
                   onComplete={() => handleComplete(item)}
                   onQuickSnooze={() => handleQuickSnooze(item)}
-                  onDelete={() => handleDelete(item)}
                 />
               </SwipeableItem>
             );
@@ -412,12 +411,10 @@ function ReminderCardR04({
   reminder,
   onComplete,
   onQuickSnooze,
-  onDelete,
 }: {
   reminder: Reminder;
   onComplete: () => void;
   onQuickSnooze: () => void;
-  onDelete: () => void;
 }) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeRemindersStyles);
@@ -493,16 +490,6 @@ function ReminderCardR04({
             accessibilityLabel="Reporter de 2 heures"
           >
             <Text style={styles.quickSnoozeText}>+2h</Text>
-          </TouchableOpacity>
-
-          {/* Bouton contextuel Supprimer */}
-          <TouchableOpacity
-            style={styles.moreBtn}
-            onPress={onDelete}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            accessibilityLabel="Supprimer le rappel"
-          >
-            <Ionicons name="ellipsis-vertical" size={18} color={palette.onSurface.variant} />
           </TouchableOpacity>
         </View>
       </GlowCard>

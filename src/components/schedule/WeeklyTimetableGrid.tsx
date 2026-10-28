@@ -18,11 +18,12 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 import { PlanningBlock, PlanningBlockType } from '@/domain/entities';
 import { useTheme } from '@/hooks/use-theme';
@@ -33,6 +34,7 @@ export interface WeeklyTimetableGridProps {
   onAddBlock: (dayNum: number, defaultTime?: string) => void;
   onDeleteBlock: (id: string, label: string) => void;
   onSelectBlock?: (block: PlanningBlock) => void;
+  weekDays?: Date[];
 }
 
 const START_HOUR = 7;   // 07:00
@@ -65,20 +67,35 @@ export function WeeklyTimetableGrid({
   onAddBlock,
   onDeleteBlock,
   onSelectBlock,
+  weekDays,
 }: WeeklyTimetableGridProps) {
-  const { theme, palette, isDark } = useTheme();
+  const { palette, isDark } = useTheme();
   const [activePreset, setActivePreset] = useState<PresetFilter>('ideal');
+
+  // Définition dynamique des jours si weekDays est fourni
+  const daysDefinition = useMemo(() => {
+    if (weekDays && weekDays.length === 7) {
+      return weekDays.map(d => {
+        const num = d.getDay();
+        const label = format(d, 'EEE', { locale: fr }).toUpperCase();
+        const full = format(d, 'EEEE', { locale: fr });
+        const dateNum = format(d, 'dd');
+        return { num, label, full, dateNum };
+      });
+    }
+    return DAYS_DEFINITION;
+  }, [weekDays]);
 
   // Filtrage des jours selon l'onglet
   const displayedDays = useMemo(() => {
     if (activePreset === 'pro') {
-      return DAYS_DEFINITION.filter(d => d.num >= 1 && d.num <= 5);
+      return daysDefinition.filter(d => d.num >= 1 && d.num <= 5);
     }
     if (activePreset === 'weekend') {
-      return DAYS_DEFINITION.filter(d => d.num === 6 || d.num === 0);
+      return daysDefinition.filter(d => d.num === 6 || d.num === 0);
     }
-    return DAYS_DEFINITION; // Semaine idéale (7 jours complets)
-  }, [activePreset]);
+    return daysDefinition; // Semaine idéale (7 jours complets)
+  }, [activePreset, daysDefinition]);
 
   // Calcul des statistiques par catégorie pour la légende Stitch
   const stats = useMemo(() => {

@@ -34,11 +34,10 @@ import { LoadingState } from '@/components/feedback/States';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { getDatabase } from '@/database/sqlite';
-import { seedDatabase, clearAllData, isSeedAlreadyLoaded, seedPulseExtra } from '@/database/seed';
+import { clearAllData } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
-import { NotificationService } from '@/services/notification-service';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
@@ -64,7 +63,6 @@ export default function SettingsScreen() {
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
-  const [testingNotification, setTestingNotification] = useState(false);
   const [isSanctumPinConfigured, setIsSanctumPinConfigured] = useState(false);
 
   const loadSettings = useCallback(async () => {
@@ -84,27 +82,6 @@ export default function SettingsScreen() {
   }, [loadSettings]);
 
   if (!settings) return <LoadingState message="Chargement des paramètres..." />;
-
-  const handleTestNotification = async () => {
-    try {
-      setTestingNotification(true);
-      const res = await NotificationService.sendTestNotification({
-        title: '⚡ Test Junix Pulse',
-        body: 'Le système de notifications locales est 100% opérationnel ! 🔔',
-        delaySeconds: 2,
-      });
-
-      if (res.success) {
-        showSnackbar('Notification test envoyée ! Elle arrive dans 2 secondes.');
-      } else {
-        Alert.alert('Information Notification', res.message ?? 'Impossible d\'envoyer la notification.');
-      }
-    } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
-    } finally {
-      setTestingNotification(false);
-    }
-  };
 
   const handleSaveName = async () => {
     try {
@@ -229,57 +206,6 @@ export default function SettingsScreen() {
             setOnboardingComplete(false);
             showSnackbar("Visite d’accueil relancée");
             router.replace('/(onboarding)');
-          },
-        },
-      ]
-    );
-  };
-
-  const handleLoadSeed = () => {
-    Alert.alert(
-      'Charger les données de démo',
-      'Cela va ajouter des personnes, rappels, tâches, habitudes et objectifs exemples pour tester l\'app. Continuer ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Charger',
-          onPress: async () => {
-            try {
-              const already = await isSeedAlreadyLoaded();
-              if (already) {
-                Alert.alert(
-                  'Données existantes',
-                  'Des données sont déjà présentes. Vider d\'abord via "Effacer toutes les données" puis réessayer.',
-                  [{ text: 'OK' }]
-                );
-                return;
-              }
-              await seedDatabase();
-              showSnackbar('Données de démo chargées avec succès !');
-            } catch (e) {
-              Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleLoadPulseExtra = () => {
-    Alert.alert(
-      'Charger démo Pulse IA',
-      'Cela va injecter de nouveaux contacts oubliés, rappels manqués et habitudes avec streaks actifs pour tester le moteur proactif. Continuer ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Charger',
-          onPress: async () => {
-            try {
-              await seedPulseExtra();
-              showSnackbar('Données Pulse IA chargées avec succès !');
-            } catch (e) {
-              Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
-            }
           },
         },
       ]
@@ -413,19 +339,9 @@ export default function SettingsScreen() {
         </View>
       )}
 
-      {/* Section Planning */}
+      {/* Section Horaires des briefings */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Planning & Horaires</Text>
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => router.push('/settings/schedule')}
-        >
-          <View>
-            <Text style={styles.rowLabel}>Blocs hebdomadaires de vie</Text>
-            <Text style={styles.rowSub}>Travail, repos, sommeil et temps libre</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={palette.onSurface.disabled} />
-        </TouchableOpacity>
+        <Text style={styles.sectionLabel}>Horaires des briefings</Text>
 
         {/* Heure Résumé Matin */}
         <View style={styles.rowCol}>
@@ -495,47 +411,7 @@ export default function SettingsScreen() {
             thumbColor={settings.notificationsEnabled ? palette.primary.default : palette.onSurface.disabled}
           />
         </View>
-
-        <TouchableOpacity
-          style={styles.row}
-          onPress={handleTestNotification}
-          disabled={testingNotification}
-        >
-          <View>
-            <Text style={styles.rowLabel}>
-              {testingNotification ? 'Envoi en cours...' : 'Tester une notification'}
-            </Text>
-            <Text style={styles.rowSub}>Déclenche une alerte locale dans 2 secondes</Text>
-          </View>
-          <Ionicons
-            name="notifications-outline"
-            size={20}
-            color={palette.primary.default}
-          />
-        </TouchableOpacity>
       </View>
-
-      {/* Section Données de démo (masquée en production — DEF-14) */}
-      {__DEV__ && (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Données de démonstration (Dev)</Text>
-          <TouchableOpacity style={styles.row} onPress={handleLoadSeed}>
-            <View>
-              <Text style={styles.rowLabel}>Charger les données exemples</Text>
-              <Text style={styles.rowSub}>Personnes, rappels, habitudes, objectifs</Text>
-            </View>
-            <Ionicons name="sparkles-outline" size={20} color={palette.primary.default} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.row} onPress={handleLoadPulseExtra}>
-            <View>
-              <Text style={styles.rowLabel}>Charger démo Pulse IA</Text>
-              <Text style={styles.rowSub}>Suggestions, streaks actifs & rappels manqués</Text>
-            </View>
-            <Ionicons name="bulb-outline" size={20} color={palette.primary.default} />
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Section Zone de danger */}
       <View style={styles.section}>

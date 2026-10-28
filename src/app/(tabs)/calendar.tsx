@@ -11,6 +11,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -19,6 +20,7 @@ import {
   format,
   addDays,
   subDays,
+  addMinutes,
   startOfWeek,
   isSameDay,
   isToday,
@@ -28,7 +30,8 @@ import { fr } from 'date-fns/locale';
 import { EventRepository } from '@/repositories/event-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
-import { Event, Reminder, Task } from '@/domain/entities';
+import { ScheduleUseCases } from '@/use-cases/schedule-use-cases';
+import { Event, Reminder, Task, PlanningBlock } from '@/domain/entities';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import {
@@ -40,10 +43,11 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
 import { CalendarActionModal } from '@/components/calendar/CalendarActionModal';
+import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
-type CalendarViewMode = 'agenda' | 'timetable';
+type CalendarViewMode = 'agenda' | 'timetable' | 'week';
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
@@ -53,10 +57,12 @@ export default function CalendarScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [viewMode, setViewMode] = useState<CalendarViewMode>('agenda');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [allWeeklyBlocks, setAllWeeklyBlocks] = useState<PlanningBlock[]>([]);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -68,21 +74,95 @@ export default function CalendarScreen() {
 
   const load = useCallback(async () => {
     try {
-      const [evts, rems, tsks] = await Promise.all([
+      const weekDatesYmd = weekDays.map(d => format(d, 'yyyy-MM-dd'));
+      const [
+        evts,
+        rems,
+        tsks,
+        storedScheduleBlocks,
+        weekEvts,
+        weekRems,
+        weekTsks,
+      ] = await Promise.all([
         EventRepository.findForDate(dateYmd),
         ReminderRepository.findForDate(dateYmd),
         TaskRepository.findForDate(dateYmd),
+        ScheduleUseCases.getActiveScheduleBlocks().catch(() => []),
+        Promise.all(weekDatesYmd.map(d => EventRepository.findForDate(d))),
+        Promise.all(weekDatesYmd.map(d => ReminderRepository.findForDate(d))),
+        Promise.all(weekDatesYmd.map(d => TaskRepository.findForDate(d))),
       ]);
 
       setEvents(evts);
       setReminders(rems);
       setTasks(tsks);
+
+      // Conversion des événements de la semaine en PlanningBlock[]
+      const eventBlocks: PlanningBlock[] = weekEvts.flat().map(e => {
+        const s = new Date(e.startAt);
+        const end = new Date(e.endAt);
+        return {
+          id: e.id,
+          scheduleId: 'event',
+          label: e.title,
+          type: 'WORK',
+          dayOfWeek: s.getDay(),
+          startTime: format(s, 'HH:mm'),
+          endTime: format(end, 'HH:mm'),
+          color: theme.primary.default,
+          createdAt: e.createdAt,
+          updatedAt: e.updatedAt,
+        };
+      });
+
+      // Conversion des rappels de la semaine en PlanningBlock[]
+      const reminderBlocks: PlanningBlock[] = weekRems.flat().map(r => {
+        const s = new Date(r.scheduledAt);
+        const end = addMinutes(s, 30);
+        return {
+          id: r.id,
+          scheduleId: 'reminder',
+          label: r.title,
+          type: 'OTHER',
+          dayOfWeek: s.getDay(),
+          startTime: format(s, 'HH:mm'),
+          endTime: format(end, 'HH:mm'),
+          color: r.priority === 'HIGH' ? theme.priority.HIGH : theme.tertiary.default,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+        };
+      });
+
+      // Conversion des tâches planifiées de la semaine en PlanningBlock[]
+      const taskBlocks: PlanningBlock[] = weekTsks.flat().map(t => {
+        const sDate = t.scheduledDate ? new Date(t.scheduledDate) : selectedDate;
+        const dur = t.estimatedMinutes ?? 45;
+        const sTime = '10:00';
+        const [h, m] = sTime.split(':').map(Number);
+        const totalMin = (h || 10) * 60 + (m || 0) + dur;
+        const endH = Math.min(23, Math.floor(totalMin / 60));
+        const endM = totalMin % 60;
+        return {
+          id: t.id,
+          scheduleId: 'task',
+          label: t.title,
+          type: 'WORK',
+          dayOfWeek: sDate.getDay(),
+          startTime: sTime,
+          endTime: `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
+          color: theme.tertiary.default,
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+        };
+      });
+
+      setAllWeeklyBlocks([...storedScheduleBlocks, ...eventBlocks, ...reminderBlocks, ...taskBlocks]);
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de chargement');
       setScreenState('error');
     }
-  }, [dateYmd]);
+  }, [dateYmd, selectedDate, theme, weekDays]);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,6 +188,32 @@ export default function CalendarScreen() {
     setSelectedDate(new Date());
   };
 
+  const handleDeleteWeeklyBlock = useCallback((blockId: string, label: string) => {
+    if (blockId.startsWith('sched_') || blockId.startsWith('block_')) {
+      Alert.alert('Supprimer', `Supprimer le créneau de vie "${label}" ?`, [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await ScheduleUseCases.deleteBlock(blockId);
+              load();
+            } catch (err) {
+              Alert.alert('Erreur', err instanceof Error ? err.message : 'Impossible de supprimer');
+            }
+          },
+        },
+      ]);
+    } else {
+      Alert.alert(
+        label,
+        'Cet élément est synchronisé avec vos événements, rappels ou tâches. Modifiez-le directement depuis sa fiche.',
+        [{ text: 'Compris' }]
+      );
+    }
+  }, [load]);
+
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
@@ -118,7 +224,7 @@ export default function CalendarScreen() {
       {/* En-tête avec navigation de date */}
       <View style={styles.header}>
         <View style={styles.headerTitleCol}>
-          <Text style={styles.title}>Calendrier</Text>
+          <Text style={styles.title}>Planning</Text>
           <Text style={styles.subtitle}>
             {format(selectedDate, 'MMMM yyyy', { locale: fr })}
           </Text>
@@ -185,56 +291,99 @@ export default function CalendarScreen() {
           },
           {
             key: 'timetable',
-            label: 'Emploi du temps',
+            label: 'Journée',
             icon: 'time-outline',
+          },
+          {
+            key: 'week',
+            label: 'Semaine (7J)',
+            icon: 'grid-outline',
           },
         ]}
         activeTab={viewMode}
         onTabChange={(tab) => setViewMode(tab as CalendarViewMode)}
       />
 
-      {/* Bandeau des 7 jours */}
-      <View style={styles.weekStrip}>
-        {weekDays.map((d, index) => {
-          const isSelected = isSameDay(d, selectedDate);
-          const isCurrentDay = isToday(d);
+      {/* Bandeau des 7 jours (affiché pour les vues quotidiennes) */}
+      {viewMode !== 'week' && (
+        <View style={styles.weekStrip}>
+          {weekDays.map((d, index) => {
+            const isSelected = isSameDay(d, selectedDate);
+            const isCurrentDay = isToday(d);
 
-          return (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.dayCell,
-                isSelected && styles.dayCellSelected,
-                isCurrentDay && !isSelected && styles.dayCellToday,
-              ]}
-              onPress={() => setSelectedDate(d)}
-              activeOpacity={0.7}
-            >
-              <Text
+            return (
+              <TouchableOpacity
+                key={index}
                 style={[
-                  styles.dayName,
-                  isSelected && styles.dayTextSelected,
-                  isCurrentDay && !isSelected && styles.dayTextToday,
+                  styles.dayCell,
+                  isSelected && styles.dayCellSelected,
+                  isCurrentDay && !isSelected && styles.dayCellToday,
                 ]}
+                onPress={() => setSelectedDate(d)}
+                activeOpacity={0.7}
               >
-                {format(d, 'EEE', { locale: fr }).toUpperCase()}
-              </Text>
-              <Text
-                style={[
-                  styles.dayNumber,
-                  isSelected && styles.dayTextSelected,
-                  isCurrentDay && !isSelected && styles.dayTextToday,
-                ]}
-              >
-                {format(d, 'd')}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+                <Text
+                  style={[
+                    styles.dayName,
+                    isSelected && styles.dayTextSelected,
+                    isCurrentDay && !isSelected && styles.dayTextToday,
+                  ]}
+                >
+                  {format(d, 'EEE', { locale: fr }).toUpperCase()}
+                </Text>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    isSelected && styles.dayTextSelected,
+                    isCurrentDay && !isSelected && styles.dayTextToday,
+                  ]}
+                >
+                  {format(d, 'd')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
 
       {/* Rendu conditionnel selon le mode choisi */}
-      {viewMode === 'timetable' ? (
+      {viewMode === 'week' ? (
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <WeeklyTimetableGrid
+            blocks={allWeeklyBlocks}
+            weekDays={weekDays}
+            onAddBlock={(dayNum, defaultTime) => {
+              const targetDate = weekDays.find(d => d.getDay() === dayNum) || selectedDate;
+              setSelectedDate(targetDate);
+              if (defaultTime) {
+                const hour = parseInt(defaultTime.split(':')[0], 10);
+                setSelectedSlotHour(isNaN(hour) ? null : hour);
+              } else {
+                setSelectedSlotHour(null);
+              }
+              setShowActionModal(true);
+            }}
+            onDeleteBlock={(id, label) => handleDeleteWeeklyBlock(id, label)}
+            onSelectBlock={(block) => {
+              if (block.scheduleId === 'event') {
+                router.push({ pathname: '/events/[id]', params: { id: block.id } });
+              } else if (block.scheduleId === 'reminder') {
+                router.push({ pathname: '/reminders/[id]', params: { id: block.id } });
+              } else if (block.scheduleId === 'task') {
+                router.push({ pathname: '/tasks/[id]', params: { id: block.id } });
+              } else {
+                handleDeleteWeeklyBlock(block.id, block.label);
+              }
+            }}
+          />
+        </ScrollView>
+      ) : viewMode === 'timetable' ? (
         <CalendarTimetable
           selectedDate={selectedDate}
           events={events}
@@ -407,14 +556,21 @@ export default function CalendarScreen() {
       <GlassFloatingActionButton
         label="Ajouter"
         icon="add"
-        onPress={() => setShowActionModal(true)}
+        onPress={() => {
+          setSelectedSlotHour(null);
+          setShowActionModal(true);
+        }}
       />
 
       {/* Modal / Action Sheet de sélection du type d'action */}
       <CalendarActionModal
         visible={showActionModal}
-        onClose={() => setShowActionModal(false)}
+        onClose={() => {
+          setShowActionModal(false);
+          setSelectedSlotHour(null);
+        }}
         selectedDate={selectedDate}
+        slotHour={selectedSlotHour}
       />
     </View>
   );
