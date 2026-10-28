@@ -86,3 +86,4 @@ export const SPLASH_EASINGS = {
   // ease-in - Exit
   exit: Easing.in(Easing.ease),
 };
+
