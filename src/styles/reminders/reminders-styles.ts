@@ -190,12 +190,6 @@ export function makeRemindersStyles(theme: ThemePalette) {
       color: theme.tertiary.default,
       fontWeight: '700',
     },
-    moreBtn: {
-      width: 28,
-      height: 28,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     nightModeCard: {
       flexDirection: 'row',
       alignItems: 'center',

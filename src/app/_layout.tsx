@@ -264,10 +264,6 @@ export default function RootLayout() {
             name="settings/index"
             options={{ presentation: "card" }}
           />
-          <Stack.Screen
-            name="settings/schedule"
-            options={{ presentation: "card" }}
-          />
           {/* Modules transversaux (Vague 9) */}
           <Stack.Screen name="capture" options={{ presentation: "modal" }} />
           <Stack.Screen name="sanctum" options={{ presentation: "card" }} />

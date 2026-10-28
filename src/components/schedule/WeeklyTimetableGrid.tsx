@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { PlanningBlock, PlanningBlockType } from '@/domain/entities';
@@ -183,37 +183,26 @@ export function WeeklyTimetableGrid({
   onPressTasksDay,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
-  const [activePreset, setActivePreset] = useState<PresetFilter>('ideal');
 
   // Détection s'il y a des tâches réparties sur la semaine
   const hasAnyTasks = useMemo(() => {
     return tasksCountByDay && Object.values(tasksCountByDay).some(c => c > 0);
   }, [tasksCountByDay]);
 
-  // Définition dynamique des jours si weekDays est fourni
-  const daysDefinition = useMemo(() => {
+  // Définition dynamique des 7 jours de la semaine
+  const displayedDays = useMemo(() => {
     if (weekDays && weekDays.length === 7) {
       return weekDays.map(d => {
         const num = d.getDay();
         const label = format(d, 'EEE', { locale: fr }).toUpperCase();
         const full = format(d, 'EEEE', { locale: fr });
         const dateNum = format(d, 'dd');
-        return { num, label, full, dateNum };
+        const isCurrentDay = isToday(d);
+        return { num, label, full, dateNum, isCurrentDay };
       });
     }
-    return DAYS_DEFINITION;
+    return DAYS_DEFINITION.map(d => ({ ...d, isCurrentDay: false }));
   }, [weekDays]);
-
-  // Filtrage des jours selon l'onglet
-  const displayedDays = useMemo(() => {
-    if (activePreset === 'pro') {
-      return daysDefinition.filter(d => d.num >= 1 && d.num <= 5);
-    }
-    if (activePreset === 'weekend') {
-      return daysDefinition.filter(d => d.num === 6 || d.num === 0);
-    }
-    return daysDefinition; // Semaine idéale (7 jours complets)
-  }, [activePreset, daysDefinition]);
 
   // Calcul des statistiques par catégorie pour la légende Stitch
   const stats = useMemo(() => {
@@ -351,79 +340,7 @@ export function WeeklyTimetableGrid({
 
   return (
     <View style={styles.wrapper}>
-      {/* ─── 1. En-tête de vue Stitch : Matrice Temporelle 7J + Score Rythme ─── */}
-      <View style={styles.topHeader}>
-        <View style={styles.subHeaderRow}>
-          <View style={styles.matrixBadge}>
-            <View style={styles.pulseDot} />
-            <Text style={styles.matrixBadgeText}>MATRICE TEMPORELLE 7J</Text>
-          </View>
-
-          <View style={styles.scoreBadge}>
-            <Ionicons name="sparkles" size={12} color={palette.primary.default} />
-            <Text style={styles.scoreBadgeText}>Score Rythme : {stats.rhythmScore}%</Text>
-          </View>
-        </View>
-
-        <View style={styles.titleRow}>
-          <Text style={styles.mainTitle}>Vue Grille Calendrier</Text>
-          <View style={styles.weekPill}>
-            <Ionicons name="calendar-outline" size={13} color={palette.tertiary.default} />
-            <Text style={styles.weekPillText}>Semaine Type</Text>
-          </View>
-        </View>
-
-        <Text style={styles.subtitle}>
-          Vision panoramique de vos blocs récurrents et zones tampons réparties du lundi au dimanche.
-        </Text>
-
-        {/* Sélecteur de segments Stitch : Semaine Idéale / Semaine Pro / Week-end */}
-        <View style={styles.segmentContainer}>
-          <TouchableOpacity
-            style={[styles.segmentBtn, activePreset === 'ideal' && styles.segmentBtnActive]}
-            onPress={() => setActivePreset('ideal')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.segmentText, activePreset === 'ideal' && styles.segmentTextActive]}>
-              Semaine Idéale
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.segmentBtn, activePreset === 'pro' && styles.segmentBtnActive]}
-            onPress={() => setActivePreset('pro')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.segmentText, activePreset === 'pro' && styles.segmentTextActive]}>
-              Semaine Pro
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.segmentBtn, activePreset === 'weekend' && styles.segmentBtnActive]}
-            onPress={() => setActivePreset('weekend')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.segmentText, activePreset === 'weekend' && styles.segmentTextActive]}>
-              Week-end
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* ─── 2. En-tête de section de la Grille ─────────────────────────────────── */}
-      <View style={styles.gridSectionHeader}>
-        <View style={styles.gridTitleWithIcon}>
-          <Ionicons name="time" size={18} color={palette.primary.default} />
-          <Text style={styles.gridSectionTitle}>Grille Hebdomadaire (7h00 - 22h00)</Text>
-        </View>
-        <View style={styles.swipeHint}>
-          <Ionicons name="swap-horizontal" size={14} color={palette.tertiary.default} />
-          <Text style={styles.swipeHintText}>Glisser horizontalement</Text>
-        </View>
-      </View>
-
-      {/* ─── 3. Conteneur principal de la Grille Matricielle ────────────────────── */}
+      {/* ─── Conteneur principal de la Grille Matricielle 7J ────────────────────── */}
       <View style={styles.gridCard}>
         <ScrollView
           horizontal
@@ -431,29 +348,28 @@ export function WeeklyTimetableGrid({
           contentContainerStyle={{ minWidth: gridContentWidth }}
         >
           <View style={{ width: gridContentWidth }}>
-            {/* Ligne d'en-tête collante des jours */}
+            {/* Ligne d'en-tête collante des 7 jours */}
             <View style={styles.dayHeaderRow}>
               {/* Coin haut-gauche icône horloge */}
               <View style={[styles.cornerCell, { width: TIME_COL_WIDTH }]}>
                 <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
               </View>
 
-              {/* Colonnes des jours */}
+              {/* Colonnes des jours (avec mise en avant du jour d'aujourd'hui) */}
               {displayedDays.map(d => {
-                const isFirstDay = d.num === 1;
                 return (
                   <View
                     key={d.num}
                     style={[
                       styles.dayHeaderCell,
                       { width: DAY_COL_WIDTH },
-                      isFirstDay && styles.dayHeaderCellActive,
+                      d.isCurrentDay && styles.dayHeaderCellActive,
                     ]}
                   >
                     <Text
                       style={[
                         styles.dayHeaderName,
-                        isFirstDay && { color: palette.primary.default, fontWeight: '800' },
+                        d.isCurrentDay && { color: palette.primary.default, fontWeight: '800' },
                       ]}
                     >
                       {d.label}
@@ -461,7 +377,7 @@ export function WeeklyTimetableGrid({
                     <Text
                       style={[
                         styles.dayHeaderDate,
-                        isFirstDay && { color: palette.primary.default },
+                        d.isCurrentDay && { color: palette.primary.default, fontWeight: '800' },
                       ]}
                     >
                       {d.dateNum}
@@ -710,91 +626,23 @@ export function WeeklyTimetableGrid({
         </ScrollView>
       </View>
 
-      {/* ─── 4. Légende des Couleurs de Blocs (Stitch) ─────────────────────────── */}
-      <View style={styles.legendCard}>
-        <View style={styles.legendHeaderRow}>
-          <Text style={styles.legendHeaderTitle}>LÉGENDE DES COULEURS DE BLOCS</Text>
-          <Text style={styles.legendHeaderSub}>{stats.totalHours}h prévues</Text>
+      {/* ─── Synthèse hebdomadaire compacte & sobre ─────────────────────────── */}
+      <View style={styles.summaryBar}>
+        <View style={styles.summaryItem}>
+          <View style={[styles.summaryDot, { backgroundColor: palette.primary.default }]} />
+          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>Événements</Text>
         </View>
-
-        <View style={styles.legendGrid}>
-          {/* Deep Focus / Travail */}
-          <View style={styles.legendPill}>
-            <View style={[styles.legendColorBox, { backgroundColor: palette.primary.default }]} />
-            <View style={styles.legendPillTextCol}>
-              <Text style={styles.legendPillLabel}>Travail & Études</Text>
-              <Text style={styles.legendPillMeta}>{stats.workHours}h • Violet</Text>
-            </View>
-          </View>
-
-          {/* Sport & Activité */}
-          <View style={styles.legendPill}>
-            <View style={[styles.legendColorBox, { backgroundColor: '#FF9800' }]} />
-            <View style={styles.legendPillTextCol}>
-              <Text style={styles.legendPillLabel}>Sport & Vitalité</Text>
-              <Text style={styles.legendPillMeta}>{stats.sportHours}h • Orange</Text>
-            </View>
-          </View>
-
-          {/* Repos & Loisirs */}
-          <View style={styles.legendPill}>
-            <View style={[styles.legendColorBox, { backgroundColor: '#4CAF50' }]} />
-            <View style={styles.legendPillTextCol}>
-              <Text style={styles.legendPillLabel}>Repos & Temps Libre</Text>
-              <Text style={styles.legendPillMeta}>{stats.restHours}h • Vert</Text>
-            </View>
-          </View>
-
-          {/* Maison & Autre */}
-          <View style={styles.legendPill}>
-            <View style={[styles.legendColorBox, { backgroundColor: '#9C27B0' }]} />
-            <View style={styles.legendPillTextCol}>
-              <Text style={styles.legendPillLabel}>Maison & Autre</Text>
-              <Text style={styles.legendPillMeta}>{stats.otherHours}h • Pourpre</Text>
-            </View>
-          </View>
+        <View style={styles.summaryItem}>
+          <View style={[styles.summaryDot, { backgroundColor: '#F59E0B' }]} />
+          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>Rappels</Text>
         </View>
-      </View>
-
-      {/* ─── 5. Carte Recommandation IA Junix Pulse ────────────────────────────── */}
-      <View style={styles.aiInsightCard}>
-        <View style={styles.aiHeaderRow}>
-          <View style={styles.aiTitleGroup}>
-            <View style={styles.aiIconCircle}>
-              <Ionicons name="sparkles" size={15} color={palette.surface.base} />
-            </View>
-            <Text style={styles.aiTitle}>Junix Pulse IA</Text>
-          </View>
-
-          <View style={styles.aiStatusBadge}>
-            <Text style={styles.aiStatusText}>Zone Tampon Active</Text>
-          </View>
+        <View style={styles.summaryItem}>
+          <View style={[styles.summaryDot, { backgroundColor: palette.tertiary.default }]} />
+          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>Tâches</Text>
         </View>
-
-        <Text style={styles.aiDescription}>
-          Les blocs sont proportionnés à leur durée réelle. Les créneaux de respiration et de repos permettent de stabiliser votre niveau de focus sans surchauffe cognitive.
+        <Text style={[styles.summaryTotalText, { color: palette.primary.default }]}>
+          {stats.totalHours > 0 ? `${stats.totalHours}h occupées` : 'Semaine libre'}
         </Text>
-      </View>
-
-      {/* ─── 6. Bouton CTA Principal GlowCard ──────────────────────────────────── */}
-      <View style={styles.actionsSection}>
-        <TouchableOpacity
-          style={styles.heroGlowBtn}
-          onPress={() => onAddBlock(1, '09:00')}
-          activeOpacity={0.88}
-          accessibilityRole="button"
-          accessibilityLabel="Ajouter un créneau dans la grille"
-        >
-          <LinearGradient
-            colors={palette.gradient.primary as [string, string]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroGlowGradient}
-          >
-            <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-            <Text style={styles.heroGlowText}>Ajouter un créneau dans la grille</Text>
-          </LinearGradient>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -805,7 +653,35 @@ export function WeeklyTimetableGrid({
 const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: 40,
+  },
+  summaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  summaryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  summaryText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  summaryTotalText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   topHeader: {
     paddingVertical: Spacing.sm,

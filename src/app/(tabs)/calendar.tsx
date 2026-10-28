@@ -30,7 +30,6 @@ import { fr } from 'date-fns/locale';
 import { EventRepository } from '@/repositories/event-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
-import { ScheduleUseCases } from '@/use-cases/schedule-use-cases';
 import { Event, Reminder, Task, PlanningBlock } from '@/domain/entities';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -80,7 +79,6 @@ export default function CalendarScreen() {
         evts,
         rems,
         tsks,
-        storedScheduleBlocks,
         weekEvts,
         weekRems,
         weekTsks,
@@ -88,7 +86,6 @@ export default function CalendarScreen() {
         EventRepository.findForDate(dateYmd),
         ReminderRepository.findForDate(dateYmd),
         TaskRepository.findForDate(dateYmd),
-        ScheduleUseCases.getActiveScheduleBlocks().catch(() => []),
         Promise.all(weekDatesYmd.map(d => EventRepository.findForDate(d))),
         Promise.all(weekDatesYmd.map(d => ReminderRepository.findForDate(d))),
         Promise.all(weekDatesYmd.map(d => TaskRepository.findForDate(d))),
@@ -98,7 +95,7 @@ export default function CalendarScreen() {
       setReminders(rems);
       setTasks(tsks);
 
-      // Conversion des événements de la semaine en PlanningBlock[]
+      // Conversion des événements réels de la semaine en créneaux
       const eventBlocks: PlanningBlock[] = weekEvts.flat().map(e => {
         const s = new Date(e.startAt);
         const end = new Date(e.endAt);
@@ -116,7 +113,7 @@ export default function CalendarScreen() {
         };
       });
 
-      // Conversion des rappels de la semaine en PlanningBlock[]
+      // Conversion des rappels ponctuels de la semaine en créneaux
       const reminderBlocks: PlanningBlock[] = weekRems.flat().map(r => {
         const s = new Date(r.scheduledAt);
         const end = addMinutes(s, 30);
@@ -128,13 +125,13 @@ export default function CalendarScreen() {
           dayOfWeek: s.getDay(),
           startTime: format(s, 'HH:mm'),
           endTime: format(end, 'HH:mm'),
-          color: r.priority === 'HIGH' ? theme.priority.HIGH : theme.tertiary.default,
+          color: r.priority === 'HIGH' || r.priority === 'URGENT' ? theme.priority.HIGH : theme.tertiary.default,
           createdAt: r.createdAt,
           updatedAt: r.updatedAt,
         };
       });
 
-      // Décompte précis des tâches non terminées par jour pour le bandeau All-Day
+      // Décompte précis des tâches non terminées par jour pour le bandeau supérieur All-Day
       const taskCounts: Record<number, number> = {};
       weekDays.forEach((d, idx) => {
         const dayTasks = weekTsks[idx] || [];
@@ -142,8 +139,8 @@ export default function CalendarScreen() {
       });
       setTasksCountByDay(taskCounts);
 
-      // Blocs récurrents (Fond structurel) + Événements réels (Premier plan) + Rappels (Pastilles ponctuelles)
-      setAllWeeklyBlocks([...storedScheduleBlocks, ...eventBlocks, ...reminderBlocks]);
+      // 100% vraies données : uniquement les événements réels et rappels de la semaine
+      setAllWeeklyBlocks([...eventBlocks, ...reminderBlocks]);
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de chargement');
@@ -176,35 +173,19 @@ export default function CalendarScreen() {
   };
 
   const handleDeleteWeeklyBlock = useCallback((blockId: string, label: string) => {
-    if (blockId.startsWith('sched_') || blockId.startsWith('block_')) {
-      Alert.alert('Supprimer', `Supprimer le créneau de vie "${label}" ?`, [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await ScheduleUseCases.deleteBlock(blockId);
-              load();
-            } catch (err) {
-              Alert.alert('Erreur', err instanceof Error ? err.message : 'Impossible de supprimer');
-            }
-          },
-        },
-      ]);
-    } else {
-      Alert.alert(
-        label,
-        'Cet élément est synchronisé avec vos événements, rappels ou tâches. Modifiez-le directement depuis sa fiche.',
-        [{ text: 'Compris' }]
-      );
-    }
-  }, [load]);
+    Alert.alert(
+      label,
+      'Cet élément est synchronisé avec vos événements réels ou rappels. Modifiez-le ou supprimez-le directement depuis sa fiche détaillée.',
+      [{ text: 'Compris' }]
+    );
+  }, []);
 
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
   const hasItems = events.length > 0 || reminders.length > 0 || tasks.length > 0;
+  const weekEnd = addDays(weekStart, 6);
+  const weekLabel = `Semaine du ${format(weekStart, 'd MMM', { locale: fr })} au ${format(weekEnd, 'd MMM yyyy', { locale: fr })}`;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -213,7 +194,9 @@ export default function CalendarScreen() {
         <View style={styles.headerTitleCol}>
           <Text style={styles.title}>Planning</Text>
           <Text style={styles.subtitle}>
-            {format(selectedDate, 'MMMM yyyy', { locale: fr })}
+            {viewMode === 'week'
+              ? weekLabel
+              : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
           </Text>
         </View>
 
