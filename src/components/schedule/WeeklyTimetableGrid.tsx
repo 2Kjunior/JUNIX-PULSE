@@ -39,9 +39,8 @@ export interface WeeklyTimetableGridProps {
   onPressTasksDay?: (dayNum: number) => void;
 }
 
-const START_HOUR = 7;   // 07:00
-const END_HOUR = 22;    // 22:00
-const TOTAL_HOURS = END_HOUR - START_HOUR; // 15 heures
+const DEFAULT_START_HOUR = 7;   // 07:00 par défaut
+const DEFAULT_END_HOUR = 22;    // 22:00 par défaut
 const HOUR_HEIGHT = 48; // 48px par tranche de 60 minutes (exactement comme dans Stitch)
 const TIME_COL_WIDTH = 54;
 const DAY_COL_WIDTH = 84;
@@ -81,7 +80,8 @@ interface PositionedForegroundBlock {
  */
 function layoutForegroundBlocks(
   blocks: PlanningBlock[],
-  columnWidth: number
+  columnWidth: number,
+  startHour: number = DEFAULT_START_HOUR
 ): PositionedForegroundBlock[] {
   if (blocks.length === 0) return [];
 
@@ -152,7 +152,7 @@ function layoutForegroundBlocks(
       const leftPx = 2 + colIndex * subColWidth;
       const widthPx = Math.max(20, subColWidth - 2);
 
-      const topPx = ((a.item.startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      const topPx = ((a.item.startMin - startHour * 60) / 60) * HOUR_HEIGHT;
       const heightPx = (a.item.durationMin / 60) * HOUR_HEIGHT;
       const clampedTop = Math.max(0, topPx);
       const clampedHeight = Math.max(24, heightPx - 2);
@@ -188,6 +188,28 @@ export function WeeklyTimetableGrid({
   const hasAnyTasks = useMemo(() => {
     return tasksCountByDay && Object.values(tasksCountByDay).some(c => c > 0);
   }, [tasksCountByDay]);
+
+  // Calcul dynamique de la plage horaire pour la semaine (Smart Range)
+  // S'étend automatiquement si une action a lieu tôt le matin (ex: 01h NBA) ou tard le soir
+  const { startHour, totalHours } = useMemo(() => {
+    let minH = DEFAULT_START_HOUR;
+    let maxH = DEFAULT_END_HOUR;
+
+    blocks.forEach(b => {
+      const sMin = timeToMinutes(b.startTime);
+      const eMin = timeToMinutes(b.endTime);
+      const sH = Math.floor(sMin / 60);
+      const eH = Math.min(24, Math.ceil(eMin / 60));
+      if (sH < minH) minH = Math.max(0, sH);
+      if (eH > maxH) maxH = Math.min(24, eH);
+    });
+
+    return {
+      startHour: minH,
+      endHour: maxH,
+      totalHours: Math.max(1, maxH - minH),
+    };
+  }, [blocks]);
 
   // Définition dynamique des 7 jours de la semaine
   const displayedDays = useMemo(() => {
@@ -418,10 +440,10 @@ export function WeeklyTimetableGrid({
 
             {/* Corps de la Grille : Colonne Heures + Colonnes Journées */}
             <View style={styles.gridBody}>
-              {/* Colonne latérale gauche : Marqueurs 07:00 à 22:00 */}
+              {/* Colonne latérale gauche : Marqueurs startHour à endHour */}
               <View style={[styles.timeGutter, { width: TIME_COL_WIDTH }]}>
-                {Array.from({ length: TOTAL_HOURS }, (_, i) => {
-                  const hour = START_HOUR + i;
+                {Array.from({ length: totalHours }, (_, i) => {
+                  const hour = startHour + i;
                   const isHighlight = hour === 9 || hour === 14 || hour === 17;
                   return (
                     <View key={hour} style={[styles.timeCell, { height: HOUR_HEIGHT }]}>
@@ -442,7 +464,7 @@ export function WeeklyTimetableGrid({
               <View style={[styles.daysContainer, { width: displayedDays.length * DAY_COL_WIDTH }]}>
                 {/* Lignes de repère horizontales (une par tranche horaire) */}
                 <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                  {Array.from({ length: TOTAL_HOURS }, (_, i) => (
+                  {Array.from({ length: totalHours }, (_, i) => (
                     <View
                       key={i}
                       style={[
@@ -467,14 +489,14 @@ export function WeeklyTimetableGrid({
                     const reminderBlocks = dayBlocks.filter(
                       b => b.scheduleId === 'reminder'
                     );
-                    const positionedForeground = layoutForegroundBlocks(foregroundBlocks, DAY_COL_WIDTH);
+                    const positionedForeground = layoutForegroundBlocks(foregroundBlocks, DAY_COL_WIDTH, startHour);
 
                     return (
                       <View
                         key={d.num}
                         style={[
                           styles.dayColumn,
-                          { width: DAY_COL_WIDTH, height: TOTAL_HOURS * HOUR_HEIGHT },
+                          { width: DAY_COL_WIDTH, height: totalHours * HOUR_HEIGHT },
                         ]}
                       >
                         {/* Clic rapide sur la colonne pour ajouter un bloc */}
@@ -490,7 +512,7 @@ export function WeeklyTimetableGrid({
                           const startMin = timeToMinutes(block.startTime);
                           const endMin = timeToMinutes(block.endTime);
                           const durationMin = Math.max(15, endMin - startMin);
-                          const topPx = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+                          const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT;
                           const heightPx = (durationMin / 60) * HOUR_HEIGHT;
                           const clampedTop = Math.max(0, topPx);
                           const clampedHeight = Math.max(22, heightPx - 2);
@@ -589,7 +611,7 @@ export function WeeklyTimetableGrid({
                         {/* 3. LAYER 2 : Rappels ponctuels (Pastilles compactes sans durée artificielle) */}
                         {reminderBlocks.map((block, rIdx) => {
                           const startMin = timeToMinutes(block.startTime);
-                          const topPx = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+                          const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT;
                           const clampedTop = Math.max(0, topPx);
 
                           return (

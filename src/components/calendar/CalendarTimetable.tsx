@@ -39,7 +39,8 @@ interface CalendarTimetableProps {
   onRefresh?: () => void;
 }
 
-const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07:00 -> 22:00
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 22;
 
 export const CalendarTimetable = memo(function CalendarTimetable({
   selectedDate,
@@ -60,6 +61,42 @@ export const CalendarTimetable = memo(function CalendarTimetable({
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null);
+
+  // Calcul de la plage horaire adaptative (Smart Range)
+  // S'étend automatiquement si une action a lieu tôt le matin ou tard le soir
+  const hours = useMemo(() => {
+    let minH = DEFAULT_START_HOUR;
+    let maxH = DEFAULT_END_HOUR;
+
+    // Si on est aujourd'hui et qu'il est plus tôt que 07h00 (ex: 6h), inclure l'heure courante
+    if (isSelectedToday && currentHour < minH) {
+      minH = Math.max(0, currentHour);
+    }
+
+    events.forEach(e => {
+      try {
+        const s = parseISO(e.startAt).getHours();
+        const endD = parseISO(e.endAt);
+        const endH = Math.min(23, Math.ceil(endD.getHours() + (endD.getMinutes() > 0 ? 1 : 0)));
+        if (s < minH) minH = s;
+        if (endH > maxH) maxH = endH;
+      } catch {
+        // Ignorer date invalide
+      }
+    });
+
+    reminders.forEach(r => {
+      try {
+        const h = parseISO(r.scheduledAt).getHours();
+        if (h < minH) minH = h;
+        if (h > maxH) maxH = h;
+      } catch {
+        // Ignorer date invalide
+      }
+    });
+
+    return Array.from({ length: maxH - minH + 1 }, (_, i) => i + minH);
+  }, [events, reminders, isSelectedToday, currentHour]);
 
   // Indexation des items par heure
   const { hourEventsMap, hourRemindersMap, totalOccupiedSlots } = useMemo(() => {
@@ -89,7 +126,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
       }
     });
 
-    HOURS.forEach(h => {
+    hours.forEach(h => {
       if ((eMap[h]?.length ?? 0) > 0 || (rMap[h]?.length ?? 0) > 0) {
         occupiedCount++;
       }
@@ -100,7 +137,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
       hourRemindersMap: rMap,
       totalOccupiedSlots: occupiedCount,
     };
-  }, [events, reminders]);
+  }, [events, reminders, hours]);
 
   return (
     <ScrollView
@@ -177,9 +214,9 @@ export const CalendarTimetable = memo(function CalendarTimetable({
         </View>
       )}
 
-      {/* ─── Grille Chronologique de 07h à 22h ──────────────────────────────── */}
+      {/* ─── Grille Chronologique Adaptative (Smart Range) ─────────────────── */}
       <View style={styles.timelineGrid}>
-        {HOURS.map(hour => {
+        {hours.map(hour => {
           const hourEvents = hourEventsMap[hour] || [];
           const hourReminders = hourRemindersMap[hour] || [];
           const hasItems = hourEvents.length > 0 || hourReminders.length > 0;
