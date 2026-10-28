@@ -9,6 +9,8 @@
 
 import { logger } from "@/utils/logger";
 import { Platform } from "react-native";
+import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
+import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NOTIFICATION_CHANNEL_DESCRIPTION, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
 
 type NotificationsType = typeof import("expo-notifications");
 
@@ -52,7 +54,9 @@ export const NotificationService = {
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
           shouldShowAlert: true,
-          shouldPlaySound: true,
+          // Sound is handled in-app by NotificationSoundService when foreground.
+          // This prevents double-play (system + in-app) when the app is open.
+          shouldPlaySound: false,
           shouldSetBadge: false,
           shouldShowBanner: true,
           shouldShowList: true,
@@ -60,6 +64,7 @@ export const NotificationService = {
       });
 
       if (Platform.OS === "android") {
+        // Legacy channel — kept intact, no sound change (Android forbids it).
         await Notifications.setNotificationChannelAsync("reminders", {
           name: "Rappels",
           description: "Notifications pour vos rappels Junix Pulse",
@@ -68,6 +73,19 @@ export const NotificationService = {
           lightColor: "#D0BCFF",
           enableVibrate: true,
           showBadge: false,
+        });
+
+        // New channel with the custom Junix Pulse sound.
+        // A channel's sound is immutable after first creation — always a new ID.
+        await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
+          name: NOTIFICATION_CHANNEL_NAME,
+          description: NOTIFICATION_CHANNEL_DESCRIPTION,
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#8B3DF0",
+          enableVibrate: true,
+          showBadge: false,
+          sound: NOTIFICATION_SOUND_WAV_FILENAME,
         });
       }
     } catch {
@@ -109,13 +127,14 @@ export const NotificationService = {
             type: "REMINDER",
             ...params.data,
           },
-          sound: "default",
+          // iOS uses the filename; Android uses the channel's configured sound.
+          sound: NOTIFICATION_SOUND_WAV_FILENAME,
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: triggerDate,
-          channelId: Platform.OS === "android" ? "reminders" : undefined,
+          channelId: Platform.OS === "android" ? NOTIFICATION_CHANNEL_ID : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
     } catch {
@@ -160,7 +179,7 @@ export const NotificationService = {
         content: {
           title,
           body,
-          sound: "default",
+          sound: NOTIFICATION_SOUND_WAV_FILENAME,
           data: {
             type: "TEST_NOTIFICATION",
             sentAt: new Date().toISOString(),
@@ -169,7 +188,7 @@ export const NotificationService = {
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: effectiveDate,
-          channelId: Platform.OS === "android" ? "reminders" : undefined,
+          channelId: Platform.OS === "android" ? NOTIFICATION_CHANNEL_ID : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
 

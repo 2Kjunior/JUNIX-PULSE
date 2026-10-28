@@ -113,6 +113,19 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleToggleNotificationSound = async (val: boolean) => {
+    try {
+      await SettingsRepository.update({
+        notificationSoundEnabled: val,
+        updatedAt: new Date().toISOString(),
+      });
+      setSettings(s => s ? { ...s, notificationSoundEnabled: val } : s);
+      showSnackbar(val ? 'Son des notifications activé' : 'Son des notifications désactivé');
+    } catch (e) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+    }
+  };
+
   const handleSelectAppearance = async (newMode: AppearanceMode) => {
     const previousMode = themeMode;
     setThemeMode(newMode);
@@ -411,6 +424,22 @@ export default function SettingsScreen() {
             thumbColor={settings.notificationsEnabled ? palette.primary.default : palette.onSurface.disabled}
           />
         </View>
+
+        {/* Son des notifications — visible seulement si les notifications sont activées */}
+        {settings.notificationsEnabled && (
+          <View style={styles.row}>
+            <View>
+              <Text style={styles.rowLabel}>Son des notifications</Text>
+              <Text style={styles.rowSub}>Signature sonore Junix Pulse</Text>
+            </View>
+            <Switch
+              value={settings.notificationSoundEnabled}
+              onValueChange={handleToggleNotificationSound}
+              trackColor={{ false: palette.outline.variant, true: palette.primary.container }}
+              thumbColor={settings.notificationSoundEnabled ? palette.primary.default : palette.onSurface.disabled}
+            />
+          </View>
+        )}
       </View>
 
       {/* Section Zone de danger */}

@@ -38,6 +38,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { NotificationService } from "@/services/notification-service";
+import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { useAppStore } from "@/store/app-store";
 import { reconcileOverdueRecurringReminders } from "@/use-cases/reminder-use-cases";
 
@@ -160,6 +161,9 @@ export default function RootLayout() {
       const title = notification.request.content.title ?? "Rappel Junix Pulse";
       const body = notification.request.content.body ?? "";
       const reminderId = data?.reminderId as string | undefined;
+
+      // Jouer le son Junix Pulse en foreground (le système ne joue pas de son car shouldPlaySound: false)
+      NotificationSoundService.play(!splashFinished);
 
       if (reminderId) {
         Alert.alert(
