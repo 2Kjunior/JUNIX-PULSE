@@ -24,6 +24,8 @@
  * 019 – indexes
  * 020 – sanctum_notes
  * 021 – sanctum_notes_multi_notebooks
+ * 022 – add_appearance_mode
+ * 023 – add_notification_sound_enabled
  */
 
 export interface Migration {
@@ -428,6 +430,14 @@ export const MIGRATIONS: Migration[] = [
 
       -- Initialisation cohérente depuis l'ancien booléen appearance_dark
       UPDATE settings SET appearance_mode = CASE WHEN appearance_dark = 1 THEN 'dark' ELSE 'light' END;
+    `,
+  },
+  {
+    version: 23,
+    name: 'add_notification_sound_enabled',
+    sql: `
+      -- Adds the per-user notification sound toggle (default: enabled).
+      ALTER TABLE settings ADD COLUMN notification_sound_enabled INTEGER NOT NULL DEFAULT 1;
     `,
   },
 ];

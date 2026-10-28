@@ -250,6 +250,11 @@ export interface Settings {
   timezone: string;            // ex: 'Europe/Paris'
   onboardingCompleted: boolean;
   notificationsEnabled: boolean;
+  /**
+   * Whether the app plays an in-app sound when a notification arrives in the
+   * foreground. True by default.
+   */
+  notificationSoundEnabled: boolean;
   forgottenContactThresholdDays: number;
   endOfDayHour: number;        // Heure à laquelle Junix propose de gérer les tâches restantes (ex: 20)
   morningBriefingHour: number; // Heure du résumé matin (ex: 8)
