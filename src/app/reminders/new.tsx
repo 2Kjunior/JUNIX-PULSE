@@ -160,7 +160,8 @@ export default function NewReminderScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: palette.surface.base }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
         {/* ─── Barre d'outils modale ───────────────────────────────────────────── */}

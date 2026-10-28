@@ -2,8 +2,15 @@
  * Repository pour les tâches et sous-tâches.
  */
 
+import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Task, Subtask } from '../domain/entities';
+
+type NullableFields<T> = {
+  [K in keyof T]?: T[K] | null;
+};
+
+export type UpdateTaskParams = NullableFields<Omit<Task, 'id' | 'createdAt'>> & { id: string; updatedAt: string };
 
 function rowToTask(row: Record<string, unknown>): Task {
   return {
@@ -16,7 +23,14 @@ function rowToTask(row: Record<string, unknown>): Task {
     priority: row.priority as Task['priority'],
     goalId: (row.goal_id as string | null) ?? undefined,
     personId: (row.person_id as string | null) ?? undefined,
-    tags: row.tags ? JSON.parse(row.tags as string) : undefined,
+    tags: (() => {
+      if (!row.tags || typeof row.tags !== 'string') return undefined;
+      try {
+        return JSON.parse(row.tags);
+      } catch {
+        return undefined;
+      }
+    })(),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     completedAt: (row.completed_at as string | null) ?? undefined,
@@ -51,25 +65,64 @@ export const TaskRepository = {
     );
   },
 
-  async update(params: Partial<Task> & { id: string; updatedAt: string }): Promise<void> {
+  async update(params: UpdateTaskParams): Promise<void> {
+    const setClauses: string[] = [];
+    const values: SQLiteBindValue[] = [];
+
+    if (params.title !== undefined) {
+      setClauses.push('title = ?');
+      values.push(params.title);
+    }
+    if (params.description !== undefined) {
+      setClauses.push('description = ?');
+      values.push(params.description);
+    }
+    if (params.status !== undefined) {
+      setClauses.push('status = ?');
+      values.push(params.status);
+    }
+    if (params.scheduledDate !== undefined) {
+      setClauses.push('scheduled_date = ?');
+      values.push(params.scheduledDate);
+    }
+    if (params.estimatedMinutes !== undefined) {
+      setClauses.push('estimated_minutes = ?');
+      values.push(params.estimatedMinutes);
+    }
+    if (params.priority !== undefined) {
+      setClauses.push('priority = ?');
+      values.push(params.priority);
+    }
+    if (params.goalId !== undefined) {
+      setClauses.push('goal_id = ?');
+      values.push(params.goalId);
+    }
+    if (params.personId !== undefined) {
+      setClauses.push('person_id = ?');
+      values.push(params.personId);
+    }
+    if (params.tags !== undefined) {
+      setClauses.push('tags = ?');
+      values.push(params.tags ? JSON.stringify(params.tags) : null);
+    }
+    if (params.completedAt !== undefined) {
+      setClauses.push('completed_at = ?');
+      values.push(params.completedAt);
+    }
+    if (params.deletedAt !== undefined) {
+      setClauses.push('deleted_at = ?');
+      values.push(params.deletedAt);
+    }
+
+    setClauses.push('updated_at = ?');
+    values.push(params.updatedAt);
+
+    values.push(params.id);
+
     const db = await getDatabase();
     await db.runAsync(
-      `UPDATE tasks SET
-        title = COALESCE(?, title),
-        description = COALESCE(?, description),
-        status = COALESCE(?, status),
-        scheduled_date = COALESCE(?, scheduled_date),
-        estimated_minutes = COALESCE(?, estimated_minutes),
-        priority = COALESCE(?, priority),
-        goal_id = COALESCE(?, goal_id),
-        person_id = COALESCE(?, person_id),
-        completed_at = COALESCE(?, completed_at),
-        updated_at = ?
-       WHERE id = ?`,
-      params.title ?? null, params.description ?? null, params.status ?? null,
-      params.scheduledDate ?? null, params.estimatedMinutes ?? null, params.priority ?? null,
-      params.goalId ?? null, params.personId ?? null, params.completedAt ?? null,
-      params.updatedAt, params.id
+      `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = ?`,
+      ...values
     );
   },
 

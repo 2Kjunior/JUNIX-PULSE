@@ -26,7 +26,8 @@ import {
   Typography,
 } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
-import { useTheme, useThemedStyles } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 

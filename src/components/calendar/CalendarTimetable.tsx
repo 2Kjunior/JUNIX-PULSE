@@ -26,6 +26,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { CalendarActionModal } from './CalendarActionModal';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { ThemePalette } from '@/constants/palettes';
@@ -145,9 +146,10 @@ export const CalendarTimetable = memo(function CalendarTimetable({
             </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tasksScroll}>
-            {tasks.map(t => (
+            {tasks.map((t, idx) => (
               <GlowCard
                 key={t.id}
+                index={idx}
                 tone="success"
                 intensity="soft"
                 style={styles.taskMiniCard}
@@ -215,12 +217,16 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                 {hasItems ? (
                   <View style={styles.itemsStack}>
                     {/* Événements de ce créneau */}
-                    {hourEvents.map(e => {
+                    {hourEvents.map((e, idx) => {
                       let timeStr = `${String(hour).padStart(2, '0')}:00`;
+                      let proportionalMinHeight = 56;
                       try {
                         const startD = parseISO(e.startAt);
                         const endD = parseISO(e.endAt);
                         timeStr = `${format(startD, 'HH:mm')} - ${format(endD, 'HH:mm')}`;
+                        const durationMinutes = Math.max(30, (endD.getTime() - startD.getTime()) / 60000);
+                        // Hauteur proportionnelle au nombre d'heures (64px par heure)
+                        proportionalMinHeight = Math.max(56, (durationMinutes / 60) * 64);
                       } catch {
                         // fallback
                       }
@@ -228,9 +234,10 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                       return (
                         <GlowCard
                           key={e.id}
+                          index={idx}
                           tone="info"
                           intensity="default"
-                          style={styles.eventCard}
+                          style={[styles.eventCard, { minHeight: proportionalMinHeight }]}
                           onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
                           accessibilityLabel={`Événement : ${e.title}, horaire ${timeStr}${e.location ? `, lieu ${e.location}` : ''}`}
                         >
@@ -261,7 +268,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                     })}
 
                     {/* Rappels de ce créneau */}
-                    {hourReminders.map(r => {
+                    {hourReminders.map((r, idx) => {
                       let reminderTimeStr = `${String(hour).padStart(2, '0')}:00`;
                       try {
                         reminderTimeStr = format(parseISO(r.scheduledAt), 'HH:mm');
@@ -274,6 +281,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                       return (
                         <GlowCard
                           key={r.id}
+                          index={idx}
                           tone={isUrgent ? 'urgent' : 'primary'}
                           intensity="default"
                           style={styles.reminderCard}
@@ -346,124 +354,12 @@ export const CalendarTimetable = memo(function CalendarTimetable({
       </View>
 
       {/* ─── Modal de sélection du type d'élément pour le créneau ────── */}
-      <Modal
+      <CalendarActionModal
         visible={selectedSlotHour !== null}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setSelectedSlotHour(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setSelectedSlotHour(null)}
-          accessibilityRole="button"
-          accessibilityLabel="Fermer la boîte de sélection"
-        >
-          <View style={styles.slotActionSheet}>
-            <View style={styles.sheetHeader}>
-              <View style={styles.sheetHeaderCol}>
-                <Text style={styles.sheetTitle}>
-                  Créneau de {selectedSlotHour !== null ? String(selectedSlotHour).padStart(2, '0') : ''}:00
-                </Text>
-                <Text style={styles.sheetSub}>
-                  {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.sheetCloseBtn}
-                onPress={() => setSelectedSlotHour(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Fermer la sélection du créneau"
-              >
-                <Ionicons name="close" size={20} color={theme.onSurface.variant} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.sheetQuestion}>
-              Que souhaitez-vous positionner sur ce créneau ?
-            </Text>
-
-            <View style={styles.optionsGrid}>
-              {/* Option 1: Événement */}
-              <TouchableOpacity
-                style={[styles.optionCard, { borderColor: eventAccentColor + '55' }]}
-                onPress={() => {
-                  const hour = selectedSlotHour;
-                  const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                  setSelectedSlotHour(null);
-                  router.push({
-                    pathname: '/events/new',
-                    params: { defaultHour: String(hour), defaultDate: dateStr },
-                  });
-                }}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Créer un événement : rendez-vous, réunion ou bloc fixe"
-              >
-                <View style={[styles.optionIconCircle, { backgroundColor: eventAccentColor + '20' }]}>
-                  <Ionicons name="calendar" size={20} color={eventAccentColor} />
-                </View>
-                <View style={styles.optionTextCol}>
-                  <Text style={styles.optionTitle}>Événement</Text>
-                  <Text style={styles.optionDesc}>Rendez-vous, réunion ou bloc fixe</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={eventAccentColor} />
-              </TouchableOpacity>
-
-              {/* Option 2: Rappel */}
-              <TouchableOpacity
-                style={[styles.optionCard, { borderColor: theme.primary.default + '55' }]}
-                onPress={() => {
-                  const hour = selectedSlotHour;
-                  const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                  setSelectedSlotHour(null);
-                  router.push({
-                    pathname: '/reminders/new',
-                    params: { defaultHour: String(hour), defaultDate: dateStr },
-                  });
-                }}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Créer un rappel : alerte sonore et notification précise"
-              >
-                <View style={[styles.optionIconCircle, { backgroundColor: theme.primary.default + '20' }]}>
-                  <Ionicons name="notifications" size={20} color={theme.primary.default} />
-                </View>
-                <View style={styles.optionTextCol}>
-                  <Text style={styles.optionTitle}>Rappel</Text>
-                  <Text style={styles.optionDesc}>Alerte sonore et notification précise</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={theme.primary.default} />
-              </TouchableOpacity>
-
-              {/* Option 3: Tâche */}
-              <TouchableOpacity
-                style={[styles.optionCard, { borderColor: taskAccentColor + '55' }]}
-                onPress={() => {
-                  const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                  setSelectedSlotHour(null);
-                  router.push({
-                    pathname: '/tasks/new',
-                    params: { defaultDate: dateStr },
-                  });
-                }}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Créer une tâche du jour : action à cocher avec durée estimée"
-              >
-                <View style={[styles.optionIconCircle, { backgroundColor: taskAccentColor + '20' }]}>
-                  <Ionicons name="checkbox" size={20} color={taskAccentColor} />
-                </View>
-                <View style={styles.optionTextCol}>
-                  <Text style={styles.optionTitle}>Tâche du jour</Text>
-                  <Text style={styles.optionDesc}>Action à cocher avec durée estimée</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={taskAccentColor} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setSelectedSlotHour(null)}
+        selectedDate={selectedDate}
+        slotHour={selectedSlotHour}
+      />
     </ScrollView>
   );
 });
@@ -762,87 +658,6 @@ export function makeTimetableStyles(theme: ThemePalette) {
     freeSlotText: {
       ...Typography.labelSmall,
       color: theme.onSurface.disabled,
-      fontSize: 11,
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.70)',
-      justifyContent: 'flex-end',
-    },
-    slotActionSheet: {
-      backgroundColor: isLight ? theme.surface.base : 'rgba(20, 24, 38, 0.96)',
-      borderTopLeftRadius: Radius.xl,
-      borderTopRightRadius: Radius.xl,
-      paddingHorizontal: Spacing.lg,
-      paddingTop: Spacing.lg,
-      paddingBottom: Spacing.xxl + 10,
-      borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.20)',
-      gap: Spacing.md,
-    },
-    sheetHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    sheetHeaderCol: {
-      gap: 2,
-    },
-    sheetTitle: {
-      ...Typography.headlineMedium,
-      color: theme.onSurface.primary,
-      fontWeight: '700',
-    },
-    sheetSub: {
-      ...Typography.labelSmall,
-      color: theme.primary.default,
-      textTransform: 'capitalize',
-      fontSize: 11,
-    },
-    sheetCloseBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.high : 'rgba(255, 255, 255, 0.08)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    sheetQuestion: {
-      ...Typography.bodyMedium,
-      color: theme.onSurface.variant,
-      marginTop: -2,
-    },
-    optionsGrid: {
-      gap: Spacing.sm,
-    },
-    optionCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: isLight ? theme.surface.container : 'rgba(26, 30, 48, 0.85)',
-      borderRadius: Radius.lg,
-      padding: Spacing.md,
-      borderWidth: 1,
-      gap: Spacing.md,
-    },
-    optionIconCircle: {
-      width: 42,
-      height: 42,
-      borderRadius: Radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    optionTextCol: {
-      flex: 1,
-      gap: 2,
-    },
-    optionTitle: {
-      ...Typography.titleMedium,
-      color: theme.onSurface.primary,
-      fontWeight: '700',
-    },
-    optionDesc: {
-      ...Typography.bodySmall,
-      color: theme.onSurface.variant,
       fontSize: 11,
     },
   });

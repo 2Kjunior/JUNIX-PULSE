@@ -2,8 +2,15 @@
  * Repository pour la gestion des événements et de leurs personnes associées.
  */
 
+import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Event, Person } from '../domain/entities';
+
+type NullableFields<T> = {
+  [K in keyof T]?: T[K] | null;
+};
+
+export type UpdateEventParams = NullableFields<Omit<Event, 'id' | 'createdAt'>> & { id: string; updatedAt: string };
 
 function rowToEvent(row: Record<string, unknown>): Event {
   return {
@@ -69,30 +76,56 @@ export const EventRepository = {
     }
   },
 
-  async update(params: Partial<Event> & { id: string; updatedAt: string }, personIds?: string[]): Promise<void> {
+  async update(params: UpdateEventParams, personIds?: string[]): Promise<void> {
+    const setClauses: string[] = [];
+    const values: SQLiteBindValue[] = [];
+
+    if (params.title !== undefined) {
+      setClauses.push('title = ?');
+      values.push(params.title);
+    }
+    if (params.notes !== undefined) {
+      setClauses.push('notes = ?');
+      values.push(params.notes);
+    }
+    if (params.startAt !== undefined) {
+      setClauses.push('start_at = ?');
+      values.push(params.startAt);
+    }
+    if (params.endAt !== undefined) {
+      setClauses.push('end_at = ?');
+      values.push(params.endAt);
+    }
+    if (params.timezone !== undefined) {
+      setClauses.push('timezone = ?');
+      values.push(params.timezone);
+    }
+    if (params.location !== undefined) {
+      setClauses.push('location = ?');
+      values.push(params.location);
+    }
+    if (params.type !== undefined) {
+      setClauses.push('type = ?');
+      values.push(params.type);
+    }
+    if (params.travelBufferMinutes !== undefined) {
+      setClauses.push('travel_buffer_minutes = ?');
+      values.push(params.travelBufferMinutes);
+    }
+    if (params.deletedAt !== undefined) {
+      setClauses.push('deleted_at = ?');
+      values.push(params.deletedAt);
+    }
+
+    setClauses.push('updated_at = ?');
+    values.push(params.updatedAt);
+
+    values.push(params.id);
+
     const db = await getDatabase();
     await db.runAsync(
-      `UPDATE events SET
-        title = COALESCE(?, title),
-        notes = COALESCE(?, notes),
-        start_at = COALESCE(?, start_at),
-        end_at = COALESCE(?, end_at),
-        timezone = COALESCE(?, timezone),
-        location = COALESCE(?, location),
-        type = COALESCE(?, type),
-        travel_buffer_minutes = COALESCE(?, travel_buffer_minutes),
-        updated_at = ?
-       WHERE id = ?`,
-      params.title ?? null,
-      params.notes ?? null,
-      params.startAt ?? null,
-      params.endAt ?? null,
-      params.timezone ?? null,
-      params.location ?? null,
-      params.type ?? null,
-      params.travelBufferMinutes ?? null,
-      params.updatedAt,
-      params.id
+      `UPDATE events SET ${setClauses.join(', ')} WHERE id = ?`,
+      ...values
     );
 
     if (personIds !== undefined) {

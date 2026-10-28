@@ -262,16 +262,9 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
       });
 
       expect(mockDb.runAsync).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE settings SET'),
-        null, // display_name
-        null, // timezone
-        null, // onboarding_completed
-        null, // notifications_enabled
-        null, // forgotten_contact_threshold_days
-        null, // end_of_day_hour
-        null, // morning_briefing_hour
-        0,    // syncDark: light -> 0
-        'light', // appearance_mode
+        "UPDATE settings SET appearance_mode = ?, appearance_dark = ?, updated_at = ? WHERE id = '1'",
+        'light',
+        0,
         '2026-10-13T01:00:00Z'
       );
     });

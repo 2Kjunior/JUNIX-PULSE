@@ -16,13 +16,15 @@
  * Accessibilité : la lueur est un renfort visuel, jamais l'unique indicateur
  * (règle BR-025). Contraste texte ≥ 4,5:1 vérifié pour les deux modes.
  */
-import { memo, type ReactNode } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { View, Pressable, StyleSheet, type StyleProp, type ViewStyle, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDelay,
+  Easing,
   useReducedMotion,
 } from 'react-native-reanimated';
 
@@ -32,6 +34,14 @@ import { hexToRgba } from '@/utils/color';
 
 export type GlowCardSize = 'list' | 'hero';
 export type GlowCardIntensity = 'soft' | 'default';
+
+/** Configuration de latence et d'entrée progressive (Fade In Up + Stagger) */
+export const GLOW_CARD_ANIMATION = {
+  duration: 380, // Durée perceptible et fluide (380ms)
+  staggerStep: 50, // Pas de cascade par carte (50ms)
+  maxDelay: 300, // Plafond maximal de cascade (300ms)
+  translateYStart: 16, // Déplacement subtil vers le haut (16px)
+} as const;
 
 export interface GlowCardProps {
   tone?: GlowTone;
@@ -43,6 +53,12 @@ export interface GlowCardProps {
   style?: StyleProp<ViewStyle>;
   testID?: string;
   accessibilityLabel?: string;
+  /** Index de la carte dans une liste pour orchestrer la cascade (stagger) */
+  index?: number;
+  /** Délai personnalisé explicite en ms (optionnel) */
+  delay?: number;
+  /** Désactive l'animation d'entrée si nécessaire */
+  disableEntranceAnimation?: boolean;
 }
 
 // Teintes Glow en mode clair (Section 10 du Master Prompt)
@@ -65,13 +81,53 @@ function GlowCardInner({
   style,
   testID,
   accessibilityLabel,
+  index,
+  delay,
+  disableEntranceAnimation = false,
 }: GlowCardProps) {
   const { isDark } = useTheme();
   const reducedMotion = useReducedMotion();
+  const isReduced = !!reducedMotion || !!disableEntranceAnimation;
+
+  const opacity = useSharedValue(isReduced ? 1 : 0);
+  const translateY = useSharedValue(isReduced ? 0 : GLOW_CARD_ANIMATION.translateYStart);
   const pressScale = useSharedValue(1);
 
+  useEffect(() => {
+    if (isReduced) {
+      opacity.value = 1;
+      translateY.value = 0;
+      return;
+    }
+
+    const calculatedDelay =
+      delay !== undefined
+        ? delay
+        : Math.min(GLOW_CARD_ANIMATION.maxDelay, (index ?? 0) * GLOW_CARD_ANIMATION.staggerStep);
+
+    opacity.value = withDelay(
+      calculatedDelay,
+      withTiming(1, {
+        duration: GLOW_CARD_ANIMATION.duration,
+        easing: Easing.out(Easing.cubic),
+      })
+    );
+
+    translateY.value = withDelay(
+      calculatedDelay,
+      withTiming(0, {
+        duration: GLOW_CARD_ANIMATION.duration,
+        easing: Easing.out(Easing.cubic),
+      })
+    );
+  }, [isReduced, delay, index]);
+
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
+    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { scale: pressScale.value },
+    ],
   }));
 
   const accentHex = isDark ? Glow[tone] : GlowLight[tone];
@@ -223,9 +279,9 @@ function GlowCardInner({
 
   if (!onPress) {
     return (
-      <View style={style} testID={testID} accessibilityLabel={accessibilityLabel}>
+      <Animated.View style={[style, animatedStyle]} testID={testID} accessibilityLabel={accessibilityLabel}>
         {content}
-      </View>
+      </Animated.View>
     );
   }
 

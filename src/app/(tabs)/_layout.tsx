@@ -173,7 +173,7 @@ type CustomTabBarProps = Parameters<
   NonNullable<ComponentProps<typeof Tabs>["tabBar"]>
 >[0];
 
-function CustomTabBar({ state, navigation }: CustomTabBarProps) {
+function CustomTabBar({ state, navigateToTab }: CustomTabBarProps) {
   const { isDark } = useTheme();
   const styles = useThemedStyles(makeTabsLayoutStyles);
   const insets = useSafeAreaInsets();
@@ -208,14 +208,21 @@ function CustomTabBar({ state, navigation }: CustomTabBarProps) {
         style={styles.gradientBorder}
       >
         <View style={styles.tabBarInner}>
-          {TABS.map((tab, index) => (
-            <TabItem
-              key={tab.name}
-              tab={tab}
-              focused={state.index === index}
-              onPress={() => navigation.navigate(tab.name)}
-            />
-          ))}
+          {TABS.map((tab, index) => {
+            const route = state.routes.find((r) => r.name === tab.name) ?? state.routes[index];
+            return (
+              <TabItem
+                key={tab.name}
+                tab={tab}
+                focused={state.index === index}
+                onPress={() => {
+                  if (route) {
+                    navigateToTab(route.key);
+                  }
+                }}
+              />
+            );
+          })}
         </View>
       </LinearGradient>
     </View>

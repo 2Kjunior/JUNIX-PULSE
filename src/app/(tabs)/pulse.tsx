@@ -192,26 +192,44 @@ export default function PulseScreen() {
   const hasNoSuggestions = suggestions.length === 0;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + Spacing.md, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 48 },
-      ]}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            loadData();
-          }}
-          tintColor={theme.primary.default}
-        />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── Hero : orbe central + état système ── */}
-      <View style={styles.heroSection}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* ─── En-tête R-09 (Modèle Personnes) ─────────────────────────────────── */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Pulse</Text>
+          <Text style={styles.subtitle}>Intelligence locale • Suggestions</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.settingsBtn}
+          onPress={() => router.push('/settings')}
+          accessibilityRole="button"
+          accessibilityLabel="Paramètres"
+        >
+          <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 48 },
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              loadData();
+            }}
+            tintColor={theme.primary.default}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Hero : orbe central + état système ── */}
+        <View style={styles.heroSection}>
         <View style={styles.orbContainer}>
           {/* Anneaux vitrés derrière l'orbe */}
           <View style={styles.orbRingOuter} />
@@ -347,5 +365,6 @@ export default function PulseScreen() {
         ))}
       </View>
     </ScrollView>
+    </View>
   );
 }

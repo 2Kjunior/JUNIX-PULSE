@@ -1,11 +1,11 @@
 /**
- * Tests unitaires pour SwipeableItem et confirmations ergonomiques (Lot 8 - DEF-08, DEF-13).
+ * Tests unitaires pour SwipeableItem — nouvelle API (rightActions / leftActions).
  *
  * Couverture :
  * - Rendu de l'élément avec enfants
- * - Présence et déclenchement des actions droite (Supprimer) et gauche (Terminer)
- * - Accessibilité WCAG (rôle button, accessibilityLabel)
  * - Comportement lorsque enabled=false
+ * - Présence et déclenchement des actions via les nouvelles props
+ * - Accessibilité WCAG (rôle button, accessibilityLabel)
  */
 
 import React from 'react';
@@ -22,10 +22,15 @@ describe('Lot 8 — SwipeableItem & Confirmations ergonomiques (DEF-08, DEF-13)'
   });
 
   it('rend les enfants transmis dans le composant', () => {
+    const onDelete = jest.fn();
     let root: ReactTestRenderer.ReactTestRenderer;
     act(() => {
       root = ReactTestRenderer.create(
-        <SwipeableItem onDelete={jest.fn()}>
+        <SwipeableItem
+          rightActions={[
+            { key: 'delete', icon: 'trash-outline', label: 'Supprimer', color: '#FFB4AB', onPress: onDelete },
+          ]}
+        >
           <Text testID="child-text">Tâche exemple</Text>
         </SwipeableItem>
       );
@@ -37,10 +42,16 @@ describe('Lot 8 — SwipeableItem & Confirmations ergonomiques (DEF-08, DEF-13)'
   });
 
   it('affiche uniquement les enfants directs lorsque enabled=false', () => {
+    const onDelete = jest.fn();
     let root: ReactTestRenderer.ReactTestRenderer;
     act(() => {
       root = ReactTestRenderer.create(
-        <SwipeableItem enabled={false} onDelete={jest.fn()}>
+        <SwipeableItem
+          enabled={false}
+          rightActions={[
+            { key: 'delete', icon: 'trash-outline', label: 'Supprimer', color: '#FFB4AB', onPress: onDelete },
+          ]}
+        >
           <Text testID="disabled-child">Contenu non swipable</Text>
         </SwipeableItem>
       );
@@ -58,10 +69,12 @@ describe('Lot 8 — SwipeableItem & Confirmations ergonomiques (DEF-08, DEF-13)'
     act(() => {
       root = ReactTestRenderer.create(
         <SwipeableItem
-          onDelete={onDelete}
-          onComplete={onComplete}
-          deleteLabel="Supprimer la tâche"
-          completeLabel="Valider la tâche"
+          rightActions={[
+            { key: 'delete', icon: 'trash-outline', label: 'Supprimer la tâche', color: '#FFB4AB', onPress: onDelete },
+          ]}
+          leftActions={[
+            { key: 'complete', icon: 'checkmark-circle-outline', label: 'Valider la tâche', color: '#6DD58C', onPress: onComplete },
+          ]}
         >
           <Text>Élément interactif</Text>
         </SwipeableItem>

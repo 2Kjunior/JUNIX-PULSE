@@ -3,6 +3,8 @@
  * Permet de valider rapidement une habitude aujourd'hui,
  * de voir les séries en cours (streaks) et de gérer les pauses.
  * Respect strict du design Midnight, zéro emoji, dégradé unique sur le FAB.
+ *
+ * Swipe gauche sur une carte active → boutons Modifier / Supprimer (LiquidGlass).
  */
 
 import { useState, useCallback } from 'react';
@@ -19,7 +21,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
 import { useAppStore } from '@/store/app-store';
 import {
@@ -28,10 +29,12 @@ import {
   Typography,
 } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
-import { useTheme, useThemedStyles } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
+import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
 
 const COLOR_PRESETS: Record<string, string> = {
   green: '#4CAF50',
@@ -87,8 +90,38 @@ export default function HabitsListScreen() {
       );
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de mettre à jour l\'habitude');
+      Alert.alert('Erreur', e instanceof Error ? e.message : "Impossible de mettre à jour l'habitude");
     }
+  };
+
+  const handleDelete = (habitId: string, title: string) => {
+    Alert.alert(
+      "Supprimer l'habitude",
+      `Supprimer "${title}" ? Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const result = await HabitUseCases.deleteHabit(habitId);
+              setStatsList(prev => prev.filter(s => s.habit.id !== habitId));
+              showSnackbar(`Habitude "${title}" supprimée`, {
+                actionLabel: 'Annuler',
+                onAction: async () => {
+                  await result.undo();
+                  loadData();
+                },
+                durationMs: 5_000,
+              });
+            } catch (e) {
+              Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de supprimer');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleResume = async (habitId: string, title: string) => {
@@ -184,52 +217,62 @@ export default function HabitsListScreen() {
           activeHabits.map(item => {
             const habitColor = resolveHabitColor(item.habit.color, palette);
             return (
-              // tone="success" (soft) une fois cochée, sinon neutral — règle du spec.
-              // La couleur personnalisée de l'habitude (habitColor) reste sur le
-              // cercle de coche uniquement, pas sur la lueur de la carte.
-              <GlowCard
+              /* SwipeableItem : swipe gauche → Modifier + Supprimer (LiquidGlass) */
+              <SwipeableItem
                 key={item.habit.id}
-                tone={item.completedToday ? 'success' : 'neutral'}
-                intensity="soft"
-                onPress={() => router.push(`/habits/${item.habit.id}`)}
-                accessibilityLabel={`${item.habit.title}${item.completedToday ? ', validée aujourd’hui' : ''}`}
+                containerStyle={styles.swipeableContainer}
+                rightActions={makeStandardRightActions({
+                  palette,
+                  onDelete: () => handleDelete(item.habit.id, item.habit.title),
+                  onEdit: () => router.push(`/habits/${item.habit.id}`),
+                })}
               >
-              <View style={styles.habitRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.checkCircle,
-                    { borderColor: habitColor },
-                    item.completedToday && { backgroundColor: habitColor },
-                  ]}
-                  onPress={() => handleToggleToday(item)}
+                {/* tone="success" (soft) une fois cochée, sinon neutral — règle du spec.
+                    La couleur personnalisée (habitColor) reste sur le cercle de coche
+                    uniquement, pas sur la lueur de la carte. */}
+                <GlowCard
+                  tone={item.completedToday ? 'success' : 'neutral'}
+                  intensity="soft"
+                  onPress={() => router.push(`/habits/${item.habit.id}`)}
+                  accessibilityLabel={`${item.habit.title}${item.completedToday ? ', validée aujourd\'hui' : ''}`}
                 >
-                  <Ionicons
-                    name="checkmark"
-                    size={20}
-                    color={item.completedToday ? palette.surface.base : 'transparent'}
-                  />
-                </TouchableOpacity>
+                  <View style={styles.habitRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.checkCircle,
+                        { borderColor: habitColor },
+                        item.completedToday && { backgroundColor: habitColor },
+                      ]}
+                      onPress={() => handleToggleToday(item)}
+                    >
+                      <Ionicons
+                        name="checkmark"
+                        size={20}
+                        color={item.completedToday ? palette.surface.base : 'transparent'}
+                      />
+                    </TouchableOpacity>
 
-                <View style={styles.habitInfo}>
-                  <Text style={styles.habitTitle}>{item.habit.title}</Text>
-                  {item.habit.description ? (
-                    <Text style={styles.habitDesc} numberOfLines={1}>
-                      {item.habit.description}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.habitFreq}>
-                    {item.habit.frequency === 'DAILY'
-                      ? 'Tous les jours'
-                      : `${item.habit.targetDaysPerWeek || 1}x par semaine`}
-                  </Text>
-                </View>
+                    <View style={styles.habitInfo}>
+                      <Text style={styles.habitTitle}>{item.habit.title}</Text>
+                      {item.habit.description ? (
+                        <Text style={styles.habitDesc} numberOfLines={1}>
+                          {item.habit.description}
+                        </Text>
+                      ) : null}
+                      <Text style={styles.habitFreq}>
+                        {item.habit.frequency === 'DAILY'
+                          ? 'Tous les jours'
+                          : `${item.habit.targetDaysPerWeek || 1}x par semaine`}
+                      </Text>
+                    </View>
 
-                <View style={styles.streakBadge}>
-                  <Ionicons name="flame" size={18} color="#FF9800" />
-                  <Text style={styles.streakText}>{item.currentStreak} j</Text>
-                </View>
-              </View>
-              </GlowCard>
+                    <View style={styles.streakBadge}>
+                      <Ionicons name="flame" size={18} color="#FF9800" />
+                      <Text style={styles.streakText}>{item.currentStreak} j</Text>
+                    </View>
+                  </View>
+                </GlowCard>
+              </SwipeableItem>
             );
           })
         )}
@@ -350,6 +393,10 @@ const makeHabitsStyles = (theme: ThemePalette) =>
       ...Typography.bodyMedium,
       color: theme.onSurface.variant,
       textAlign: 'center',
+    },
+    /** Wrapper du SwipeableItem — fournit l'espacement vertical entre cartes */
+    swipeableContainer: {
+      marginBottom: Spacing.sm,
     },
     habitRow: {
       flexDirection: 'row',

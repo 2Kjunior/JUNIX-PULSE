@@ -5,6 +5,9 @@
  * Actions rapides : complétion inline, quick-snooze (+2h), suppression avec Undo (30s).
  * Bouton flottant CTA dégradé : + Nouveau rappel.
  *
+ * Swipe gauche : Supprimer (rouge) + +2h (tertiaire).
+ * Swipe droit  : Compléter (vert).
+ *
  * Règle A.1 : Zéro emoji dans tout le composant.
  * Règle A.2 : Cartes rayon 16px (Radius.lg), 1 seul dégradé (CTA flottant), palette theme.ts.
  */
@@ -34,6 +37,7 @@ import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/Stat
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makeRemindersStyles } from '@/styles/reminders/reminders-styles';
+import { SwipeableItem, type SwipeAction } from '@/components/ui/SwipeableItem';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type FilterTab = 'ALL' | 'TONIGHT' | 'TOMORROW' | 'MISSED';
@@ -295,14 +299,50 @@ export default function RemindersListScreen() {
               ) : null}
             </View>
           )}
-          renderItem={({ item }) => (
-            <ReminderCardR04
-              reminder={item}
-              onComplete={() => handleComplete(item)}
-              onQuickSnooze={() => handleQuickSnooze(item)}
-              onDelete={() => handleDelete(item)}
-            />
-          )}
+          renderItem={({ item }) => {
+            /* Actions de swipe spécifiques aux rappels :
+               - Droite (swipe gauche) : Supprimer + Reporter 2h
+               - Gauche (swipe droit)  : Compléter */
+            const rightActions: SwipeAction[] = [
+              {
+                key: 'snooze',
+                icon: 'time-outline',
+                label: '+2h',
+                color: palette.tertiary.default,
+                onPress: () => handleQuickSnooze(item),
+              },
+              {
+                key: 'delete',
+                icon: 'trash-outline',
+                label: 'Supprimer',
+                color: palette.error.default,
+                onPress: () => handleDelete(item),
+              },
+            ];
+            const leftActions: SwipeAction[] = [
+              {
+                key: 'complete',
+                icon: 'checkmark-circle-outline',
+                label: 'Terminer',
+                color: palette.success.default,
+                onPress: () => handleComplete(item),
+              },
+            ];
+
+            return (
+              <SwipeableItem
+                rightActions={rightActions}
+                leftActions={leftActions}
+              >
+                <ReminderCardR04
+                  reminder={item}
+                  onComplete={() => handleComplete(item)}
+                  onQuickSnooze={() => handleQuickSnooze(item)}
+                  onDelete={() => handleDelete(item)}
+                />
+              </SwipeableItem>
+            );
+          }}
           ListFooterComponent={
             <View style={styles.nightModeCard}>
               <Ionicons name="bed-outline" size={20} color={palette.tertiary.default} />
@@ -392,79 +432,78 @@ function ReminderCardR04({
         onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: reminder.id } })}
         accessibilityLabel={reminder.title}
       >
-      <View style={styles.cardRow}>
-        {/* Checkmark bouton */}
-        <TouchableOpacity
-          style={styles.checkCircle}
-          onPress={onComplete}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Marquer le rappel comme terminé"
-        >
-          <Ionicons name="ellipse-outline" size={22} color={palette.onSurface.variant} />
-        </TouchableOpacity>
+        <View style={styles.cardRow}>
+          {/* Checkmark bouton */}
+          <TouchableOpacity
+            style={styles.checkCircle}
+            onPress={onComplete}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Marquer le rappel comme terminé"
+          >
+            <Ionicons name="ellipse-outline" size={22} color={palette.onSurface.variant} />
+          </TouchableOpacity>
 
-        {/* Détails du rappel */}
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {reminder.title}
-          </Text>
+          {/* Détails du rappel */}
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {reminder.title}
+            </Text>
 
-          {/* Badges / Métadonnées en pills */}
-          <View style={styles.metaRow}>
-            {/* Heure */}
-            <View style={styles.metaPill}>
-              <Ionicons name="time-outline" size={12} color={palette.primary.default} />
-              <Text style={styles.metaPillText}>{timeStr}</Text>
+            {/* Badges / Métadonnées en pills */}
+            <View style={styles.metaRow}>
+              {/* Heure */}
+              <View style={styles.metaPill}>
+                <Ionicons name="time-outline" size={12} color={palette.primary.default} />
+                <Text style={styles.metaPillText}>{timeStr}</Text>
+              </View>
+
+              {/* Action / Sphère */}
+              {actionLabel ? (
+                <View style={styles.metaPill}>
+                  <Text style={styles.metaPillText}>{actionLabel}</Text>
+                </View>
+              ) : null}
+
+              {/* Priorité discrète */}
+              {reminder.priority === 'URGENT' || reminder.priority === 'HIGH' ? (
+                <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
+                  <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+                  <Text style={[styles.metaPillText, { color: priorityColor }]}>
+                    {reminder.priority === 'URGENT' ? 'Urgent' : 'Haute'}
+                  </Text>
+                </View>
+              ) : null}
+
+              {/* Récurrence */}
+              {reminder.recurrenceRuleId ? (
+                <View style={styles.metaPill}>
+                  <Ionicons name="repeat-outline" size={12} color={palette.tertiary.default} />
+                </View>
+              ) : null}
             </View>
-
-            {/* Action / Sphère */}
-            {actionLabel ? (
-              <View style={styles.metaPill}>
-                <Text style={styles.metaPillText}>{actionLabel}</Text>
-              </View>
-            ) : null}
-
-            {/* Priorité discrète */}
-            {reminder.priority === 'URGENT' || reminder.priority === 'HIGH' ? (
-              <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
-                <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
-                <Text style={[styles.metaPillText, { color: priorityColor }]}>
-                  {reminder.priority === 'URGENT' ? 'Urgent' : 'Haute'}
-                </Text>
-              </View>
-            ) : null}
-
-            {/* Récurrence */}
-            {reminder.recurrenceRuleId ? (
-              <View style={styles.metaPill}>
-                <Ionicons name="repeat-outline" size={12} color={palette.tertiary.default} />
-              </View>
-            ) : null}
           </View>
+
+          {/* Bouton Quick Snooze (+2h) — conservé pour l'accessibilité */}
+          <TouchableOpacity
+            style={styles.quickSnoozeBtn}
+            onPress={onQuickSnooze}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityLabel="Reporter de 2 heures"
+          >
+            <Text style={styles.quickSnoozeText}>+2h</Text>
+          </TouchableOpacity>
+
+          {/* Bouton contextuel Supprimer */}
+          <TouchableOpacity
+            style={styles.moreBtn}
+            onPress={onDelete}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityLabel="Supprimer le rappel"
+          >
+            <Ionicons name="ellipsis-vertical" size={18} color={palette.onSurface.variant} />
+          </TouchableOpacity>
         </View>
-
-        {/* Bouton Quick Snooze (+2h) */}
-        <TouchableOpacity
-          style={styles.quickSnoozeBtn}
-          onPress={onQuickSnooze}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-          accessibilityLabel="Reporter de 2 heures"
-        >
-          <Text style={styles.quickSnoozeText}>+2h</Text>
-        </TouchableOpacity>
-
-        {/* Menu contextuel / Détails */}
-        <TouchableOpacity
-          style={styles.moreBtn}
-          onPress={onDelete}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-          accessibilityLabel="Supprimer le rappel"
-        >
-          <Ionicons name="ellipsis-vertical" size={18} color={palette.onSurface.variant} />
-        </TouchableOpacity>
-      </View>
       </GlowCard>
     </View>
   );
 }
-

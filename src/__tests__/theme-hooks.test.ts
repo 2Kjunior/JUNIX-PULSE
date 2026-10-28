@@ -10,7 +10,8 @@
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { darkPalette, lightPalette } from '../constants/palettes';
-import { useTheme, useThemedStyles } from '../hooks/use-theme';
+import { useTheme } from '../hooks/use-theme';
+import { useThemedStyles } from '../hooks/use-themed-styles';
 import { useAppStore } from '../store/app-store';
 
 // Mock de useColorScheme

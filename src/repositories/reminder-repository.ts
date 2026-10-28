@@ -4,6 +4,7 @@
  * Règle : aucun composant UI ne doit importer ce module directement.
  */
 
+import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Reminder, ReminderChecklistItem, RecurrenceRule } from '../domain/entities';
 
@@ -26,17 +27,17 @@ export interface CreateReminderParams {
 export interface UpdateReminderParams {
   id: string;
   title?: string;
-  notes?: string;
+  notes?: string | null;
   scheduledAt?: string;
   priority?: Reminder['priority'];
   status?: Reminder['status'];
   actionType?: Reminder['actionType'];
-  personId?: string;
-  notificationId?: string;
-  snoozedUntil?: string;
+  personId?: string | null;
+  notificationId?: string | null;
+  snoozedUntil?: string | null;
   updatedAt: string;
-  completedAt?: string;
-  deletedAt?: string;
+  completedAt?: string | null;
+  deletedAt?: string | null;
 }
 
 // ─── Conversion row → entité ──────────────────────────────────────────────────
@@ -103,35 +104,63 @@ export const ReminderRepository = {
    * Met à jour les champs modifiés d'un rappel.
    */
   async update(params: UpdateReminderParams): Promise<void> {
+    const setClauses: string[] = [];
+    const values: SQLiteBindValue[] = [];
+
+    if (params.title !== undefined) {
+      setClauses.push('title = ?');
+      values.push(params.title);
+    }
+    if (params.notes !== undefined) {
+      setClauses.push('notes = ?');
+      values.push(params.notes);
+    }
+    if (params.scheduledAt !== undefined) {
+      setClauses.push('scheduled_at = ?');
+      values.push(params.scheduledAt);
+    }
+    if (params.priority !== undefined) {
+      setClauses.push('priority = ?');
+      values.push(params.priority);
+    }
+    if (params.status !== undefined) {
+      setClauses.push('status = ?');
+      values.push(params.status);
+    }
+    if (params.actionType !== undefined) {
+      setClauses.push('action_type = ?');
+      values.push(params.actionType);
+    }
+    if (params.personId !== undefined) {
+      setClauses.push('person_id = ?');
+      values.push(params.personId);
+    }
+    if (params.notificationId !== undefined) {
+      setClauses.push('notification_id = ?');
+      values.push(params.notificationId);
+    }
+    if (params.snoozedUntil !== undefined) {
+      setClauses.push('snoozed_until = ?');
+      values.push(params.snoozedUntil);
+    }
+    if (params.completedAt !== undefined) {
+      setClauses.push('completed_at = ?');
+      values.push(params.completedAt);
+    }
+    if (params.deletedAt !== undefined) {
+      setClauses.push('deleted_at = ?');
+      values.push(params.deletedAt);
+    }
+
+    setClauses.push('updated_at = ?');
+    values.push(params.updatedAt);
+
+    values.push(params.id);
+
     const db = await getDatabase();
     await db.runAsync(
-      `UPDATE reminders SET
-        title = COALESCE(?, title),
-        notes = COALESCE(?, notes),
-        scheduled_at = COALESCE(?, scheduled_at),
-        priority = COALESCE(?, priority),
-        status = COALESCE(?, status),
-        action_type = COALESCE(?, action_type),
-        person_id = COALESCE(?, person_id),
-        notification_id = COALESCE(?, notification_id),
-        snoozed_until = COALESCE(?, snoozed_until),
-        completed_at = COALESCE(?, completed_at),
-        deleted_at = COALESCE(?, deleted_at),
-        updated_at = ?
-      WHERE id = ?`,
-      params.title ?? null,
-      params.notes ?? null,
-      params.scheduledAt ?? null,
-      params.priority ?? null,
-      params.status ?? null,
-      params.actionType ?? null,
-      params.personId ?? null,
-      params.notificationId ?? null,
-      params.snoozedUntil ?? null,
-      params.completedAt ?? null,
-      params.deletedAt ?? null,
-      params.updatedAt,
-      params.id
+      `UPDATE reminders SET ${setClauses.join(', ')} WHERE id = ?`,
+      ...values
     );
   },
 
@@ -301,9 +330,14 @@ export const ReminderRepository = {
       id: row.id as string,
       type: row.type as RecurrenceRule['type'],
       interval: row.interval_val as number,
-      daysOfWeek: row.days_of_week
-        ? JSON.parse(row.days_of_week as string)
-        : undefined,
+      daysOfWeek: (() => {
+        if (!row.days_of_week || typeof row.days_of_week !== 'string') return undefined;
+        try {
+          return JSON.parse(row.days_of_week);
+        } catch {
+          return undefined;
+        }
+      })(),
       dayOfMonth: (row.day_of_month as number | null) ?? undefined,
       weekPosition: (row.week_position as RecurrenceRule['weekPosition'] | null) ?? undefined,
       endDate: (row.end_date as string | null) ?? undefined,

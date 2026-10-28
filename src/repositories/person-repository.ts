@@ -2,9 +2,16 @@
  * Repository pour la gestion des personnes et du journal d'interactions.
  */
 
+import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Person, Interaction } from '../domain/entities';
 import { isPersonForgotten } from '../domain/rules/person-rules';
+
+type NullableFields<T> = {
+  [K in keyof T]?: T[K] | null;
+};
+
+export type UpdatePersonParams = NullableFields<Omit<Person, 'id' | 'createdAt'>> & { id: string; updatedAt: string };
 
 function rowToPerson(row: Record<string, unknown>): Person {
   return {
@@ -58,30 +65,60 @@ export const PersonRepository = {
     );
   },
 
-  async update(params: Partial<Person> & { id: string; updatedAt: string }): Promise<void> {
+  async update(params: UpdatePersonParams): Promise<void> {
+    const setClauses: string[] = [];
+    const values: SQLiteBindValue[] = [];
+
+    if (params.displayName !== undefined) {
+      setClauses.push('display_name = ?');
+      values.push(params.displayName);
+    }
+    if (params.relationship !== undefined) {
+      setClauses.push('relationship = ?');
+      values.push(params.relationship);
+    }
+    if (params.phone !== undefined) {
+      setClauses.push('phone = ?');
+      values.push(params.phone);
+    }
+    if (params.email !== undefined) {
+      setClauses.push('email = ?');
+      values.push(params.email);
+    }
+    if (params.birthDate !== undefined) {
+      setClauses.push('birth_date = ?');
+      values.push(params.birthDate);
+    }
+    if (params.notes !== undefined) {
+      setClauses.push('notes = ?');
+      values.push(params.notes);
+    }
+    if (params.lastInteractionAt !== undefined) {
+      setClauses.push('last_interaction_at = ?');
+      values.push(params.lastInteractionAt);
+    }
+    if (params.forgottenThresholdDays !== undefined) {
+      setClauses.push('forgotten_threshold_days = ?');
+      values.push(params.forgottenThresholdDays);
+    }
+    if (params.importedFromContacts !== undefined) {
+      setClauses.push('imported_from_contacts = ?');
+      values.push(params.importedFromContacts ? 1 : 0);
+    }
+    if (params.deletedAt !== undefined) {
+      setClauses.push('deleted_at = ?');
+      values.push(params.deletedAt);
+    }
+
+    setClauses.push('updated_at = ?');
+    values.push(params.updatedAt);
+
+    values.push(params.id);
+
     const db = await getDatabase();
     await db.runAsync(
-      `UPDATE persons SET
-        display_name = COALESCE(?, display_name),
-        relationship = COALESCE(?, relationship),
-        phone = COALESCE(?, phone),
-        email = COALESCE(?, email),
-        birth_date = COALESCE(?, birth_date),
-        notes = COALESCE(?, notes),
-        last_interaction_at = COALESCE(?, last_interaction_at),
-        forgotten_threshold_days = COALESCE(?, forgotten_threshold_days),
-        updated_at = ?
-       WHERE id = ?`,
-      params.displayName ?? null,
-      params.relationship ?? null,
-      params.phone ?? null,
-      params.email ?? null,
-      params.birthDate ?? null,
-      params.notes ?? null,
-      params.lastInteractionAt ?? null,
-      params.forgottenThresholdDays ?? null,
-      params.updatedAt,
-      params.id
+      `UPDATE persons SET ${setClauses.join(', ')} WHERE id = ?`,
+      ...values
     );
   },
 

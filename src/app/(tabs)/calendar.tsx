@@ -37,7 +37,9 @@ import {
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { PillTopBar } from '@/components/ui/PillTopBar';
 import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
+import { CalendarActionModal } from '@/components/calendar/CalendarActionModal';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -51,6 +53,7 @@ export default function CalendarScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [viewMode, setViewMode] = useState<CalendarViewMode>('agenda');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showActionModal, setShowActionModal] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -145,6 +148,7 @@ export default function CalendarScreen() {
           <TouchableOpacity
             style={styles.navArrowBtn}
             onPress={handlePrevWeek}
+            accessibilityRole="button"
             accessibilityLabel="Semaine précédente"
           >
             <Ionicons name="chevron-back" size={18} color={theme.onSurface.primary} />
@@ -153,12 +157,41 @@ export default function CalendarScreen() {
           <TouchableOpacity
             style={styles.navArrowBtn}
             onPress={handleNextWeek}
+            accessibilityRole="button"
             accessibilityLabel="Semaine suivante"
           >
             <Ionicons name="chevron-forward" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push('/settings')}
+            accessibilityRole="button"
+            accessibilityLabel="Paramètres"
+          >
+            <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
+          </TouchableOpacity>
         </View>
       </View>
+
+      {/* ─── Segmented Control PillTopBar (Modèle Personnes) ─────────────────── */}
+      <PillTopBar
+        tabs={[
+          {
+            key: 'agenda',
+            label: 'Agenda',
+            count: events.length + reminders.length + tasks.length,
+            icon: 'list-outline',
+          },
+          {
+            key: 'timetable',
+            label: 'Emploi du temps',
+            icon: 'time-outline',
+          },
+        ]}
+        activeTab={viewMode}
+        onTabChange={(tab) => setViewMode(tab as CalendarViewMode)}
+      />
 
       {/* Bandeau des 7 jours */}
       <View style={styles.weekStrip}>
@@ -200,55 +233,6 @@ export default function CalendarScreen() {
         })}
       </View>
 
-      {/* Sélecteur de mode (Top Bar Switcher) : Agenda vs Emploi du temps */}
-      <View style={styles.viewModeSelector}>
-        <TouchableOpacity
-          style={[
-            styles.viewModeTab,
-            viewMode === 'agenda' && styles.viewModeTabActive,
-          ]}
-          onPress={() => setViewMode('agenda')}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name="list-outline"
-            size={16}
-            color={viewMode === 'agenda' ? theme.primary.default : theme.onSurface.variant}
-          />
-          <Text
-            style={[
-              styles.viewModeTabText,
-              viewMode === 'agenda' && styles.viewModeTabTextActive,
-            ]}
-          >
-            Agenda
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.viewModeTab,
-            viewMode === 'timetable' && styles.viewModeTabActive,
-          ]}
-          onPress={() => setViewMode('timetable')}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name="time-outline"
-            size={16}
-            color={viewMode === 'timetable' ? theme.primary.default : theme.onSurface.variant}
-          />
-          <Text
-            style={[
-              styles.viewModeTabText,
-              viewMode === 'timetable' && styles.viewModeTabTextActive,
-            ]}
-          >
-            Emploi du temps
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Rendu conditionnel selon le mode choisi */}
       {viewMode === 'timetable' ? (
         <CalendarTimetable
@@ -288,9 +272,10 @@ export default function CalendarScreen() {
                     Événements ({events.length})
                   </Text>
                 </View>
-                {events.map(e => (
+                {events.map((e, idx) => (
                   <GlowCard
                     key={e.id}
+                    index={idx}
                     tone="primary"
                     intensity="soft"
                     onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
@@ -351,9 +336,10 @@ export default function CalendarScreen() {
                     Rappels ({reminders.length})
                   </Text>
                 </View>
-                {reminders.map(r => (
+                {reminders.map((r, idx) => (
                   <GlowCard
                     key={r.id}
+                    index={idx}
                     tone="attention"
                     intensity="soft"
                     onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
@@ -385,9 +371,10 @@ export default function CalendarScreen() {
                     Tâches planifiées ({tasks.length})
                   </Text>
                 </View>
-                {tasks.map(t => (
+                {tasks.map((t, idx) => (
                   <GlowCard
                     key={t.id}
+                    index={idx}
                     tone="neutral"
                     onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}
                     accessibilityLabel={t.title}
@@ -416,11 +403,18 @@ export default function CalendarScreen() {
       </ScrollView>
       )}
 
-      {/* Bouton Flottant 3D (FAB) */}
+      {/* Bouton Flottant 3D (FAB) — Choix universel d'ajout */}
       <GlassFloatingActionButton
-        label="Événement"
-        icon="calendar-outline"
-        onPress={() => router.push('/events/new')}
+        label="Ajouter"
+        icon="add"
+        onPress={() => setShowActionModal(true)}
+      />
+
+      {/* Modal / Action Sheet de sélection du type d'action */}
+      <CalendarActionModal
+        visible={showActionModal}
+        onClose={() => setShowActionModal(false)}
+        selectedDate={selectedDate}
       />
     </View>
   );

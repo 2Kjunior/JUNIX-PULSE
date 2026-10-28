@@ -2,6 +2,8 @@
  * Écran Liste des Objectifs — Suivi de progression.
  * BR-012 : Affiche les objectifs et calcule la progression en fonction des tâches associées.
  * Design Midnight, dégradé unique sur le FAB, zéro emoji.
+ *
+ * Swipe gauche sur une carte active → boutons Modifier / Supprimer (LiquidGlass).
  */
 
 import { useState, useCallback } from 'react';
@@ -12,13 +14,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-
 import { GoalUseCases, GoalDetails } from '@/use-cases/goal-use-cases';
+import { useAppStore } from '@/store/app-store';
 import {
   Spacing,
   Radius,
@@ -30,9 +33,11 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
+import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
 
 export default function GoalsListScreen() {
   const insets = useSafeAreaInsets();
+  const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeGoalsStyles);
 
@@ -59,6 +64,36 @@ export default function GoalsListScreen() {
       loadData();
     }, [loadData])
   );
+
+  const handleDelete = (goalId: string, title: string) => {
+    Alert.alert(
+      "Supprimer l'objectif",
+      `Supprimer "${title}" ? Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const result = await GoalUseCases.deleteGoal(goalId);
+              setGoalsList(prev => prev.filter(g => g.goal.id !== goalId));
+              showSnackbar(`Objectif "${title}" supprimé`, {
+                actionLabel: 'Annuler',
+                onAction: async () => {
+                  await result.undo();
+                  loadData();
+                },
+                durationMs: 5_000,
+              });
+            } catch (e) {
+              Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de supprimer');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (loading) {
     return <LoadingState message="Chargement de vos objectifs..." />;
@@ -135,67 +170,77 @@ export default function GoalsListScreen() {
           </GlowCard>
         ) : (
           activeGoals.map(item => (
-            <GlowCard
+            /* SwipeableItem : swipe gauche → Modifier + Supprimer (LiquidGlass) */
+            <SwipeableItem
               key={item.goal.id}
-              tone={item.isOverdue ? 'urgent' : 'neutral'}
-              intensity="soft"
-              onPress={() => router.push(`/goals/${item.goal.id}`)}
-              accessibilityLabel={`${item.goal.title}${item.isOverdue ? ', échu' : ''}`}
+              containerStyle={styles.swipeableContainer}
+              rightActions={makeStandardRightActions({
+                palette,
+                onDelete: () => handleDelete(item.goal.id, item.goal.title),
+                onEdit: () => router.push(`/goals/${item.goal.id}`),
+              })}
             >
-            <View style={styles.goalContent}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.goalTitle}>{item.goal.title}</Text>
-                {item.isOverdue && (
-                  <View style={styles.overdueBadge}>
-                    <Text style={styles.overdueText}>Échu</Text>
+              <GlowCard
+                tone={item.isOverdue ? 'urgent' : 'neutral'}
+                intensity="soft"
+                onPress={() => router.push(`/goals/${item.goal.id}`)}
+                accessibilityLabel={`${item.goal.title}${item.isOverdue ? ', échu' : ''}`}
+              >
+                <View style={styles.goalContent}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.goalTitle}>{item.goal.title}</Text>
+                    {item.isOverdue && (
+                      <View style={styles.overdueBadge}>
+                        <Text style={styles.overdueText}>Échu</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
 
-              {item.goal.description ? (
-                <Text style={styles.goalDesc} numberOfLines={2}>
-                  {item.goal.description}
-                </Text>
-              ) : null}
-
-              {/* Barre de progression */}
-              <View style={styles.progressSection}>
-                <View style={styles.progressHeader}>
-                  <Text style={styles.progressLabel}>
-                    {item.progress !== null
-                      ? `${item.progress}% (${item.associatedTasks.filter(t => t.status === 'COMPLETED').length}/${item.associatedTasks.length} tâches)`
-                      : 'Aucune tâche liée'}
-                  </Text>
-                  {item.daysLeft !== null && (
-                    <Text
-                      style={[
-                        styles.deadlineText,
-                        item.isOverdue && { color: palette.error.default },
-                      ]}
-                    >
-                      {item.daysLeft < 0
-                        ? `Retard de ${Math.abs(item.daysLeft)} j`
-                        : `${item.daysLeft} j restants`}
+                  {item.goal.description ? (
+                    <Text style={styles.goalDesc} numberOfLines={2}>
+                      {item.goal.description}
                     </Text>
-                  )}
-                </View>
+                  ) : null}
 
-                <View style={styles.track}>
-                  <View
-                    style={[
-                      styles.fill,
-                      {
-                        width: `${item.progress ?? 0}%`,
-                        backgroundColor: item.isOverdue
-                          ? palette.error.default
-                          : palette.primary.default,
-                      },
-                    ]}
-                  />
+                  {/* Barre de progression */}
+                  <View style={styles.progressSection}>
+                    <View style={styles.progressHeader}>
+                      <Text style={styles.progressLabel}>
+                        {item.progress !== null
+                          ? `${item.progress}% (${item.associatedTasks.filter(t => t.status === 'COMPLETED').length}/${item.associatedTasks.length} tâches)`
+                          : 'Aucune tâche liée'}
+                      </Text>
+                      {item.daysLeft !== null && (
+                        <Text
+                          style={[
+                            styles.deadlineText,
+                            item.isOverdue && { color: palette.error.default },
+                          ]}
+                        >
+                          {item.daysLeft < 0
+                            ? `Retard de ${Math.abs(item.daysLeft)} j`
+                            : `${item.daysLeft} j restants`}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View style={styles.track}>
+                      <View
+                        style={[
+                          styles.fill,
+                          {
+                            width: `${item.progress ?? 0}%`,
+                            backgroundColor: item.isOverdue
+                              ? palette.error.default
+                              : palette.primary.default,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </View>
-            </GlowCard>
+              </GlowCard>
+            </SwipeableItem>
           ))
         )}
 
@@ -210,7 +255,7 @@ export default function GoalsListScreen() {
                 key={item.goal.id}
                 tone="success"
                 intensity="soft"
-                style={{ opacity: 0.85 }}
+                style={{ opacity: 0.85, marginBottom: Spacing.sm }}
                 onPress={() => router.push(`/goals/${item.goal.id}`)}
                 accessibilityLabel={`${item.goal.title}, atteint`}
               >
@@ -321,6 +366,10 @@ const makeGoalsStyles = (theme: ThemePalette) =>
       ...Typography.bodyMedium,
       color: theme.onSurface.variant,
       textAlign: 'center',
+    },
+    /** Wrapper du SwipeableItem — fournit l'espacement vertical entre cartes */
+    swipeableContainer: {
+      marginBottom: Spacing.sm,
     },
     goalContent: {
       gap: Spacing.sm,

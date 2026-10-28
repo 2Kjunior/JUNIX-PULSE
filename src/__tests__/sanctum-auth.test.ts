@@ -119,6 +119,41 @@ describe('SanctumAuthService — Gestion moderne via SecureStore', () => {
     expect(changeResult.success).toBe(false);
     expect(changeResult.error).toBe('Code PIN incorrect');
   });
+
+  it('déclenche un lockout temporaire après 3 échecs consécutifs (V-03)', async () => {
+    await SanctumAuthService.setupPin('1234');
+    const t0 = 2_000_000;
+
+    // Échec 1 & 2 : pas de lockout
+    const res1 = await SanctumAuthService.verifyAndUnlockWithPin('0001', t0);
+    expect(res1.success).toBe(false);
+    expect(res1.isLocked).toBeUndefined();
+
+    const res2 = await SanctumAuthService.verifyAndUnlockWithPin('0002', t0);
+    expect(res2.success).toBe(false);
+    expect(res2.isLocked).toBeUndefined();
+
+    // Échec 3 : verrouillage de 30 secondes
+    const res3 = await SanctumAuthService.verifyAndUnlockWithPin('0003', t0);
+    expect(res3.success).toBe(false);
+    expect(res3.isLocked).toBe(true);
+    expect(res3.remainingSeconds).toBe(30);
+
+    // Tentative 5 secondes plus tard (même avec le BON PIN) : doit être bloquée immédiatement
+    const resBlocked = await SanctumAuthService.verifyAndUnlockWithPin('1234', t0 + 5_000);
+    expect(resBlocked.success).toBe(false);
+    expect(resBlocked.isLocked).toBe(true);
+    expect(resBlocked.remainingSeconds).toBe(25);
+
+    // Tentative après expiration du lockout (31s plus tard) avec le bon PIN : succès !
+    const resUnlocked = await SanctumAuthService.verifyAndUnlockWithPin('1234', t0 + 31_000);
+    expect(resUnlocked.success).toBe(true);
+    expect(resUnlocked.key).toBeDefined();
+
+    // Vérifier que le lockout a été réinitialisé
+    const lockoutStatus = await SanctumAuthService.getLockoutStatus(t0 + 31_000);
+    expect(lockoutStatus.isLocked).toBe(false);
+  });
 });
 
 describe('SanctumAuthService — Migration transparente legacy', () => {

@@ -97,7 +97,7 @@ export default function PeopleScreen() {
           onPress={() => router.push('/settings')}
           accessibilityLabel="Paramètres"
         >
-          <Ionicons name="options-outline" size={20} color={theme.onSurface.variant} />
+          <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
         </TouchableOpacity>
       </View>
 

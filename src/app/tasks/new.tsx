@@ -121,7 +121,8 @@ export default function NewTaskScreen() {
   return (
     <KeyboardAvoidingView
       style={[formStyles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       {/* En-tête harmonisé Midnight / Crème */}
       <View style={formStyles.toolbar}>

@@ -20,7 +20,7 @@ import {
     useFonts,
 } from "@expo-google-fonts/inter";
 import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
-import { Stack, router } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
@@ -51,7 +51,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const {
-    dbReady: _dbReady,
+    dbReady,
     dbError,
     onboardingComplete,
     setDbReady,
@@ -64,7 +64,7 @@ export default function RootLayout() {
 
   const { isDark, mode, surface } = useTheme();
   const styles = useThemedStyles(makeRootLayoutStyles);
-
+  const segments = useSegments();
 
   const [fontsLoaded, fontError] = useFonts({
     "Inter-Regular": Inter_400Regular,
@@ -93,12 +93,19 @@ export default function RootLayout() {
         setThemeMode(settings.appearanceMode);
 
         // 3. Initialiser les notifications (handler + canal Android)
-        //    Appelé ici pour garantir que le bridge natif est prêt
-        await NotificationService.initialize();
+        //    Isolé pour ne jamais bloquer le démarrage si expo-notifications est limité dans Expo Go
+        try {
+          await NotificationService.initialize();
+        } catch {
+          // Ignoré silencieusement en environnement Expo Go sans push
+        }
 
         // 4. Réconcilier les rappels récurrents en retard (DEF-03)
-        //    Avance les occurrences passées vers la prochaine date future
-        await reconcileOverdueRecurringReminders();
+        try {
+          await reconcileOverdueRecurringReminders();
+        } catch {
+          // Tolérance aux erreurs de réconciliation
+        }
 
         setDbReady(true);
       } catch (error) {
@@ -106,8 +113,8 @@ export default function RootLayout() {
           error instanceof Error ? error.message : "Erreur base de données";
         setDbError(message);
       } finally {
-        // Révéler directement l'application sans écran animé redondant (Option A)
-        await SplashScreen.hideAsync();
+        // Révéler l'application sans écran bloqué
+        await SplashScreen.hideAsync().catch(() => {});
       }
     }
 
@@ -121,6 +128,19 @@ export default function RootLayout() {
   }, [themeMode, mode, surface.base]);
 
 
+
+  // Redirection onboarding vs application principale
+  useEffect(() => {
+    if (!appReady || (!dbReady && !dbError)) return;
+
+    const inOnboarding = segments[0] === "(onboarding)";
+
+    if (!onboardingComplete && !inOnboarding) {
+      router.replace("/(onboarding)");
+    } else if (onboardingComplete && inOnboarding) {
+      router.replace("/(tabs)");
+    }
+  }, [appReady, dbReady, dbError, onboardingComplete, segments]);
 
   // Écouteurs de notifications pour navigation directe & snooze
   useEffect(() => {
@@ -160,8 +180,8 @@ export default function RootLayout() {
     };
   }, []);
 
-  // Fonts pas encore prêtes : laisser le splash natif visible
-  if (!appReady) {
+  // Fonts pas encore prêtes ou DB en cours d'initialisation : laisser le splash natif visible
+  if (!appReady || (!dbReady && !dbError)) {
     return null;
   }
 
@@ -190,13 +210,11 @@ export default function RootLayout() {
           <Stack.Screen
             name="(onboarding)"
             options={{ animation: "fade" }}
-            redirect={onboardingComplete}
           />
           {/* Application principale — redirigée si onboarding non terminé */}
           <Stack.Screen
             name="(tabs)"
             options={{ animation: "fade" }}
-            redirect={!onboardingComplete}
           />
           {/* Routes de détail — Rappels */}
           <Stack.Screen

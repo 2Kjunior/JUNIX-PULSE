@@ -18,6 +18,11 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: (initialValue) => ({ value: initialValue }),
     useAnimatedStyle: (styleFunc) => styleFunc(),
     useAnimatedProps: (propsFunc) => propsFunc(),
+    Extrapolation: {
+      CLAMP: 'clamp',
+      EXTEND: 'extend',
+      IDENTITY: 'identity',
+    },
     interpolate: (value, input, output) => {
       if (value <= input[0]) return output[0];
       if (value >= input[input.length - 1]) return output[output.length - 1];
@@ -95,8 +100,52 @@ jest.mock('expo-secure-store', () => ({
     mockSecureStoreMap.delete(key);
   }),
   isAvailableAsync: jest.fn(async () => true),
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: 1,
+  WHEN_UNLOCKED: 2,
+  ALWAYS_THIS_DEVICE_ONLY: 3,
   __resetMockStorage: () => mockSecureStoreMap.clear(),
 }));
 
 // Timeout global à 30s pour absorber la charge CPU des tests cryptographiques en environnement Windows
 jest.setTimeout(30000);
+
+// Mock react-native-gesture-handler et ReanimatedSwipeable
+try {
+  require('react-native-gesture-handler/jestSetup');
+} catch {}
+
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const MockSwipeable = React.forwardRef((props, ref) => {
+    const { children, renderLeftActions, renderRightActions } = props;
+    const progress = { value: 1 };
+    const dragX = { value: 0 };
+    const methods = {
+      close: jest.fn(),
+      openLeft: jest.fn(),
+      openRight: jest.fn(),
+      reset: jest.fn(),
+    };
+    if (ref) {
+      if (typeof ref === 'function') {
+        ref(methods);
+      } else {
+        ref.current = methods;
+      }
+    }
+    return React.createElement(
+      View,
+      null,
+      renderLeftActions ? renderLeftActions(progress, dragX, methods) : null,
+      children,
+      renderRightActions ? renderRightActions(progress, dragX, methods) : null
+    );
+  });
+
+  return {
+    __esModule: true,
+    default: MockSwipeable,
+  };
+});

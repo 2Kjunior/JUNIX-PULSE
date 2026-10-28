@@ -8,11 +8,14 @@ import {
   Spacing,
   Radius,
   Typography,
+  FontFamily,
+  TitleFontFamily,
 } from '@/constants/theme';
 import { darkPalette, type ThemePalette } from '@/constants/palettes';
 
 export function makeTodayStyles(theme: ThemePalette) {
   const isDark = theme.mode === 'dark';
+  const isLight = theme.mode === 'light';
 
   return StyleSheet.create({
     container: {
@@ -34,13 +37,17 @@ export function makeTodayStyles(theme: ThemePalette) {
     },
     greeting: {
       ...Typography.headlineLarge,
+      fontFamily: TitleFontFamily?.bold ?? FontFamily?.bold,
       color: theme.onSurface.primary,
+      fontWeight: '700',
+      letterSpacing: -0.5,
     },
     date: {
-      ...Typography.bodyMedium,
+      ...Typography.bodySmall,
       color: theme.onSurface.variant,
       textTransform: 'capitalize',
       marginTop: 2,
+      letterSpacing: 0.2,
     },
     headerActions: {
       flexDirection: 'row',
@@ -51,9 +58,9 @@ export function makeTodayStyles(theme: ThemePalette) {
       width: 44,
       height: 44,
       borderRadius: Radius.full,
-      backgroundColor: isDark ? 'rgba(20, 24, 36, 0.82)' : theme.surface.container,
+      backgroundColor: isLight ? theme.surface.high : 'rgba(26, 30, 44, 0.75)',
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.outline.variant,
+      borderColor: theme.outline.variant,
       alignItems: 'center',
       justifyContent: 'center',
       ...Platform.select({
@@ -486,6 +493,22 @@ export function makeTodayStyles(theme: ThemePalette) {
       color: theme.onSurface.variant,
       lineHeight: 18,
       marginBottom: Spacing.xs,
+    },
+    filterResetRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      alignSelf: 'flex-start',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 5,
+      borderRadius: Radius.full,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.08)',
+    },
+    filterResetText: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
     },
     demoBtn: {
       borderRadius: Radius.full,

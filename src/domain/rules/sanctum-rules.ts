@@ -21,10 +21,10 @@ export const DEFAULT_SANCTUM_FOLDERS = [
 ] as const;
 
 /**
- * Valide la saisie d'un code PIN pour le Sanctuaire.
- * Doit être composé de 4 à 8 chiffres numériques.
+ * Valide la saisie d'un code PIN existant pour le déverrouillage du Sanctuaire.
+ * Accepte de 4 à 8 chiffres pour assurer la rétrocompatibilité des anciens PINs.
  */
-export function validateSanctumPin(pin: string): { valid: boolean; error?: string } {
+export function validateSanctumPin(pin: string, minLength: number = 4): { valid: boolean; error?: string } {
   const trimmed = pin.trim();
   if (!trimmed) {
     return { valid: false, error: 'Le code PIN ne peut pas être vide' };
@@ -32,14 +32,82 @@ export function validateSanctumPin(pin: string): { valid: boolean; error?: strin
   if (!/^\d+$/.test(trimmed)) {
     return { valid: false, error: 'Le code PIN doit comporter uniquement des chiffres' };
   }
-  if (trimmed.length < 4) {
-    return { valid: false, error: 'Le code PIN doit contenir au moins 4 chiffres' };
+  if (trimmed.length < minLength) {
+    return { valid: false, error: `Le code PIN doit contenir au moins ${minLength} chiffres` };
   }
   if (trimmed.length > 8) {
     return { valid: false, error: 'Le code PIN ne peut pas dépasser 8 chiffres' };
   }
   return { valid: true };
 }
+
+/**
+ * Valide la création ou modification d'un code PIN (V-02 : 6 à 8 chiffres recommandés).
+ * Un PIN de 6 chiffres offre 1 000 000 de combinaisons (contre 10 000 pour 4 chiffres).
+ */
+export function validateNewSanctumPin(pin: string): { valid: boolean; error?: string } {
+  return validateSanctumPin(pin, 6);
+}
+
+// ─── Règles de limitation des tentatives & Lockout (V-03) ───────────────────
+
+export interface SanctumLockoutState {
+  failedAttempts: number;
+  lockedUntil: number | null; // Timestamp en millisecondes ou null si non verrouillé
+}
+
+export const INITIAL_SANCTUM_LOCKOUT: SanctumLockoutState = {
+  failedAttempts: 0,
+  lockedUntil: null,
+};
+
+/**
+ * Calcule la durée de pénalité en millisecondes selon le nombre d'échecs consécutifs.
+ * - Moins de 3 échecs : aucune pénalité (tolérance erreur de frappe).
+ * - 3 à 4 échecs : 30 secondes.
+ * - 5 à 7 échecs : 120 secondes (2 minutes).
+ * - 8 échecs et plus : 900 secondes (15 minutes).
+ */
+export function getSanctumLockoutDurationMs(failedAttempts: number): number {
+  if (failedAttempts < 3) return 0;
+  if (failedAttempts < 5) return 30 * 1000;
+  if (failedAttempts < 8) return 120 * 1000;
+  return 900 * 1000;
+}
+
+/**
+ * Calcule le nouvel état de verrouillage suite à une tentative infructueuse.
+ */
+export function registerSanctumFailedAttempt(
+  currentState: SanctumLockoutState,
+  nowMs: number = Date.now()
+): SanctumLockoutState {
+  const nextAttempts = currentState.failedAttempts + 1;
+  const penaltyDurationMs = getSanctumLockoutDurationMs(nextAttempts);
+
+  return {
+    failedAttempts: nextAttempts,
+    lockedUntil: penaltyDurationMs > 0 ? nowMs + penaltyDurationMs : null,
+  };
+}
+
+/**
+ * Détermine si le coffre est actuellement verrouillé et renvoie les secondes restantes.
+ */
+export function getSanctumLockoutStatus(
+  state: SanctumLockoutState,
+  nowMs: number = Date.now()
+): { isLocked: boolean; remainingSeconds: number } {
+  if (!state.lockedUntil || nowMs >= state.lockedUntil) {
+    return { isLocked: false, remainingSeconds: 0 };
+  }
+  const remainingMs = state.lockedUntil - nowMs;
+  return {
+    isLocked: true,
+    remainingSeconds: Math.max(1, Math.ceil(remainingMs / 1000)),
+  };
+}
+
 
 /**
  * Formate un extrait d'une note secrète pour l'aperçu dans la liste.

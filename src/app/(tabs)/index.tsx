@@ -55,7 +55,10 @@ export default function TodayScreen() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
 
+  type ActiveFilter = 'reminders' | 'tasks' | 'events' | 'habits' | 'goals' | null;
+
   const [state, setState] = useState<ScreenState>('loading');
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>(null);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [totalActiveReminders, setTotalActiveReminders] = useState(0);
   const [todayRemindersCount, setTodayRemindersCount] = useState(0);
@@ -67,6 +70,10 @@ export default function TodayScreen() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+
+  const toggleFilter = useCallback((filter: ActiveFilter) => {
+    setActiveFilter(prev => (prev === filter ? null : filter));
+  }, []);
 
   const today = new Date();
   const greeting = getGreeting(today.getHours());
@@ -239,13 +246,6 @@ export default function TodayScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerBtn}
-            onPress={() => router.push('/capture')}
-            accessibilityLabel="Capture rapide"
-          >
-            <Ionicons name="flash-outline" size={20} color={palette.primary.default} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerBtn}
             onPress={() => router.push('/search')}
             accessibilityLabel="Recherche globale"
           >
@@ -261,44 +261,61 @@ export default function TodayScreen() {
         </View>
       </View>
 
-      {/* ─── Synthèse rapide (Pill Counters) ─────────────────────────────────── */}
+      {/* ─── Synthèse rapide (Pill Counters / Filtres) ────────────────────────── */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryRow} contentContainerStyle={styles.summaryRowContent}>
         <SummaryChip
           count={todayRemindersCount > 0 ? todayRemindersCount : totalActiveReminders}
           label={todayRemindersCount > 0 ? 'rappels (auj.)' : 'rappels'}
           color={palette.primary.default}
           icon="notifications-outline"
-          onPress={() => router.push('/reminders')}
+          selected={activeFilter === 'reminders'}
+          onPress={() => toggleFilter('reminders')}
         />
         <SummaryChip
           count={totalTasksCount}
           label="tâches"
           color={palette.tertiary.default}
           icon="checkmark-circle-outline"
-          onPress={() => router.push('/(tabs)/tasks')}
+          selected={activeFilter === 'tasks'}
+          onPress={() => toggleFilter('tasks')}
         />
         <SummaryChip
           count={events.length}
           label="événements"
           color={palette.tertiary.default}
           icon="calendar-outline"
-          onPress={() => router.push('/(tabs)/calendar')}
+          selected={activeFilter === 'events'}
+          onPress={() => toggleFilter('events')}
         />
         <SummaryChip
           count={habits.filter(h => h.completedToday).length}
           label={`/ ${habits.length} habitudes`}
           color={palette.priority.HIGH}
           icon="flame-outline"
-          onPress={() => router.push('/habits')}
+          selected={activeFilter === 'habits'}
+          onPress={() => toggleFilter('habits')}
         />
         <SummaryChip
           count={goals.length}
           label="objectifs"
           color={palette.success.default}
           icon="flag-outline"
-          onPress={() => router.push('/goals')}
+          selected={activeFilter === 'goals'}
+          onPress={() => toggleFilter('goals')}
         />
       </ScrollView>
+
+      {/* Indicateur de filtre actif */}
+      {activeFilter !== null && (
+        <TouchableOpacity
+          onPress={() => setActiveFilter(null)}
+          style={styles.filterResetRow}
+          accessibilityLabel="Réinitialiser le filtre"
+        >
+          <Ionicons name="close-circle" size={14} color={palette.onSurface.variant} />
+          <Text style={styles.filterResetText}>Tout afficher</Text>
+        </TouchableOpacity>
+      )}
 
       {/* ─── CARTE DÉCOUVERTE / DONNÉES DE DÉMO (si base vide) ────────────────── */}
       {isEmptyState && (
@@ -339,6 +356,7 @@ export default function TodayScreen() {
       )}
 
       {/* ─── 1. MAINTENANT (Carte Urgent / Prioritaire) ───────────────────────── */}
+      {(activeFilter === null || activeFilter === 'reminders') && (
       <View style={styles.sectionBlock}>
         <View style={styles.blockTitleRow}>
           <View style={styles.nowIndicator} />
@@ -346,9 +364,10 @@ export default function TodayScreen() {
         </View>
 
         {urgentReminders.length > 0 ? (
-          urgentReminders.map(r => (
+          urgentReminders.map((r, idx) => (
             <GlowCard
               key={r.id}
+              index={idx}
               tone="urgent"
               intensity="soft"
               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
@@ -399,9 +418,10 @@ export default function TodayScreen() {
           />
         )}
       </View>
+      )}
 
       {/* ─── 2. ENSUITE (Prochain jalon temporel) ─────────────────────────────── */}
-      {(nextEvent || nextReminder) && (
+      {(nextEvent || nextReminder) && (activeFilter === null || activeFilter === 'reminders' || activeFilter === 'events') && (
         <View style={styles.sectionBlock}>
           <View style={styles.blockTitleRow}>
             <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
@@ -460,7 +480,7 @@ export default function TodayScreen() {
       )}
 
       {/* ─── 3. SUGGESTION IA (Une seule, avec orbe et validation) ────────────── */}
-      {topSuggestion && (
+      {topSuggestion && activeFilter === null && (
         <View style={styles.sectionBlock}>
           <View style={styles.suggestionCard}>
             <View style={styles.suggHeaderRow}>
@@ -503,6 +523,7 @@ export default function TodayScreen() {
       )}
 
       {/* ─── 4. AUJOURD'HUI (Progression des tâches & Habitudes) ──────────────── */}
+      {(activeFilter === null || activeFilter === 'tasks' || activeFilter === 'habits' || activeFilter === 'goals' || activeFilter === 'events') && (
       <View style={styles.sectionBlock}>
         <View style={styles.blockTitleRow}>
           <Ionicons name="calendar-outline" size={16} color={palette.onSurface.variant} />
@@ -510,7 +531,7 @@ export default function TodayScreen() {
         </View>
 
         {/* Barre de progression des tâches */}
-        {totalTasksCount > 0 && (
+        {totalTasksCount > 0 && (activeFilter === null || activeFilter === 'tasks') && (
           <View style={styles.progressCard}>
             <View style={styles.progressRow}>
               <Text style={styles.progressLabel}>Progression des tâches</Text>
@@ -530,6 +551,7 @@ export default function TodayScreen() {
         )}
 
         {/* Liste des tâches du jour */}
+        {(activeFilter === null || activeFilter === 'tasks') && (
         <View style={styles.subBlock}>
           <View style={styles.subHeader}>
             <Text style={styles.subTitle}>Tâches ({tasks.length})</Text>
@@ -553,8 +575,10 @@ export default function TodayScreen() {
             </GlowCard>
           )}
         </View>
+        )}
 
         {/* Habitudes du jour (1-tap completion) */}
+        {(activeFilter === null || activeFilter === 'habits') && (
         <View style={styles.subBlock}>
           <View style={styles.subHeader}>
             <Text style={styles.subTitle}>Habitudes & Streaks ({habits.length})</Text>
@@ -564,9 +588,10 @@ export default function TodayScreen() {
           </View>
 
           {habits.length > 0 ? (
-            habits.map(item => (
+            habits.map((item, idx) => (
               <GlowCard
                 key={item.habit.id}
+                index={idx}
                 tone={item.completedToday ? 'success' : 'neutral'}
                 intensity="soft"
                 onPress={() => handleToggleHabit(item)}
@@ -608,8 +633,10 @@ export default function TodayScreen() {
             </GlowCard>
           )}
         </View>
+        )}
 
         {/* Objectifs & Progression */}
+        {(activeFilter === null || activeFilter === 'goals') && (
         <View style={styles.subBlock}>
           <View style={styles.subHeader}>
             <Text style={styles.subTitle}>Objectifs & Progression ({goals.length})</Text>
@@ -619,9 +646,10 @@ export default function TodayScreen() {
           </View>
 
           {goals.length > 0 ? (
-            goals.map(item => (
+            goals.map((item, idx) => (
               <GlowCard
                 key={item.goal.id}
+                index={idx}
                 tone="neutral"
                 onPress={() => router.push({ pathname: '/goals/[id]', params: { id: item.goal.id } })}
                 accessibilityLabel={item.goal.title}
@@ -658,7 +686,9 @@ export default function TodayScreen() {
             </GlowCard>
           )}
         </View>
+        )}
       </View>
+      )}
     </ScrollView>
   );
 }

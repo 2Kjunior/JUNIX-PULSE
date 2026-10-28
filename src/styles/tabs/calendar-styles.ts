@@ -82,6 +82,16 @@ export function makeCalendarStyles(theme: ThemePalette) {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    settingsBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: Radius.full,
+      backgroundColor: isLight ? theme.surface.high : 'rgba(26, 30, 44, 0.75)',
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     weekStrip: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -356,40 +366,6 @@ export function makeCalendarStyles(theme: ThemePalette) {
     fabText: {
       ...Typography.titleMedium,
       color: '#FFFFFF',
-      fontWeight: '700',
-    },
-    viewModeSelector: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: isLight ? theme.surface.container : 'rgba(20, 24, 36, 0.85)',
-      borderRadius: Radius.lg,
-      padding: 3,
-      marginHorizontal: Spacing.md,
-      marginBottom: Spacing.sm,
-      borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.08)',
-    },
-    viewModeTab: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 8,
-      borderRadius: Radius.md,
-      gap: 6,
-    },
-    viewModeTabActive: {
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.16)',
-      borderWidth: 1,
-      borderColor: isLight ? theme.primary.default + '40' : 'rgba(208, 188, 255, 0.35)',
-    },
-    viewModeTabText: {
-      ...Typography.labelMedium,
-      color: theme.onSurface.variant,
-      fontWeight: '600',
-    },
-    viewModeTabTextActive: {
-      color: theme.primary.default,
       fontWeight: '700',
     },
   });

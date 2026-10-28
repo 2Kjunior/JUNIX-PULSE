@@ -27,7 +27,7 @@ import {
   AppState,
   type AppStateStatus,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -40,6 +40,7 @@ import {
   extractUniqueFolders,
   formatSanctumSnippet,
   validateSanctumPin,
+  validateNewSanctumPin,
   validateSanctumNoteInput,
   DEFAULT_SANCTUM_FOLDERS,
   type SanctumNoteItem,
@@ -59,6 +60,7 @@ type SanctumView = 'locked' | 'pin_setup' | 'pin_verify' | 'pin_change' | 'list'
 // ═════════════════════════════════════════════════════════════════════════════
 export default function SanctumScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ action?: string }>();
   const { showSnackbar } = useAppStore();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeSanctumStyles);
@@ -79,6 +81,34 @@ export default function SanctumScreen() {
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinStep, setPinStep] = useState<'enter' | 'confirm'>('enter');
   const [pinError, setPinError] = useState('');
+  const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
+
+  // ─── Décompte du verrouillage temporaire (Lockout V-03) ────────────────
+  useEffect(() => {
+    if (lockoutRemaining <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setPinError('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutRemaining]);
+
+  useEffect(() => {
+    if (currentView === 'pin_verify') {
+      SanctumAuthService.getLockoutStatus().then((status) => {
+        if (status.isLocked) {
+          setLockoutRemaining(status.remainingSeconds);
+          setPinError(`Coffre-fort verrouillé. Réessayez dans ${status.remainingSeconds}s.`);
+        }
+      });
+    }
+  }, [currentView]);
 
   // ─── PIN Change state (Modification depuis le Sanctuaire) ──────────────
   const [oldPinInput, setOldPinInput] = useState('');
@@ -191,7 +221,11 @@ export default function SanctumScreen() {
       const currentKey = key ?? activeKeyRef.current;
       const allNotes = await SanctumRepository.getAllNotes(currentKey ?? undefined);
       setNotes(allNotes);
-      setCurrentView('list');
+      if (params.action === 'change_pin') {
+        setCurrentView('pin_change');
+      } else {
+        setCurrentView('list');
+      }
       setAuthError('');
     } catch {
       showSnackbar('Erreur lors du déchiffrement des notes');
@@ -201,7 +235,7 @@ export default function SanctumScreen() {
   // ─── Gestion PIN : configuration scrypt + SecureStore ─────────────────
   const handlePinSetup = async () => {
     if (pinStep === 'enter') {
-      const validation = validateSanctumPin(pinInput);
+      const validation = validateNewSanctumPin(pinInput);
       if (!validation.valid) {
         setPinError(validation.error ?? '');
         return;
@@ -240,9 +274,9 @@ export default function SanctumScreen() {
       setPinChangeError('Veuillez entrer votre code PIN actuel');
       return;
     }
-    const validation = validateSanctumPin(newPinInput);
+    const validation = validateNewSanctumPin(newPinInput);
     if (!validation.valid) {
-      setPinChangeError(validation.error ?? 'Nouveau code PIN invalide (4 à 8 chiffres)');
+      setPinChangeError(validation.error ?? 'Nouveau code PIN invalide (6 à 8 chiffres)');
       return;
     }
     if (newPinInput !== newPinConfirm) {
@@ -277,8 +311,13 @@ export default function SanctumScreen() {
     }
   };
 
-  // ─── Gestion PIN : vérification scrypt + Poly1305 ──────────────────────
+  // ─── Gestion PIN : vérification scrypt + Poly1305 avec Lockout ─────────
   const handlePinVerify = async () => {
+    if (lockoutRemaining > 0) {
+      setPinError(`Coffre-fort verrouillé. Réessayez dans ${lockoutRemaining}s.`);
+      return;
+    }
+
     const validation = validateSanctumPin(pinInput);
     if (!validation.valid) {
       setPinError(validation.error ?? '');
@@ -291,8 +330,12 @@ export default function SanctumScreen() {
         activeKeyRef.current = result.key;
         setPinInput('');
         setPinError('');
+        setLockoutRemaining(0);
         await onAuthSuccess(result.key);
       } else {
+        if (result.isLocked && result.remainingSeconds) {
+          setLockoutRemaining(result.remainingSeconds);
+        }
         setPinError(result.error ?? 'Code PIN incorrect');
         setPinInput('');
       }
@@ -497,7 +540,7 @@ export default function SanctumScreen() {
           </Text>
           <Text style={styles.lockSubtitle}>
             {pinStep === 'enter'
-              ? 'Choisissez un code de 4 à 8 chiffres pour chiffrer et protéger votre Sanctuaire.'
+              ? 'Choisissez un code de 6 à 8 chiffres pour chiffrer et protéger votre Sanctuaire.'
               : 'Entrez à nouveau votre code confidentiel pour valider la configuration.'}
           </Text>
 
@@ -563,7 +606,7 @@ export default function SanctumScreen() {
           </View>
           <Text style={styles.lockTitle}>Modifier le code PIN</Text>
           <Text style={styles.lockSubtitle}>
-            Entrez votre code actuel puis définissez votre nouveau code secret (4 à 8 chiffres).
+            Entrez votre code actuel puis définissez votre nouveau code secret (6 à 8 chiffres).
           </Text>
 
           <View style={styles.pinFormGroup}>
@@ -659,30 +702,47 @@ export default function SanctumScreen() {
           </Text>
 
           <TextInput
-            style={styles.pinInput}
+            style={[styles.pinInput, lockoutRemaining > 0 && { opacity: 0.5 }]}
             value={pinInput}
             onChangeText={setPinInput}
-            placeholder="Code PIN"
+            placeholder={lockoutRemaining > 0 ? 'Verrouillé...' : 'Code PIN'}
             placeholderTextColor={theme.onSurface.disabled}
             keyboardType="number-pad"
             secureTextEntry
             maxLength={8}
-            autoFocus
+            editable={lockoutRemaining === 0}
+            autoFocus={lockoutRemaining === 0}
           />
 
-          {!!pinError && (
-            <View style={styles.errorBadge}>
-              <Ionicons name="alert-circle-outline" size={16} color={theme.error.default} />
-              <Text style={styles.errorText}>{pinError}</Text>
+          {lockoutRemaining > 0 ? (
+            <View style={[styles.errorBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+              <Ionicons name="time-outline" size={16} color={theme.error.default} />
+              <Text style={styles.errorText}>
+                Coffre verrouillé : réessayez dans {lockoutRemaining}s
+              </Text>
             </View>
+          ) : (
+            !!pinError && (
+              <View style={styles.errorBadge}>
+                <Ionicons name="alert-circle-outline" size={16} color={theme.error.default} />
+                <Text style={styles.errorText}>{pinError}</Text>
+              </View>
+            )
           )}
 
           <Button
-            label="Déverrouiller"
+            label={lockoutRemaining > 0 ? `Verrouillé (${lockoutRemaining}s)` : 'Déverrouiller'}
             onPress={handlePinVerify}
             variant="primary"
             size="lg"
-            icon={<Ionicons name="lock-open-outline" size={20} color="#FFFFFF" />}
+            disabled={lockoutRemaining > 0}
+            icon={
+              <Ionicons
+                name={lockoutRemaining > 0 ? 'time-outline' : 'lock-open-outline'}
+                size={20}
+                color="#FFFFFF"
+              />
+            }
             style={styles.unlockBtn}
           />
 

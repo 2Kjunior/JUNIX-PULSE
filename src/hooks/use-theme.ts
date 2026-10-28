@@ -79,5 +79,3 @@ export function useTheme(): UseThemeResult {
   );
 }
 
-export { useThemedStyles } from './use-themed-styles';
-

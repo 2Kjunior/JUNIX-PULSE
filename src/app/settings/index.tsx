@@ -17,6 +17,7 @@ import {
   Alert,
   Modal,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,13 +31,15 @@ import { Button } from '@/components/ui/Button';
 import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { LoadingState } from '@/components/feedback/States';
-import { useTheme, useThemedStyles } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { getDatabase } from '@/database/sqlite';
 import { seedDatabase, clearAllData, isSeedAlreadyLoaded, seedPulseExtra } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
 import { NotificationService } from '@/services/notification-service';
+import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
 const APPEARANCE_OPTIONS: {
@@ -62,11 +65,18 @@ export default function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
   const [testingNotification, setTestingNotification] = useState(false);
+  const [isSanctumPinConfigured, setIsSanctumPinConfigured] = useState(false);
 
   const loadSettings = useCallback(async () => {
     const s = await SettingsRepository.get();
     setSettings(s);
     setDisplayNameInput(s.displayName ?? '');
+    try {
+      const pinConfigured = await SanctumAuthService.isPinConfigured();
+      setIsSanctumPinConfigured(pinConfigured);
+    } catch {
+      // Ignoré si indisponible
+    }
   }, []);
 
   useEffect(() => {
@@ -193,7 +203,7 @@ export default function SettingsScreen() {
     const encryptedContents = await encryptBackup(contents, password);
     const file = new File(Paths.cache, `junix-pulse-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
     file.create({ overwrite: true });
-    file.write(encryptedContents);
+    await file.write(encryptedContents);
 
     if (!(await Sharing.isAvailableAsync())) {
       throw new Error('Le fichier chiffré a été créé, mais le partage n\'est pas disponible sur cet appareil.');
@@ -554,6 +564,27 @@ export default function SettingsScreen() {
           <Ionicons name="lock-closed-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => {
+            if (isSanctumPinConfigured) {
+              router.push({ pathname: '/sanctum', params: { action: 'change_pin' } });
+            } else {
+              router.push('/sanctum');
+            }
+          }}
+        >
+          <View>
+            <Text style={styles.rowLabel}>Code PIN du Sanctuaire</Text>
+            <Text style={styles.rowSub}>
+              {isSanctumPinConfigured
+                ? 'Code configuré • Modifier le code PIN'
+                : 'Non configuré • Définir un code secret'}
+            </Text>
+          </View>
+          <Ionicons name="key-outline" size={20} color={palette.primary.default} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.row} onPress={handleExportData}>
           <View>
             <Text style={styles.rowLabel}>Sauvegarder les données</Text>
@@ -582,7 +613,10 @@ export default function SettingsScreen() {
 
       {/* Modal d'édition du prénom */}
       <Modal visible={editingName} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Modifier votre prénom</Text>
             <TextInput
@@ -608,7 +642,7 @@ export default function SettingsScreen() {
               />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Text style={styles.version}>Junix Pulse v1.0.0 — Offline-First SQLite</Text>

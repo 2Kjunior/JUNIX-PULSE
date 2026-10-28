@@ -11,6 +11,8 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -67,7 +69,11 @@ export default function NewGoalScreen() {
   };
 
   return (
-    <View style={[formStyles.container, { paddingTop: insets.top }]}>
+    <KeyboardAvoidingView
+      style={[formStyles.container, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       {/* Header Toolbar */}
       <View style={formStyles.toolbar}>
         <TouchableOpacity
@@ -192,7 +198,7 @@ export default function NewGoalScreen() {
         cancelTextIOS="Annuler"
         locale="fr_FR"
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

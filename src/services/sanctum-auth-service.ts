@@ -22,11 +22,18 @@ import {
   hexToBytes,
   SANCTUM_CRYPTO_CONSTANTS,
 } from './sanctum-crypto';
+import {
+  SanctumLockoutState,
+  INITIAL_SANCTUM_LOCKOUT,
+  registerSanctumFailedAttempt,
+  getSanctumLockoutStatus,
+} from '../domain/rules/sanctum-rules';
 
 const SECURE_STORE_KEYS = {
   SALT: 'jp_sanctum_salt_v1',
   VERIFIER: 'jp_sanctum_verifier_v1',
   BIOMETRIC_KEY: 'jp_sanctum_biometric_key_v1',
+  LOCKOUT: 'jp_sanctum_lockout_v1',
 } as const;
 
 const VERIFIER_SENTINEL = '__SANCTUM_PIN_VERIFIER_TOKEN__';
@@ -101,7 +108,14 @@ export const SanctumAuthService = {
 
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, bytesToHex(salt));
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, verifierPayload);
-    await SecureStore.setItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY, bytesToHex(masterKey));
+    await SecureStore.setItemAsync(
+      SECURE_STORE_KEYS.BIOMETRIC_KEY,
+      bytesToHex(masterKey),
+      { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
+    );
+
+    // Réinitialiser tout lockout éventuel
+    await this.resetLockout();
 
     // Supprimer l'ancienne trace SQLite s'il y en avait une
     await purgeLegacyPinHash();
@@ -110,12 +124,81 @@ export const SanctumAuthService = {
   },
 
   /**
+   * Récupère l'état de verrouillage persistant (nombre d'échecs, timestamp de lockout).
+   */
+  async getLockoutState(): Promise<SanctumLockoutState> {
+    try {
+      const raw = await SecureStore.getItemAsync(SECURE_STORE_KEYS.LOCKOUT);
+      if (!raw) return INITIAL_SANCTUM_LOCKOUT;
+      const parsed = JSON.parse(raw);
+      return {
+        failedAttempts: typeof parsed.failedAttempts === 'number' ? parsed.failedAttempts : 0,
+        lockedUntil: typeof parsed.lockedUntil === 'number' ? parsed.lockedUntil : null,
+      };
+    } catch {
+      return INITIAL_SANCTUM_LOCKOUT;
+    }
+  },
+
+  /**
+   * Indique si le coffre est actuellement verrouillé et renvoie le décompte en secondes.
+   */
+  async getLockoutStatus(
+    nowMs: number = Date.now()
+  ): Promise<{ isLocked: boolean; remainingSeconds: number }> {
+    const state = await this.getLockoutState();
+    return getSanctumLockoutStatus(state, nowMs);
+  },
+
+  /**
+   * Enregistre un échec de saisie du PIN et applique la temporisation exponentielle.
+   */
+  async recordFailedAttempt(
+    nowMs: number = Date.now()
+  ): Promise<{ isLocked: boolean; remainingSeconds: number }> {
+    const state = await this.getLockoutState();
+    const nextState = registerSanctumFailedAttempt(state, nowMs);
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.LOCKOUT, JSON.stringify(nextState));
+    return getSanctumLockoutStatus(nextState, nowMs);
+  },
+
+  /**
+   * Réinitialise le compteur d'échecs à zéro.
+   */
+  async resetLockout(): Promise<void> {
+    try {
+      await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.LOCKOUT);
+    } catch {
+      // silencieux
+    }
+  },
+
+  /**
    * Vérifie le code PIN saisi et déverrouille la clé de chiffrement du Sanctuaire.
+   * Empêche l'attaque brute-force par verrouillage exponentiel persisté.
    * Gère automatiquement la migration transparente si l'utilisateur utilisait l'ancien système.
    */
   async verifyAndUnlockWithPin(
-    pin: string
-  ): Promise<{ success: boolean; key?: Uint8Array; error?: string }> {
+    pin: string,
+    nowMs: number = Date.now()
+  ): Promise<{
+    success: boolean;
+    key?: Uint8Array;
+    error?: string;
+    isLocked?: boolean;
+    remainingSeconds?: number;
+  }> {
+    // 1. Contrôle strict de lockout (évite le coût CPU de scrypt si verrouillé)
+    const currentLockout = await this.getLockoutStatus(nowMs);
+    if (currentLockout.isLocked) {
+      return {
+        success: false,
+        isLocked: true,
+        remainingSeconds: currentLockout.remainingSeconds,
+        error: `Coffre-fort verrouillé. Réessayez dans ${currentLockout.remainingSeconds}s.`,
+      };
+    }
+
     const storedSaltHex = await SecureStore.getItemAsync(SECURE_STORE_KEYS.SALT);
     const storedVerifier = await SecureStore.getItemAsync(SECURE_STORE_KEYS.VERIFIER);
 
@@ -128,17 +211,32 @@ export const SanctumAuthService = {
         // Validation en déchiffrant la sentinelle
         const decryptedSentinel = await decryptSanctumNote(storedVerifier, derivedKey);
         if (decryptedSentinel === VERIFIER_SENTINEL) {
+          // Succès : réinitialiser le compteur d'échecs
+          await this.resetLockout();
+
           // Mettre à jour la clé biométrique pour les accès ultérieurs
           await SecureStore.setItemAsync(
             SECURE_STORE_KEYS.BIOMETRIC_KEY,
-            bytesToHex(derivedKey)
+            bytesToHex(derivedKey),
+            { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
           );
           return { success: true, key: derivedKey };
         }
-        return { success: false, error: 'Code PIN incorrect' };
       } catch {
-        return { success: false, error: 'Code PIN incorrect' };
+        // Mauvais PIN
       }
+
+      // Échec : incrémenter le compteur et calculer la pénalité
+      const failureStatus = await this.recordFailedAttempt(nowMs);
+      if (failureStatus.isLocked) {
+        return {
+          success: false,
+          isLocked: true,
+          remainingSeconds: failureStatus.remainingSeconds,
+          error: `Code PIN incorrect. Verrouillé pendant ${failureStatus.remainingSeconds}s.`,
+        };
+      }
+      return { success: false, error: 'Code PIN incorrect' };
     }
 
     // Cas de migration : vérifier si un ancien PIN SHA-256 existait dans SQLite
@@ -148,8 +246,19 @@ export const SanctumAuthService = {
 
       if (candidateHash === legacyHash) {
         // Le PIN est valide ! Migration transparente immédiate vers scrypt + SecureStore
+        await this.resetLockout();
         const newKey = await this.setupPin(pin.trim());
         return { success: true, key: newKey };
+      }
+
+      const failureStatus = await this.recordFailedAttempt(nowMs);
+      if (failureStatus.isLocked) {
+        return {
+          success: false,
+          isLocked: true,
+          remainingSeconds: failureStatus.remainingSeconds,
+          error: `Code PIN incorrect. Verrouillé pendant ${failureStatus.remainingSeconds}s.`,
+        };
       }
       return { success: false, error: 'Code PIN incorrect' };
     }
@@ -212,7 +321,13 @@ export const SanctumAuthService = {
       // 4. Stockage dans SecureStore
       await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, bytesToHex(newSalt));
       await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, newVerifierPayload);
-      await SecureStore.setItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY, bytesToHex(newMasterKey));
+      await SecureStore.setItemAsync(
+        SECURE_STORE_KEYS.BIOMETRIC_KEY,
+        bytesToHex(newMasterKey),
+        { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
+      );
+
+      await this.resetLockout();
 
       return { success: true, newKey: newMasterKey };
     } catch {
@@ -228,6 +343,7 @@ export const SanctumAuthService = {
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.SALT);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.VERIFIER);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY);
+    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.LOCKOUT);
   },
 };
 

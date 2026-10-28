@@ -15,6 +15,7 @@ import {
   View,
   Text,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   ScrollView,
   FlatList,
@@ -57,7 +58,7 @@ const FILTER_ITEMS: { key: SearchFilter; label: string; icon: keyof typeof Ionic
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const { theme } = useTheme();
   const styles = useThemedStyles(makeSearchStyles);
   const isLight = theme.mode === 'light';

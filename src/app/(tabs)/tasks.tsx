@@ -39,7 +39,7 @@ import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/Stat
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
-import { SwipeableItem } from '@/components/ui/SwipeableItem';
+import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
 import { makeTasksStyles } from '@/styles/tabs/tasks-styles';
 
 type FilterTab = 'inbox' | 'today' | 'all';
@@ -200,7 +200,7 @@ export default function TasksScreen() {
             accessibilityRole="button"
             accessibilityLabel="Paramètres"
           >
-            <Ionicons name="options-outline" size={20} color={theme.onSurface.variant} />
+            <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
           </TouchableOpacity>
         </View>
       </View>
@@ -246,10 +246,22 @@ export default function TasksScreen() {
           items.map(({ task, subtasks }) => (
             <SwipeableItem
               key={task.id}
-              onDelete={() => handleDeleteTask(task)}
-              onComplete={() => handleToggleComplete(task)}
-              completeLabel={task.status === 'COMPLETED' ? 'Réouvrir' : 'Terminer'}
-              deleteLabel="Supprimer"
+              rightActions={makeStandardRightActions({
+                palette: theme,
+                onDelete: () => handleDeleteTask(task),
+                onEdit: () => router.push(`/tasks/${task.id}`),
+                deleteLabel: 'Supprimer',
+                editLabel: 'Modifier',
+              })}
+              leftActions={[
+                {
+                  key: 'complete',
+                  icon: task.status === 'COMPLETED' ? 'refresh-outline' : 'checkmark-circle-outline',
+                  label: task.status === 'COMPLETED' ? 'Réouvrir' : 'Terminer',
+                  color: theme.success.default,
+                  onPress: () => handleToggleComplete(task),
+                },
+              ]}
             >
               <TaskCardR08
                 task={task}

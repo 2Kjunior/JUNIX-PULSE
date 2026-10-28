@@ -32,7 +32,8 @@ import {
   Typography,
 } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
-import { useTheme, useThemedStyles } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 
 import { parseQuickCapture } from '@/domain/rules/capture-rules';
