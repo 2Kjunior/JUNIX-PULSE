@@ -72,7 +72,11 @@ export function PillTopBar<T extends string = string>({
                   color={isActive ? palette.primary.default : palette.onSurface.variant}
                 />
               )}
-              <Text style={[styles.label, isActive && styles.labelActive]}>
+              <Text
+                style={[styles.label, isActive && styles.labelActive]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {tab.label}
               </Text>
               {tab.count !== undefined && (
@@ -140,6 +144,7 @@ const makePillTopBarStyles = (theme: ThemePalette) =>
       color: theme.onSurface.variant,
       fontFamily: FontFamily?.medium,
       fontSize: 13,
+      flexShrink: 1,
     },
     labelActive: {
       color: theme.onSurface.primary,

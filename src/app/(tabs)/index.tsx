@@ -1,17 +1,17 @@
 /**
- * Écran Aujourd'hui — Référence R-03 du Master Prompt Junix Pulse.
- * Centre de commande quotidien :
- * 1. MAINTENANT : Rappel urgent / manqué ou focus immédiat avec accent color sémantique
- * 2. ENSUITE : Prochain événement / rappel planifié
- * 3. AUJOURD'HUI : Jauge de progression des tâches + Habitudes du jour
- * 4. SUGGESTION IA : 1 seule suggestion proactive avec orbe distinctif et validation humaine
+ * Écran Accueil — Hub Central de Junix Pulse (Inspiré de l'ergonomie Wave).
  *
- * Règle A.1 : Zéro emoji dans tout le composant.
- * Règle A.2 : Cartes rayon 16px (Radius.lg), 1 seul gradient CTA, palette theme.ts.
- * Migration P5 : Entièrement accordé sur le thème dynamique (mode sombre et clair).
+ * 1. En-tête statut clair : salutation + bilan immédiat ("X rappels et Y tâches aujourd'hui").
+ * 2. Grille des 4 Piliers Wave : Rappels | Tâches | Planning | Proches.
+ * 3. Barre d'ajout rapide universelle : "+ Nouveau rappel, tâche ou note".
+ * 4. Mon Fil d'Aujourd'hui : Timeline unifiée et chronologique (événements, rappels et tâches).
+ * 5. Suggestion proactive intelligente (IA locale).
+ * 6. Habitudes & Streaks quotidiennes (validation en 1 tap).
+ *
+ * Conforme WCAG 2.2 AA, responsive pour mobile et tablettes.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -41,27 +41,32 @@ import { Spacing, TAB_BAR_TOTAL_HEIGHT } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
-import { SummaryChip } from '@/components/today/SummaryChip';
-import { TaskCard } from '@/components/today/TaskCard';
-import { RecoveryAndHrvMetricCard } from '@/components/today/RecoveryAndHrvMetricCard';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
+interface TimelineItem {
+  id: string;
+  type: 'reminder' | 'event' | 'task';
+  time: string;
+  title: string;
+  subtitle?: string;
+  isCompleted?: boolean;
+  priority?: string;
+  raw: Reminder | Event | Task;
+}
+
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const { showSnackbar, todayFocusMinutes } = useAppStore();
+  const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
 
-  type ActiveFilter = 'reminders' | 'tasks' | 'events' | 'habits' | 'goals' | null;
-
   const [state, setState] = useState<ScreenState>('loading');
-  const [activeFilter, setActiveFilter] = useState<ActiveFilter>(null);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [totalActiveReminders, setTotalActiveReminders] = useState(0);
-  const [todayRemindersCount, setTodayRemindersCount] = useState(0);
+  const [dueTodayReminders, setDueTodayReminders] = useState<Reminder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [habits, setHabits] = useState<HabitStats[]>([]);
@@ -70,10 +75,6 @@ export default function TodayScreen() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-
-  const toggleFilter = useCallback((filter: ActiveFilter) => {
-    setActiveFilter(prev => (prev === filter ? null : filter));
-  }, []);
 
   const today = new Date();
   const greeting = getGreeting(today.getHours());
@@ -101,11 +102,9 @@ export default function TodayScreen() {
         }
       });
 
-      // Affiche les rappels du jour/en retard, ou s'il n'y en a pas, les prochains rappels actifs
-      setReminders(dueTodayOrPast.length > 0 ? dueTodayOrPast : activeReminders);
+      setReminders(activeReminders);
       setTotalActiveReminders(activeReminders.length);
-      setTodayRemindersCount(dueTodayOrPast.length);
-
+      setDueTodayReminders(dueTodayOrPast);
       setTasks(tks);
       setEvents(evts);
       setHabits(habStats.filter(h => h.habit.status === 'ACTIVE'));
@@ -140,8 +139,8 @@ export default function TodayScreen() {
           : `Validation retirée pour "${habitItem.habit.title}".`
       );
       load();
-    } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : 'Impossible de mettre à jour l’habitude.');
+    } catch (err: unknown) {
+      showSnackbar(err instanceof Error ? err.message : 'Impossible de mettre à jour l’habitude.');
     }
   };
 
@@ -150,8 +149,8 @@ export default function TodayScreen() {
       await TaskUseCases.toggleComplete(task.id);
       showSnackbar(`Tâche "${task.title}" mise à jour.`);
       load();
-    } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : 'Impossible de mettre à jour la tâche.');
+    } catch (err: unknown) {
+      showSnackbar(err instanceof Error ? err.message : 'Impossible de mettre à jour la tâche.');
     }
   };
 
@@ -160,8 +159,8 @@ export default function TodayScreen() {
       await SuggestionUseCases.acceptSuggestion(sugg.id);
       showSnackbar(`Action appliquée : ${sugg.title}`);
       load();
-    } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : 'Impossible d’accepter la suggestion.');
+    } catch (err: unknown) {
+      showSnackbar(err instanceof Error ? err.message : 'Impossible d’accepter la suggestion.');
     }
   };
 
@@ -170,8 +169,8 @@ export default function TodayScreen() {
       await SuggestionUseCases.refuseSuggestion(sugg.id);
       showSnackbar('Suggestion ignorée.');
       load();
-    } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : 'Impossible d’ignorer la suggestion.');
+    } catch (err: unknown) {
+      showSnackbar(err instanceof Error ? err.message : 'Impossible d’ignorer la suggestion.');
     }
   };
 
@@ -180,44 +179,84 @@ export default function TodayScreen() {
       await seedDatabase();
       showSnackbar('Données de démo chargées avec succès !');
       await load();
-    } catch (error: unknown) {
-      showSnackbar(error instanceof Error ? error.message : 'Impossible de charger les données de démonstration.');
+    } catch (err: unknown) {
+      showSnackbar(err instanceof Error ? err.message : 'Impossible de charger les données de démonstration.');
     }
   };
 
-  if (state === 'loading') return <LoadingState message="Préparation de votre rythme..." />;
+  // Construction chronologique du fil du jour
+  const timelineItems = useMemo<TimelineItem[]>(() => {
+    const list: TimelineItem[] = [];
+
+    // 1. Événements de la journée
+    for (const ev of events) {
+      list.push({
+        id: `event-${ev.id}`,
+        type: 'event',
+        time: format(new Date(ev.startAt), 'HH:mm'),
+        title: ev.title,
+        subtitle: ev.location || ev.notes,
+        raw: ev,
+      });
+    }
+
+    // 2. Rappels de la journée
+    for (const rem of dueTodayReminders) {
+      let t = '';
+      try {
+        t = format(new Date(rem.scheduledAt), 'HH:mm');
+      } catch {}
+      list.push({
+        id: `rem-${rem.id}`,
+        type: 'reminder',
+        time: t,
+        title: rem.title,
+        subtitle: rem.notes,
+        isCompleted: rem.status === 'COMPLETED',
+        priority: rem.priority,
+        raw: rem,
+      });
+    }
+
+    // 3. Tâches de la journée
+    for (const tk of tasks) {
+      list.push({
+        id: `task-${tk.id}`,
+        type: 'task',
+        time: '',
+        title: tk.title,
+        subtitle: tk.description,
+        isCompleted: tk.status === 'COMPLETED',
+        priority: tk.priority,
+        raw: tk,
+      });
+    }
+
+    // Tri : complétées à la fin, puis par heure
+    return list.sort((a, b) => {
+      if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+      if (a.time && b.time) return a.time.localeCompare(b.time);
+      if (a.time) return -1;
+      if (b.time) return 1;
+      return 0;
+    });
+  }, [events, dueTodayReminders, tasks]);
+
+  if (state === 'loading') return <LoadingState message="Préparation de votre journée..." />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
 
   const dateLabel = format(today, 'EEEE d MMMM', { locale: fr });
-  const urgentReminders = reminders.filter(r => r.priority === 'URGENT' || r.status === 'MISSED');
-  const normalReminders = reminders.filter(r => r.priority !== 'URGENT' && r.status !== 'MISSED');
+  const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
+  const totalTasksCount = tasks.length;
+  const urgentReminders = dueTodayReminders.filter(r => r.priority === 'URGENT' || r.status === 'MISSED');
+  const nextEvent = events.length > 0 ? events[0] : null;
 
-  // État vide complet : proposer la démo
   const isEmptyState =
     tasks.length === 0 &&
     habits.length === 0 &&
     goals.length === 0 &&
     reminders.length === 0 &&
     events.length === 0;
-
-  // Calcul du taux de complétion des tâches et des habitudes du jour (Rythme Réel)
-  const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
-  const totalTasksCount = tasks.length;
-  const taskProgressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
-
-  const completedHabitsCount = habits.filter(h => h.completedToday).length;
-  const totalHabitsCount = habits.length;
-
-  const totalActions = totalTasksCount + totalHabitsCount;
-  const completedActions = completedTasksCount + completedHabitsCount;
-  const rhythmScore = totalActions > 0
-    ? Math.round((completedActions / totalActions) * 100)
-    : 100;
-  const rhythmStatus = rhythmScore >= 80 ? 'Optimal' : rhythmScore >= 50 ? 'En cours' : 'Démarrage';
-
-  // Prochain événement ou rappel ("Ensuite")
-  const nextEvent = events.length > 0 ? events[0] : null;
-  const nextReminder = !urgentReminders.length && normalReminders.length > 0 ? normalReminders[0] : null;
 
   return (
     <ScrollView
@@ -235,367 +274,348 @@ export default function TodayScreen() {
       }
       showsVerticalScrollIndicator={false}
     >
-      {/* ─── En-tête R-03 ──────────────────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View style={styles.headerInfo}>
-          <Text style={styles.greeting}>
-            {greeting}{displayName ? `, ${displayName}` : ''}
-          </Text>
-          <Text style={styles.date}>{dateLabel}</Text>
+      <View style={styles.responsiveContainer}>
+        {/* ─── 1. En-tête convivial & Statut immédiat ───────────────────────── */}
+        <View style={styles.header}>
+          <View style={styles.headerInfo}>
+            <Text style={styles.greeting}>
+              {greeting}{displayName ? `, ${displayName}` : ''}
+            </Text>
+            <Text style={styles.date}>{dateLabel}</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => router.push('/sanctum')}
+              accessibilityLabel="Sanctuaire coffre-fort"
+            >
+              <Ionicons name="lock-closed-outline" size={19} color={palette.onSurface.variant} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => router.push('/search')}
+              accessibilityLabel="Recherche"
+            >
+              <Ionicons name="search-outline" size={20} color={palette.onSurface.variant} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => router.push('/settings')}
+              accessibilityLabel="Paramètres"
+            >
+              <Ionicons name="settings-outline" size={20} color={palette.onSurface.variant} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.headerActions}>
+
+        {/* ─── 2. Les 4 Piliers Wave (Action Grid 2x2) ──────────────────────── */}
+        <View style={styles.waveGrid}>
+          {/* Pilier 1 : Rappels */}
           <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => router.push('/search')}
-            accessibilityLabel="Recherche globale"
+            style={styles.waveCard}
+            onPress={() => router.push('/(tabs)/reminders' as any)}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={`Rappels : ${dueTodayReminders.length} pour aujourd'hui`}
           >
-            <Ionicons name="search-outline" size={20} color={palette.onSurface.variant} />
+            <View style={styles.waveCardHeader}>
+              <View style={[styles.waveIconCircle, { backgroundColor: palette.primary.container }]}>
+                <Ionicons name="notifications" size={18} color={palette.primary.default} />
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
+            </View>
+            <Text style={styles.waveCardNumber}>{dueTodayReminders.length}</Text>
+            <Text style={styles.waveCardLabel}>Rappels</Text>
+            <Text style={styles.waveCardSub}>
+              {urgentReminders.length > 0 ? `${urgentReminders.length} urgent(s)` : `${totalActiveReminders} au total`}
+            </Text>
           </TouchableOpacity>
+
+          {/* Pilier 2 : Tâches */}
           <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => router.push('/settings')}
-            accessibilityLabel="Paramètres"
+            style={styles.waveCard}
+            onPress={() => router.push('/(tabs)/tasks' as any)}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={`Tâches : ${tasks.length} pour aujourd'hui`}
           >
-            <Ionicons name="settings-outline" size={20} color={palette.onSurface.variant} />
+            <View style={styles.waveCardHeader}>
+              <View style={[styles.waveIconCircle, { backgroundColor: palette.tertiary.container }]}>
+                <Ionicons name="checkmark-done" size={18} color={palette.tertiary.default} />
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
+            </View>
+            <Text style={styles.waveCardNumber}>{tasks.length}</Text>
+            <Text style={styles.waveCardLabel}>Tâches</Text>
+            <Text style={styles.waveCardSub}>
+              {completedTasksCount}/{totalTasksCount} faites
+            </Text>
+          </TouchableOpacity>
+
+          {/* Pilier 3 : Planning */}
+          <TouchableOpacity
+            style={styles.waveCard}
+            onPress={() => router.push('/(tabs)/calendar' as any)}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={`Planning : ${events.length} événements`}
+          >
+            <View style={styles.waveCardHeader}>
+              <View style={[styles.waveIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+                <Ionicons name="calendar" size={18} color="#F59E0B" />
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
+            </View>
+            <Text style={styles.waveCardNumber}>{events.length}</Text>
+            <Text style={styles.waveCardLabel}>Planning</Text>
+            <Text style={styles.waveCardSub}>
+              {nextEvent ? `Prochain à ${format(new Date(nextEvent.startAt), 'HH:mm')}` : 'Journée libre'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Pilier 4 : Proches */}
+          <TouchableOpacity
+            style={styles.waveCard}
+            onPress={() => router.push('/(tabs)/people' as any)}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Proches et sanctuaire relationnel"
+          >
+            <View style={styles.waveCardHeader}>
+              <View style={[styles.waveIconCircle, { backgroundColor: palette.success.container }]}>
+                <Ionicons name="people" size={18} color={palette.success.default} />
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
+            </View>
+            <Text style={[styles.waveCardNumber, { fontSize: 18, marginTop: Spacing.sm }]}>Proches</Text>
+            <Text style={styles.waveCardLabel}>Sanctuaire</Text>
+            <Text style={styles.waveCardSub}>
+              {topSuggestion && topSuggestion.type === 'FORGOTTEN_CONTACT' ? '1 à contacter' : 'Garder le lien'}
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* ─── Synthèse rapide (Pill Counters / Filtres) ────────────────────────── */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryRow} contentContainerStyle={styles.summaryRowContent}>
-        <SummaryChip
-          count={todayRemindersCount > 0 ? todayRemindersCount : totalActiveReminders}
-          label={todayRemindersCount > 0 ? 'rappels (auj.)' : 'rappels'}
-          color={palette.primary.default}
-          icon="notifications-outline"
-          selected={activeFilter === 'reminders'}
-          onPress={() => toggleFilter('reminders')}
-        />
-        <SummaryChip
-          count={totalTasksCount}
-          label="tâches"
-          color={palette.tertiary.default}
-          icon="checkmark-circle-outline"
-          selected={activeFilter === 'tasks'}
-          onPress={() => toggleFilter('tasks')}
-        />
-        <SummaryChip
-          count={events.length}
-          label="événements"
-          color={palette.tertiary.default}
-          icon="calendar-outline"
-          selected={activeFilter === 'events'}
-          onPress={() => toggleFilter('events')}
-        />
-        <SummaryChip
-          count={habits.filter(h => h.completedToday).length}
-          label={`/ ${habits.length} habitudes`}
-          color={palette.priority.HIGH}
-          icon="flame-outline"
-          selected={activeFilter === 'habits'}
-          onPress={() => toggleFilter('habits')}
-        />
-        <SummaryChip
-          count={goals.length}
-          label="objectifs"
-          color={palette.success.default}
-          icon="flag-outline"
-          selected={activeFilter === 'goals'}
-          onPress={() => toggleFilter('goals')}
-        />
-      </ScrollView>
-
-      {/* Indicateur de filtre actif */}
-      {activeFilter !== null && (
+        {/* ─── 3. Bouton Universel d'Ajout Rapide ──────────────────────────── */}
         <TouchableOpacity
-          onPress={() => setActiveFilter(null)}
-          style={styles.filterResetRow}
-          accessibilityLabel="Réinitialiser le filtre"
+          style={styles.quickAddBar}
+          onPress={() => router.push('/capture')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Créer un rappel ou une tâche"
         >
-          <Ionicons name="close-circle" size={14} color={palette.onSurface.variant} />
-          <Text style={styles.filterResetText}>Tout afficher</Text>
+          <View style={styles.quickAddLeft}>
+            <Ionicons name="add-circle" size={24} color={palette.primary.default} />
+            <Text style={styles.quickAddText}>+ Nouveau rappel, tâche ou note</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={16} color={palette.primary.default} />
         </TouchableOpacity>
-      )}
 
-      {/* ─── CARTE DÉCOUVERTE / DONNÉES DE DÉMO (si base vide) ────────────────── */}
-      {isEmptyState && (
-        <View style={styles.demoCardWrapper}>
-          <LinearGradient
-            colors={['rgba(208, 188, 255, 0.15)', 'rgba(123, 208, 255, 0.06)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.demoCard}
-          >
-            <View style={styles.demoHeader}>
-              <View style={styles.demoBadge}>
-                <Ionicons name="sparkles" size={13} color={palette.primary.default} />
-                <Text style={styles.demoBadgeText}>MODE DÉCOUVERTE</Text>
+        {/* ─── Mode Découverte (si base vide) ─────────────────────────────── */}
+        {isEmptyState && (
+          <View style={styles.demoCardWrapper}>
+            <LinearGradient
+              colors={['rgba(208, 188, 255, 0.15)', 'rgba(123, 208, 255, 0.06)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.demoCard}
+            >
+              <View style={styles.demoHeader}>
+                <View style={styles.demoBadge}>
+                  <Ionicons name="sparkles" size={13} color={palette.primary.default} />
+                  <Text style={styles.demoBadgeText}>MODE DÉCOUVERTE</Text>
+                </View>
+              </View>
+              <Text style={styles.demoTitle}>Prêt à explorer Junix Pulse ?</Text>
+              <Text style={styles.demoSubtitle}>
+                Chargez un jeu de test complet (contacts, rappels, habitudes, objectifs) pour découvrir immédiatement la puissance du rythme quotidien.
+              </Text>
+              <TouchableOpacity
+                style={styles.demoBtn}
+                onPress={handleLoadDemo}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.demoBtnGradient}
+                >
+                  <Ionicons name="cloud-download-outline" size={16} color="#FFFFFF" />
+                  <Text style={styles.demoBtnText}>Charger les données de démo</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        )}
+
+        {/* ─── 4. Suggestion Proactive Unique (IA locale) ─────────────────── */}
+        {topSuggestion && (
+          <View style={styles.sectionBlock}>
+            <View style={styles.suggestionCard}>
+              <View style={styles.suggHeaderRow}>
+                <LinearGradient
+                  colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.aiOrb}
+                >
+                  <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={styles.suggBadge}>Suggestion intelligente</Text>
+              </View>
+
+              <Text style={styles.suggTitle}>{topSuggestion.title}</Text>
+              <Text style={styles.suggExplanation}>{topSuggestion.explanation}</Text>
+
+              <View style={styles.suggActions}>
+                <TouchableOpacity
+                  style={styles.suggRefuseBtn}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  onPress={() => handleRefuseSuggestion(topSuggestion)}
+                >
+                  <Text style={styles.suggRefuseText}>Ignorer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.suggAcceptBtn}
+                  activeOpacity={0.8}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  onPress={() => handleAcceptSuggestion(topSuggestion)}
+                >
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                  <Text style={styles.suggAcceptText}>Accepter</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <Text style={styles.demoTitle}>Prêt à explorer Junix Pulse ?</Text>
-            <Text style={styles.demoSubtitle}>
-              Chargez un jeu de test complet (contacts, rappels, habitudes, objectifs) pour découvrir immédiatement la puissance du rythme quotidien.
-            </Text>
-            <TouchableOpacity
-              style={styles.demoBtn}
-              onPress={handleLoadDemo}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.demoBtnGradient}
-              >
-                <Ionicons name="cloud-download-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.demoBtnText}>Charger les données de démo</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </LinearGradient>
-        </View>
-      )}
-
-      {/* ─── 1. MAINTENANT (Carte Urgent / Prioritaire) ───────────────────────── */}
-      {(activeFilter === null || activeFilter === 'reminders') && (
-      <View style={styles.sectionBlock}>
-        <View style={styles.blockTitleRow}>
-          <View style={styles.nowIndicator} />
-          <Text style={styles.blockTitle}>Maintenant</Text>
-        </View>
-
-        {urgentReminders.length > 0 ? (
-          urgentReminders.map((r, idx) => (
-            <GlowCard
-              key={r.id}
-              index={idx}
-              tone="urgent"
-              intensity="soft"
-              onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
-              accessibilityLabel={`${r.title}, ${r.status === 'MISSED' ? 'en retard' : 'priorité haute'}`}
-            >
-              <View style={styles.urgentContent}>
-                <View style={styles.urgentHeader}>
-                  <View style={styles.urgentBadge}>
-                    <Ionicons name="alert-circle" size={14} color={palette.error.default} />
-                    <Text style={styles.urgentBadgeText}>
-                      {r.status === 'MISSED' ? 'En retard' : 'Priorité haute'}
-                    </Text>
-                  </View>
-                  <Text style={styles.urgentTime}>
-                    {format(new Date(r.scheduledAt), 'HH:mm')}
-                  </Text>
-                </View>
-                <Text style={styles.urgentTitle} numberOfLines={1}>{r.title}</Text>
-                {r.notes ? (
-                  <Text style={styles.urgentSubtitle} numberOfLines={2}>{r.notes}</Text>
-                ) : null}
-              </View>
-            </GlowCard>
-          ))
-        ) : (
-          <RecoveryAndHrvMetricCard
-            score={rhythmScore}
-            scoreLabel="RYTHME"
-            statusLabel={rhythmStatus}
-            title="Rythme Quotidien"
-            subtitle={
-              todayFocusMinutes > 0
-                ? `${todayFocusMinutes} min de focus • ${completedActions}/${totalActions} actions`
-                : totalActions > 0
-                ? `${completedActions}/${totalActions} actions complétées aujourd’hui`
-                : 'Appuyez pour démarrer un Focus • Journée sereine'
-            }
-            metricLabel="FOCUS"
-            metricValue={
-              todayFocusMinutes > 0
-                ? `${todayFocusMinutes}m`
-                : totalTasksCount > 0
-                ? `${completedTasksCount}/${totalTasksCount}`
-                : `${completedActions}`
-            }
-            metricUnit={todayFocusMinutes > 0 ? 'focus' : totalTasksCount > 0 ? 'tâches' : 'actions'}
-            onPress={() => router.push('/focus' as any)}
-          />
+          </View>
         )}
-      </View>
-      )}
 
-      {/* ─── 2. ENSUITE (Prochain jalon temporel) ─────────────────────────────── */}
-      {(nextEvent || nextReminder) && (activeFilter === null || activeFilter === 'reminders' || activeFilter === 'events') && (
+        {/* ─── 5. Mon Fil d'Aujourd'hui (Timeline Unifiée) ─────────────────── */}
         <View style={styles.sectionBlock}>
           <View style={styles.blockTitleRow}>
             <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
-            <Text style={styles.blockTitle}>Ensuite</Text>
+            <Text style={styles.blockTitle}>Mon Fil d'Aujourd'hui ({timelineItems.length})</Text>
           </View>
 
-          {nextEvent ? (
-            <GlowCard
-              tone="info"
-              onPress={() => router.push(`/events/${nextEvent.id}`)}
-              accessibilityLabel={nextEvent.title}
-            >
-              <View style={styles.nextRow}>
-                <View style={styles.nextTimeCol}>
-                  <Text style={styles.nextTimeText}>
-                    {format(new Date(nextEvent.startAt), 'HH:mm')}
-                  </Text>
-                  <Text style={styles.nextTypeLabel}>Agenda</Text>
-                </View>
-                <View style={styles.nextDivider} />
-                <View style={styles.nextBody}>
-                  <Text style={styles.nextTitle} numberOfLines={1}>{nextEvent.title}</Text>
-                  {nextEvent.location && (
-                    <View style={styles.inlineMeta}>
-                      <Ionicons name="location-outline" size={13} color={palette.onSurface.variant} />
-                      <Text style={styles.nextSubtitle}>{nextEvent.location}</Text>
-                    </View>
+          {timelineItems.length > 0 ? (
+            timelineItems.map((item, idx) => (
+              <GlowCard
+                key={item.id}
+                index={idx}
+                tone={
+                  item.priority === 'URGENT'
+                    ? 'urgent'
+                    : item.type === 'reminder'
+                    ? 'attention'
+                    : item.type === 'event'
+                    ? 'info'
+                    : 'neutral'
+                }
+                intensity="soft"
+                onPress={() => {
+                  if (item.type === 'reminder') {
+                    router.push({ pathname: '/reminders/[id]', params: { id: (item.raw as Reminder).id } });
+                  } else if (item.type === 'event') {
+                    router.push(`/events/${(item.raw as Event).id}`);
+                  } else {
+                    router.push(`/tasks/${(item.raw as Task).id}`);
+                  }
+                }}
+                accessibilityLabel={`${item.title}, ${item.type}`}
+              >
+                <View style={styles.timelineCard}>
+                  <View style={styles.timelineTimeCol}>
+                    <Text
+                      style={[
+                        styles.timelineTimeText,
+                        {
+                          color:
+                            item.type === 'event'
+                              ? '#F59E0B'
+                              : item.type === 'reminder'
+                              ? palette.primary.default
+                              : palette.onSurface.variant,
+                        },
+                      ]}
+                    >
+                      {item.time || 'Auj.'}
+                    </Text>
+                    <Text style={styles.timelineTypeTag}>
+                      {item.type === 'reminder' ? 'Rappel' : item.type === 'event' ? 'Agenda' : 'Tâche'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.timelineDivider} />
+
+                  <View style={styles.timelineBody}>
+                    <Text
+                      style={[
+                        styles.timelineTitle,
+                        item.isCompleted && { textDecorationLine: 'line-through', opacity: 0.6 },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+                    {item.subtitle ? (
+                      <Text style={styles.timelineDesc} numberOfLines={1}>
+                        {item.subtitle}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  {/* Coche rapide pour tâche */}
+                  {item.type === 'task' && (
+                    <TouchableOpacity
+                      style={styles.timelineActionBtn}
+                      onPress={() => handleCompleteTask(item.raw as Task)}
+                      accessibilityLabel="Terminer la tâche"
+                    >
+                      <Ionicons
+                        name={item.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={22}
+                        color={item.isCompleted ? palette.success.default : palette.onSurface.variant}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Flèche de détail pour rappels et agenda */}
+                  {item.type !== 'task' && (
+                    <Ionicons name="chevron-forward" size={16} color={palette.onSurface.variant} />
                   )}
                 </View>
-              </View>
-            </GlowCard>
-          ) : nextReminder ? (
-            <GlowCard
-              tone="info"
-              onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: nextReminder.id } })}
-              accessibilityLabel={nextReminder.title}
-            >
-              <View style={styles.nextRow}>
-                <View style={styles.nextTimeCol}>
-                  <Text style={styles.nextTimeText}>
-                    {format(new Date(nextReminder.scheduledAt), 'HH:mm')}
-                  </Text>
-                  <Text style={styles.nextTypeLabel}>Rappel</Text>
-                </View>
-                <View style={styles.nextDivider} />
-                <View style={styles.nextBody}>
-                  <Text style={styles.nextTitle} numberOfLines={1}>{nextReminder.title}</Text>
-                  {nextReminder.notes && (
-                    <Text style={styles.nextSubtitle} numberOfLines={1}>{nextReminder.notes}</Text>
-                  )}
-                </View>
-              </View>
-            </GlowCard>
-          ) : null}
-        </View>
-      )}
-
-      {/* ─── 3. SUGGESTION IA (Une seule, avec orbe et validation) ────────────── */}
-      {topSuggestion && activeFilter === null && (
-        <View style={styles.sectionBlock}>
-          <View style={styles.suggestionCard}>
-            <View style={styles.suggHeaderRow}>
-              {/* Orbe IA distinctif avec halo */}
-              <LinearGradient
-                colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.aiOrb}
-              >
-                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-              </LinearGradient>
-              <Text style={styles.suggBadge}>Suggestion intelligente</Text>
-            </View>
-
-            <Text style={styles.suggTitle}>{topSuggestion.title}</Text>
-            <Text style={styles.suggExplanation}>{topSuggestion.explanation}</Text>
-
-            <View style={styles.suggActions}>
-              <TouchableOpacity
-                style={styles.suggRefuseBtn}
-                activeOpacity={0.7}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                onPress={() => handleRefuseSuggestion(topSuggestion)}
-              >
-                <Text style={styles.suggRefuseText}>Ignorer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.suggAcceptBtn}
-                activeOpacity={0.8}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                onPress={() => handleAcceptSuggestion(topSuggestion)}
-              >
-                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                <Text style={styles.suggAcceptText}>Accepter</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* ─── 4. AUJOURD'HUI (Progression des tâches & Habitudes) ──────────────── */}
-      {(activeFilter === null || activeFilter === 'tasks' || activeFilter === 'habits' || activeFilter === 'goals' || activeFilter === 'events') && (
-      <View style={styles.sectionBlock}>
-        <View style={styles.blockTitleRow}>
-          <Ionicons name="calendar-outline" size={16} color={palette.onSurface.variant} />
-          <Text style={styles.blockTitle}>Aujourd'hui</Text>
-        </View>
-
-        {/* Barre de progression des tâches */}
-        {totalTasksCount > 0 && (activeFilter === null || activeFilter === 'tasks') && (
-          <View style={styles.progressCard}>
-            <View style={styles.progressRow}>
-              <Text style={styles.progressLabel}>Progression des tâches</Text>
-              <Text style={styles.progressValue}>
-                {completedTasksCount}/{totalTasksCount} ({taskProgressPercent}%)
-              </Text>
-            </View>
-            <View style={styles.progressBarTrack}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${taskProgressPercent}%` },
-                ]}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Liste des tâches du jour */}
-        {(activeFilter === null || activeFilter === 'tasks') && (
-        <View style={styles.subBlock}>
-          <View style={styles.subHeader}>
-            <Text style={styles.subTitle}>Tâches ({tasks.length})</Text>
-            <TouchableOpacity onPress={() => router.push('/tasks/new')}>
-              <Text style={styles.subAction}>+ Ajouter</Text>
-            </TouchableOpacity>
-          </View>
-
-          {tasks.length > 0 ? (
-            tasks.map(t => (
-              <TaskCard key={t.id} task={t} onComplete={() => handleCompleteTask(t)} />
+              </GlowCard>
             ))
           ) : (
             <GlowCard tone="neutral">
               <View style={styles.emptyContent}>
-                <Text style={styles.emptyText}>Aucune tâche planifiée aujourd'hui</Text>
-                <TouchableOpacity onPress={() => router.push('/(tabs)/tasks')}>
-                  <Text style={styles.emptyAction}>Ouvrir l'Inbox</Text>
+                <Text style={styles.emptyText}>Aucun événement ni rappel prévu pour aujourd'hui</Text>
+                <TouchableOpacity onPress={() => router.push('/capture')}>
+                  <Text style={styles.emptyAction}>+ Planifier quelque chose</Text>
                 </TouchableOpacity>
               </View>
             </GlowCard>
           )}
         </View>
-        )}
 
-        {/* Habitudes du jour (1-tap completion) */}
-        {(activeFilter === null || activeFilter === 'habits') && (
-        <View style={styles.subBlock}>
-          <View style={styles.subHeader}>
-            <Text style={styles.subTitle}>Habitudes & Streaks ({habits.length})</Text>
-            <TouchableOpacity onPress={() => router.push('/habits')}>
-              <Text style={styles.subAction}>Gérer</Text>
-            </TouchableOpacity>
-          </View>
+        {/* ─── 6. Habitudes du jour (Routines & Streaks) ───────────────────── */}
+        {habits.length > 0 && (
+          <View style={styles.sectionBlock}>
+            <View style={styles.subHeader}>
+              <Text style={styles.subTitle}>Mes Routines & Habitudes ({habits.length})</Text>
+              <TouchableOpacity onPress={() => router.push('/habits')}>
+                <Text style={styles.subAction}>Voir tout</Text>
+              </TouchableOpacity>
+            </View>
 
-          {habits.length > 0 ? (
-            habits.map((item, idx) => (
+            {habits.map((item, idx) => (
               <GlowCard
                 key={item.habit.id}
                 index={idx}
                 tone={item.completedToday ? 'success' : 'neutral'}
                 intensity="soft"
                 onPress={() => handleToggleHabit(item)}
-                accessibilityLabel={`${item.habit.title}${item.completedToday ? ', complétée aujourd’hui' : ''}`}
+                accessibilityLabel={`${item.habit.title}${item.completedToday ? ', complétée' : ''}`}
               >
                 <View style={styles.habitRow}>
                   <Ionicons
@@ -621,79 +641,13 @@ export default function TodayScreen() {
                   </View>
                 </View>
               </GlowCard>
-            ))
-          ) : (
-            <GlowCard tone="neutral">
-              <View style={styles.emptyContent}>
-                <Text style={styles.emptyText}>Aucune habitude active pour le moment</Text>
-                <TouchableOpacity onPress={() => router.push('/habits/new')}>
-                  <Text style={styles.emptyAction}>+ Créer une habitude</Text>
-                </TouchableOpacity>
-              </View>
-            </GlowCard>
-          )}
-        </View>
-        )}
-
-        {/* Objectifs & Progression */}
-        {(activeFilter === null || activeFilter === 'goals') && (
-        <View style={styles.subBlock}>
-          <View style={styles.subHeader}>
-            <Text style={styles.subTitle}>Objectifs & Progression ({goals.length})</Text>
-            <TouchableOpacity onPress={() => router.push('/goals')}>
-              <Text style={styles.subAction}>Voir tout</Text>
-            </TouchableOpacity>
+            ))}
           </View>
-
-          {goals.length > 0 ? (
-            goals.map((item, idx) => (
-              <GlowCard
-                key={item.goal.id}
-                index={idx}
-                tone="neutral"
-                onPress={() => router.push({ pathname: '/goals/[id]', params: { id: item.goal.id } })}
-                accessibilityLabel={item.goal.title}
-              >
-                <View style={styles.goalContent}>
-                  <View style={styles.goalHeaderRow}>
-                    <Text style={styles.goalCardTitle} numberOfLines={1}>{item.goal.title}</Text>
-                    <Text style={styles.goalCardPercent}>
-                      {item.progress !== null ? `${item.progress}%` : '0%'}
-                    </Text>
-                  </View>
-                  <View style={styles.progressBarTrack}>
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        {
-                          width: `${item.progress ?? 0}%`,
-                          backgroundColor: palette.success.default,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-              </GlowCard>
-            ))
-          ) : (
-            <GlowCard tone="neutral">
-              <View style={styles.emptyContent}>
-                <Text style={styles.emptyText}>Aucun objectif défini</Text>
-                <TouchableOpacity onPress={() => router.push('/goals/new')}>
-                  <Text style={styles.emptyAction}>+ Définir un objectif</Text>
-                </TouchableOpacity>
-              </View>
-            </GlowCard>
-          )}
-        </View>
         )}
       </View>
-      )}
     </ScrollView>
   );
 }
-
-// ─── Helpers ────────────────────────────────────────────────────────────────────
 
 function getGreeting(hour: number): string {
   if (hour < 12) return 'Bonjour';

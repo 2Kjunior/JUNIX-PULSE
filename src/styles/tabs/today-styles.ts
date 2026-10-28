@@ -528,6 +528,133 @@ export function makeTodayStyles(theme: ThemePalette) {
       color: '#FFFFFF',
       fontWeight: '700',
     },
+
+    /* ─── NOUVEAUX STYLES : GRILLE WAVE DES 4 PILIERS & RESPONSIVE ─── */
+    responsiveContainer: {
+      width: '100%',
+      maxWidth: 720,
+      alignSelf: 'center',
+      gap: Spacing.lg,
+    },
+    waveGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    waveCard: {
+      flexBasis: '47%',
+      flexGrow: 1,
+      backgroundColor: isDark ? theme.surface.container : '#FFFFFF',
+      borderRadius: Radius.lg,
+      padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.shadow.color,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.shadow.smOpacity,
+          shadowRadius: 6,
+        },
+        android: {
+          elevation: 2,
+        },
+      }),
+    },
+    waveCardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    waveIconCircle: {
+      width: 36,
+      height: 36,
+      borderRadius: Radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    waveCardNumber: {
+      ...Typography.headlineMedium,
+      fontWeight: '800',
+      color: theme.onSurface.primary,
+      marginTop: Spacing.xs,
+    },
+    waveCardLabel: {
+      ...Typography.labelMedium,
+      fontWeight: '700',
+      color: theme.onSurface.primary,
+      marginTop: 2,
+    },
+    waveCardSub: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      marginTop: 1,
+    },
+    quickAddBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.08)' : theme.primary.container,
+      borderRadius: Radius.lg,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm + 2,
+      borderWidth: 1,
+      borderColor: theme.primary.default + '40',
+    },
+    quickAddLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    quickAddText: {
+      ...Typography.labelMedium,
+      color: isDark ? theme.primary.default : theme.primary.onContainer,
+      fontWeight: '700',
+    },
+    timelineCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    timelineTimeCol: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 48,
+    },
+    timelineTimeText: {
+      ...Typography.labelLarge,
+      fontWeight: '700',
+    },
+    timelineTypeTag: {
+      ...Typography.labelSmall,
+      color: theme.onSurface.variant,
+      fontSize: 9,
+      textTransform: 'uppercase',
+      marginTop: 1,
+    },
+    timelineDivider: {
+      width: 1,
+      height: 34,
+      backgroundColor: theme.outline.variant,
+    },
+    timelineBody: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    timelineTitle: {
+      ...Typography.titleMedium,
+      color: theme.onSurface.primary,
+      fontWeight: '600',
+    },
+    timelineDesc: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+      marginTop: 2,
+    },
+    timelineActionBtn: {
+      padding: Spacing.xs,
+    },
   });
 }
 

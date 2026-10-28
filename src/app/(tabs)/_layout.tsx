@@ -44,9 +44,15 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   {
     name: "index",
-    title: "Aujourd'hui",
-    icon: "sunny-outline",
-    iconFocused: "sunny",
+    title: "Accueil",
+    icon: "home-outline",
+    iconFocused: "home",
+  },
+  {
+    name: "reminders",
+    title: "Rappels",
+    icon: "notifications-outline",
+    iconFocused: "notifications",
   },
   {
     name: "tasks",
@@ -56,21 +62,15 @@ const TABS: TabConfig[] = [
   },
   {
     name: "calendar",
-    title: "Calendrier",
+    title: "Planning",
     icon: "calendar-outline",
     iconFocused: "calendar",
   },
   {
     name: "people",
-    title: "Personnes",
+    title: "Proches",
     icon: "people-outline",
     iconFocused: "people",
-  },
-  {
-    name: "pulse",
-    title: "Pulse",
-    icon: "pulse-outline",
-    iconFocused: "pulse",
   },
 ];
 
@@ -253,6 +253,10 @@ export default function TabsLayout() {
           options={{ title: tab.title }}
         />
       ))}
+      <Tabs.Screen
+        name="pulse"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }

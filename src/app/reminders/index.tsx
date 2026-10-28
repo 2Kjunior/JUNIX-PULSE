@@ -60,7 +60,7 @@ const ACTION_LABELS: Record<string, string> = {
   NONE: '',
 };
 
-export default function RemindersListScreen() {
+export default function RemindersListScreen({ hideBackButton = false }: { hideBackButton?: boolean }) {
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -208,13 +208,15 @@ export default function RemindersListScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* ─── En-tête R-04 ──────────────────────────────────────────────────────── */}
       <View style={styles.topBar}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          accessibilityLabel="Retour"
-        >
-          <Ionicons name="chevron-back" size={22} color={palette.onSurface.primary} />
-        </TouchableOpacity>
+        {!hideBackButton && (
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            accessibilityLabel="Retour"
+          >
+            <Ionicons name="chevron-back" size={22} color={palette.onSurface.primary} />
+          </TouchableOpacity>
+        )}
 
         <View style={styles.titleCol}>
           <View style={styles.titleRow}>
