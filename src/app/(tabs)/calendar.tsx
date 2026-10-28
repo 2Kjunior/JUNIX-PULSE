@@ -63,6 +63,7 @@ export default function CalendarScreen() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allWeeklyBlocks, setAllWeeklyBlocks] = useState<PlanningBlock[]>([]);
+  const [tasksCountByDay, setTasksCountByDay] = useState<Record<number, number>>({});
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -133,36 +134,22 @@ export default function CalendarScreen() {
         };
       });
 
-      // Conversion des tâches planifiées de la semaine en PlanningBlock[]
-      const taskBlocks: PlanningBlock[] = weekTsks.flat().map(t => {
-        const sDate = t.scheduledDate ? new Date(t.scheduledDate) : selectedDate;
-        const dur = t.estimatedMinutes ?? 45;
-        const sTime = '10:00';
-        const [h, m] = sTime.split(':').map(Number);
-        const totalMin = (h || 10) * 60 + (m || 0) + dur;
-        const endH = Math.min(23, Math.floor(totalMin / 60));
-        const endM = totalMin % 60;
-        return {
-          id: t.id,
-          scheduleId: 'task',
-          label: t.title,
-          type: 'WORK',
-          dayOfWeek: sDate.getDay(),
-          startTime: sTime,
-          endTime: `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
-          color: theme.tertiary.default,
-          createdAt: t.createdAt,
-          updatedAt: t.updatedAt,
-        };
+      // Décompte précis des tâches non terminées par jour pour le bandeau All-Day
+      const taskCounts: Record<number, number> = {};
+      weekDays.forEach((d, idx) => {
+        const dayTasks = weekTsks[idx] || [];
+        taskCounts[d.getDay()] = dayTasks.filter(t => t.status !== 'COMPLETED').length;
       });
+      setTasksCountByDay(taskCounts);
 
-      setAllWeeklyBlocks([...storedScheduleBlocks, ...eventBlocks, ...reminderBlocks, ...taskBlocks]);
+      // Blocs récurrents (Fond structurel) + Événements réels (Premier plan) + Rappels (Pastilles ponctuelles)
+      setAllWeeklyBlocks([...storedScheduleBlocks, ...eventBlocks, ...reminderBlocks]);
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de chargement');
       setScreenState('error');
     }
-  }, [dateYmd, selectedDate, theme, weekDays]);
+  }, [dateYmd, theme, weekDays]);
 
   useFocusEffect(
     useCallback(() => {
@@ -358,6 +345,12 @@ export default function CalendarScreen() {
           <WeeklyTimetableGrid
             blocks={allWeeklyBlocks}
             weekDays={weekDays}
+            tasksCountByDay={tasksCountByDay}
+            onPressTasksDay={(dayNum) => {
+              const targetDate = weekDays.find(d => d.getDay() === dayNum) || selectedDate;
+              setSelectedDate(targetDate);
+              setViewMode('agenda');
+            }}
             onAddBlock={(dayNum, defaultTime) => {
               const targetDate = weekDays.find(d => d.getDay() === dayNum) || selectedDate;
               setSelectedDate(targetDate);

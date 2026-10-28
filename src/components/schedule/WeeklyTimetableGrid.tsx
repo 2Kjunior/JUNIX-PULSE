@@ -35,6 +35,8 @@ export interface WeeklyTimetableGridProps {
   onDeleteBlock: (id: string, label: string) => void;
   onSelectBlock?: (block: PlanningBlock) => void;
   weekDays?: Date[];
+  tasksCountByDay?: Record<number, number>;
+  onPressTasksDay?: (dayNum: number) => void;
 }
 
 const START_HOUR = 7;   // 07:00
@@ -62,15 +64,131 @@ function timeToMinutes(timeStr: string): number {
   return (h || 0) * 60 + (m || 0);
 }
 
+interface PositionedForegroundBlock {
+  block: PlanningBlock;
+  colIndex: number;
+  totalCols: number;
+  hasConflict: boolean;
+  topPx: number;
+  heightPx: number;
+  leftPx: number;
+  widthPx: number;
+}
+
+/**
+ * Algorithme de partitionnement en sous-colonnes (Column Splitting standard Google / Apple Calendar)
+ * Permet d'afficher côte à côte les événements qui ont lieu à la même heure sans aucune superposition.
+ */
+function layoutForegroundBlocks(
+  blocks: PlanningBlock[],
+  columnWidth: number
+): PositionedForegroundBlock[] {
+  if (blocks.length === 0) return [];
+
+  const items = blocks
+    .map(block => {
+      const startMin = timeToMinutes(block.startTime);
+      const endMin = timeToMinutes(block.endTime);
+      const durationMin = Math.max(15, endMin - startMin);
+      return {
+        block,
+        startMin,
+        endMin,
+        durationMin,
+      };
+    })
+    .sort((a, b) => a.startMin - b.startMin || b.durationMin - a.durationMin);
+
+  // Groupes d'intervalles qui se chevauchent consécutivement
+  const clusters: typeof items[] = [];
+  let currentCluster: typeof items = [];
+  let clusterEndMin = -1;
+
+  for (const item of items) {
+    if (currentCluster.length === 0) {
+      currentCluster.push(item);
+      clusterEndMin = item.endMin;
+    } else if (item.startMin < clusterEndMin) {
+      currentCluster.push(item);
+      clusterEndMin = Math.max(clusterEndMin, item.endMin);
+    } else {
+      clusters.push(currentCluster);
+      currentCluster = [item];
+      clusterEndMin = item.endMin;
+    }
+  }
+  if (currentCluster.length > 0) {
+    clusters.push(currentCluster);
+  }
+
+  const result: PositionedForegroundBlock[] = [];
+
+  for (const cluster of clusters) {
+    const colEnds: number[] = [];
+    const assignments: { item: typeof items[0]; colIndex: number }[] = [];
+
+    for (const item of cluster) {
+      let placedCol = -1;
+      for (let c = 0; c < colEnds.length; c++) {
+        if (colEnds[c] <= item.startMin) {
+          placedCol = c;
+          colEnds[c] = item.endMin;
+          break;
+        }
+      }
+      if (placedCol === -1) {
+        placedCol = colEnds.length;
+        colEnds.push(item.endMin);
+      }
+      assignments.push({ item, colIndex: placedCol });
+    }
+
+    const totalCols = Math.min(3, colEnds.length); // Maximum 3 sous-colonnes simultanées sur mobile
+    const hasConflict = colEnds.length > 1;
+
+    for (const a of assignments) {
+      const colIndex = Math.min(a.colIndex, totalCols - 1);
+      const subColWidth = (columnWidth - 4) / totalCols;
+      const leftPx = 2 + colIndex * subColWidth;
+      const widthPx = Math.max(20, subColWidth - 2);
+
+      const topPx = ((a.item.startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      const heightPx = (a.item.durationMin / 60) * HOUR_HEIGHT;
+      const clampedTop = Math.max(0, topPx);
+      const clampedHeight = Math.max(24, heightPx - 2);
+
+      result.push({
+        block: a.item.block,
+        colIndex,
+        totalCols,
+        hasConflict,
+        topPx: clampedTop,
+        heightPx: clampedHeight,
+        leftPx,
+        widthPx,
+      });
+    }
+  }
+
+  return result;
+}
+
 export function WeeklyTimetableGrid({
   blocks,
   onAddBlock,
   onDeleteBlock,
   onSelectBlock,
   weekDays,
+  tasksCountByDay,
+  onPressTasksDay,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
   const [activePreset, setActivePreset] = useState<PresetFilter>('ideal');
+
+  // Détection s'il y a des tâches réparties sur la semaine
+  const hasAnyTasks = useMemo(() => {
+    return tasksCountByDay && Object.values(tasksCountByDay).some(c => c > 0);
+  }, [tasksCountByDay]);
 
   // Définition dynamique des jours si weekDays est fourni
   const daysDefinition = useMemo(() => {
@@ -353,6 +471,35 @@ export function WeeklyTimetableGrid({
               })}
             </View>
 
+            {/* Ligne facultative "Tâches à faire dans la journée" (All-day) */}
+            {hasAnyTasks && (
+              <View style={styles.allDayRow}>
+                <View style={[styles.allDayGutter, { width: TIME_COL_WIDTH }]}>
+                  <Ionicons name="checkbox-outline" size={13} color={palette.tertiary.default} />
+                  <Text style={styles.allDayGutterText}>Tâches</Text>
+                </View>
+                {displayedDays.map(d => {
+                  const count = tasksCountByDay?.[d.num] ?? 0;
+                  return (
+                    <View key={d.num} style={[styles.allDayCell, { width: DAY_COL_WIDTH }]}>
+                      {count > 0 ? (
+                        <TouchableOpacity
+                          style={styles.allDayTaskPill}
+                          onPress={() => onPressTasksDay ? onPressTasksDay(d.num) : onAddBlock(d.num)}
+                          activeOpacity={0.75}
+                          accessibilityLabel={`${count} tâches à faire pour ce jour`}
+                        >
+                          <Text style={styles.allDayTaskPillText} numberOfLines={1}>
+                            {count} tâche{count > 1 ? 's' : ''}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
             {/* Corps de la Grille : Colonne Heures + Colonnes Journées */}
             <View style={styles.gridBody}>
               {/* Colonne latérale gauche : Marqueurs 07:00 à 22:00 */}
@@ -395,6 +542,16 @@ export function WeeklyTimetableGrid({
                 <View style={styles.columnsRow}>
                   {displayedDays.map(d => {
                     const dayBlocks = blocks.filter(b => b.dayOfWeek === d.num);
+                    const backgroundBlocks = dayBlocks.filter(
+                      b => b.scheduleId !== 'event' && b.scheduleId !== 'reminder' && b.scheduleId !== 'task'
+                    );
+                    const foregroundBlocks = dayBlocks.filter(
+                      b => b.scheduleId === 'event' || b.scheduleId === 'task'
+                    );
+                    const reminderBlocks = dayBlocks.filter(
+                      b => b.scheduleId === 'reminder'
+                    );
+                    const positionedForeground = layoutForegroundBlocks(foregroundBlocks, DAY_COL_WIDTH);
 
                     return (
                       <View
@@ -412,18 +569,48 @@ export function WeeklyTimetableGrid({
                           accessibilityLabel={`Ajouter un bloc pour ${d.full}`}
                         />
 
-                        {/* Blocs positionnés proportionnellement à leur durée exacte */}
-                        {dayBlocks.map(block => {
+                        {/* 1. LAYER 0 : Blocs de vie récurrents (Fond contextuel en filigrane) */}
+                        {backgroundBlocks.map(block => {
                           const startMin = timeToMinutes(block.startTime);
                           const endMin = timeToMinutes(block.endTime);
                           const durationMin = Math.max(15, endMin - startMin);
-
-                          // Calcul exact de la position et de la hauteur en pixels
                           const topPx = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
                           const heightPx = (durationMin / 60) * HOUR_HEIGHT;
                           const clampedTop = Math.max(0, topPx);
-                          const clampedHeight = Math.max(26, heightPx - 3);
+                          const clampedHeight = Math.max(22, heightPx - 2);
+                          const config = getBlockStyleConfig(block.type);
 
+                          return (
+                            <TouchableOpacity
+                              key={block.id}
+                              style={[
+                                styles.backgroundBlockCard,
+                                {
+                                  top: clampedTop + 1,
+                                  height: clampedHeight,
+                                  backgroundColor: isDark ? config.bg : 'rgba(240, 238, 248, 0.45)',
+                                  borderColor: config.border + '55',
+                                },
+                              ]}
+                              activeOpacity={0.85}
+                              onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
+                              onLongPress={() => onDeleteBlock(block.id, block.label)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`${block.label}, de ${block.startTime} à ${block.endTime}.`}
+                            >
+                              <View style={styles.backgroundBlockHeader}>
+                                <Ionicons name={config.icon as any} size={9} color={config.accent} style={{ opacity: 0.8 }} />
+                                <Text style={[styles.backgroundBlockTitle, { color: config.text }]} numberOfLines={1}>
+                                  {block.label}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+
+                        {/* 2. LAYER 1 : Événements réels avec Column Splitting côte-à-côte */}
+                        {positionedForeground.map(item => {
+                          const { block } = item;
                           const config = getBlockStyleConfig(block.type);
 
                           return (
@@ -432,65 +619,84 @@ export function WeeklyTimetableGrid({
                               style={[
                                 styles.blockCard,
                                 {
-                                  top: clampedTop + 1,
-                                  height: clampedHeight,
-                                  backgroundColor: config.bg,
+                                  top: item.topPx + 1,
+                                  height: item.heightPx,
+                                  left: item.leftPx,
+                                  width: item.widthPx,
+                                  backgroundColor: isDark ? 'rgba(28, 24, 40, 0.96)' : 'rgba(255, 255, 255, 0.96)',
                                   borderColor: config.border,
-                                  borderStyle: config.isDashed ? 'dashed' : 'solid',
-                                  borderWidth: config.isDashed ? 1.5 : 1,
                                 },
                               ]}
                               activeOpacity={0.85}
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
                               onLongPress={() => onDeleteBlock(block.id, block.label)}
                               accessibilityRole="button"
-                              accessibilityLabel={`${block.label}, de ${block.startTime} à ${block.endTime}. Maintenir pour supprimer.`}
+                              accessibilityLabel={`${block.label}, de ${block.startTime} à ${block.endTime}.`}
                             >
-                              {/* Lueur de coin GlowCard */}
                               <LinearGradient
-                                colors={[config.accent + '44', 'transparent']}
+                                colors={[config.accent + '33', 'transparent']}
                                 start={{ x: 1, y: 0 }}
                                 end={{ x: 0, y: 1 }}
                                 style={styles.cardCornerGlow}
                                 pointerEvents="none"
                               />
 
-                              {/* Reflet supérieur spéculaire (1px blanc) */}
                               {isDark && (
-                                <View
-                                  style={styles.topSpecularHighlight}
-                                  pointerEvents="none"
-                                />
+                                <View style={styles.topSpecularHighlight} pointerEvents="none" />
                               )}
 
-                              {/* Header du bloc : icône / point d'accentuation + titre */}
                               <View style={styles.blockCardHeader}>
-                                {config.isWork ? (
-                                  <View style={[styles.workPulseDot, { backgroundColor: config.accent }]} />
+                                {item.hasConflict ? (
+                                  <View style={styles.conflictDot} />
                                 ) : (
-                                  <Ionicons
-                                    name={config.icon as any}
-                                    size={10}
-                                    color={config.accent}
-                                    style={{ marginRight: 2 }}
-                                  />
+                                  <View style={[styles.workPulseDot, { backgroundColor: config.accent }]} />
                                 )}
                                 <Text
                                   style={[styles.blockTitle, { color: config.text }]}
-                                  numberOfLines={clampedHeight > 55 ? 2 : 1}
+                                  numberOfLines={item.heightPx > 50 ? 2 : 1}
                                 >
                                   {block.label}
                                 </Text>
                               </View>
 
-                              {/* Heures affichées en badge si la hauteur le permet */}
-                              {clampedHeight >= 36 && (
+                              {item.heightPx >= 36 && item.totalCols <= 2 && (
                                 <View style={[styles.timeBadge, { backgroundColor: config.badgeBg }]}>
                                   <Text style={[styles.timeBadgeText, { color: config.accent }]}>
-                                    {block.startTime.replace(':00', 'h')} - {block.endTime.replace(':00', 'h')}
+                                    {block.startTime.replace(':00', 'h')}
                                   </Text>
                                 </View>
                               )}
+                            </TouchableOpacity>
+                          );
+                        })}
+
+                        {/* 3. LAYER 2 : Rappels ponctuels (Pastilles compactes sans durée artificielle) */}
+                        {reminderBlocks.map(block => {
+                          const startMin = timeToMinutes(block.startTime);
+                          const topPx = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+                          const clampedTop = Math.max(0, topPx);
+
+                          return (
+                            <TouchableOpacity
+                              key={block.id}
+                              style={[
+                                styles.reminderPillMarker,
+                                {
+                                  top: clampedTop - 9,
+                                  backgroundColor: isDark ? 'rgba(245, 158, 11, 0.25)' : 'rgba(254, 243, 199, 0.95)',
+                                  borderColor: '#F59E0B',
+                                },
+                              ]}
+                              activeOpacity={0.85}
+                              onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
+                              onLongPress={() => onDeleteBlock(block.id, block.label)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Rappel : ${block.label} à ${block.startTime}.`}
+                            >
+                              <Ionicons name="notifications" size={10} color="#F59E0B" />
+                              <Text style={styles.reminderPillText} numberOfLines={1}>
+                                {block.startTime} {block.label}
+                              </Text>
                             </TouchableOpacity>
                           );
                         })}
@@ -802,6 +1008,44 @@ const styles = StyleSheet.create({
     color: '#E6E1E7',
     marginTop: 1,
   },
+  allDayRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
+    paddingVertical: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.20)',
+  },
+  allDayGutter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  allDayGutterText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#948F9A',
+  },
+  allDayCell: {
+    paddingHorizontal: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  allDayTaskPill: {
+    backgroundColor: 'rgba(14, 116, 144, 0.22)',
+    borderWidth: 1,
+    borderColor: '#00BCD4',
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    width: '92%',
+    alignItems: 'center',
+  },
+  allDayTaskPillText: {
+    fontSize: 8.5,
+    fontWeight: '700',
+    color: '#80DEEA',
+  },
   gridBody: {
     flexDirection: 'row',
   },
@@ -838,14 +1082,36 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: 'rgba(255, 255, 255, 0.08)',
   },
-  blockCard: {
+  backgroundBlockCard: {
     position: 'absolute',
     left: 2,
     right: 2,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    padding: 3,
+    zIndex: 1,
+    opacity: 0.70,
+  },
+  backgroundBlockHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  backgroundBlockTitle: {
+    fontSize: 9,
+    fontWeight: '600',
+    opacity: 0.9,
+    flex: 1,
+  },
+  blockCard: {
+    position: 'absolute',
     borderRadius: Radius.sm + 2,
     padding: 3,
+    borderWidth: 1.5,
     justifyContent: 'space-between',
     overflow: 'hidden',
+    zIndex: 3,
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 1 },
@@ -854,6 +1120,39 @@ const styles = StyleSheet.create({
       },
       android: { elevation: 2 },
     }),
+  },
+  conflictDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F59E0B',
+  },
+  reminderPillMarker: {
+    position: 'absolute',
+    left: 2,
+    right: 2,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    zIndex: 6,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
+      },
+      android: { elevation: 3 },
+    }),
+  },
+  reminderPillText: {
+    fontSize: 8.5,
+    fontWeight: '700',
+    color: '#D97706',
+    flex: 1,
   },
   cardCornerGlow: {
     position: 'absolute',
