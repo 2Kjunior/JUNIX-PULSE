@@ -25,7 +25,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useEffect, useState } from "react";
-import { Alert, Appearance, LogBox, StyleSheet, Text, View } from "react-native";
+import { Alert, Appearance, AppState, LogBox, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -39,6 +39,7 @@ import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { NotificationService } from "@/services/notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
+import { SessionManager } from "@/services/session/SessionManager";
 import { useAppStore } from "@/store/app-store";
 import { reconcileOverdueRecurringReminders } from "@/use-cases/reminder-use-cases";
 
@@ -110,6 +111,12 @@ export default function RootLayout() {
           // Tolérance aux erreurs de réconciliation
         }
 
+        // 5. Vérifier si l'animation de démarrage doit être jouée ou ignorée (reprise de session < 15 min)
+        const needsSplash = await SessionManager.shouldPlayLaunchSplash();
+        if (!needsSplash) {
+          setSplashFinished(true);
+        }
+
         setDbReady(true);
       } catch (error) {
         const message =
@@ -129,6 +136,18 @@ export default function RootLayout() {
     Appearance.setColorScheme(themeMode === "system" ? "unspecified" : mode);
     SystemUI.setBackgroundColorAsync(surface.base).catch(() => {});
   }, [themeMode, mode, surface.base]);
+
+  // Suivi du cycle de vie de l'application (AppState active/background) pour la session et l'inactivité
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        SessionManager.recordActive();
+      } else if (nextAppState === "background") {
+        SessionManager.recordBackground();
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
 
 

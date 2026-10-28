@@ -10,6 +10,7 @@ import {
     AccessibilityInfo,
     BackHandler,
     Platform,
+    Pressable,
     StyleSheet,
     useWindowDimensions,
     View,
@@ -339,7 +340,12 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
   const logoImageSource = require("../../../assets/images/splash-icon.png");
 
   return (
-    <View style={styles.container}>
+    <Pressable
+      style={styles.container}
+      onPress={handleFinish}
+      accessibilityRole="button"
+      accessibilityLabel="Passer l'animation de démarrage"
+    >
       <Animated.View style={[styles.stageWrapper, { width: stageSize, height: stageSize }, animatedAllStyle]}>
         {/* Calque 1 : Symbole et Anneau (animés en scale / beat / enter) */}
         <Animated.View style={[StyleSheet.absoluteFill, animatedSymStyle]}>
@@ -471,7 +477,7 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
           </Svg>
         </Animated.View>
       </Animated.View>
-    </View>
+    </Pressable>
   );
 }
 
