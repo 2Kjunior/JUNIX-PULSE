@@ -24,7 +24,7 @@ import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Appearance, LogBox, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -33,6 +33,7 @@ import { Snackbar } from "@/components/feedback/Snackbar";
 import { AnimatedBackgroundGlow } from "@/components/ui/AnimatedBackgroundGlow";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
+import { SplashAnimation } from "@/features/launch/SplashAnimation";
 import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
@@ -76,6 +77,7 @@ export default function RootLayout() {
   });
 
   const appReady = fontsLoaded || !!fontError;
+  const [splashFinished, setSplashFinished] = useState(false);
 
   useEffect(() => {
     // Option A : Masquer le splash natif une fois que les polices ET la base sont prêtes (DEF-06)
@@ -113,7 +115,7 @@ export default function RootLayout() {
           error instanceof Error ? error.message : "Erreur base de données";
         setDbError(message);
       } finally {
-        // Révéler l'application sans écran bloqué
+        // Révéler le Splash animé Junix Pulse dès que les polices & runtime sont prêts
         await SplashScreen.hideAsync().catch(() => {});
       }
     }
@@ -131,7 +133,7 @@ export default function RootLayout() {
 
   // Redirection onboarding vs application principale
   useEffect(() => {
-    if (!appReady || (!dbReady && !dbError)) return;
+    if (!splashFinished || !appReady || (!dbReady && !dbError)) return;
 
     const inOnboarding = segments[0] === "(onboarding)";
 
@@ -140,7 +142,7 @@ export default function RootLayout() {
     } else if (onboardingComplete && inOnboarding) {
       router.replace("/(tabs)");
     }
-  }, [appReady, dbReady, dbError, onboardingComplete, segments]);
+  }, [splashFinished, appReady, dbReady, dbError, onboardingComplete, segments]);
 
   // Écouteurs de notifications pour navigation directe & snooze
   useEffect(() => {
@@ -269,6 +271,10 @@ export default function RootLayout() {
         </Stack>
         {/* Snackbar global (au-dessus de tout le contenu) */}
         <Snackbar />
+        {/* Animation de démarrage Junix Pulse (4 secondes, jouée en parallèle de l'initialisation) */}
+        {!splashFinished && (
+          <SplashAnimation onFinish={() => setSplashFinished(true)} />
+        )}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
