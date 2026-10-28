@@ -95,41 +95,49 @@ export default function CalendarScreen() {
       setReminders(rems);
       setTasks(tsks);
 
-      // Conversion des événements réels de la semaine en créneaux
-      const eventBlocks: PlanningBlock[] = weekEvts.flat().map(e => {
-        const s = new Date(e.startAt);
-        const end = new Date(e.endAt);
-        return {
-          id: e.id,
-          scheduleId: 'event',
-          label: e.title,
-          type: 'WORK',
-          dayOfWeek: s.getDay(),
-          startTime: format(s, 'HH:mm'),
-          endTime: format(end, 'HH:mm'),
-          color: theme.primary.default,
-          createdAt: e.createdAt,
-          updatedAt: e.updatedAt,
-        };
+      // Conversion des événements réels de la semaine en créneaux (dédoublonnés par ID)
+      const eventBlocksMap = new Map<string, PlanningBlock>();
+      weekEvts.flat().forEach(e => {
+        if (!eventBlocksMap.has(e.id)) {
+          const s = new Date(e.startAt);
+          const end = new Date(e.endAt);
+          eventBlocksMap.set(e.id, {
+            id: e.id,
+            scheduleId: 'event',
+            label: e.title,
+            type: 'WORK',
+            dayOfWeek: s.getDay(),
+            startTime: format(s, 'HH:mm'),
+            endTime: format(end, 'HH:mm'),
+            color: theme.primary.default,
+            createdAt: e.createdAt,
+            updatedAt: e.updatedAt,
+          });
+        }
       });
+      const eventBlocks = Array.from(eventBlocksMap.values());
 
-      // Conversion des rappels ponctuels de la semaine en créneaux
-      const reminderBlocks: PlanningBlock[] = weekRems.flat().map(r => {
-        const s = new Date(r.scheduledAt);
-        const end = addMinutes(s, 30);
-        return {
-          id: r.id,
-          scheduleId: 'reminder',
-          label: r.title,
-          type: 'OTHER',
-          dayOfWeek: s.getDay(),
-          startTime: format(s, 'HH:mm'),
-          endTime: format(end, 'HH:mm'),
-          color: r.priority === 'HIGH' || r.priority === 'URGENT' ? theme.priority.HIGH : theme.tertiary.default,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-        };
+      // Conversion des rappels ponctuels de la semaine en créneaux (dédoublonnés par ID)
+      const reminderBlocksMap = new Map<string, PlanningBlock>();
+      weekRems.flat().forEach(r => {
+        if (!reminderBlocksMap.has(r.id)) {
+          const s = new Date(r.scheduledAt);
+          const end = addMinutes(s, 30);
+          reminderBlocksMap.set(r.id, {
+            id: r.id,
+            scheduleId: 'reminder',
+            label: r.title,
+            type: 'OTHER',
+            dayOfWeek: s.getDay(),
+            startTime: format(s, 'HH:mm'),
+            endTime: format(end, 'HH:mm'),
+            color: r.priority === 'HIGH' || r.priority === 'URGENT' ? theme.priority.HIGH : theme.tertiary.default,
+            createdAt: r.createdAt,
+            updatedAt: r.updatedAt,
+          });
+        }
       });
+      const reminderBlocks = Array.from(reminderBlocksMap.values());
 
       // Décompte précis des tâches non terminées par jour pour le bandeau supérieur All-Day
       const taskCounts: Record<number, number> = {};
@@ -399,7 +407,7 @@ export default function CalendarScreen() {
                 </View>
                 {events.map((e, idx) => (
                   <GlowCard
-                    key={e.id}
+                    key={`agenda-event-${e.id}-${idx}`}
                     index={idx}
                     tone="primary"
                     intensity="soft"
@@ -463,7 +471,7 @@ export default function CalendarScreen() {
                 </View>
                 {reminders.map((r, idx) => (
                   <GlowCard
-                    key={r.id}
+                    key={`agenda-reminder-${r.id}-${idx}`}
                     index={idx}
                     tone="attention"
                     intensity="soft"
@@ -498,7 +506,7 @@ export default function CalendarScreen() {
                 </View>
                 {tasks.map((t, idx) => (
                   <GlowCard
-                    key={t.id}
+                    key={`agenda-task-${t.id}-${idx}`}
                     index={idx}
                     tone="neutral"
                     onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}

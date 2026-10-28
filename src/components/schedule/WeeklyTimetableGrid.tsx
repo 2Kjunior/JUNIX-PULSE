@@ -486,7 +486,7 @@ export function WeeklyTimetableGrid({
                         />
 
                         {/* 1. LAYER 0 : Blocs de vie récurrents (Fond contextuel en filigrane) */}
-                        {backgroundBlocks.map(block => {
+                        {backgroundBlocks.map((block, bIdx) => {
                           const startMin = timeToMinutes(block.startTime);
                           const endMin = timeToMinutes(block.endTime);
                           const durationMin = Math.max(15, endMin - startMin);
@@ -498,7 +498,7 @@ export function WeeklyTimetableGrid({
 
                           return (
                             <TouchableOpacity
-                              key={block.id}
+                              key={`bg-${block.id}-${d.num}-${bIdx}`}
                               style={[
                                 styles.backgroundBlockCard,
                                 {
@@ -525,13 +525,13 @@ export function WeeklyTimetableGrid({
                         })}
 
                         {/* 2. LAYER 1 : Événements réels avec Column Splitting côte-à-côte */}
-                        {positionedForeground.map(item => {
+                        {positionedForeground.map((item, itemIdx) => {
                           const { block } = item;
                           const config = getBlockStyleConfig(block.type);
 
                           return (
                             <TouchableOpacity
-                              key={block.id}
+                              key={`fg-${block.id}-${d.num}-${item.colIndex}-${itemIdx}`}
                               style={[
                                 styles.blockCard,
                                 {
@@ -587,14 +587,14 @@ export function WeeklyTimetableGrid({
                         })}
 
                         {/* 3. LAYER 2 : Rappels ponctuels (Pastilles compactes sans durée artificielle) */}
-                        {reminderBlocks.map(block => {
+                        {reminderBlocks.map((block, rIdx) => {
                           const startMin = timeToMinutes(block.startTime);
                           const topPx = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
                           const clampedTop = Math.max(0, topPx);
 
                           return (
                             <TouchableOpacity
-                              key={block.id}
+                              key={`rem-${block.id}-${d.num}-${rIdx}`}
                               style={[
                                 styles.reminderPillMarker,
                                 {
