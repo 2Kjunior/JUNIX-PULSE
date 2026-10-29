@@ -133,7 +133,9 @@ export default function RootLayout() {
 
   // Synchroniser le thème avec les composants natifs et l'arrière-plan système
   useEffect(() => {
-    Appearance.setColorScheme(themeMode === "system" ? "unspecified" : mode);
+    if (typeof Appearance?.setColorScheme === "function") {
+      Appearance.setColorScheme(themeMode === "system" ? "unspecified" : mode);
+    }
     SystemUI.setBackgroundColorAsync(surface.base).catch(() => {});
   }, [themeMode, mode, surface.base]);
 

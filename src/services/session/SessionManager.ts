@@ -42,6 +42,13 @@ export const SessionManager = {
       return true;
     }
 
+    // En environnement de développement (__DEV__), autoriser le splash au démarrage pour tester l'animation
+    if (__DEV__ && process.env.NODE_ENV !== 'test') {
+      hasPlayedSplashInProcess = true;
+      memoryLastActiveAt = Date.now();
+      return true;
+    }
+
     try {
       const now = Date.now();
 
