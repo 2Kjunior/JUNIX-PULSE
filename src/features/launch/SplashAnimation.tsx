@@ -14,6 +14,7 @@
  */
 
 import { createAudioPlayer } from "expo-audio";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -451,6 +452,10 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
   });
 
   // Symbole et anneau (.sym & .beat)
+  // Origine exacte dans la viewBox 900x1600 : center (514, 447) avec minX=62, minY=-287
+  const symOriginX = sceneWidth * ((SPLASH_COORDINATES.center.x - SPLASH_COORDINATES.viewBox.minX) / SPLASH_COORDINATES.viewBox.width);
+  const symOriginY = sceneHeight * ((SPLASH_COORDINATES.center.y - SPLASH_COORDINATES.viewBox.minY) / SPLASH_COORDINATES.viewBox.height);
+
   const animatedSymStyle = useAnimatedStyle(() => {
     const opacity = interpolate(enterProgress.value, [0, 1], [0, 1]);
     const scaleEnter = interpolate(enterProgress.value, [0, 1], [0.9, 1.0]);
@@ -469,19 +474,31 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
       }
     }
 
+    const scale = scaleEnter * scaleBeat;
+
     return {
       opacity,
-      transform: [{ scale: scaleEnter * scaleBeat }],
+      transform: [
+        { translateX: symOriginX },
+        { translateY: symOriginY },
+        { scale },
+        { translateX: -symOriginX },
+        { translateY: -symOriginY },
+      ],
     };
   });
 
-  // Texte "JUNIX PULSE" (.tm : montée de 26px)
+  // Texte "JUNIX PULSE" (.tm : montée de 26px dans la hauteur du viewBox 1600)
+  const textRiseScaled =
+    SPLASH_COORDINATES.textRisePx *
+    (sceneHeight / SPLASH_COORDINATES.viewBox.height);
+
   const animatedTextStyle = useAnimatedStyle(() => {
     const opacity = interpolate(textRiseProgress.value, [0, 1], [0, 1]);
     const translateY = interpolate(
       textRiseProgress.value,
       [0, 1],
-      [SPLASH_COORDINATES.textRisePx, 0]
+      [textRiseScaled, 0]
     );
     return {
       opacity,
@@ -639,9 +656,16 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
             animatedCardStyle,
           ]}
         >
+          {/* Vrai flou matériel de verre liquide (expo-blur, intensité ~60 conforme au brief) */}
+          <BlurView
+            intensity={60}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
+
           {/* Dégradé translucide de verre (62% vers 22%) */}
           <LinearGradient
-            colors={["rgba(255,255,255,0.62)", "rgba(255,255,255,0.22)"]}
+            colors={["rgba(255,255,255,0.48)", "rgba(255,255,255,0.18)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
