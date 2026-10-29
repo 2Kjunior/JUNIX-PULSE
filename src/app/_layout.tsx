@@ -224,7 +224,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <AnimatedBackgroundGlow />
       <SafeAreaProvider>
-        <StatusBar style={isDark ? "light" : "dark"} />
+        <StatusBar style={!splashFinished ? "dark" : (isDark ? "light" : "dark")} />
         <Stack
           screenOptions={{
             headerShown: false,
