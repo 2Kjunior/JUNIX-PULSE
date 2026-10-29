@@ -10,6 +10,7 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
 
 /** Durée maximale d'inactivité avant de considérer qu'il s'agit d'une nouvelle session (15 minutes) */
@@ -31,6 +32,14 @@ export const SessionManager = {
     // Si le splash a déjà été joué dans ce process JS en cours, ne jamais le rejouer
     if (hasPlayedSplashInProcess) {
       return false;
+    }
+
+    // Sur Web (PC / navigateur), chaque rechargement de page est un démarrage à froid
+    // pour permettre de visualiser et tester l'animation de lancement
+    if (Platform.OS === 'web') {
+      hasPlayedSplashInProcess = true;
+      memoryLastActiveAt = Date.now();
+      return true;
     }
 
     try {
@@ -78,6 +87,16 @@ export const SessionManager = {
   async recordActive(): Promise<void> {
     const now = Date.now();
     memoryLastActiveAt = now;
+    if (Platform.OS === 'web') {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY_LAST_ACTIVE, String(now));
+        }
+      } catch {
+        // Silencieux
+      }
+      return;
+    }
     try {
       await SecureStore.setItemAsync(STORAGE_KEY_LAST_ACTIVE, String(now));
     } catch {
