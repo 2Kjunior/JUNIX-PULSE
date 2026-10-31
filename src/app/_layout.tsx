@@ -80,6 +80,8 @@ export default function RootLayout() {
 
   const appReady = fontsLoaded || !!fontError;
   const [splashFinished, setSplashFinished] = useState(false);
+  // Le splash animé n'est monté qu'après la décision (jamais de clignotement à la reprise de session)
+  const [splashPlaying, setSplashPlaying] = useState(false);
 
   useEffect(() => {
     // Option A : Masquer le splash natif une fois que les polices ET la base sont prêtes (DEF-06)
@@ -87,6 +89,17 @@ export default function RootLayout() {
 
     async function initialize() {
       try {
+        // 0. Décider AVANT d'afficher quoi que ce soit si l'animation doit être jouée
+        //    (premier lancement ou inactivité > 15 min) ou ignorée (reprise de session)
+        const needsSplash = await SessionManager.shouldPlayLaunchSplash();
+        if (needsSplash) {
+          setSplashPlaying(true);
+          // Masquer le splash natif (blanc) : l'animation prend le relais, l'init continue en parallèle
+          await SplashScreen.hideAsync().catch(() => {});
+        } else {
+          setSplashFinished(true);
+        }
+
         // 1. Initialiser SQLite et appliquer les migrations
         await getDatabase();
 
@@ -111,12 +124,6 @@ export default function RootLayout() {
           // Tolérance aux erreurs de réconciliation
         }
 
-        // 5. Vérifier si l'animation de démarrage doit être jouée ou ignorée (reprise de session < 15 min)
-        const needsSplash = await SessionManager.shouldPlayLaunchSplash();
-        if (!needsSplash) {
-          setSplashFinished(true);
-        }
-
         setDbReady(true);
       } catch (error) {
         const message =
@@ -133,6 +140,7 @@ export default function RootLayout() {
 
   // Synchroniser le thème avec les composants natifs et l'arrière-plan système
   useEffect(() => {
+    // Protégé : setColorScheme n'existe pas sur toutes les plateformes (ex. web)
     if (typeof Appearance?.setColorScheme === "function") {
       Appearance.setColorScheme(themeMode === "system" ? "unspecified" : mode);
     }
@@ -293,7 +301,7 @@ export default function RootLayout() {
         {/* Snackbar global (au-dessus de tout le contenu) */}
         <Snackbar />
         {/* Animation de démarrage Junix Pulse (4 secondes, jouée en parallèle de l'initialisation) */}
-        {!splashFinished && (
+        {splashPlaying && !splashFinished && (
           <SplashAnimation onFinish={() => setSplashFinished(true)} />
         )}
       </SafeAreaProvider>

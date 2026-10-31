@@ -43,6 +43,7 @@ import Svg, {
   G,
   Image as SvgImage,
   LinearGradient as SvgLinearGradient,
+  Mask,
   RadialGradient,
   Rect,
   Stop,
@@ -65,6 +66,7 @@ interface SplashAnimationProps {
 export function SplashAnimation({ onFinish }: SplashAnimationProps) {
   const { width, height } = useWindowDimensions();
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [reduceTransparency, setReduceTransparency] = useState(false);
   const finishCalledRef = useRef(false);
 
   // Sécurité pour n'appeler onFinish qu'une seule fois
@@ -118,6 +120,17 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => setReduceMotion(enabled))
       .catch(() => {});
+  }, []);
+
+  // Accessibilité "Réduire la transparence" (iOS) : repli opaque sans flou
+  useEffect(() => {
+    try {
+      AccessibilityInfo.isReduceTransparencyEnabled?.()
+        .then((enabled) => setReduceTransparency(Boolean(enabled)))
+        .catch(() => {});
+    } catch {
+      // Silencieux
+    }
   }, []);
 
   // Désactivation retour arrière physique sur Android
@@ -324,8 +337,8 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     return {
       opacity: orb1Opacity.value,
       transform: [
-        { translateX: -sceneWidth * 0.60 / 2 + driftX },
-        { translateY: -sceneWidth * 0.60 / 2 + driftY },
+        { translateX: -sceneWidth * 0.52 / 2 + driftX },
+        { translateY: -sceneWidth * 0.52 / 2 + driftY },
       ],
     };
   });
@@ -336,8 +349,8 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     return {
       opacity: orb2Opacity.value,
       transform: [
-        { translateX: -sceneWidth * 0.56 / 2 + driftX },
-        { translateY: -sceneWidth * 0.56 / 2 + driftY },
+        { translateX: -sceneWidth * 0.48 / 2 + driftX },
+        { translateY: -sceneWidth * 0.48 / 2 + driftY },
       ],
     };
   });
@@ -348,8 +361,8 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     return {
       opacity: orb3Opacity.value,
       transform: [
-        { translateX: -sceneWidth * 0.36 / 2 + driftX },
-        { translateY: -sceneWidth * 0.36 / 2 + driftY },
+        { translateX: -sceneWidth * 0.30 / 2 + driftX },
+        { translateY: -sceneWidth * 0.30 / 2 + driftY },
       ],
     };
   });
@@ -452,10 +465,6 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
   });
 
   // Symbole et anneau (.sym & .beat)
-  // Origine exacte dans la viewBox 900x1600 : center (514, 447) avec minX=62, minY=-287
-  const symOriginX = sceneWidth * ((SPLASH_COORDINATES.center.x - SPLASH_COORDINATES.viewBox.minX) / SPLASH_COORDINATES.viewBox.width);
-  const symOriginY = sceneHeight * ((SPLASH_COORDINATES.center.y - SPLASH_COORDINATES.viewBox.minY) / SPLASH_COORDINATES.viewBox.height);
-
   const animatedSymStyle = useAnimatedStyle(() => {
     const opacity = interpolate(enterProgress.value, [0, 1], [0, 1]);
     const scaleEnter = interpolate(enterProgress.value, [0, 1], [0.9, 1.0]);
@@ -474,31 +483,19 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
       }
     }
 
-    const scale = scaleEnter * scaleBeat;
-
     return {
       opacity,
-      transform: [
-        { translateX: symOriginX },
-        { translateY: symOriginY },
-        { scale },
-        { translateX: -symOriginX },
-        { translateY: -symOriginY },
-      ],
+      transform: [{ scale: scaleEnter * scaleBeat }],
     };
   });
 
-  // Texte "JUNIX PULSE" (.tm : montée de 26px dans la hauteur du viewBox 1600)
-  const textRiseScaled =
-    SPLASH_COORDINATES.textRisePx *
-    (sceneHeight / SPLASH_COORDINATES.viewBox.height);
-
+  // Texte "JUNIX PULSE" (.tm : montée de 26px)
   const animatedTextStyle = useAnimatedStyle(() => {
     const opacity = interpolate(textRiseProgress.value, [0, 1], [0, 1]);
     const translateY = interpolate(
       textRiseProgress.value,
       [0, 1],
-      [textRiseScaled, 0]
+      [SPLASH_COORDINATES.textRisePx, 0]
     );
     return {
       opacity,
@@ -506,7 +503,16 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     };
   });
 
-  const logoImageSource = require("../../../assets/images/splash-icon.png");
+  // Logo 1024x1024 100 % transparent, bords nettoyés (aucune frange claire)
+  const logoImageSource = require("../../../assets/images/junix-pulse-logo-transparent.png");
+
+  // Flou matériel uniquement sur iOS (repli sans flou sur Android / transparence réduite)
+  const useBlur = Platform.OS === "ios" && !reduceTransparency;
+  const glassColors: [string, string] = reduceTransparency
+    ? ["rgba(255,255,255,0.82)", "rgba(255,255,255,0.82)"]
+    : useBlur
+      ? ["rgba(255,255,255,0.48)", "rgba(255,255,255,0.18)"]
+      : ["rgba(255,255,255,0.62)", "rgba(255,255,255,0.22)"];
 
   return (
     <Pressable
@@ -531,8 +537,8 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
             {
               left: "20%",
               top: "58%",
-              width: sceneWidth * 0.60,
-              height: sceneWidth * 0.60,
+              width: sceneWidth * 0.52,
+              height: sceneWidth * 0.52,
             },
             animatedOrb1Style,
           ]}
@@ -543,23 +549,17 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
                 id="gradOrb1"
                 cx="35%"
                 cy="35%"
-                rx="75%"
-                ry="75%"
+                rx="50%"
+                ry="50%"
                 fx="35%"
                 fy="35%"
               >
-                <Stop offset="0%" stopColor="#8B3DF0" stopOpacity="0.9" />
-                <Stop offset="38%" stopColor="#8B3DF0" stopOpacity="0.45" />
-                <Stop offset="72%" stopColor="#8B3DF0" stopOpacity="0" />
+                <Stop offset="0%" stopColor="#8B3DF0" stopOpacity="0.85" />
+                <Stop offset="38%" stopColor="#8B3DF0" stopOpacity="0.38" />
+                <Stop offset="68%" stopColor="#8B3DF0" stopOpacity="0" />
               </RadialGradient>
             </Defs>
-            <Rect
-              width="100%"
-              height="100%"
-              rx={sceneWidth * 0.30}
-              ry={sceneWidth * 0.30}
-              fill="url(#gradOrb1)"
-            />
+            <Circle cx="50%" cy="50%" r="50%" fill="url(#gradOrb1)" />
           </Svg>
         </Animated.View>
 
@@ -571,8 +571,8 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
             {
               left: "80%",
               top: "37%",
-              width: sceneWidth * 0.56,
-              height: sceneWidth * 0.56,
+              width: sceneWidth * 0.48,
+              height: sceneWidth * 0.48,
             },
             animatedOrb2Style,
           ]}
@@ -583,23 +583,17 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
                 id="gradOrb2"
                 cx="60%"
                 cy="40%"
-                rx="75%"
-                ry="75%"
+                rx="50%"
+                ry="50%"
                 fx="60%"
                 fy="40%"
               >
-                <Stop offset="0%" stopColor="#0AE8F0" stopOpacity="0.9" />
-                <Stop offset="38%" stopColor="#0AE8F0" stopOpacity="0.45" />
-                <Stop offset="72%" stopColor="#0AE8F0" stopOpacity="0" />
+                <Stop offset="0%" stopColor="#0AE8F0" stopOpacity="0.85" />
+                <Stop offset="38%" stopColor="#0AE8F0" stopOpacity="0.38" />
+                <Stop offset="68%" stopColor="#0AE8F0" stopOpacity="0" />
               </RadialGradient>
             </Defs>
-            <Rect
-              width="100%"
-              height="100%"
-              rx={sceneWidth * 0.28}
-              ry={sceneWidth * 0.28}
-              fill="url(#gradOrb2)"
-            />
+            <Circle cx="50%" cy="50%" r="50%" fill="url(#gradOrb2)" />
           </Svg>
         </Animated.View>
 
@@ -611,8 +605,8 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
             {
               left: "34%",
               top: "30%",
-              width: sceneWidth * 0.36,
-              height: sceneWidth * 0.36,
+              width: sceneWidth * 0.30,
+              height: sceneWidth * 0.30,
             },
             animatedOrb3Style,
           ]}
@@ -623,22 +617,16 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
                 id="gradOrb3"
                 cx="50%"
                 cy="50%"
-                rx="65%"
-                ry="65%"
+                rx="50%"
+                ry="50%"
                 fx="50%"
                 fy="50%"
               >
-                <Stop offset="0%" stopColor="#8B3DF0" stopOpacity="0.6" />
-                <Stop offset="68%" stopColor="#8B3DF0" stopOpacity="0" />
+                <Stop offset="0%" stopColor="#8B3DF0" stopOpacity="0.55" />
+                <Stop offset="66%" stopColor="#8B3DF0" stopOpacity="0" />
               </RadialGradient>
             </Defs>
-            <Rect
-              width="100%"
-              height="100%"
-              rx={sceneWidth * 0.18}
-              ry={sceneWidth * 0.18}
-              fill="url(#gradOrb3)"
-            />
+            <Circle cx="50%" cy="50%" r="50%" fill="url(#gradOrb3)" />
           </Svg>
         </Animated.View>
 
@@ -656,28 +644,32 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
             animatedCardStyle,
           ]}
         >
-          {/* Vrai flou matériel de verre liquide (expo-blur, intensité ~60 conforme au brief) */}
-          <BlurView
-            intensity={60}
-            tint="light"
-            style={StyleSheet.absoluteFill}
-          />
+          {/* Flou d'arrière-plan du verre liquide (expo-blur, intensité ~60) */}
+          {useBlur && (
+            <BlurView
+              intensity={60}
+              tint="light"
+              style={StyleSheet.absoluteFill}
+            />
+          )}
 
           {/* Dégradé translucide de verre (62% vers 22%) */}
           <LinearGradient
-            colors={["rgba(255,255,255,0.48)", "rgba(255,255,255,0.18)"]}
+            colors={glassColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
 
-          {/* Reflet ambiant diffusé des orbes dans le verre (glassmorphism glow) */}
-          <LinearGradient
-            colors={["rgba(10,232,240,0.18)", "transparent", "rgba(139,61,240,0.18)"]}
-            start={{ x: 0.9, y: 0.1 }}
-            end={{ x: 0.1, y: 0.9 }}
-            style={StyleSheet.absoluteFill}
-          />
+          {/* Reflet ambiant des orbes dans le verre (cyan / violet) */}
+          {!reduceTransparency && (
+            <LinearGradient
+              colors={["rgba(10,232,240,0.18)", "transparent", "rgba(139,61,240,0.18)"]}
+              start={{ x: 0.9, y: 0.1 }}
+              end={{ x: 0.1, y: 0.9 }}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
 
           {/* Reflet lumineux en haut à gauche (.card::before) */}
           <LinearGradient
@@ -687,7 +679,7 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
             style={[StyleSheet.absoluteFill, { opacity: 0.7 }]}
           />
 
-          {/* Liseré / reflet cyan intérieur en bas (.card inset 0 -14px 30px rgba(10,232,240,.10)) */}
+          {/* Liseré cyan intérieur en bas (inset 0 -14px 30px rgba(10,232,240,.10)) */}
           <LinearGradient
             colors={["transparent", "rgba(10,232,240,0.14)"]}
             start={{ x: 0.5, y: 0.65 }}
@@ -730,8 +722,14 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
                   <Stop offset="1" stopColor={SPLASH_COLORS.cyan} />
                 </SvgLinearGradient>
 
+                {/* Dégradé doux de bord de balayage */}
+                <SvgLinearGradient id="soft" x1="0" y1="0" x2="1" y2="0">
+                  <Stop offset="0.88" stopColor="#FFFFFF" />
+                  <Stop offset="1" stopColor="#000000" />
+                </SvgLinearGradient>
+
                 {/* Découpe intérieure circulaire (r=212) */}
-                <ClipPath id="clipInner">
+                <ClipPath id="inner">
                   <Circle
                     cx={SPLASH_COORDINATES.center.x}
                     cy={SPLASH_COORDINATES.center.y}
@@ -739,15 +737,49 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
                   />
                 </ClipPath>
 
-                {/* Clip du balayage intérieur animé de gauche à droite */}
-                <ClipPath id="clipInnerWipe">
-                  <AnimatedRect
-                    x={SPLASH_COORDINATES.innerWipe.x}
-                    y={SPLASH_COORDINATES.innerWipe.y}
-                    height={SPLASH_COORDINATES.innerWipe.height}
-                    animatedProps={animatedInnerWipeProps}
+                {/* Masque 1 : Tracé de l'anneau (#mRing) */}
+                <Mask
+                  id="mRing"
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
+                  width="1024"
+                  height="1024"
+                >
+                  <Rect width="1024" height="1024" fill="#000000" />
+                  <AnimatedCircle
+                    cx={SPLASH_COORDINATES.center.x}
+                    cy={SPLASH_COORDINATES.center.y}
+                    r={SPLASH_COORDINATES.ringRadius}
+                    stroke="#FFFFFF"
+                    strokeWidth={SPLASH_COLORS.ringStroke}
+                    strokeDasharray={`${ringCircumference}`}
+                    fill="none"
+                    transform={`rotate(180 ${SPLASH_COORDINATES.center.x} ${SPLASH_COORDINATES.center.y})`}
+                    animatedProps={animatedRingProps}
                   />
-                </ClipPath>
+                </Mask>
+
+                {/* Masque 2 : Balayage intérieur pulse & P (#mIn) */}
+                <Mask
+                  id="mIn"
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
+                  width="1024"
+                  height="1024"
+                >
+                  <Rect width="1024" height="1024" fill="#000000" />
+                  <G clipPath="url(#inner)">
+                    <AnimatedRect
+                      x={SPLASH_COORDINATES.innerWipe.x}
+                      y={SPLASH_COORDINATES.innerWipe.y}
+                      height={SPLASH_COORDINATES.innerWipe.height}
+                      fill="url(#soft)"
+                      animatedProps={animatedInnerWipeProps}
+                    />
+                  </G>
+                </Mask>
               </Defs>
 
               {/* Ondes dégradées d'impact (ripples) */}
@@ -768,28 +800,21 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
                 animatedProps={animatedRipple2Props}
               />
 
-              {/* Anneau tracé avec dégradé vectoriel violet-cyan (0.15s à 1.4s) */}
-              <AnimatedCircle
-                cx={SPLASH_COORDINATES.center.x}
-                cy={SPLASH_COORDINATES.center.y}
-                r={SPLASH_COORDINATES.ringRadius}
-                stroke="url(#gr)"
-                strokeWidth={24}
-                strokeDasharray={`${ringCircumference}`}
-                fill="none"
-                transform={`rotate(180 ${SPLASH_COORDINATES.center.x} ${SPLASH_COORDINATES.center.y})`}
-                animatedProps={animatedRingProps}
+              {/* Logo : Anneau révélé */}
+              <SvgImage
+                href={logoImageSource}
+                width="1024"
+                height="1024"
+                mask="url(#mRing)"
               />
 
-              {/* Intérieur : Pulse + P balayé de gauche à droite (0.95s à 2.0s) */}
-              <G clipPath="url(#clipInner)">
-                <SvgImage
-                  href={logoImageSource}
-                  width="1024"
-                  height="1024"
-                  clipPath="url(#clipInnerWipe)"
-                />
-              </G>
+              {/* Logo : Intérieur révélé */}
+              <SvgImage
+                href={logoImageSource}
+                width="1024"
+                height="1024"
+                mask="url(#mIn)"
+              />
             </Svg>
           </Animated.View>
 
@@ -802,21 +827,36 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
               preserveAspectRatio="xMidYMid meet"
             >
               <Defs>
-                <ClipPath id="clipTx">
+                <SvgLinearGradient id="softTx" x1="0" y1="0" x2="1" y2="0">
+                  <Stop offset="0.88" stopColor="#FFFFFF" />
+                  <Stop offset="1" stopColor="#000000" />
+                </SvgLinearGradient>
+
+                {/* Masque 3 : Balayage du texte (#mTx) */}
+                <Mask
+                  id="mTx"
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
+                  width="1024"
+                  height="1024"
+                >
+                  <Rect width="1024" height="1024" fill="#000000" />
                   <AnimatedRect
                     x={SPLASH_COORDINATES.textWipe.x}
                     y={SPLASH_COORDINATES.textWipe.y}
                     height={SPLASH_COORDINATES.textWipe.height}
+                    fill="url(#softTx)"
                     animatedProps={animatedTextWipeProps}
                   />
-                </ClipPath>
+                </Mask>
               </Defs>
 
               <SvgImage
                 href={logoImageSource}
                 width="1024"
                 height="1024"
-                clipPath="url(#clipTx)"
+                mask="url(#mTx)"
               />
             </Svg>
           </Animated.View>
@@ -848,7 +888,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: SPLASH_COLORS.cardBorder,
-    borderTopColor: "rgba(255, 255, 255, 0.95)",
     // Ombre douce violette / élévation (conforme CSS .card box-shadow)
     ...Platform.select({
       ios: {
@@ -858,7 +897,7 @@ const styles = StyleSheet.create({
         shadowRadius: 25,
       },
       android: {
-        elevation: 12,
+        elevation: 10,
       },
     }),
   },

@@ -34,9 +34,10 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#141317",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 120
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "backgroundColor": "#FFFFFF"
+          }
         }
       ],
       "expo-sqlite",
@@ -47,13 +48,13 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#8B5CF6",
-          "sounds": ["./assets/sounds/junix-pulse-notification.wav"],
+          "sounds": ["./assets/sounds/junix_pulse_notification.wav"],
           "androidChannels": [
             {
               "name": "junix-pulse-reminders",
               "channelName": "Rappels Junix Pulse",
               "importance": "high",
-              "sound": "junix-pulse-notification.wav",
+              "sound": "junix_pulse_notification.wav",
               "vibrate": true,
               "lightColor": "#8B3DF0",
               "showBadge": false

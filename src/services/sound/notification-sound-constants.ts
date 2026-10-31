@@ -11,7 +11,7 @@ export const NOTIFICATION_SOUND_MP3 = require("../../../assets/sounds/junix-puls
  * The file must exist at assets/sounds/<NOTIFICATION_SOUND_WAV_FILENAME>.
  * iOS requires WAV/AIFF/CAF, duration < 30 s.
  */
-export const NOTIFICATION_SOUND_WAV_FILENAME = "junix-pulse-notification.wav";
+export const NOTIFICATION_SOUND_WAV_FILENAME = "junix_pulse_notification.wav";
 
 /**
  * Android notification channel ID that carries the custom sound.

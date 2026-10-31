@@ -10,13 +10,19 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
 
 /** Durée maximale d'inactivité avant de considérer qu'il s'agit d'une nouvelle session (15 minutes) */
 export const SESSION_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
 
 const STORAGE_KEY_LAST_ACTIVE = 'junix_pulse_last_active_at';
+
+/**
+ * Réglage de test : en développement (__DEV__), force le splash à chaque lancement de l'app
+ * (nouveau process JS), sans tenir compte de la règle des 15 minutes.
+ * Sans effet en production et dans les tests unitaires. Mettre à false pour le désactiver.
+ */
+export const FORCE_SPLASH_IN_DEV = true;
 
 // Cache mémoire vive (survit pendant toute la durée où le runtime JS est en vie)
 let memoryLastActiveAt: number | null = null;
@@ -34,18 +40,10 @@ export const SessionManager = {
       return false;
     }
 
-    // Sur Web (PC / navigateur), chaque rechargement de page est un démarrage à froid
-    // pour permettre de visualiser et tester l'animation de lancement
-    if (Platform.OS === 'web') {
+    // Test en développement : toujours jouer le splash au lancement de l'app
+    if (__DEV__ && FORCE_SPLASH_IN_DEV && process.env.NODE_ENV !== 'test') {
       hasPlayedSplashInProcess = true;
-      memoryLastActiveAt = Date.now();
-      return true;
-    }
-
-    // En environnement de développement (__DEV__), autoriser le splash au démarrage pour tester l'animation
-    if (__DEV__ && process.env.NODE_ENV !== 'test') {
-      hasPlayedSplashInProcess = true;
-      memoryLastActiveAt = Date.now();
+      await this.recordActive();
       return true;
     }
 
@@ -94,16 +92,6 @@ export const SessionManager = {
   async recordActive(): Promise<void> {
     const now = Date.now();
     memoryLastActiveAt = now;
-    if (Platform.OS === 'web') {
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(STORAGE_KEY_LAST_ACTIVE, String(now));
-        }
-      } catch {
-        // Silencieux
-      }
-      return;
-    }
     try {
       await SecureStore.setItemAsync(STORAGE_KEY_LAST_ACTIVE, String(now));
     } catch {
