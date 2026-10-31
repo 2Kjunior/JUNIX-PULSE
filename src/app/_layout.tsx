@@ -215,97 +215,111 @@ export default function RootLayout() {
     };
   }, []);
 
-  // Fonts pas encore prêtes ou DB en cours d'initialisation : laisser le splash natif visible
+  // Animation de démarrage Junix Pulse (4 secondes, jouée en parallèle de l'initialisation).
+  // Toujours au même emplacement (2e enfant) pour ne pas être remontée quand la base devient prête.
+  const splashOverlay =
+    splashPlaying && !splashFinished ? (
+      <SplashAnimation onFinish={() => setSplashFinished(true)} />
+    ) : null;
+
+  // Fonts pas encore prêtes ou DB en cours d'initialisation : splash natif ou animation seuls
   if (!appReady || (!dbReady && !dbError)) {
-    return null;
+    return (
+      <>
+        {null}
+        {splashOverlay}
+      </>
+    );
   }
 
   // Erreur critique de base de données
   if (dbError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Impossible de démarrer</Text>
-        <Text style={styles.errorMessage}>{dbError}</Text>
-      </View>
+      <>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Impossible de démarrer</Text>
+          <Text style={styles.errorMessage}>{dbError}</Text>
+        </View>
+        {splashOverlay}
+      </>
     );
   }
 
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <AnimatedBackgroundGlow />
-      <SafeAreaProvider>
-        <StatusBar style={!splashFinished ? "dark" : (isDark ? "light" : "dark")} />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: 'transparent' },
-          }}
-        >
-          {/* Onboarding — affiché uniquement au premier lancement */}
-          <Stack.Screen
-            name="(onboarding)"
-            options={{ animation: "fade" }}
-          />
-          {/* Application principale — redirigée si onboarding non terminé */}
-          <Stack.Screen
-            name="(tabs)"
-            options={{ animation: "fade" }}
-          />
-          {/* Routes de détail — Rappels */}
-          <Stack.Screen
-            name="reminders/index"
-            options={{ presentation: "card" }}
-          />
-          <Stack.Screen
-            name="reminders/[id]"
-            options={{ presentation: "card" }}
-          />
-          <Stack.Screen
-            name="reminders/new"
-            options={{ presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="reminders/edit/[id]"
-            options={{ presentation: "modal" }}
-          />
-          {/* Tâches */}
-          <Stack.Screen name="tasks/[id]" options={{ presentation: "card" }} />
-          <Stack.Screen name="tasks/new" options={{ presentation: "modal" }} />
-          {/* Personnes */}
-          <Stack.Screen name="people/[id]" options={{ presentation: "card" }} />
-          <Stack.Screen name="people/new" options={{ presentation: "modal" }} />
-          {/* Événements */}
-          <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
-          <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
-          {/* Habitudes */}
-          <Stack.Screen
-            name="habits/index"
-            options={{ presentation: "card" }}
-          />
-          <Stack.Screen name="habits/[id]" options={{ presentation: "card" }} />
-          <Stack.Screen name="habits/new" options={{ presentation: "modal" }} />
-          {/* Objectifs */}
-          <Stack.Screen name="goals/index" options={{ presentation: "card" }} />
-          <Stack.Screen name="goals/[id]" options={{ presentation: "card" }} />
-          <Stack.Screen name="goals/new" options={{ presentation: "modal" }} />
-          {/* Paramètres */}
-          <Stack.Screen
-            name="settings/index"
-            options={{ presentation: "card" }}
-          />
-          {/* Modules transversaux (Vague 9) */}
-          <Stack.Screen name="capture" options={{ presentation: "modal" }} />
-          <Stack.Screen name="sanctum" options={{ presentation: "card" }} />
-          <Stack.Screen name="search" options={{ presentation: "card" }} />
-        </Stack>
-        {/* Snackbar global (au-dessus de tout le contenu) */}
-        <Snackbar />
-        {/* Animation de démarrage Junix Pulse (4 secondes, jouée en parallèle de l'initialisation) */}
-        {splashPlaying && !splashFinished && (
-          <SplashAnimation onFinish={() => setSplashFinished(true)} />
-        )}
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <>
+      <GestureHandlerRootView style={styles.root}>
+        <AnimatedBackgroundGlow />
+        <SafeAreaProvider>
+          <StatusBar style={!splashFinished ? "dark" : (isDark ? "light" : "dark")} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: 'transparent' },
+            }}
+          >
+            {/* Onboarding — affiché uniquement au premier lancement */}
+            <Stack.Screen
+              name="(onboarding)"
+              options={{ animation: "fade" }}
+            />
+            {/* Application principale — redirigée si onboarding non terminé */}
+            <Stack.Screen
+              name="(tabs)"
+              options={{ animation: "fade" }}
+            />
+            {/* Routes de détail — Rappels */}
+            <Stack.Screen
+              name="reminders/index"
+              options={{ presentation: "card" }}
+            />
+            <Stack.Screen
+              name="reminders/[id]"
+              options={{ presentation: "card" }}
+            />
+            <Stack.Screen
+              name="reminders/new"
+              options={{ presentation: "modal" }}
+            />
+            <Stack.Screen
+              name="reminders/edit/[id]"
+              options={{ presentation: "modal" }}
+            />
+            {/* Tâches */}
+            <Stack.Screen name="tasks/[id]" options={{ presentation: "card" }} />
+            <Stack.Screen name="tasks/new" options={{ presentation: "modal" }} />
+            {/* Personnes */}
+            <Stack.Screen name="people/[id]" options={{ presentation: "card" }} />
+            <Stack.Screen name="people/new" options={{ presentation: "modal" }} />
+            {/* Événements */}
+            <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
+            <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
+            {/* Habitudes */}
+            <Stack.Screen
+              name="habits/index"
+              options={{ presentation: "card" }}
+            />
+            <Stack.Screen name="habits/[id]" options={{ presentation: "card" }} />
+            <Stack.Screen name="habits/new" options={{ presentation: "modal" }} />
+            {/* Objectifs */}
+            <Stack.Screen name="goals/index" options={{ presentation: "card" }} />
+            <Stack.Screen name="goals/[id]" options={{ presentation: "card" }} />
+            <Stack.Screen name="goals/new" options={{ presentation: "modal" }} />
+            {/* Paramètres */}
+            <Stack.Screen
+              name="settings/index"
+              options={{ presentation: "card" }}
+            />
+            {/* Modules transversaux (Vague 9) */}
+            <Stack.Screen name="capture" options={{ presentation: "modal" }} />
+            <Stack.Screen name="sanctum" options={{ presentation: "card" }} />
+            <Stack.Screen name="search" options={{ presentation: "card" }} />
+          </Stack>
+          {/* Snackbar global (au-dessus de tout le contenu) */}
+          <Snackbar />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+      {splashOverlay}
+    </>
   );
 }
 

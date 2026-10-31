@@ -51,7 +51,7 @@
           "sounds": ["./assets/sounds/junix_pulse_notification.wav"],
           "androidChannels": [
             {
-              "name": "junix-pulse-reminders",
+              "name": "junix-pulse-reminders-v2",
               "channelName": "Rappels Junix Pulse",
               "importance": "high",
               "sound": "junix_pulse_notification.wav",

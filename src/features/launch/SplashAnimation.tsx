@@ -24,7 +24,6 @@ import {
   Pressable,
   StyleSheet,
   useWindowDimensions,
-  View,
 } from "react-native";
 import Animated, {
   interpolate,
@@ -181,13 +180,16 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
       textRiseProgress.value = 1;
       textSweepProgress.value = 1;
 
-      setTimeout(() => {
+      const exitTimer = setTimeout(() => {
         exitProgress.value = withTiming(1, { duration: 400 }, (finished) => {
           if (finished) runOnJS(handleFinish)();
         });
       }, SPLASH_TIMINGS.reducedMotionDurationMs);
 
-      return () => clearTimeout(safetyTimer);
+      return () => {
+        clearTimeout(safetyTimer);
+        clearTimeout(exitTimer);
+      };
     }
 
     // 1. Orbes : apparition (0s à 0.9s) et dérive (0s à 4.0s)
@@ -464,7 +466,11 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     };
   });
 
-  // Symbole et anneau (.sym & .beat)
+  // Symbole et anneau (.sym & .beat) : transform-origin 514/447, exprimé depuis le centre de la vue
+  const { center, viewBox } = SPLASH_COORDINATES;
+  const symPivotX = sceneWidth * ((center.x - (viewBox.minX + viewBox.width / 2)) / viewBox.width);
+  const symPivotY = sceneHeight * ((center.y - (viewBox.minY + viewBox.height / 2)) / viewBox.height);
+
   const animatedSymStyle = useAnimatedStyle(() => {
     const opacity = interpolate(enterProgress.value, [0, 1], [0, 1]);
     const scaleEnter = interpolate(enterProgress.value, [0, 1], [0.9, 1.0]);
@@ -485,17 +491,25 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
 
     return {
       opacity,
-      transform: [{ scale: scaleEnter * scaleBeat }],
+      transform: [
+        { translateX: symPivotX },
+        { translateY: symPivotY },
+        { scale: scaleEnter * scaleBeat },
+        { translateX: -symPivotX },
+        { translateY: -symPivotY },
+      ],
     };
   });
 
-  // Texte "JUNIX PULSE" (.tm : montée de 26px)
+  // Texte "JUNIX PULSE" (.tm : montée de 26 unités du viewBox, soit l'équivalent à l'écran)
+  const textRiseScaled = SPLASH_COORDINATES.textRisePx * (sceneHeight / viewBox.height);
+
   const animatedTextStyle = useAnimatedStyle(() => {
     const opacity = interpolate(textRiseProgress.value, [0, 1], [0, 1]);
     const translateY = interpolate(
       textRiseProgress.value,
       [0, 1],
-      [SPLASH_COORDINATES.textRisePx, 0]
+      [textRiseScaled, 0]
     );
     return {
       opacity,
@@ -876,7 +890,6 @@ const styles = StyleSheet.create({
   },
   scene: {
     position: "relative",
-    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },

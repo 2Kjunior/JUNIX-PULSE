@@ -18,7 +18,7 @@ export const NOTIFICATION_SOUND_WAV_FILENAME = "junix_pulse_notification.wav";
  * A channel's sound can NEVER be changed after creation — always use a new ID.
  * The legacy "reminders" channel is preserved as-is.
  */
-export const NOTIFICATION_CHANNEL_ID = "junix-pulse-reminders";
+export const NOTIFICATION_CHANNEL_ID = "junix-pulse-reminders-v2";
 
 /** Human-readable label shown in Android system notification settings. */
 export const NOTIFICATION_CHANNEL_NAME = "Rappels Junix Pulse";
