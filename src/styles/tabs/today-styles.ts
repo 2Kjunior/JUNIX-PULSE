@@ -32,6 +32,13 @@ export function makeTodayStyles(theme: ThemePalette) {
       alignItems: 'center',
       justifyContent: 'space-between',
     },
+    // Compagne à côté de « Bonjour » : 60 dp de large, les bras débordent dans les marges
+    mascotButton: {
+      width: 60,
+      marginRight: Spacing.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     headerInfo: {
       flex: 1,
     },

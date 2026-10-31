@@ -26,7 +26,8 @@ export const MASCOT_LIQUID = {
 
 export const MASCOT_BOB = { amplitude: 2.5, periodMs: 3400 } as const;
 
-export const MASCOT_SIZES = [40, 48, 56, 72, 80, 96] as const;
+/** 28 px is the small mascot beside each proposal in the Pulse tab; the others are the guide's sizes. */
+export const MASCOT_SIZES = [28, 40, 48, 56, 72, 80, 96] as const;
 export type MascotSize = (typeof MASCOT_SIZES)[number];
 
 export interface MoodVisual {

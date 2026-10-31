@@ -253,9 +253,11 @@ export default function TabsLayout() {
           options={{ title: tab.title }}
         />
       ))}
+      {/* Pulse n'a pas de bouton dans la barre (elle ne dessine que TABS) mais doit rester
+          joignable : depuis SDK 58, `href: null` cache l'onglet ET redirige toute navigation vers lui. */}
       <Tabs.Screen
         name="pulse"
-        options={{ href: null }}
+        options={{ title: "Pulse" }}
       />
     </Tabs>
   );

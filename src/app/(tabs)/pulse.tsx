@@ -41,7 +41,9 @@ import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { PulseLogo } from '@/components/ui/PulseLogo';
+import { PulseMascot } from '@/features/mascot/PulseMascot';
+import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
+import { suggestionMood } from '@/domain/rules/mascot-suggestion-rules';
 import { makePulseStyles } from '@/styles/tabs/pulse-styles';
 
 // ─── Helpers visuels ─────────────────────────────────────────────────────────
@@ -101,6 +103,7 @@ export default function PulseScreen() {
   const { theme } = useTheme();
   const styles = useThemedStyles(makePulseStyles);
   const isLight = theme.mode === 'light';
+  const { mood: mascotMood } = useMascotDayMood();
 
   const [refreshing, setRefreshing] = useState(false);
   const [habitCount, setHabitCount] = useState<number | null>(null);
@@ -234,8 +237,8 @@ export default function PulseScreen() {
           {/* Anneaux vitrés derrière l'orbe */}
           <View style={styles.orbRingOuter} />
           <View style={styles.orbRing} />
-          {/* PulseLogo en mode idle : double battement toutes les 2.4s */}
-          <PulseLogo size={96} mode="idle" />
+          {/* La mascotte remplace le logo : son humeur de fond suit la journée (seul élément ambiant) */}
+          <PulseMascot mood={mascotMood} size={96} />
         </View>
 
         <Text style={styles.heroTitle}>Pulse</Text>
@@ -306,6 +309,8 @@ export default function PulseScreen() {
                         {meta.label}
                       </Text>
                     </View>
+                    {/* Mini-mascotte dont l'humeur suit le type de la proposition */}
+                    <PulseMascot mood={suggestionMood(s.type)} size={28} />
                   </View>
 
                   {/* Titre + explication */}

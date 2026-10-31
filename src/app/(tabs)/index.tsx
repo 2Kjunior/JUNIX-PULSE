@@ -18,6 +18,7 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -42,6 +43,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
+import { PulseMascot } from '@/features/mascot/PulseMascot';
+import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -62,6 +66,8 @@ export default function TodayScreen() {
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
+  const { width: windowWidth } = useWindowDimensions();
+  const { mood: mascotMood, urgentReminderId } = useMascotDayMood();
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -277,6 +283,20 @@ export default function TodayScreen() {
       <View style={styles.responsiveContainer}>
         {/* ─── 1. En-tête convivial & Statut immédiat ───────────────────────── */}
         <View style={styles.header}>
+          {/* Compagne : un appui ouvre ce qui compte, le rappel urgent sinon l'onglet Pulse */}
+          <TouchableOpacity
+            style={styles.mascotButton}
+            onPress={() =>
+              urgentReminderId
+                ? router.push(`/reminders/${urgentReminderId}` as never)
+                : router.push('/(tabs)/pulse' as never)
+            }
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={urgentReminderId ? 'Ouvrir le rappel urgent' : 'Ouvrir Pulse'}
+          >
+            <PulseMascot mood={mascotMood} size={56} />
+          </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.greeting}>
               {greeting}{displayName ? `, ${displayName}` : ''}
@@ -451,42 +471,14 @@ export default function TodayScreen() {
         {/* ─── 4. Suggestion Proactive Unique (IA locale) ─────────────────── */}
         {topSuggestion && (
           <View style={styles.sectionBlock}>
-            <View style={styles.suggestionCard}>
-              <View style={styles.suggHeaderRow}>
-                <LinearGradient
-                  colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.aiOrb}
-                >
-                  <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={styles.suggBadge}>Suggestion intelligente</Text>
-              </View>
-
-              <Text style={styles.suggTitle}>{topSuggestion.title}</Text>
-              <Text style={styles.suggExplanation}>{topSuggestion.explanation}</Text>
-
-              <View style={styles.suggActions}>
-                <TouchableOpacity
-                  style={styles.suggRefuseBtn}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                  onPress={() => handleRefuseSuggestion(topSuggestion)}
-                >
-                  <Text style={styles.suggRefuseText}>Ignorer</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.suggAcceptBtn}
-                  activeOpacity={0.8}
-                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                  onPress={() => handleAcceptSuggestion(topSuggestion)}
-                >
-                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                  <Text style={styles.suggAcceptText}>Accepter</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <MascotProposalBubble
+              suggestion={topSuggestion}
+              displayName={displayName}
+              maxWidth={Math.min(windowWidth - Spacing.lg * 2, 560)}
+              tailSide="top"
+              onAccept={() => handleAcceptSuggestion(topSuggestion)}
+              onRefuse={() => handleRefuseSuggestion(topSuggestion)}
+            />
           </View>
         )}
 

@@ -11,6 +11,12 @@ import { PersonUseCases } from './person-use-cases';
 import { HabitUseCases } from './habit-use-cases';
 import { snoozeReminder } from './reminder-use-cases';
 import { Suggestion } from '../domain/entities';
+import { daysSinceLastInteraction } from '../domain/rules/person-rules';
+import {
+  forgottenContactData,
+  missedReminderData,
+  streakAtRiskData,
+} from '../domain/rules/mascot-suggestion-rules';
 
 export const SuggestionUseCases = {
   /**
@@ -36,6 +42,10 @@ export const SuggestionUseCases = {
             explanation: `Vous n'avez pas interagi avec ${person.displayName} depuis plus de ${person.forgottenThresholdDays} jours.`,
             targetId: person.id,
             targetType: 'person',
+            proposedData: forgottenContactData(
+              person.displayName,
+              daysSinceLastInteraction(person.lastInteractionAt) ?? person.forgottenThresholdDays
+            ),
             generatedAt: now,
             createdAt: now,
           };
@@ -60,6 +70,7 @@ export const SuggestionUseCases = {
             explanation: `Ce rappel n'a pas été validé à l'heure prévue. Voulez-vous le reporter à demain même heure ?`,
             targetId: rem.id,
             targetType: 'reminder',
+            proposedData: missedReminderData(rem.title, new Date(rem.scheduledAt)),
             generatedAt: now,
             createdAt: now,
           };
@@ -89,6 +100,7 @@ export const SuggestionUseCases = {
             explanation: `Vous avez actuellement une série de ${item.currentStreak} jours. N'oubliez pas de la valider aujourd'hui !`,
             targetId: item.habit.id,
             targetType: 'habit',
+            proposedData: streakAtRiskData(item.habit.title, item.currentStreak),
             generatedAt: now,
             createdAt: now,
           };

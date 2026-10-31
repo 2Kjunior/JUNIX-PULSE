@@ -23,7 +23,15 @@ import {
   MascotTone,
 } from '@/domain/rules/mascot-preferences';
 import type { MascotReactionLevel } from '@/domain/rules/mascot-reaction-rules';
+import type { Suggestion } from '@/domain/entities';
+import {
+  forgottenContactData,
+  missedReminderData,
+  streakAtRiskData,
+  suggestionMood,
+} from '@/domain/rules/mascot-suggestion-rules';
 import { MascotBubble } from '@/features/mascot/MascotBubble';
+import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
 import { MascotReactionTrigger, PulseMascot } from '@/features/mascot/PulseMascot';
 import { PulseMascotMover } from '@/features/mascot/PulseMascotMover';
 import { MASCOT_SIZES } from '@/features/mascot/mascot-visuals';
@@ -65,6 +73,29 @@ const SAMPLE_MESSAGES: readonly { id: MascotMessageId; params: Record<string, st
 ];
 
 const SAMPLE_NAME = 'Awa';
+
+const NOW_ISO = new Date().toISOString();
+
+/** Suggestions as the engine now creates them, with the parameters the mascot phrases them from. */
+const SAMPLE_SUGGESTIONS: readonly Suggestion[] = [
+  {
+    id: 'demo-contact', type: 'FORGOTTEN_CONTACT', status: 'PENDING', title: 'Prendre des nouvelles de Paul',
+    explanation: '', proposedData: forgottenContactData('Paul', 31), generatedAt: NOW_ISO, createdAt: NOW_ISO,
+  },
+  {
+    id: 'demo-reminder', type: 'RESCHEDULE_REMINDER', status: 'PENDING', title: 'Replanifier le rappel',
+    explanation: '', proposedData: missedReminderData('Appeler papa', new Date(2026, 0, 1, 9, 0)),
+    generatedAt: NOW_ISO, createdAt: NOW_ISO,
+  },
+  {
+    id: 'demo-habit', type: 'HABIT_REMINDER', status: 'PENDING', title: 'Maintenir la série',
+    explanation: '', proposedData: streakAtRiskData('Lecture', 6), generatedAt: NOW_ISO, createdAt: NOW_ISO,
+  },
+  {
+    id: 'demo-old', type: 'FORGOTTEN_CONTACT', status: 'PENDING', title: 'Marc n\'a pas eu de nouvelles depuis 35 jours',
+    explanation: '', generatedAt: NOW_ISO, createdAt: NOW_ISO,
+  },
+];
 
 interface ChipProps {
   label: string;
@@ -203,6 +234,23 @@ function MascotLab() {
             </View>
           ) : null;
         })}
+
+        <Text style={styles.section}>Propositions</Text>
+        <Text style={styles.note}>La dernière n'a pas de paramètres : la mascotte reprend alors son titre enregistré.</Text>
+        {SAMPLE_SUGGESTIONS.map(suggestion => (
+          <View key={suggestion.id} style={styles.bubbleRow}>
+            <PulseMascot mood={suggestionMood(suggestion.type)} size={40} />
+            <MascotProposalBubble
+              suggestion={suggestion}
+              displayName={SAMPLE_NAME}
+              preferences={preferences}
+              maxWidth={bubbleWidth - 40}
+              tailSide="left"
+              onAccept={() => react('medium')}
+              onRefuse={() => react('micro')}
+            />
+          </View>
+        ))}
 
         <Text style={styles.section}>Déplacement du guide</Text>
         <Text style={styles.note}>
