@@ -56,8 +56,8 @@ const PROPOSALS_CHOICES: readonly Choice<MascotProposalsLevel>[] = [
 ];
 
 const PRESENCE_HINT: Record<MascotPresence, string> = {
-  full: 'Elle réagit à tes actions et te parle avec chaleur.',
-  discreet: 'Ton sobre, et seulement les réactions marquantes.',
+  full: "Elle te suit d'un écran à l'autre, réagit à tes actions et te parle avec chaleur.",
+  discreet: "Elle te suit sur un ton sobre et ne réagit qu'aux moments marquants.",
   off: 'Elle ne se montre plus et ne dit plus rien.',
 };
 
