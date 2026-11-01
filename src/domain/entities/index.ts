@@ -24,6 +24,7 @@ import {
   MascotAddress,
   MascotProposalsLevel,
 } from '../enums';
+import type { LanguageSetting } from '../rules/language-rules';
 
 export * from '../enums';
 
@@ -287,6 +288,8 @@ export interface Settings {
   mascotProposals: MascotProposalsLevel;
   /** Résumé du matin et bilan du soir. */
   mascotBriefings: boolean;
+  /** Langue de l'application : 'auto' suit celle du téléphone, sinon 'fr' ou 'en'. */
+  language: LanguageSetting;
   createdAt: string;
   updatedAt: string;
 }

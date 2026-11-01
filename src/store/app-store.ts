@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { AppearanceMode } from '@/domain/entities';
+import type { AppLanguage, LanguageSetting } from '@/domain/rules/language-rules';
 
 // ─── Snackbar (undo de suppression, confirmations) ────────────────────────────
 
@@ -33,6 +34,11 @@ interface AppStore {
   // Thème & Apparence
   themeMode: AppearanceMode;
   setThemeMode: (mode: AppearanceMode) => void;
+
+  // Langue : le choix de la personne, et la langue qui en résulte (celle du téléphone sur « auto »)
+  languageSetting: LanguageSetting;
+  language: AppLanguage;
+  setLanguage: (setting: LanguageSetting, resolved: AppLanguage) => void;
 
   // Snackbar global
   snackbar: SnackbarState | null;
@@ -66,6 +72,11 @@ export const useAppStore = create<AppStore>((set) => ({
   // Thème & Apparence (valeur par défaut : sombre)
   themeMode: 'dark',
   setThemeMode: (mode) => set({ themeMode: mode }),
+
+  // Langue
+  languageSetting: 'auto',
+  language: 'fr',
+  setLanguage: (setting, resolved) => set({ languageSetting: setting, language: resolved }),
 
   // Snackbar
   snackbar: null,

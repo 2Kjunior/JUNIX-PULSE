@@ -40,6 +40,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { detectDeviceTimezone } from "@/services/device-timezone";
+import { applyLanguage } from "@/services/language-service";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
 import { notificationRoute } from "@/domain/rules/reminder-notification-rules";
@@ -129,6 +130,8 @@ export default function RootLayout() {
         // 2. Lire les paramètres utilisateur
         const settings = await SettingsRepository.get();
         setOnboardingComplete(settings.onboardingCompleted);
+        // La langue choisie, ou celle du téléphone sur « auto »
+        applyLanguage(settings.language);
         // Le fuseau de l'utilisateur est celui du téléphone : il suit ses déplacements
         const deviceTimezone = detectDeviceTimezone();
         setUserTimezone(deviceTimezone);

@@ -37,11 +37,14 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 
 import { parseQuickCapture } from '@/domain/rules/capture-rules';
-import { callAdvice, WEEKDAY_NAMES_FR } from '@/domain/rules/person-availability-rules';
+import { callAdvice } from '@/domain/rules/person-availability-rules';
+import { useT } from '@/i18n';
+import { WEEKDAY_KEYS } from '@/i18n/weekdays';
 
 export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();
   const { userTimezone, showSnackbar } = useAppStore();
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeQuickCaptureStyles);
 
@@ -294,11 +297,12 @@ export default function QuickCaptureScreen() {
                 />
                 <View style={{ flex: 1, gap: 6 }}>
                   <Text style={styles.adviceText}>
-                    {advice.kind === 'info' && `À ce moment, il sera ${advice.localTime} chez ${targetPerson.displayName}.`}
+                    {advice.kind === 'info' &&
+                      t('capture.callInfo', { time: advice.localTime, name: targetPerson.displayName })}
                     {advice.kind === 'inside' &&
-                      `Il sera ${advice.localTime} chez ${targetPerson.displayName} : un bon moment pour appeler.`}
+                      t('capture.callInside', { time: advice.localTime, name: targetPerson.displayName })}
                     {advice.kind === 'outside' &&
-                      `Il sera ${advice.localTime} chez ${targetPerson.displayName}, en dehors de ses heures d’appel.`}
+                      t('capture.callOutside', { time: advice.localTime, name: targetPerson.displayName })}
                   </Text>
                   {advice.kind === 'outside' && advice.suggestion && (
                     <TouchableOpacity
@@ -307,7 +311,10 @@ export default function QuickCaptureScreen() {
                       testID="capture-use-suggested-slot"
                     >
                       <Text style={styles.adviceAction}>
-                        {`Plutôt ${WEEKDAY_NAMES_FR[advice.suggestion.here.weekday - 1]} à ${advice.suggestion.here.time} (${advice.suggestion.there.time} chez elle)`}
+                        {t('capture.callSuggestion', {
+                          here: `${t(WEEKDAY_KEYS[advice.suggestion.here.weekday - 1])} ${advice.suggestion.here.time}`,
+                          there: advice.suggestion.there.time,
+                        })}
                       </Text>
                     </TouchableOpacity>
                   )}

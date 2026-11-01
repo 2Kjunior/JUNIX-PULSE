@@ -32,6 +32,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MascotTabsLayer } from "@/features/mascot/MascotTabsLayer";
+import { MessageKey, useT } from "@/i18n";
 
 // ─── Config des onglets ────────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 interface TabConfig {
   name: string;
-  title: string;
+  titleKey: MessageKey;
   icon: IoniconName;
   iconFocused: IoniconName;
 }
@@ -47,31 +48,31 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   {
     name: "index",
-    title: "Accueil",
+    titleKey: "tab.home",
     icon: "home-outline",
     iconFocused: "home",
   },
   {
     name: "reminders",
-    title: "Rappels",
+    titleKey: "tab.reminders",
     icon: "notifications-outline",
     iconFocused: "notifications",
   },
   {
     name: "tasks",
-    title: "Tâches",
+    titleKey: "tab.tasks",
     icon: "checkmark-circle-outline",
     iconFocused: "checkmark-circle",
   },
   {
     name: "calendar",
-    title: "Planning",
+    titleKey: "tab.calendar",
     icon: "calendar-outline",
     iconFocused: "calendar",
   },
   {
     name: "people",
-    title: "Proches",
+    titleKey: "tab.people",
     icon: "people-outline",
     iconFocused: "people",
   },
@@ -86,6 +87,8 @@ interface TabItemProps {
 }
 
 function TabItem({ tab, focused, onPress }: TabItemProps) {
+  const t = useT();
+  const title = t(tab.titleKey);
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeTabsLayoutStyles);
   const pressScale = useSharedValue(1);
@@ -126,7 +129,7 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
       }}
       activeOpacity={0.9}
       accessibilityRole="button"
-      accessibilityLabel={tab.title}
+      accessibilityLabel={title}
       accessibilityState={{ selected: focused }}
     >
       <Animated.View style={[styles.tabItemContent, animatedItemStyle]}>
@@ -163,7 +166,7 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
           ellipsizeMode="tail"
           maxFontSizeMultiplier={1.2}
         >
-          {tab.title}
+          {title}
         </Text>
       </Animated.View>
     </TouchableOpacity>
@@ -245,6 +248,7 @@ function CustomTabBar({ state, navigateToTab }: CustomTabBarProps) {
 // ─── Layout principal ──────────────────────────────────────────────────────────
 
 export default function TabsLayout() {
+  const t = useT();
   return (
     <>
     <Tabs
@@ -264,7 +268,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           key={tab.name}
           name={tab.name}
-          options={{ title: tab.title }}
+          options={{ title: t(tab.titleKey) }}
         />
       ))}
       {/* Pulse n'a pas de bouton dans la barre (elle ne dessine que TABS) mais doit rester

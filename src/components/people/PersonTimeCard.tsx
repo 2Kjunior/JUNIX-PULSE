@@ -17,7 +17,10 @@ import { timezoneLabel } from '@/constants/timezones';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import type { Person } from '@/domain/entities';
-import { MomentLabel, personTimeState, WEEKDAY_NAMES_FR } from '@/domain/rules/person-availability-rules';
+import { MomentLabel, personTimeState } from '@/domain/rules/person-availability-rules';
+import { useT } from '@/i18n';
+import type { TFunction } from '@/i18n';
+import { WEEKDAY_KEYS } from '@/i18n/weekdays';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { PersonUseCases } from '@/use-cases/person-use-cases';
@@ -32,15 +35,17 @@ interface PersonTimeCardProps {
   onError: (message: string) => void;
 }
 
-function weekdayName(weekday: number): string {
-  return WEEKDAY_NAMES_FR[weekday - 1] ?? '';
+function weekdayName(t: TFunction, weekday: number): string {
+  const key = WEEKDAY_KEYS[weekday - 1];
+  return key ? t(key) : '';
 }
 
-function describeMoment(moment: MomentLabel): string {
-  return `${weekdayName(moment.weekday)} ${moment.time}`;
+function describeMoment(t: TFunction, moment: MomentLabel): string {
+  return `${weekdayName(t, moment.weekday)} ${moment.time}`;
 }
 
 export function PersonTimeCard({ person, userTimezone, onSaved, onError }: PersonTimeCardProps) {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makePersonTimeCardStyles);
   const [now, setNow] = useState(() => new Date());
@@ -70,7 +75,7 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
       setEditing(false);
       onSaved();
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Enregistrement impossible');
+      onError(e instanceof Error ? e.message : t('personTime.saveError'));
     } finally {
       setSaving(false);
     }
@@ -82,8 +87,8 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
         <View style={styles.inner}>
           <PersonTimeFields value={draft} onChange={setDraft} />
           <View style={styles.actions}>
-            <Button label="Annuler" onPress={() => setEditing(false)} variant="secondary" size="md" />
-            <Button label="Enregistrer" onPress={save} variant="primary" size="md" loading={saving} />
+            <Button label={t('personTime.cancel')} onPress={() => setEditing(false)} variant="secondary" size="md" />
+            <Button label={t('personTime.save')} onPress={save} variant="primary" size="md" loading={saving} />
           </View>
         </View>
       </GlowCard>
@@ -96,15 +101,15 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
         onPress={startEditing}
         activeOpacity={0.75}
         accessibilityRole="button"
-        accessibilityLabel="Ajouter le fuseau horaire et les heures d'appel"
+        accessibilityLabel={t('personTime.addA11y')}
         testID="person-time-add"
       >
         <GlowCard tone="neutral">
           <View style={styles.addRow}>
             <Ionicons name="earth-outline" size={20} color={palette.primary.default} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.addTitle}>Connaître l’heure chez cette personne</Text>
-              <Text style={styles.addSub}>Ajoutez sa ville et les heures où l’appeler</Text>
+              <Text style={styles.addTitle}>{t('personTime.addTitle')}</Text>
+              <Text style={styles.addSub}>{t('personTime.addSub')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
           </View>
@@ -120,14 +125,16 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
       <View style={styles.inner} testID="person-time-card">
         <View style={styles.topRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.place}>{`Chez ${person.displayName.split(' ')[0]} · ${timezoneLabel(person.timezone)}`}</Text>
+            <Text style={styles.place}>
+              {t('personTime.at', { name: person.displayName.split(' ')[0], city: timezoneLabel(person.timezone) })}
+            </Text>
             <Text style={styles.clock}>{state.localTime}</Text>
-            <Text style={styles.day}>{weekdayName(state.weekday)}</Text>
+            <Text style={styles.day}>{weekdayName(t, state.weekday)}</Text>
           </View>
           <TouchableOpacity
             onPress={startEditing}
             accessibilityRole="button"
-            accessibilityLabel="Modifier le fuseau et les heures d'appel"
+            accessibilityLabel={t('personTime.editA11y')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="create-outline" size={20} color={palette.primary.default} />
@@ -138,7 +145,7 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
           <View style={[styles.status, styles.statusOk]}>
             <Ionicons name="call-outline" size={16} color={palette.success.default} />
             <Text style={[styles.statusText, { color: palette.success.default }]}>
-              {`Disponible maintenant, jusqu’à ${state.untilTime} chez elle`}
+              {t('personTime.available', { time: state.untilTime })}
             </Text>
           </View>
         )}
@@ -148,10 +155,11 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
             <Ionicons name="moon-outline" size={16} color={palette.priority.HIGH} />
             <Text style={[styles.statusText, { color: palette.priority.HIGH }]}>
               {state.next
-                ? `Pas disponible. Prochain créneau : ${describeMoment(state.next.there)} chez elle, soit ${
-                    state.next.sameDay ? state.next.here.time : describeMoment(state.next.here)
-                  } chez vous`
-                : 'Pas disponible pour le moment'}
+                ? t('personTime.nextSlot', {
+                    there: describeMoment(t, state.next.there),
+                    here: state.next.sameDay ? state.next.here.time : describeMoment(t, state.next.here),
+                  })
+                : t('personTime.unavailable')}
             </Text>
           </View>
         )}

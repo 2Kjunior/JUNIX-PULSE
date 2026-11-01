@@ -476,5 +476,13 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE persons ADD COLUMN availability TEXT;
     `,
   },
+  {
+    version: 26,
+    name: 'add_language_setting',
+    sql: `
+      -- Langue de l application : auto suit la langue du telephone, sinon fr ou en.
+      ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'auto';
+    `,
+  },
 ];
 

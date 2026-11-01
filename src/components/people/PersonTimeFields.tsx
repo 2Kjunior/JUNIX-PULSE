@@ -15,6 +15,8 @@ import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import type { PersonAvailability } from '@/domain/entities';
 import { DEFAULT_AVAILABILITY, formatMinutes } from '@/domain/rules/person-availability-rules';
+import { useT } from '@/i18n';
+import { WEEKDAY_KEYS, WEEKDAY_SHORT_KEYS } from '@/i18n/weekdays';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 
@@ -29,20 +31,13 @@ interface PersonTimeFieldsProps {
 }
 
 /** Monday first, as the days are numbered. */
-const DAY_CHIPS: readonly { day: number; short: string; full: string }[] = [
-  { day: 1, short: 'L', full: 'lundi' },
-  { day: 2, short: 'M', full: 'mardi' },
-  { day: 3, short: 'M', full: 'mercredi' },
-  { day: 4, short: 'J', full: 'jeudi' },
-  { day: 5, short: 'V', full: 'vendredi' },
-  { day: 6, short: 'S', full: 'samedi' },
-  { day: 7, short: 'D', full: 'dimanche' },
-];
+const DAYS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
 
 const STEP_MINUTES = 30;
 const MIN_WINDOW_MINUTES = STEP_MINUTES;
 
 export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makePersonTimeStyles);
   const [listOpen, setListOpen] = useState(false);
@@ -80,17 +75,17 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>Où vit cette personne ?</Text>
+      <Text style={styles.label}>{t('personTime.where')}</Text>
       <TouchableOpacity
         style={styles.select}
         onPress={() => setListOpen(open => !open)}
         accessibilityRole="button"
-        accessibilityLabel="Choisir le fuseau horaire de la personne"
+        accessibilityLabel={t('personTime.pickA11y')}
         testID="person-timezone-select"
       >
         <Ionicons name="earth-outline" size={20} color={palette.primary.default} />
         <Text style={[styles.selectText, !timezone && styles.selectPlaceholder]}>
-          {timezone ? timezoneLabel(timezone) : 'Ajouter une ville pour connaître son heure...'}
+          {timezone ? timezoneLabel(timezone) : t('personTime.pick')}
         </Text>
         <Ionicons name={listOpen ? 'chevron-up' : 'chevron-down'} size={16} color={palette.onSurface.variant} />
       </TouchableOpacity>
@@ -113,7 +108,7 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
           })}
           {!!timezone && (
             <TouchableOpacity style={styles.chip} onPress={() => setZone(undefined)} accessibilityRole="button">
-              <Text style={styles.chipText}>Aucune</Text>
+              <Text style={styles.chipText}>{t('personTime.none')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -123,8 +118,8 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
         <View style={styles.windowBlock}>
           <View style={styles.switchRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.switchLabel}>Préciser quand l’appeler</Text>
-              <Text style={styles.hint}>Les jours et les heures où elle est disponible, chez elle</Text>
+              <Text style={styles.switchLabel}>{t('personTime.specify')}</Text>
+              <Text style={styles.hint}>{t('personTime.specifyHint')}</Text>
             </View>
             <Switch
               value={!!availability}
@@ -138,18 +133,20 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
           {!!availability && (
             <>
               <View style={styles.dayRow}>
-                {DAY_CHIPS.map(item => {
-                  const selected = availability.days.includes(item.day);
+                {DAYS.map(day => {
+                  const selected = availability.days.includes(day);
                   return (
                     <TouchableOpacity
-                      key={item.day}
+                      key={day}
                       style={[styles.dayChip, selected && styles.chipActive]}
-                      onPress={() => toggleDay(item.day)}
+                      onPress={() => toggleDay(day)}
                       accessibilityRole="button"
-                      accessibilityLabel={item.full}
+                      accessibilityLabel={t(WEEKDAY_KEYS[day - 1])}
                       accessibilityState={{ selected }}
                     >
-                      <Text style={[styles.chipText, selected && styles.chipTextActive]}>{item.short}</Text>
+                      <Text style={[styles.chipText, selected && styles.chipTextActive]}>
+                        {t(WEEKDAY_SHORT_KEYS[day - 1])}
+                      </Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -157,13 +154,13 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
 
               <View style={styles.hoursRow}>
                 <Stepper
-                  label="De"
+                  label={t('personTime.from')}
                   text={formatMinutes(availability.startMinutes)}
                   onLess={() => moveStart(-STEP_MINUTES)}
                   onMore={() => moveStart(STEP_MINUTES)}
                 />
                 <Stepper
-                  label="À"
+                  label={t('personTime.to')}
                   text={formatMinutes(availability.endMinutes)}
                   onLess={() => moveEnd(-STEP_MINUTES)}
                   onMore={() => moveEnd(STEP_MINUTES)}
@@ -185,6 +182,7 @@ interface StepperProps {
 }
 
 function Stepper({ label, text, onLess, onMore }: StepperProps) {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makePersonTimeStyles);
   return (
@@ -194,7 +192,7 @@ function Stepper({ label, text, onLess, onMore }: StepperProps) {
         style={styles.stepperBtn}
         onPress={onLess}
         accessibilityRole="button"
-        accessibilityLabel={`${label} : une demi-heure plus tôt`}
+        accessibilityLabel={`${label} : ${t('personTime.earlier')}`}
       >
         <Ionicons name="remove" size={18} color={palette.primary.default} />
       </TouchableOpacity>
@@ -203,7 +201,7 @@ function Stepper({ label, text, onLess, onMore }: StepperProps) {
         style={styles.stepperBtn}
         onPress={onMore}
         accessibilityRole="button"
-        accessibilityLabel={`${label} : une demi-heure plus tard`}
+        accessibilityLabel={`${label} : ${t('personTime.later')}`}
       >
         <Ionicons name="add" size={18} color={palette.primary.default} />
       </TouchableOpacity>

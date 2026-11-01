@@ -13,6 +13,7 @@ import {
   Settings,
 } from '../domain/entities';
 import { DEFAULT_MASCOT_SETTINGS } from '../domain/rules/mascot-preferences';
+import { DEFAULT_LANGUAGE_SETTING, isLanguageSetting } from '../domain/rules/language-rules';
 
 const VALID_APPEARANCE_MODES: ReadonlySet<AppearanceMode> = new Set(['system', 'light', 'dark']);
 const VALID_MASCOT_PRESENCE: ReadonlySet<string> = new Set<MascotPresence>(['full', 'discreet', 'off']);
@@ -48,6 +49,7 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     mascotProposals: validOr(row.mascot_proposals, VALID_MASCOT_PROPOSALS, DEFAULT_MASCOT_SETTINGS.proposals),
     mascotBriefings:
       row.mascot_briefings !== undefined ? (row.mascot_briefings as number) === 1 : DEFAULT_MASCOT_SETTINGS.briefings,
+    language: isLanguageSetting(row.language) ? row.language : DEFAULT_LANGUAGE_SETTING,
     createdAt: (row.created_at as string) || new Date().toISOString(),
     updatedAt: (row.updated_at as string) || new Date().toISOString(),
   };
@@ -127,6 +129,11 @@ export const SettingsRepository = {
     if (params.mascotBriefings !== undefined) {
       setClauses.push('mascot_briefings = ?');
       values.push(params.mascotBriefings ? 1 : 0);
+    }
+
+    if (params.language !== undefined && isLanguageSetting(params.language)) {
+      setClauses.push('language = ?');
+      values.push(params.language);
     }
 
     const safeMode =
