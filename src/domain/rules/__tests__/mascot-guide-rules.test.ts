@@ -12,6 +12,7 @@ import {
   GuideStep,
   guideDirection,
   guideMessageFor,
+  DISCOVER_CARD_MESSAGES,
 } from '../mascot-guide-rules';
 
 const PHONE = { width: 390, height: 844, insets: { top: 47, bottom: 34, left: 0, right: 0 } };
@@ -309,5 +310,23 @@ describe('the welcome anchor', () => {
 
   it('falls back to the free band when the screen has not said', () => {
     expect(place({ step: 'welcome', from: null }).center.y).toBeGreaterThan(forbidden.topBarBottom);
+  });
+});
+
+describe('the discovery cards', () => {
+  it('has one message per card, in the order of the cards', () => {
+    expect(DISCOVER_CARD_MESSAGES.map(item => item.id)).toEqual(['DISCOVER_REMINDER', 'DISCOVER_TASK', 'DISCOVER_EVENT']);
+  });
+
+  it('points an arm at the card it is talking about', () => {
+    const result = place({ step: 'discover', target: { x: 187, y: 300 } });
+    expect(result.pose).toBe('pointAt');
+    expect(result.pointAt?.arm).toBe('left');
+  });
+
+  it('points lower for a lower card', () => {
+    const high = place({ step: 'discover', target: { x: 187, y: 300 } }).pointAt!;
+    const low = place({ step: 'discover', target: { x: 187, y: 500 } }).pointAt!;
+    expect(Math.abs(low.angleDeg)).toBeLessThan(Math.abs(high.angleDeg));
   });
 });

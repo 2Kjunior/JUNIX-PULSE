@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   computeGuidePlacement,
+  DISCOVER_CARD_MESSAGES,
   GuidePlacement,
   guideDirection,
   guideMessageFor,
@@ -32,6 +33,9 @@ import { useMascotPreferences } from './use-mascot-preferences';
 
 /** How long a bubble stays: long enough to read two short sentences. */
 const BUBBLE_READING_MS = 7000;
+/** Delay before the first card is pointed at, then the time spent on each. */
+const CARD_FIRST_MS = 1200;
+const CARD_EACH_MS = 2800;
 const BUBBLE_GAP_DP = 6;
 const EDGE_MARGIN_DP = 12;
 /** The whole drawing, arms included, is 1.5 times as wide as the orb. */
@@ -96,6 +100,9 @@ export function OnboardingGuide() {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [placement, setPlacement] = useState<GuidePlacement | null>(null);
+  // Discovery step: the card the mascot is pointing at, or null when it is only introducing them
+  const [cardIndex, setCardIndex] = useState<number | null>(null);
+  const discoverPlayedRef = useRef(false);
   const previousStepRef = useRef<GuideStep | null>(null);
 
   const step = stepFromSegments(segments);
@@ -107,7 +114,27 @@ export function OnboardingGuide() {
     setBubbleShown(true);
     const timer = setTimeout(() => setBubbleShown(false), BUBBLE_READING_MS);
     return () => clearTimeout(timer);
-  }, [step, guide.permission]);
+  }, [step, guide.permission, cardIndex]);
+
+  // On the discovery step, point at each card in turn, once: reminders, tasks, events
+  useEffect(() => {
+    if (step !== 'discover') {
+      setCardIndex(null);
+      return;
+    }
+    if (guide.discoverCardsY.length < DISCOVER_CARD_MESSAGES.length || discoverPlayedRef.current) return;
+    const timers = DISCOVER_CARD_MESSAGES.map((_, index) =>
+      setTimeout(() => setCardIndex(index), CARD_FIRST_MS + index * CARD_EACH_MS)
+    );
+    timers.push(
+      setTimeout(() => {
+        // Played to the end: never again, even if the user comes back to this step
+        discoverPlayedRef.current = true;
+        setCardIndex(null);
+      }, CARD_FIRST_MS + DISCOVER_CARD_MESSAGES.length * CARD_EACH_MS)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [step, guide.discoverCardsY]);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
@@ -150,11 +177,20 @@ export function OnboardingGuide() {
         reducedMotion,
         from: previous?.center ?? null,
         anchorY: guide.welcomeAnchorY ?? undefined,
+        target:
+          step === 'discover' && cardIndex !== null && guide.discoverCardsY[cardIndex] !== undefined
+            ? { x: width / 2, y: guide.discoverCardsY[cardIndex] }
+            : undefined,
       })
     );
-  }, [step, present, guide.permission, guide.welcomeAnchorY, keyboardOpen, width, height, insets, reducedMotion]);
+  }, [step, present, guide.permission, guide.welcomeAnchorY, guide.discoverCardsY, cardIndex, keyboardOpen, width, height, insets, reducedMotion]);
 
-  const message = step ? guideMessageFor(step, guide.permission) : null;
+  const message =
+    step === 'discover' && cardIndex !== null
+      ? DISCOVER_CARD_MESSAGES[cardIndex]
+      : step
+        ? guideMessageFor(step, guide.permission)
+        : null;
   const text = useMemo(
     () => (message ? resolveMascotMessage(message.id, {}, preferences, displayName) : null),
     [message, preferences, displayName]
@@ -174,7 +210,7 @@ export function OnboardingGuide() {
       {text && placement.bubbleVisible && bubbleShown ? (
         <View pointerEvents="none" style={bubble.style}>
           <MascotBubble
-            key={`${step}-${guide.permission}`}
+            key={`${step}-${guide.permission}-${cardIndex}`}
             text={text}
             maxWidth={bubble.maxWidth}
             tailSide={bubble.tailSide}

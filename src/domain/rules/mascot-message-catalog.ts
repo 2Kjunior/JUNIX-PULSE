@@ -103,6 +103,62 @@ export const MASCOT_MESSAGES = {
     ["Compris. Vos rappels resteront visibles dans l'app.", "Compris {name}. Vos rappels resteront visibles dans l'app."],
   ),
 
+  // ─── Home tour (four stops) and first visit tips ───────────────────────────
+  TOUR_PILLARS: entry(
+    ["Voici ton accueil : rappels, tâches, planning et proches d'un coup d'œil.", "{name}, voici ton accueil : rappels, tâches, planning et proches d'un coup d'œil."],
+    ["Ton accueil réunit rappels, tâches, planning et proches.", "{name}, ton accueil réunit rappels, tâches, planning et proches."],
+    ["Voici votre accueil : rappels, tâches, planning et proches d'un coup d'œil.", "{name}, voici votre accueil : rappels, tâches, planning et proches d'un coup d'œil."],
+    ["Votre accueil réunit rappels, tâches, planning et proches.", "{name}, votre accueil réunit rappels, tâches, planning et proches."],
+  ),
+  TOUR_QUICK_ADD: entry(
+    ["Ici, tu ajoutes un rappel, une tâche ou une note en quelques secondes.", "{name}, ici, tu ajoutes un rappel, une tâche ou une note en quelques secondes."],
+    ["Ajoute ici un rappel, une tâche ou une note.", "{name}, ajoute ici un rappel, une tâche ou une note."],
+    ["Ici, vous ajoutez un rappel, une tâche ou une note en quelques secondes.", "{name}, ici, vous ajoutez un rappel, une tâche ou une note en quelques secondes."],
+    ["Ajoutez ici un rappel, une tâche ou une note.", "{name}, ajoutez ici un rappel, une tâche ou une note."],
+  ),
+  TOUR_TIMELINE: entry(
+    ["Ton fil du jour met tout ce qui compte aujourd'hui dans l'ordre.", "{name}, ton fil du jour met tout ce qui compte aujourd'hui dans l'ordre."],
+    ["Le fil du jour classe tes éléments dans l'ordre.", "{name}, le fil du jour classe tes éléments dans l'ordre."],
+    ["Votre fil du jour met tout ce qui compte aujourd'hui dans l'ordre.", "{name}, votre fil du jour met tout ce qui compte aujourd'hui dans l'ordre."],
+    ["Le fil du jour classe vos éléments dans l'ordre.", "{name}, le fil du jour classe vos éléments dans l'ordre."],
+  ),
+  TOUR_MASCOT: entry(
+    ["Touche-moi pour ouvrir Pulse : j'y garde mes propositions.", "{name}, touche-moi pour ouvrir Pulse : j'y garde mes propositions."],
+    ["Un appui sur la mascotte ouvre Pulse et ses propositions.", "{name}, un appui sur la mascotte ouvre Pulse et ses propositions."],
+    ["Touchez-moi pour ouvrir Pulse : j'y garde mes propositions.", "{name}, touchez-moi pour ouvrir Pulse : j'y garde mes propositions."],
+    ["Un appui sur la mascotte ouvre Pulse et ses propositions.", "{name}, un appui sur la mascotte ouvre Pulse et ses propositions."],
+  ),
+  TIP_REMINDERS: entry(
+    ["Ici, tes rappels. Glisse-en un pour le terminer ou le reporter.", "{name}, ici, tes rappels. Glisse-en un pour le terminer ou le reporter."],
+    ["Glisse un rappel pour le terminer ou le reporter.", "{name}, glisse un rappel pour le terminer ou le reporter."],
+    ["Ici, vos rappels. Faites-en glisser un pour le terminer ou le reporter.", "{name}, ici, vos rappels. Faites-en glisser un pour le terminer ou le reporter."],
+    ["Faites glisser un rappel pour le terminer ou le reporter.", "{name}, faites glisser un rappel pour le terminer ou le reporter."],
+  ),
+  TIP_TASKS: entry(
+    ["Ici, tes tâches. Touche le cercle pour en terminer une.", "{name}, ici, tes tâches. Touche le cercle pour en terminer une."],
+    ["Touche le cercle d'une tâche pour la terminer.", "{name}, touche le cercle d'une tâche pour la terminer."],
+    ["Ici, vos tâches. Touchez le cercle pour en terminer une.", "{name}, ici, vos tâches. Touchez le cercle pour en terminer une."],
+    ["Touchez le cercle d'une tâche pour la terminer.", "{name}, touchez le cercle d'une tâche pour la terminer."],
+  ),
+  TIP_CALENDAR: entry(
+    ["Ici, ton planning. Choisis un jour pour voir ce qui l'attend.", "{name}, ici, ton planning. Choisis un jour pour voir ce qui l'attend."],
+    ["Choisis un jour pour voir son contenu.", "{name}, choisis un jour pour voir son contenu."],
+    ["Ici, votre planning. Choisissez un jour pour voir ce qui l'attend.", "{name}, ici, votre planning. Choisissez un jour pour voir ce qui l'attend."],
+    ["Choisissez un jour pour voir son contenu.", "{name}, choisissez un jour pour voir son contenu."],
+  ),
+  TIP_PEOPLE: entry(
+    ["Ici, tes proches. Je te signale ceux que tu n'as pas vus depuis longtemps.", "{name}, ici, tes proches. Je te signale ceux que tu n'as pas vus depuis longtemps."],
+    ["Les proches sans nouvelles depuis longtemps sont signalés.", "{name}, les proches sans nouvelles depuis longtemps sont signalés."],
+    ["Ici, vos proches. Je vous signale ceux que vous n'avez pas vus depuis longtemps.", "{name}, ici, vos proches. Je vous signale ceux que vous n'avez pas vus depuis longtemps."],
+    ["Les proches sans nouvelles depuis longtemps sont signalés.", "{name}, les proches sans nouvelles depuis longtemps sont signalés."],
+  ),
+  TIP_PULSE: entry(
+    ["Ici, je garde mes propositions. Tu décides toujours : je donne seulement une idée.", "{name}, ici, je garde mes propositions. Tu décides toujours : je donne seulement une idée."],
+    ["Les propositions sont ici. Tu décides toujours de la suite.", "{name}, les propositions sont ici. Tu décides toujours de la suite."],
+    ["Ici, je garde mes propositions. Vous décidez toujours : je donne seulement une idée.", "{name}, ici, je garde mes propositions. Vous décidez toujours : je donne seulement une idée."],
+    ["Les propositions sont ici. Vous décidez toujours de la suite.", "{name}, les propositions sont ici. Vous décidez toujours de la suite."],
+  ),
+
   // ─── Proposals P1 to P12 ──────────────────────────────────────────────────
   FORGOTTEN_CONTACT: entry(
     ["Ça fait {days} jours que tu n'as pas pris de nouvelles {de:person}. On lui écrit ?", "{name}, ça fait {days} jours que tu n'as pas pris de nouvelles {de:person}. On lui écrit ?"],

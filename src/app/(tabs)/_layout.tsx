@@ -29,6 +29,7 @@ import Animated, {
     withTiming
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MascotTabsLayer } from "@/features/mascot/MascotTabsLayer";
 
 // ─── Config des onglets ────────────────────────────────────────────────────────
 
@@ -233,6 +234,7 @@ function CustomTabBar({ state, navigateToTab }: CustomTabBarProps) {
 
 export default function TabsLayout() {
   return (
+    <>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -260,6 +262,9 @@ export default function TabsLayout() {
         options={{ title: "Pulse" }}
       />
     </Tabs>
+    {/* Guidance de la mascotte sur les onglets : visite de l'Accueil et astuces de première visite */}
+    <MascotTabsLayer />
+    </>
   );
 }
 

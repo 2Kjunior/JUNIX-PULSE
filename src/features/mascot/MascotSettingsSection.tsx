@@ -7,6 +7,7 @@
  * be undone at any time.
  */
 
+import { router } from 'expo-router';
 import React from 'react';
 import { Switch, Text, TouchableOpacity, View } from 'react-native';
 
@@ -23,6 +24,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { MascotStateRepository } from '@/repositories/mascot-state-repository';
 import { resetBudget } from '@/services/mascot/mascot-budget-service';
+import { replayHomeTour } from '@/services/mascot/mascot-tips-service';
 import { saveMascotSettings } from '@/services/mascot/mascot-settings-service';
 import { useAppStore } from '@/store/app-store';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
@@ -104,6 +106,16 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
     } catch (e) {
       // Le Snackbar se voit partout, y compris sur le web où Alert n'affiche rien
       showSnackbar(e instanceof Error ? `Réglage non enregistré : ${e.message}` : 'Réglage non enregistré.');
+    }
+  };
+
+  const replayTour = async () => {
+    try {
+      await replayHomeTour();
+      // The tour starts by itself a moment after the home screen shows
+      router.push('/(tabs)' as never);
+    } catch (e) {
+      showSnackbar(e instanceof Error ? `Échec : ${e.message}` : 'Échec.');
     }
   };
 
@@ -190,6 +202,15 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
             </View>
           ) : null}
         </>
+      )}
+
+      {present && (
+        <TouchableOpacity style={styles.row} onPress={replayTour} accessibilityRole="button">
+          <View>
+            <Text style={styles.rowLabel}>Revoir la présentation</Text>
+            <Text style={styles.rowSub}>Elle te refait le tour de l'Accueil</Text>
+          </View>
+        </TouchableOpacity>
       )}
 
       <TouchableOpacity style={styles.row} onPress={forgetTips} accessibilityRole="button">

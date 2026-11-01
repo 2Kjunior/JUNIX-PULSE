@@ -119,6 +119,13 @@ export function guideMessageFor(step: GuideStep, permission: GuidePermissionOutc
   }
 }
 
+/** What the mascot says as it points at each of the three discovery cards, in order. */
+export const DISCOVER_CARD_MESSAGES: readonly GuideMessage[] = [
+  { id: 'DISCOVER_REMINDER', mood: 'calm' },
+  { id: 'DISCOVER_TASK', mood: 'calm' },
+  { id: 'DISCOVER_EVENT', mood: 'calm' },
+];
+
 /** The onboarding screens, in order, as the router names them. */
 export const ONBOARDING_STEPS: readonly GuideStep[] = ['welcome', 'discover', 'personalize', 'schedule', 'permissions'];
 

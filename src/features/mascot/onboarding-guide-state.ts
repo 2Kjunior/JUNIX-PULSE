@@ -12,16 +12,23 @@ export interface OnboardingGuideState {
   permission: GuidePermissionOutcome;
   /** Height, in window coordinates, where the mascot stands on the welcome screen. */
   welcomeAnchorY: number | null;
+  /** Heights, in window coordinates, of the centres of the three discovery cards. */
+  discoverCardsY: readonly number[];
 }
 
-const INITIAL: OnboardingGuideState = { permission: 'ask', welcomeAnchorY: null };
+const INITIAL: OnboardingGuideState = { permission: 'ask', welcomeAnchorY: null, discoverCardsY: [] };
 
 let state: OnboardingGuideState = INITIAL;
 const listeners = new Set<() => void>();
 
 function update(next: Partial<OnboardingGuideState>): void {
   const merged = { ...state, ...next };
-  if (merged.permission === state.permission && merged.welcomeAnchorY === state.welcomeAnchorY) return;
+  const unchanged =
+    merged.permission === state.permission &&
+    merged.welcomeAnchorY === state.welcomeAnchorY &&
+    merged.discoverCardsY.length === state.discoverCardsY.length &&
+    merged.discoverCardsY.every((y, index) => y === state.discoverCardsY[index]);
+  if (unchanged) return;
   state = merged; // A new object, so subscribers see the change
   for (const listener of [...listeners]) listener();
 }
@@ -32,6 +39,10 @@ export function setGuidePermission(permission: GuidePermissionOutcome): void {
 
 export function setWelcomeAnchorY(y: number | null): void {
   update({ welcomeAnchorY: y === null ? null : Math.round(y) });
+}
+
+export function setDiscoverCardsY(ys: readonly number[]): void {
+  update({ discoverCardsY: ys.map(Math.round) });
 }
 
 export function resetOnboardingGuideState(): void {

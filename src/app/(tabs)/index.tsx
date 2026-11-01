@@ -45,6 +45,7 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
+import { TourTarget } from '@/features/mascot/TourTarget';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
 import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
 import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposal';
@@ -300,6 +301,7 @@ export default function TodayScreen() {
           {/* Compagne : un appui ouvre ce qui compte, le rappel urgent sinon l'onglet Pulse.
               Absente quand l'utilisateur a désactivé la mascotte. */}
           {mascotPresent && (
+          <TourTarget id="mascot">
           <TouchableOpacity
             style={styles.mascotButton}
             onPress={() =>
@@ -313,6 +315,7 @@ export default function TodayScreen() {
           >
             <PulseMascot mood={mascotMood} size={56} />
           </TouchableOpacity>
+          </TourTarget>
           )}
           <View style={styles.headerInfo}>
             <Text style={styles.greeting}>
@@ -346,6 +349,7 @@ export default function TodayScreen() {
         </View>
 
         {/* ─── 2. Les 4 Piliers Wave (Action Grid 2x2) ──────────────────────── */}
+        <TourTarget id="pillars">
         <View style={styles.waveGrid}>
           {/* Pilier 1 : Rappels */}
           <TouchableOpacity
@@ -431,8 +435,10 @@ export default function TodayScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        </TourTarget>
 
         {/* ─── 3. Bouton Universel d'Ajout Rapide ──────────────────────────── */}
+        <TourTarget id="quickAdd">
         <TouchableOpacity
           style={styles.quickAddBar}
           onPress={() => router.push('/capture')}
@@ -446,6 +452,7 @@ export default function TodayScreen() {
           </View>
           <Ionicons name="arrow-forward" size={16} color={palette.primary.default} />
         </TouchableOpacity>
+        </TourTarget>
 
         {/* ─── Mode Découverte (si base vide) ─────────────────────────────── */}
         {isEmptyState && (
@@ -513,10 +520,12 @@ export default function TodayScreen() {
 
         {/* ─── 5. Mon Fil d'Aujourd'hui (Timeline Unifiée) ─────────────────── */}
         <View style={styles.sectionBlock}>
+          <TourTarget id="timeline">
           <View style={styles.blockTitleRow}>
             <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
             <Text style={styles.blockTitle}>Mon Fil d'Aujourd'hui ({timelineItems.length})</Text>
           </View>
+          </TourTarget>
 
           {timelineItems.length > 0 ? (
             timelineItems.map((item, idx) => (

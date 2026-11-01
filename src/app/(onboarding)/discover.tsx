@@ -7,8 +7,11 @@
  * - Titre en Outfit Bold (règle A.2)
  * - StepIndicator harmonisé (barre, pas dots)
  */
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
+import { setDiscoverCardsY } from '@/features/mascot/onboarding-guide-state';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Spacing,
@@ -35,6 +38,24 @@ interface Concept {
 export default function OnboardingDiscover() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingDiscoverStyles);
+
+  // La mascotte guide désigne chaque carte : l'écran lui dit où elles sont. On mesure une fois
+  // la transition de l'écran terminée, sinon la position serait celle de l'écran en train de glisser.
+  const cardRefs = useRef<(React.ComponentRef<typeof View> | null)[]>([]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const centres: number[] = [];
+      cardRefs.current.forEach((card, index) => {
+        card?.measureInWindow((_x, y, _w, h) => {
+          centres[index] = y + h / 2;          if (centres.filter(value => value !== undefined).length === cardRefs.current.length) setDiscoverCardsY(centres);
+        });
+      });
+    }, 600);
+    return () => {
+      clearTimeout(timer);
+      setDiscoverCardsY([]);
+    };
+  }, []);
 
   const concepts: Concept[] = [
     {
@@ -83,8 +104,15 @@ export default function OnboardingDiscover() {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {concepts.map((c) => (
-          <View key={c.title} style={styles.conceptCard}>
+        {concepts.map((c, index) => (
+          <View
+            key={c.title}
+            ref={node => {
+              cardRefs.current[index] = node;
+            }}
+            collapsable={false}
+            style={styles.conceptCard}
+          >
             <View style={[styles.conceptIcon, { backgroundColor: c.bgColor }]}>
               <Ionicons name={c.icon} size={22} color={c.accentColor} />
             </View>
