@@ -11,6 +11,7 @@ import {
   calculateBestStreak,
   isCompletedToday,
 } from '../domain/rules/habit-rules';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 export interface HabitStats {
   habit: Habit;
@@ -39,6 +40,16 @@ export interface UpdateHabitParams {
   color?: string;
 }
 
+/** Tells the mascot a habit was just checked, with the streak it now stands on. */
+async function announceHabitCompleted(habitId: string): Promise<void> {
+  try {
+    const stats = await HabitUseCases.getHabitWithStats(habitId);
+    emitMascotEvent({ type: 'HABIT_COMPLETED', streakDays: stats?.currentStreak ?? 1 });
+  } catch {
+    // The mascot is decoration: ignored on purpose
+  }
+}
+
 export const HabitUseCases = {
   async createHabit(params: CreateHabitParams): Promise<Habit> {
     const now = new Date().toISOString();
@@ -55,6 +66,7 @@ export const HabitUseCases = {
     };
 
     await HabitRepository.create(habit);
+    emitMascotEvent({ type: 'ITEM_CREATED' });
     return habit;
   },
 
@@ -70,6 +82,7 @@ export const HabitUseCases = {
   async deleteHabit(id: string): Promise<{ undo: () => Promise<void> }> {
     const now = new Date().toISOString();
     await HabitRepository.delete(id, now);
+    emitMascotEvent({ type: 'ITEM_DELETED' });
     return {
       undo: async () => {
         const undoNow = new Date().toISOString();
@@ -93,6 +106,7 @@ export const HabitUseCases = {
         createdAt: new Date().toISOString(),
       };
       await HabitRepository.addCompletion(completion);
+      await announceHabitCompleted(habitId);
       return true; // Désormais complétée
     }
   },
@@ -125,6 +139,7 @@ export const HabitUseCases = {
     }
 
     await HabitRepository.update({ id: habitId, status: 'ACTIVE', updatedAt: now });
+    emitMascotEvent({ type: 'HABIT_RESUMED' });
   },
 
   async getHabitWithStats(habitId: string): Promise<HabitStats | null> {

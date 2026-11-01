@@ -38,6 +38,7 @@ import { clearAllData } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
+import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
@@ -204,6 +205,7 @@ export default function SettingsScreen() {
       dialogTitle: 'Partager la sauvegarde chiffrée Junix Pulse',
     });
     setBackupPasswordVisible(false);
+    emitMascotEvent({ type: 'BACKUP_DONE' });
   };
 
   const handleResetApp = () => {

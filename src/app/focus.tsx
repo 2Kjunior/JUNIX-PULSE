@@ -43,6 +43,8 @@ import { Button } from '@/components/ui/Button';
 import { Radius, Spacing, Typography, TitleFontFamily } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { NotificationService } from '@/services/notification-service';
+import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
+import { setMascotFocusState } from '@/services/mascot/mascot-runtime';
 
 const CIRCLE_SIZE = 260;
 const STROKE_WIDTH = 12;
@@ -75,6 +77,7 @@ export default function FocusScreen() {
           const next = tickFocusSession(prev);
           if (next.state === 'completed' && prev.state === 'running') {
             addFocusMinutes(prev.durationMinutes);
+            emitMascotEvent({ type: 'FOCUS_COMPLETED', durationMinutes: prev.durationMinutes });
             showSnackbar('Session de focus terminée avec succès !');
             NotificationService.sendTestNotification({
               title: 'Temps écoulé !',
@@ -101,6 +104,13 @@ export default function FocusScreen() {
       }
     };
   }, [session.state, showSnackbar]);
+
+  // La mascotte se tait pendant une session : elle doit savoir qu'elle est en cours
+  useEffect(() => {
+    setMascotFocusState(session.state);
+  }, [session.state]);
+
+  useEffect(() => () => setMascotFocusState('idle'), []);
 
   // ─── Gestionnaires d'actions ───────────────────────────────────────────────
   const handleTogglePlayPause = () => {

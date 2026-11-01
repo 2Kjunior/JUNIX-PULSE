@@ -34,9 +34,11 @@ import { AnimatedBackgroundGlow } from "@/components/ui/AnimatedBackgroundGlow";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
 import { SplashAnimation } from "@/features/launch/SplashAnimation";
+import { MascotCameo } from "@/features/mascot/MascotCameo";
 import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
+import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { NotificationService } from "@/services/notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { SessionManager } from "@/services/session/SessionManager";
@@ -195,6 +197,7 @@ export default function RootLayout() {
       NotificationSoundService.play(!splashFinished);
 
       if (reminderId) {
+        void announceReminderArrived(reminderId);
         Alert.alert(
           `🔔 ${title}`,
           body || "Votre rappel est arrivé à échéance.",
@@ -316,6 +319,8 @@ export default function RootLayout() {
           </Stack>
           {/* Snackbar global (au-dessus de tout le contenu) */}
           <Snackbar />
+          {/* Caméo de la mascotte : une seule instance, au-dessus du Snackbar */}
+          <MascotCameo />
         </SafeAreaProvider>
       </GestureHandlerRootView>
       {splashOverlay}

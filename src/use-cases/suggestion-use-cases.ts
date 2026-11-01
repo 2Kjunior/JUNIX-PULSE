@@ -12,6 +12,7 @@ import { HabitUseCases } from './habit-use-cases';
 import { snoozeReminder } from './reminder-use-cases';
 import { Suggestion } from '../domain/entities';
 import { daysSinceLastInteraction } from '../domain/rules/person-rules';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import {
   forgottenContactData,
   missedReminderData,
@@ -139,11 +140,13 @@ export const SuggestionUseCases = {
     }
 
     await SuggestionRepository.updateStatus(id, 'ACCEPTED', now);
+    emitMascotEvent({ type: 'SUGGESTION_ACCEPTED' });
   },
 
   async refuseSuggestion(id: string): Promise<void> {
     const now = new Date().toISOString();
     await SuggestionRepository.updateStatus(id, 'REFUSED', now);
+    emitMascotEvent({ type: 'SUGGESTION_DISMISSED' });
   },
 
   async getPendingSuggestions(): Promise<Suggestion[]> {

@@ -22,7 +22,8 @@ import {
   MascotPreferences,
   MascotTone,
 } from '@/domain/rules/mascot-preferences';
-import type { MascotReactionLevel } from '@/domain/rules/mascot-reaction-rules';
+import type { MascotEvent, MascotReactionLevel } from '@/domain/rules/mascot-reaction-rules';
+import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import type { Suggestion } from '@/domain/entities';
 import {
   forgottenContactData,
@@ -70,6 +71,19 @@ const SAMPLE_MESSAGES: readonly { id: MascotMessageId; params: Record<string, st
   { id: 'STREAK_AT_RISK', params: { streak: 6, title: 'Lecture' } },
   { id: 'TASKS_TO_POSTPONE', params: { count: 3 } },
   { id: 'EVENING_REVIEW', params: { done: 4, total: 5 } },
+];
+
+const LIVE_EVENTS: readonly { label: string; event: MascotEvent }[] = [
+  { label: 'Élément créé', event: { type: 'ITEM_CREATED' } },
+  { label: 'Tâche terminée', event: { type: 'TASK_COMPLETED', priority: 'NORMAL' } },
+  { label: 'Tâche urgente', event: { type: 'TASK_COMPLETED', priority: 'URGENT', subtaskCount: 3 } },
+  { label: 'Journée terminée', event: { type: 'DAY_CLEARED' } },
+  { label: 'Rappel terminé', event: { type: 'REMINDER_COMPLETED', priority: 'NORMAL' } },
+  { label: 'Rappel urgent', event: { type: 'REMINDER_ARRIVED', priority: 'URGENT' } },
+  { label: 'Série de 30 jours', event: { type: 'HABIT_COMPLETED', streakDays: 30 } },
+  { label: 'Objectif atteint', event: { type: 'GOAL_COMPLETED' } },
+  { label: 'Focus 60 min', event: { type: 'FOCUS_COMPLETED', durationMinutes: 60 } },
+  { label: 'Élément supprimé', event: { type: 'ITEM_DELETED' } },
 ];
 
 const SAMPLE_NAME = 'Awa';
@@ -251,6 +265,17 @@ function MascotLab() {
             />
           </View>
         ))}
+
+        <Text style={styles.section}>Caméo en direct</Text>
+        <Text style={styles.note}>
+          Ces boutons envoient de vrais événements, comme les actions de l'app. Le caméo apparaît en bas à gauche,
+          au-dessus du Snackbar. La nuit (23 h à 5 h), seul un rappel urgent réveille la mascotte.
+        </Text>
+        <View style={styles.chips}>
+          {LIVE_EVENTS.map(({ label, event }) => (
+            <Chip key={label} label={label} selected={false} onPress={() => emitMascotEvent(event)} />
+          ))}
+        </View>
 
         <Text style={styles.section}>Déplacement du guide</Text>
         <Text style={styles.note}>

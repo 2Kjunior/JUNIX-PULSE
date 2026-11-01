@@ -10,6 +10,7 @@ import {
   isGoalOverdue,
   daysUntilDeadline,
 } from '../domain/rules/goal-rules';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 export interface GoalDetails {
   goal: Goal;
@@ -47,6 +48,7 @@ export const GoalUseCases = {
     };
 
     await GoalRepository.create(goal);
+    emitMascotEvent({ type: 'ITEM_CREATED' });
     return goal;
   },
 
@@ -62,6 +64,7 @@ export const GoalUseCases = {
   async deleteGoal(id: string): Promise<{ undo: () => Promise<void> }> {
     const now = new Date().toISOString();
     await GoalRepository.delete(id, now);
+    emitMascotEvent({ type: 'ITEM_DELETED' });
     return {
       undo: async () => {
         const undoNow = new Date().toISOString();
@@ -95,6 +98,7 @@ export const GoalUseCases = {
         status: 'COMPLETED',
         updatedAt: new Date().toISOString(),
       });
+      emitMascotEvent({ type: 'GOAL_COMPLETED' });
     }
   },
 

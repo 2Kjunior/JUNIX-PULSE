@@ -4,9 +4,11 @@
  */
 
 import { randomUUID } from 'expo-crypto';
+import { format } from 'date-fns';
 import { TaskRepository } from '../repositories/task-repository';
-import { Subtask, TaskStatus, ReminderPriority } from '../domain/entities';
+import { Subtask, Task, TaskStatus, ReminderPriority } from '../domain/entities';
 import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 // ─── Interfaces d'entrée ──────────────────────────────────────────────────────
 
@@ -34,6 +36,28 @@ export interface UpdateTaskInput {
   goalId?: string;
   personId?: string;
   tags?: string[];
+}
+
+/**
+ * Tells the mascot a task has just been completed: the cleared day when it was the last of
+ * today's tasks, otherwise the task itself with its priority and subtasks.
+ * The mascot is decoration, so any failure here is ignored.
+ */
+async function announceTaskCompleted(task: Task): Promise<void> {
+  try {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    if (task.scheduledDate === today) {
+      const todayTasks = await TaskRepository.findForDate(today);
+      if (todayTasks.length > 0 && todayTasks.every(item => item.status === 'COMPLETED')) {
+        emitMascotEvent({ type: 'DAY_CLEARED' });
+        return;
+      }
+    }
+    const subtasks = await TaskRepository.findSubtasks(task.id);
+    emitMascotEvent({ type: 'TASK_COMPLETED', priority: task.priority, subtaskCount: subtasks.length });
+  } catch {
+    // Ignored on purpose
+  }
 }
 
 // ─── Actions Métier Tâches ───────────────────────────────────────────────────
@@ -82,6 +106,7 @@ export const TaskUseCases = {
       }
     }
 
+    emitMascotEvent({ type: 'ITEM_CREATED' });
     return taskId;
   },
 
@@ -121,6 +146,7 @@ export const TaskUseCases = {
       updatedAt: now,
     });
 
+    if (isNowCompleted) await announceTaskCompleted(task);
     return newStatus;
   },
 
@@ -130,6 +156,7 @@ export const TaskUseCases = {
   async deleteTask(id: string): Promise<{ undo: () => Promise<void> }> {
     const now = new Date().toISOString();
     await TaskRepository.softDelete(id, now);
+    emitMascotEvent({ type: 'ITEM_DELETED' });
     return {
       undo: async () => {
         const undoNow = new Date().toISOString();
@@ -173,6 +200,7 @@ export const TaskUseCases = {
   async toggleSubtask(id: string, isCompleted: boolean): Promise<void> {
     const completedAt = isCompleted ? new Date().toISOString() : undefined;
     await TaskRepository.updateSubtask(id, isCompleted, completedAt);
+    if (isCompleted) emitMascotEvent({ type: 'SUBTASK_COMPLETED' });
   },
 
   /**

@@ -5,6 +5,7 @@
 import { randomUUID } from 'expo-crypto';
 import { EventRepository } from '../repositories/event-repository';
 import { EventType } from '../domain/entities';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 export interface CreateEventInput {
   title: string;
@@ -59,6 +60,7 @@ export const EventUseCases = {
       input.personIds
     );
 
+    emitMascotEvent({ type: 'ITEM_CREATED' });
     return eventId;
   },
 
@@ -93,6 +95,7 @@ export const EventUseCases = {
   async deleteEvent(id: string): Promise<void> {
     const now = new Date().toISOString();
     await EventRepository.softDelete(id, now);
+    emitMascotEvent({ type: 'ITEM_DELETED' });
   },
 
   /**

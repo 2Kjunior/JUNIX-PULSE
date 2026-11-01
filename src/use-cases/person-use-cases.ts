@@ -5,6 +5,8 @@
 import { randomUUID } from 'expo-crypto';
 import { PersonRepository } from '../repositories/person-repository';
 import { Interaction, InteractionType } from '../domain/entities';
+import { isPersonForgotten } from '../domain/rules/person-rules';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 export interface CreatePersonInput {
   displayName: string;
@@ -58,6 +60,7 @@ export const PersonUseCases = {
       updatedAt: now,
     });
 
+    emitMascotEvent({ type: 'ITEM_CREATED' });
     return personId;
   },
 
@@ -83,6 +86,7 @@ export const PersonUseCases = {
   async deletePerson(id: string): Promise<void> {
     const now = new Date().toISOString();
     await PersonRepository.softDelete(id, now);
+    emitMascotEvent({ type: 'ITEM_DELETED' });
   },
 
   /**
@@ -101,6 +105,15 @@ export const PersonUseCases = {
     const now = new Date().toISOString();
     const occurredAtStr = (input.occurredAt ?? new Date()).toISOString();
 
+    // Read before the write: afterwards the person is no longer "forgotten"
+    let wasForgotten = false;
+    try {
+      const person = await PersonRepository.findById(input.personId);
+      wasForgotten = person ? isPersonForgotten(person) : false;
+    } catch {
+      // Without it the reaction is simply the ordinary one
+    }
+
     const interaction: Interaction = {
       id: randomUUID(),
       personId: input.personId,
@@ -112,6 +125,7 @@ export const PersonUseCases = {
     };
 
     await PersonRepository.createInteraction(interaction);
+    emitMascotEvent({ type: 'PERSON_CONTACTED', wasForgotten });
     return interaction;
   },
 

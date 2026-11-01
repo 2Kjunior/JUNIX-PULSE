@@ -12,6 +12,7 @@ import { ReminderRepository } from '../repositories/reminder-repository';
 import { NotificationService } from '../services/notification-service';
 import { getNextOccurrence, computeSnoozeUntil, computeSnoozeTomorrowSameTime, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
 import { Reminder, RecurrenceRule } from '../domain/entities';
+import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 // ─── Création ────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     }
   }
 
+  emitMascotEvent({ type: 'ITEM_CREATED' });
   return reminderId;
 }
 
@@ -201,6 +203,8 @@ export async function completeReminder(
       }
     }
   }
+
+  emitMascotEvent({ type: 'REMINDER_COMPLETED', priority: reminder.priority });
 }
 
 // ─── Snooze ───────────────────────────────────────────────────────────────────
@@ -271,6 +275,8 @@ export async function snoozeReminder(
       }
     } catch { /* ignore */ }
   }
+
+  emitMascotEvent({ type: 'REMINDER_SNOOZED' });
 }
 
 // ─── Suppression (avec undo) ──────────────────────────────────────────────────
@@ -294,6 +300,7 @@ export async function deleteReminder(
 
   // Suppression logique immédiate
   await ReminderRepository.softDelete(reminder.id, now);
+  emitMascotEvent({ type: 'ITEM_DELETED' });
 
   // Retourner la fonction d'annulation
   const timer = setTimeout(() => {
