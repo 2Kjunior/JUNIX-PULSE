@@ -103,6 +103,10 @@ export function OnboardingGuide() {
   // Discovery step: the card the mascot is pointing at, or null when it is only introducing them
   const [cardIndex, setCardIndex] = useState<number | null>(null);
   const discoverPlayedRef = useRef(false);
+  // Screens measure in window coordinates, the mascot is drawn in this layer's own: on some
+  // Android phones the origins differ (status bar), so the layer is measured the same way
+  const layerRef = useRef<React.ComponentRef<typeof View>>(null);
+  const [layerOriginY, setLayerOriginY] = useState(0);
   const previousStepRef = useRef<GuideStep | null>(null);
 
   const step = stepFromSegments(segments);
@@ -135,6 +139,10 @@ export function OnboardingGuide() {
     );
     return () => timers.forEach(clearTimeout);
   }, [step, guide.discoverCardsY]);
+
+  useEffect(() => {
+    layerRef.current?.measureInWindow((_x, y) => setLayerOriginY(Math.round(y)));
+  }, [step, width, height]);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
@@ -176,14 +184,14 @@ export function OnboardingGuide() {
         keyboardOpen,
         reducedMotion,
         from: previous?.center ?? null,
-        anchorY: guide.welcomeAnchorY ?? undefined,
+        anchorY: guide.welcomeAnchorY === null ? undefined : guide.welcomeAnchorY - layerOriginY,
         target:
           step === 'discover' && cardIndex !== null && guide.discoverCardsY[cardIndex] !== undefined
-            ? { x: width / 2, y: guide.discoverCardsY[cardIndex] }
+            ? { x: width / 2, y: guide.discoverCardsY[cardIndex] - layerOriginY }
             : undefined,
       })
     );
-  }, [step, present, guide.permission, guide.welcomeAnchorY, guide.discoverCardsY, cardIndex, keyboardOpen, width, height, insets, reducedMotion]);
+  }, [step, present, guide.permission, guide.welcomeAnchorY, guide.discoverCardsY, layerOriginY, cardIndex, keyboardOpen, width, height, insets, reducedMotion]);
 
   const message =
     step === 'discover' && cardIndex !== null
@@ -200,12 +208,15 @@ export function OnboardingGuide() {
   const granted = guide.permission === 'granted';
   const reaction = useMemo(() => (granted ? { level: 'medium' as const, key: 1 } : null), [granted]);
 
-  if (!placement || !present) return null;
+  // The layer is always there, so it can be measured before the mascot has a place
+  if (!placement || !present) {
+    return <View ref={layerRef} collapsable={false} pointerEvents="none" style={StyleSheet.absoluteFill} />;
+  }
 
   const bubble = layoutBubble(placement, width);
 
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View ref={layerRef} collapsable={false} pointerEvents="none" style={StyleSheet.absoluteFill}>
       <PulseMascotMover placement={placement} mood={message?.mood ?? 'calm'} reaction={reaction} />
       {text && placement.bubbleVisible && bubbleShown ? (
         <View pointerEvents="none" style={bubble.style}>

@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap', // With a large text size the buttons go on two lines instead of overflowing
     justifyContent: 'flex-end',
     gap: 8,
   },

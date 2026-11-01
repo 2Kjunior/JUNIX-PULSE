@@ -9,6 +9,7 @@ import {
   MIN_TOUR_STOPS,
   placeTourBubble,
   planTour,
+  relativeToLayer,
   TIP_MESSAGES,
   TIP_SCREENS,
   tipKey,
@@ -61,6 +62,24 @@ describe('first visit tips', () => {
     [[], false],
   ])('%j is the home screen: %s', (segments, expected) => {
     expect(isHomeSegments(segments)).toBe(expected);
+  });
+});
+
+describe('relativeToLayer', () => {
+  it('leaves a rect alone when the layer starts at the window origin', () => {
+    expect(relativeToLayer(rect(200), { x: 0, y: 0 })).toEqual(rect(200));
+  });
+
+  it('cancels a shift the platform puts on every window measure', () => {
+    // Everything is measured 51 too high, the layer included (it really starts at 0): the target is at 200
+    const target = rect(149);
+    const layer = { x: 0, y: -51 };
+    expect(relativeToLayer(target, layer)).toEqual(rect(200));
+  });
+
+  it('keeps the size', () => {
+    const moved = relativeToLayer(rect(100, 60, 20, 300), { x: 4, y: 30 });
+    expect(moved).toEqual({ x: 16, y: 70, width: 300, height: 60 });
   });
 });
 
@@ -118,6 +137,22 @@ describe('the tour', () => {
     it('never goes above the top inset', () => {
       const tall: TourScreen = { ...SCREEN, height: 400 };
       expect(placeTourBubble(rect(60, 200), tall).top).toBeGreaterThanOrEqual(tall.topInset);
+    });
+
+    it('uses the measured height of the bubble: a tall one (large text) no longer fits under the target', () => {
+      const target = rect(400, 100);
+      expect(placeTourBubble(target, SCREEN, 150).side).toBe('below');
+      expect(placeTourBubble(target, SCREEN, 250).side).toBe('above');
+    });
+
+    it('stays on screen when it fits on neither side of a large target on a short screen', () => {
+      const short: TourScreen = { width: 360, height: 560, topInset: 24, bottomReserve: 80 };
+      const target = rect(60, 340);
+      for (const bubbleHeight of [150, 220]) {
+        const placement = placeTourBubble(target, short, bubbleHeight);
+        expect(placement.top).toBeGreaterThanOrEqual(short.topInset);
+        expect(placement.top + bubbleHeight).toBeLessThanOrEqual(short.height - short.bottomReserve);
+      }
     });
 
     it('rings the target with a small margin', () => {

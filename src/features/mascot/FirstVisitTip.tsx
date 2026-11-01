@@ -11,7 +11,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
-import { TIP_MESSAGES, TipScreen } from '@/domain/rules/mascot-tour-rules';
+import { TIP_MESSAGES, TipScreen, TOUR_BUBBLE_MAX_WIDTH } from '@/domain/rules/mascot-tour-rules';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { hasSeenTip, markTipSeen } from '@/services/mascot/mascot-tips-service';
 
@@ -80,7 +80,7 @@ export function FirstVisitTip({ screen }: { screen: TipScreen }) {
         </View>
         <MascotBubble
           text={text}
-          maxWidth={width - SIDE_MARGIN_DP * 2 - MASCOT_COLUMN_DP - 4}
+          maxWidth={Math.min(TOUR_BUBBLE_MAX_WIDTH, width - SIDE_MARGIN_DP * 2 - MASCOT_COLUMN_DP - 4)}
           tailSide="left"
           solid
           actions={[{ label: 'Compris', onPress: () => setText(null), primary: true }]}

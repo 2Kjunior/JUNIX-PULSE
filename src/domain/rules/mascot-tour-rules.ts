@@ -66,6 +66,15 @@ export interface TourScreen {
   bottomReserve: number;
 }
 
+/**
+ * A rect measured in window coordinates, expressed in the coordinates of the layer that draws
+ * on top of the screen. Both are measured the same way, so whatever the platform adds to
+ * "window" coordinates (the status bar on some Android phones) cancels out.
+ */
+export function relativeToLayer(rect: TourRect, layerOrigin: { x: number; y: number }): TourRect {
+  return { ...rect, x: rect.x - layerOrigin.x, y: rect.y - layerOrigin.y };
+}
+
 export const MIN_TOUR_STOPS = 2;
 
 /**
@@ -90,6 +99,8 @@ export function planTour(
 }
 
 export const TOUR_BUBBLE_HEIGHT = 150;
+/** Widest a tour or tip bubble gets, so it stays a bubble on a tablet or a wide window. */
+export const TOUR_BUBBLE_MAX_WIDTH = 360;
 export const TOUR_HIGHLIGHT_PADDING = 6;
 export const TOUR_GAP = 12;
 
@@ -100,8 +111,17 @@ export interface TourBubblePlacement {
   highlight: TourRect;
 }
 
-/** Puts the bubble under the target when there is room, above it otherwise. */
-export function placeTourBubble(rect: TourRect, screen: TourScreen): TourBubblePlacement {
+/**
+ * Puts the bubble under the target when there is room, above it otherwise. When the bubble fits
+ * on neither side (a large target on a short screen), it takes the side with more room and stays
+ * on screen, over the target rather than off the screen. `bubbleHeight` is the measured height,
+ * which grows with the user's text size; until it is known the default estimate is used.
+ */
+export function placeTourBubble(
+  rect: TourRect,
+  screen: TourScreen,
+  bubbleHeight: number = TOUR_BUBBLE_HEIGHT
+): TourBubblePlacement {
   const highlight: TourRect = {
     x: rect.x - TOUR_HIGHLIGHT_PADDING,
     y: rect.y - TOUR_HIGHLIGHT_PADDING,
@@ -109,11 +129,21 @@ export function placeTourBubble(rect: TourRect, screen: TourScreen): TourBubbleP
     height: rect.height + 2 * TOUR_HIGHLIGHT_PADDING,
   };
 
+  const needed = bubbleHeight + TOUR_GAP;
   const roomBelow = screen.height - screen.bottomReserve - (highlight.y + highlight.height);
-  if (roomBelow >= TOUR_BUBBLE_HEIGHT + TOUR_GAP) {
+  const roomAbove = highlight.y - screen.topInset;
+
+  if (roomBelow >= needed) {
     return { side: 'below', top: highlight.y + highlight.height + TOUR_GAP, highlight };
   }
+  if (roomAbove >= needed) {
+    return { side: 'above', top: highlight.y - TOUR_GAP - bubbleHeight, highlight };
+  }
 
-  const top = Math.max(screen.topInset, highlight.y - TOUR_GAP - TOUR_BUBBLE_HEIGHT);
-  return { side: 'above', top, highlight };
+  const lowest = Math.max(screen.topInset, screen.height - screen.bottomReserve - bubbleHeight);
+  const clamp = (top: number) => Math.min(lowest, Math.max(screen.topInset, top));
+  if (roomBelow >= roomAbove) {
+    return { side: 'below', top: clamp(highlight.y + highlight.height + TOUR_GAP), highlight };
+  }
+  return { side: 'above', top: clamp(highlight.y - TOUR_GAP - bubbleHeight), highlight };
 }

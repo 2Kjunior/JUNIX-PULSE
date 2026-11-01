@@ -169,6 +169,11 @@ describe('bubble', () => {
     expect(place().bubbleMaxWidth).toBe(Math.round(PHONE.width * 0.7));
   });
 
+  it('stays a bubble on a tablet or a wide window', () => {
+    const tablet = { width: 1024, height: 1366, insets: PHONE.insets };
+    expect(place({ screen: tablet }).bubbleMaxWidth).toBe(360);
+  });
+
   it('folds while the keyboard is open', () => {
     expect(place({ step: 'personalize', keyboardOpen: true }).bubbleVisible).toBe(false);
     expect(place({ step: 'personalize', keyboardOpen: false }).bubbleVisible).toBe(true);

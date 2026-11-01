@@ -16,6 +16,8 @@ import {
   HOME_TOUR_TIP_ID,
   placeTourBubble,
   planTour,
+  relativeToLayer,
+  TOUR_BUBBLE_MAX_WIDTH,
   TOUR_STOPS,
   TourRect,
   TourScreen,
@@ -32,6 +34,7 @@ import { useMascotPreferences } from './use-mascot-preferences';
 
 const START_DELAY_MS = 1500;
 const START_ATTEMPTS = 4;
+const RESIZE_SETTLE_MS = 350;
 const TAB_BAR_RESERVE_DP = 110;
 const SIDE_MARGIN_DP = 16;
 const MASCOT_COLUMN_DP = 60;
@@ -57,7 +60,21 @@ export function HomeTour() {
 
   const [tour, setTour] = useState<ActiveTour | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [bubbleHeight, setBubbleHeight] = useState<number | null>(null);
   const startedRef = useRef(false);
+  const layerRef = useRef<React.ComponentRef<typeof View>>(null);
+
+  // A target is measured in window coordinates, the ring is drawn in the layer's own: on some
+  // Android phones the two origins differ (status bar), so the layer is measured the same way
+  const measureStop = useCallback(async (id: TourStopId): Promise<TourRect | null> => {
+    const rect = await measureTourTarget(id);
+    const layer = layerRef.current;
+    if (!rect || !layer) return rect;
+    const origin = await new Promise<{ x: number; y: number }>(resolve => {
+      layer.measureInWindow((x, y) => resolve({ x, y }));
+    });
+    return relativeToLayer(rect, origin);
+  }, []);
 
   const screen: TourScreen = {
     width,
@@ -84,7 +101,7 @@ export function HomeTour() {
       if (!active || (await hasSeenTip(HOME_TOUR_TIP_ID))) return;
 
       const measured: Partial<Record<TourStopId, TourRect | null>> = {};
-      for (const stop of TOUR_STOPS) measured[stop.id] = await measureTourTarget(stop.id);
+      for (const stop of TOUR_STOPS) measured[stop.id] = await measureStop(stop.id);
       const stops = planTour(measured, screenRef.current);
       if (!active) return;
       if (stops.length === 0) {
@@ -110,7 +127,7 @@ export function HomeTour() {
       active = false;
       clearTimeout(timer);
     };
-  }, [settings.presence]);
+  }, [settings.presence, measureStop]);
 
   // Leaving the screen ends the tour for good: it has been shown
   useEffect(() => {
@@ -127,28 +144,51 @@ export function HomeTour() {
       return;
     }
     // Measure again: the layout may have moved since the start
-    const rect = await measureTourTarget(tour.stops[index]);
+    const rect = await measureStop(tour.stops[index]);
     if (!rect) {
       finish();
       return;
     }
     setTour({ ...tour, index, rect });
-  }, [tour, finish]);
+  }, [tour, finish, measureStop]);
 
-  if (!tour || settings.presence === 'off') return null;
+  // Turning the phone, folding it or resizing the window moves the targets: measure the stop again
+  const stopId = tour ? tour.stops[tour.index] : null;
+  useEffect(() => {
+    if (!stopId) return;
+    let active = true;
+    // The new layout is in place a moment after the window changes size
+    const timer = setTimeout(async () => {
+      const rect = await measureStop(stopId);
+      if (active && rect) setTour(current => (current ? { ...current, rect } : current));
+    }, RESIZE_SETTLE_MS);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [width, height, stopId, measureStop]);
+
+  // The layer is always there, empty and transparent, so it can be measured before the tour starts
+  const layer = (content: React.ReactNode) => (
+    <View ref={layerRef} collapsable={false} pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+      {content}
+    </View>
+  );
+
+  if (!tour || settings.presence === 'off') return layer(null);
 
   const stop = TOUR_STOPS.find(item => item.id === tour.stops[tour.index]);
-  if (!stop) return null;
+  if (!stop) return layer(null);
 
-  const placement = placeTourBubble(tour.rect, screen);
+  const placement = placeTourBubble(tour.rect, screen, bubbleHeight ?? undefined);
   const text = resolveMascotMessage(stop.message, {}, preferences, displayName);
-  if (!text) return null;
+  if (!text) return layer(null);
 
   const last = tour.index === tour.stops.length - 1;
   const position = `${tour.index + 1} sur ${tour.stops.length}`;
 
   return (
-    <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+    <View ref={layerRef} collapsable={false} pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <View
         pointerEvents="none"
         style={{
@@ -173,15 +213,20 @@ export function HomeTour() {
           alignItems: 'flex-start',
           gap: 4,
         }}
+        onLayout={event => {
+          // The bubble grows with the user's text size: place it from its real height
+          const measured = Math.round(event.nativeEvent.layout.height);
+          setBubbleHeight(previous => (previous !== null && Math.abs(previous - measured) < 2 ? previous : measured));
+        }}
       >
         <View pointerEvents="none" style={{ width: MASCOT_COLUMN_DP, alignItems: 'center', paddingTop: 8 }}>
-                    {/* Still: the home screen already has its own animated mascot behind this one */}
+          {/* Still: the home screen already has its own animated mascot behind this one */}
           <PulseMascot mood="happy" size={40} pose="pointAt" pointAt={{ arm: 'right', angleDeg: -90 }} animated={false} />
         </View>
         <MascotBubble
           key={tour.index}
           text={text}
-          maxWidth={width - SIDE_MARGIN_DP * 2 - MASCOT_COLUMN_DP - 4}
+          maxWidth={Math.min(TOUR_BUBBLE_MAX_WIDTH, width - SIDE_MARGIN_DP * 2 - MASCOT_COLUMN_DP - 4)}
           tailSide="left"
           solid
           actions={[

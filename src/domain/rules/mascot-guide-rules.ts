@@ -37,6 +37,7 @@ export const GUIDE_LAYOUT = {
   edgeMargin: 16,
   smallScreenHeight: 600,
   bubbleMaxWidthRatio: 0.7,
+  bubbleMaxWidth: 360, // On a tablet or a wide window, 70 % of the width would be a banner
 } as const;
 
 export interface GuidePoint {
@@ -282,7 +283,7 @@ export function computeGuidePlacement(input: GuideInput): GuidePlacement {
     pose,
     pointAt: pose === 'pointAt' && input.target ? computePointAt(center, input.target) : null,
     bubbleVisible: !input.keyboardOpen,
-    bubbleMaxWidth: Math.round(width * GUIDE_LAYOUT.bubbleMaxWidthRatio),
+    bubbleMaxWidth: Math.min(GUIDE_LAYOUT.bubbleMaxWidth, Math.round(width * GUIDE_LAYOUT.bubbleMaxWidthRatio)),
     transition: buildTransition(input, center, firstEntry),
     compact,
   };
