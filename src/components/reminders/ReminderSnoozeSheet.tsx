@@ -9,6 +9,7 @@ import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+import { Button } from '@/components/ui/Button';
 import { SnoozeInput } from '@/use-cases/reminder-use-cases';
 import { Spacing } from '@/constants/theme';
 import { SNOOZE_OPTIONS_MINUTES } from '@/domain/rules/reminder-rules';
@@ -129,15 +130,13 @@ export function ReminderSnoozeSheet({
 
         {/* Bouton de confirmation sur iOS */}
         {snoozeSheet === 'picker' && Platform.OS === 'ios' && (
-          <TouchableOpacity
-            style={styles.snoozeConfirmBtn}
+          <Button
+            label="Confirmer la date"
             onPress={() => {
               onSnoozeSheetChange('hidden');
               onSnooze({ kind: 'custom', until: customDate });
             }}
-          >
-            <Text style={styles.snoozeConfirmLabel}>Confirmer la date</Text>
-          </TouchableOpacity>
+          />
         )}
       </View>
     </View>

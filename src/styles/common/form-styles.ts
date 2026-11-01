@@ -39,7 +39,7 @@ export function makeFormStyles(theme: ThemePalette) {
       paddingVertical: Spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.07)' : theme.outline.variant,
-      backgroundColor: isDark ? 'rgba(14, 16, 23, 0.95)' : theme.glass.nav.backgroundColor,
+      backgroundColor: theme.glass.nav.backgroundColor,
     },
     toolbarBtn: {
       minWidth: 70,
@@ -72,7 +72,15 @@ export function makeFormStyles(theme: ThemePalette) {
       color: theme.primary.default,
       fontWeight: '700',
       fontFamily: FontFamily?.bold,
-      textAlign: 'right',
+      textAlign: 'center',
+      alignSelf: 'flex-end',
+      backgroundColor: theme.glass.controlActive,
+      borderWidth: 1,
+      borderColor: theme.primary.default + '66',
+      borderRadius: Radius.full,
+      overflow: 'hidden',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 6,
     },
     toolbarSaveDisabled: {
       opacity: 0.35,
@@ -110,11 +118,11 @@ export function makeFormStyles(theme: ThemePalette) {
       fontFamily: FontFamily?.medium,
     },
     cardGroup: {
-      backgroundColor: isDark ? 'rgba(24, 28, 42, 0.82)' : theme.glass.card.backgroundColor,
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.lg,
       padding: Spacing.md,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(208, 188, 255, 0.16)' : theme.glass.card.borderColor,
+      borderColor: theme.glass.card.borderColor,
       gap: Spacing.sm,
       ...Platform.select({
         ios: {
@@ -122,9 +130,6 @@ export function makeFormStyles(theme: ThemePalette) {
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 10,
-        },
-        android: {
-          elevation: 3,
         },
         default: {
           boxShadow: isDark

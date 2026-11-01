@@ -170,16 +170,34 @@ export const GlowCardTokens = {
   borderOpacityAccentMid: 0.08,
   borderOpacityAccentSoft: 0.05,
   cornerGlowOpacity: {
-    soft: 0.18,
-    default: 0.28,
+    soft: 0.14,
+    default: 0.22,
   },
   cornerGlowMidOpacity: {
-    soft: 0.065,
-    default: 0.1,
+    soft: 0.035,
+    default: 0.06,
   },
   topHighlightOpacity: 0.08,
   footerSeparatorOpacity: 0.06,
   haloOpacity: 0.35, // halo extérieur statique, tone="attention"/"urgent" uniquement
+  // Verre liquide : translucidité calculée pour garder un contraste texte ≥ 4,5:1 au-dessus des halos
+  glass: {
+    dark: {
+      fill: ['rgba(38, 36, 58, 0.50)', 'rgba(20, 20, 34, 0.62)'],
+      sheen: ['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0)'],
+      specular: 'rgba(255, 255, 255, 0.45)',
+      edgeLit: 'rgba(255, 255, 255, 0.28)',
+      edgeShade: 'rgba(255, 255, 255, 0.08)',
+    },
+    light: {
+      fill: ['rgba(255, 255, 255, 0.62)', 'rgba(255, 255, 255, 0.40)'],
+      sheen: ['rgba(255, 255, 255, 0.55)', 'rgba(255, 255, 255, 0)'],
+      specular: 'rgba(255, 255, 255, 0.95)',
+      edgeLit: 'rgba(255, 255, 255, 0.90)',
+      edgeShade: 'rgba(76, 52, 120, 0.12)',
+    },
+    blurIntensity: 40,
+  },
 } as const;
 
 // ─── Glassmorphism — deux niveaux, hiérarchie stricte ────────────────────────

@@ -339,6 +339,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
               <SwipeableItem
                 rightActions={rightActions}
                 leftActions={leftActions}
+                containerStyle={styles.cardWrapper}
               >
                 <ReminderCardR04
                   reminder={item}
@@ -427,77 +428,77 @@ function ReminderCardR04({
   const d = new Date(reminder.scheduledAt);
   const timeStr = format(d, 'HH:mm');
   const actionLabel = reminder.actionType && ACTION_LABELS[reminder.actionType];
+  // La couleur suit le sens : un rappel à venir reste neutre
+  const tone = reminder.priority === 'URGENT' ? 'urgent' : isPast(d) ? 'attention' : 'neutral';
 
   return (
-    <View style={styles.cardWrapper}>
-      <GlowCard
-        tone="attention"
-        intensity="soft"
-        onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: reminder.id } })}
-        accessibilityLabel={reminder.title}
-      >
-        <View style={styles.cardRow}>
-          {/* Checkmark bouton */}
-          <TouchableOpacity
-            style={styles.checkCircle}
-            onPress={onComplete}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Marquer le rappel comme terminé"
-          >
-            <Ionicons name="ellipse-outline" size={22} color={palette.onSurface.variant} />
-          </TouchableOpacity>
+    <GlowCard
+      tone={tone}
+      intensity="soft"
+      onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: reminder.id } })}
+      accessibilityLabel={reminder.title}
+    >
+      <View style={styles.cardRow}>
+        {/* Checkmark bouton */}
+        <TouchableOpacity
+          style={styles.checkCircle}
+          onPress={onComplete}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Marquer le rappel comme terminé"
+        >
+          <Ionicons name="ellipse-outline" size={22} color={palette.onSurface.variant} />
+        </TouchableOpacity>
 
-          {/* Détails du rappel */}
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle} numberOfLines={2}>
-              {reminder.title}
-            </Text>
+        {/* Détails du rappel */}
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {reminder.title}
+          </Text>
 
-            {/* Badges / Métadonnées en pills */}
-            <View style={styles.metaRow}>
-              {/* Heure */}
-              <View style={styles.metaPill}>
-                <Ionicons name="time-outline" size={12} color={palette.primary.default} />
-                <Text style={styles.metaPillText}>{timeStr}</Text>
-              </View>
-
-              {/* Action / Sphère */}
-              {actionLabel ? (
-                <View style={styles.metaPill}>
-                  <Text style={styles.metaPillText}>{actionLabel}</Text>
-                </View>
-              ) : null}
-
-              {/* Priorité discrète */}
-              {reminder.priority === 'URGENT' || reminder.priority === 'HIGH' ? (
-                <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
-                  <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
-                  <Text style={[styles.metaPillText, { color: priorityColor }]}>
-                    {reminder.priority === 'URGENT' ? 'Urgent' : 'Haute'}
-                  </Text>
-                </View>
-              ) : null}
-
-              {/* Récurrence */}
-              {reminder.recurrenceRuleId ? (
-                <View style={styles.metaPill}>
-                  <Ionicons name="repeat-outline" size={12} color={palette.tertiary.default} />
-                </View>
-              ) : null}
+          {/* Badges / Métadonnées en pills */}
+          <View style={styles.metaRow}>
+            {/* Heure */}
+            <View style={styles.metaPill}>
+              <Ionicons name="time-outline" size={12} color={palette.primary.default} />
+              <Text style={styles.metaPillText}>{timeStr}</Text>
             </View>
-          </View>
 
-          {/* Bouton Quick Snooze (+2h) — conservé pour l'accessibilité */}
-          <TouchableOpacity
-            style={styles.quickSnoozeBtn}
-            onPress={onQuickSnooze}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            accessibilityLabel="Reporter de 2 heures"
-          >
-            <Text style={styles.quickSnoozeText}>+2h</Text>
-          </TouchableOpacity>
+            {/* Action / Sphère */}
+            {actionLabel ? (
+              <View style={styles.metaPill}>
+                <Text style={styles.metaPillText}>{actionLabel}</Text>
+              </View>
+            ) : null}
+
+            {/* Priorité discrète */}
+            {reminder.priority === 'URGENT' || reminder.priority === 'HIGH' ? (
+              <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
+                <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+                <Text style={[styles.metaPillText, { color: priorityColor }]}>
+                  {reminder.priority === 'URGENT' ? 'Urgent' : 'Haute'}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Récurrence */}
+            {reminder.recurrenceRuleId ? (
+              <View style={styles.metaPill}>
+                <Ionicons name="repeat-outline" size={12} color={palette.tertiary.default} />
+              </View>
+            ) : null}
+          </View>
         </View>
-      </GlowCard>
-    </View>
+
+        {/* Bouton Quick Snooze (+2h) — conservé pour l'accessibilité */}
+        <TouchableOpacity
+          style={styles.quickSnoozeBtn}
+          onPress={onQuickSnooze}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityLabel="Reporter de 2 heures"
+        >
+          <Text style={styles.quickSnoozeText}>+2h</Text>
+        </TouchableOpacity>
+      </View>
+    </GlowCard>
   );
 }

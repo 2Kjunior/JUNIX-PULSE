@@ -21,19 +21,13 @@ export const makeSettingsStyles = (t: ThemePalette) => {
   const isDark = t.mode === 'dark';
 
   // Fond des rangées (glass effect adapté)
-  const rowBg = isDark
-    ? 'rgba(24, 28, 42, 0.80)'
-    : hexToRgba(t.surface.container, 0.85);
+  const rowBg = t.glass.card.backgroundColor;
 
-  // Bordure des rangées (violet teinté)
-  const rowBorder = isDark
-    ? hexToRgba(t.primary.default, 0.12)
-    : hexToRgba(t.outline.variant, 0.60);
+  // Bordure des rangées
+  const rowBorder = t.glass.control.borderColor;
 
   // Fond du bouton retour
-  const backBtnBg = isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : hexToRgba(t.outline.variant, 0.25);
+  const backBtnBg = t.glass.control.backgroundColor;
 
   // Fond des pilules d'heure (inactive)
   const hourPillBg = isDark
@@ -76,9 +70,7 @@ export const makeSettingsStyles = (t: ThemePalette) => {
     : hexToRgba(t.outline.variant, 0.50);
 
   // Fond info box
-  const infoBg = isDark
-    ? 'rgba(20, 24, 38, 0.75)'
-    : hexToRgba(t.surface.container, 0.80);
+  const infoBg = t.glass.card.backgroundColor;
 
   // Bordure info box
   const infoBorder = isDark
@@ -148,9 +140,6 @@ export const makeSettingsStyles = (t: ThemePalette) => {
           shadowOffset: { width: 0, height: 3 },
           shadowOpacity: t.shadow.smOpacity,
           shadowRadius: 8,
-        },
-        android: {
-          elevation: 2,
         },
         default: {},
       }),

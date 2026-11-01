@@ -75,12 +75,12 @@ export function makeSearchStyles(theme: ThemePalette) {
       paddingHorizontal: Spacing.md,
       paddingVertical: 7,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.container : theme.surface.container,
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
-      borderColor: theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
     },
     filterChipActive: {
-      backgroundColor: isLight ? theme.primary.container : theme.surface.high,
+      backgroundColor: theme.glass.controlActive,
       borderColor: theme.primary.default,
     },
     filterText: {
@@ -126,9 +126,9 @@ export function makeSearchStyles(theme: ThemePalette) {
       paddingHorizontal: Spacing.md,
       paddingVertical: 8,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.container : theme.surface.container,
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
-      borderColor: theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
     },
     recentChipText: {
       ...Typography.bodyMedium,

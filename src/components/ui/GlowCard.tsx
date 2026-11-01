@@ -2,22 +2,26 @@
  * GlowCard — carte unique de Junix Pulse.
  *
  * Anatomie (de bas en haut) :
- * 1) Bordure en dégradé (padding 1px, plus forte côté coin supérieur droit)
- * 2) Fond uni opaque (sombre: #14141E, clair: #FFFFFF)
- * 3) Dégradé de profondeur (sombre: ardoise, clair: #FFFFFF -> #FBF8FF)
- * 4) Lueur de coin (LinearGradient absolu, pointerEvents="none")
- * 5) Reflet supérieur (1px blanc, uniquement en sombre)
- * 6) Contenu (children)
- * 7) Pied optionnel (footer), séparé par un filet
+ * 1) Bordure 1px éclairée (haut et gauche)
+ * 2) Flou d'arrière-plan (iOS et web ; translucide sans flou sur Android)
+ * 3) Remplissage translucide en dégradé, qui laisse passer le fond ambiant
+ * 4) Reflet diagonal du verre depuis le coin supérieur gauche
+ * 5) Lueur de coin (LinearGradient absolu, pointerEvents="none")
+ * 6) Reflet supérieur (1px blanc) et liseré du tone autour du coin supérieur droit
+ * 7) Contenu (children)
+ * 8) Pied optionnel (footer), séparé par un filet
  *
  * La couleur ("tone") suit toujours le SENS (priorité, statut), jamais la
  * décoration. "neutral" n'a aucune lueur : c'est la carte ordinaire par défaut.
+ *
+ * "Réduire la transparence" (réglage système) : carte opaque, sans flou ni reflet.
  *
  * Accessibilité : la lueur est un renfort visuel, jamais l'unique indicateur
  * (règle BR-025). Contraste texte ≥ 4,5:1 vérifié pour les deux modes.
  */
 import { memo, useEffect, type ReactNode } from 'react';
 import { View, Pressable, StyleSheet, type StyleProp, type ViewStyle, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -29,6 +33,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Glow, GlowCardTokens, type GlowTone } from '@/constants/theme';
+import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
 import { hexToRgba } from '@/utils/color';
 
@@ -86,6 +91,7 @@ function GlowCardInner({
   disableEntranceAnimation = false,
 }: GlowCardProps) {
   const { isDark } = useTheme();
+  const reduceTransparency = useReduceTransparency();
   const reducedMotion = useReducedMotion();
   const isReduced = !!reducedMotion || !!disableEntranceAnimation;
 
@@ -142,31 +148,28 @@ function GlowCardInner({
     ? GlowCardTokens.cornerGlowMidOpacity[intensity]
     : (intensity === 'soft' ? 0.04 : 0.06);
 
-  // Couleurs de bordure en dégradé
-  const borderColors: readonly [string, string, ...string[]] = isDark
-    ? (hasGlow
-        ? [
-            hexToRgba(accentHex, GlowCardTokens.borderOpacityAccentStrong),
-            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityAccentMid),
-            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityAccentSoft),
-          ]
-        : [
-            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityNeutral),
-            hexToRgba('#FFFFFF', GlowCardTokens.borderOpacityNeutral),
-          ])
-    : (hasGlow
-        ? [
-            hexToRgba(accentHex, 0.40),
-            'rgba(76, 52, 120, 0.10)',
-            'rgba(76, 52, 120, 0.06)',
-          ]
-        : [
-            'rgba(76, 52, 120, 0.10)',
-            'rgba(76, 52, 120, 0.10)',
-          ]);
+  const glass = isDark ? GlowCardTokens.glass.dark : GlowCardTokens.glass.light;
+
+  const accentRim = hasGlow
+    ? hexToRgba(accentHex, isDark ? GlowCardTokens.borderOpacityAccentStrong : 0.40)
+    : 'transparent';
+
+  // Bordure : la lumière accroche le haut et la gauche. Sur le verre, le tone passe par le
+  // liseré du coin ; sans transparence, il colore la bordure comme sur une carte pleine.
+  const accentEdge = hasGlow && reduceTransparency ? accentRim : null;
+  const borderStyle: ViewStyle = {
+    borderTopColor: accentEdge ?? glass.edgeLit,
+    borderRightColor: accentEdge ?? glass.edgeShade,
+    borderBottomColor: glass.edgeShade,
+    borderLeftColor: glass.edgeLit,
+  };
+
+  // Une ombre native se voit à travers le verre et dessine un rectangle : seuls le web
+  // (box-shadow découpée sous la carte) et la carte opaque en portent une.
+  const castsShadow = reduceTransparency || Platform.OS === 'web';
 
   // Halo extérieur statique : attention/urgent
-  const showHalo = tone === 'attention' || tone === 'urgent';
+  const showHalo = castsShadow && (tone === 'attention' || tone === 'urgent');
   const haloStyle: ViewStyle | null = showHalo
     ? ({
         boxShadow: isDark
@@ -176,13 +179,18 @@ function GlowCardInner({
       })
     : null;
 
-  // Dégradé de profondeur
-  const depthColors: readonly [string, string] = isDark
+  // Dégradé de profondeur : verre translucide, ou surface opaque si la transparence est réduite
+  const opaqueColors: readonly [string, string] = isDark
     ? ['rgba(27, 32, 48, 0.72)', 'rgba(20, 24, 36, 0.92)']
     : ['#FFFFFF', '#FBF8FF'];
+  const depthColors = reduceTransparency ? opaqueColors : glass.fill;
 
-  // Fond uni inner
-  const innerBg = isDark ? GlowCardTokens.background : '#FFFFFF';
+  // Fond uni inner, uniquement sans transparence
+  const opaqueBg = isDark ? GlowCardTokens.background : '#FFFFFF';
+  const innerBg = reduceTransparency ? opaqueBg : 'transparent';
+
+  // Android affiche un simple voile sans BlurTargetView : on garde le verre translucide sans flou
+  const showBlur = !reduceTransparency && Platform.OS !== 'android';
 
   // Séparateur de pied
   const separatorColor = isDark
@@ -190,7 +198,9 @@ function GlowCardInner({
     : 'rgba(76, 52, 120, 0.08)';
 
   // Ombre extérieure thématique
-  const shadowStyle: ViewStyle = isDark
+  const shadowStyle: ViewStyle | null = !castsShadow
+    ? null
+    : isDark
     ? (Platform.select({
         ios: {
           shadowColor: '#000000',
@@ -222,58 +232,80 @@ function GlowCardInner({
 
   const content = (
     <View style={[styles.outerWrapper, shadowStyle, { borderRadius: radius }, haloStyle]}>
-      <LinearGradient
-        colors={borderColors}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.gradientBorder, { borderRadius: radius }]}
-      >
-        <View style={[styles.inner, { backgroundColor: innerBg, borderRadius: radius - 0.5 }]}>
-          {/* Fond dégradé pour la profondeur */}
-          <LinearGradient
-            colors={depthColors}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={[StyleSheet.absoluteFill, { borderRadius: radius - 0.5 }]}
+      <View style={[styles.inner, borderStyle, { backgroundColor: innerBg, borderRadius: radius }]}>
+        {showBlur && (
+          <BlurView
+            intensity={GlowCardTokens.glass.blurIntensity}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
+        )}
 
-          {hasGlow && (
-            <LinearGradient
-              pointerEvents="none"
-              colors={[
-                hexToRgba(accentHex, glowOpacity),
-                hexToRgba(accentHex, glowMidOpacity),
-                hexToRgba(accentHex, 0),
-              ]}
-              locations={[0, 0.45, 1]}
-              start={{ x: 1, y: 0 }}
-              end={{ x: 0.35, y: 0.75 }}
-              style={[StyleSheet.absoluteFill, { borderRadius: radius - 0.5 }]}
-            />
-          )}
+        {/* Fond dégradé pour la profondeur */}
+        <LinearGradient
+          colors={depthColors}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
 
-          {/* Liseré spéculaire zénithal (sombre uniquement) */}
-          {isDark && (
-            <LinearGradient
-              colors={['transparent', 'rgba(255, 255, 255, 0.32)', 'transparent']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.topHighlight}
-              pointerEvents="none"
-            />
-          )}
+        {/* Reflet diagonal du verre */}
+        {!reduceTransparency && (
+          <LinearGradient
+            colors={glass.sheen}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.6, y: 0.7 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+        )}
 
-          <View style={styles.content}>{children}</View>
+        {hasGlow && (
+          <LinearGradient
+            pointerEvents="none"
+            colors={[
+              hexToRgba(accentHex, glowOpacity),
+              hexToRgba(accentHex, glowMidOpacity),
+              hexToRgba(accentHex, 0),
+            ]}
+            locations={[0, 0.35, 1]}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0.55, y: 0.8 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
 
-          {footer ? (
-            <View style={styles.footer}>
-              <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
-              {footer}
-            </View>
-          ) : null}
-        </View>
-      </LinearGradient>
+        {/* Liseré spéculaire zénithal, qui prend la couleur du tone vers le coin supérieur droit */}
+        {!reduceTransparency && (
+          <LinearGradient
+            colors={['transparent', glass.specular, hasGlow ? accentRim : 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.topHighlight}
+            pointerEvents="none"
+          />
+        )}
+        {!reduceTransparency && hasGlow && (
+          <LinearGradient
+            colors={[accentRim, hexToRgba(accentHex, 0)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.sideHighlight}
+            pointerEvents="none"
+          />
+        )}
+
+        <View style={styles.content}>{children}</View>
+
+        {footer ? (
+          <View style={styles.footer}>
+            <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
+            {footer}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 
@@ -313,11 +345,8 @@ const styles = StyleSheet.create({
   outerWrapper: {
     minHeight: 44, // zone tactile >= 44dp
   },
-  gradientBorder: {
-    padding: 1,
-    overflow: 'hidden',
-  },
   inner: {
+    borderWidth: 1,
     overflow: 'hidden',
   },
   topHighlight: {
@@ -326,6 +355,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
+    zIndex: 2,
+  },
+  sideHighlight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 1,
+    height: '60%',
     zIndex: 2,
   },
   content: {

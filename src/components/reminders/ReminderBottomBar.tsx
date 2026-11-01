@@ -2,10 +2,12 @@
  * Barre d'actions fixes en bas de l'écran de détail d'un rappel — Référence R-06.
  * Extrait de reminders/[id].tsx.
  */
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Platform, StyleSheet, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 
-import { Spacing } from '@/constants/theme';
+import { GlassActionButton } from '@/components/ui/GlassActionButton';
+import { GlowCardTokens, Spacing } from '@/constants/theme';
+import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { makeReminderDetailStyles } from '@/styles/reminders/reminder-detail-styles';
@@ -23,38 +25,51 @@ export function ReminderBottomBar({
   onComplete,
   onDelete,
 }: ReminderBottomBarProps) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const styles = useThemedStyles(makeReminderDetailStyles);
-  const isLight = theme.mode === 'light';
+  const reduceTransparency = useReduceTransparency();
 
   return (
-    <View style={[styles.bottomBar, { paddingBottom: insetsBottom + Spacing.md }]}>
-      <TouchableOpacity
-        style={[styles.bottomBtn, styles.snoozeBtn]}
+    <View
+      style={[
+        styles.bottomBar,
+        reduceTransparency && styles.bottomBarOpaque,
+        { bottom: insetsBottom + Spacing.sm },
+      ]}
+    >
+      {/* Android affiche un simple voile sans BlurTargetView : la barre y reste translucide sans flou */}
+      {!reduceTransparency && Platform.OS !== 'android' && (
+        <BlurView
+          intensity={GlowCardTokens.glass.blurIntensity}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      )}
+      <GlassActionButton
+        icon="alarm-outline"
+        label="Reporter"
+        color={theme.tertiary.default}
         onPress={onSnooze}
         accessibilityLabel="Reporter ce rappel"
-      >
-        <Ionicons name="alarm-outline" size={18} color={isLight ? theme.tertiary.onContainer : theme.tertiary.default} />
-        <Text style={styles.snoozeBtnText}>Reporter</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.bottomBtn, styles.completeBtn]}
+        style={styles.bottomBtn}
+      />
+      <GlassActionButton
+        icon="checkmark-circle-outline"
+        label="Terminer"
+        color={theme.success.default}
         onPress={onComplete}
         accessibilityLabel="Marquer le rappel comme terminé"
-      >
-        <Ionicons name="checkmark-circle-outline" size={18} color={isLight ? theme.success.onContainer : theme.success.default} />
-        <Text style={styles.completeBtnText}>Terminer</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.bottomBtn, styles.deleteBtn]}
+        style={styles.bottomBtn}
+      />
+      <GlassActionButton
+        icon="trash-outline"
+        label="Supprimer"
+        color={theme.error.default}
         onPress={onDelete}
         accessibilityLabel="Supprimer ce rappel"
-      >
-        <Ionicons name="trash-outline" size={18} color={isLight ? theme.error.onContainer : theme.error.default} />
-        <Text style={styles.deleteBtnText}>Supprimer</Text>
-      </TouchableOpacity>
+        style={styles.bottomBtn}
+      />
     </View>
   );
 }

@@ -26,7 +26,7 @@ export function SummaryChip({
   selected = false,
   onPress,
 }: SummaryChipProps) {
-  const { isDark } = useTheme();
+  const { isDark, palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
 
   return (
@@ -34,18 +34,12 @@ export function SummaryChip({
       style={[
         styles.chip,
         {
-          borderColor: selected
-            ? color
-            : isDark
-            ? 'rgba(255, 255, 255, 0.12)'
-            : 'rgba(0, 0, 0, 0.08)',
+          borderColor: selected ? color : palette.glass.control.borderColor,
           backgroundColor: selected
             ? isDark
               ? color + '33'
               : color + '22'
-            : isDark
-            ? 'rgba(20, 24, 36, 0.85)'
-            : 'rgba(255, 255, 255, 0.95)',
+            : palette.glass.control.backgroundColor,
         },
       ]}
       onPress={onPress}

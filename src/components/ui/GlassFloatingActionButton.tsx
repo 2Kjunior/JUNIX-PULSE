@@ -11,8 +11,7 @@
  * 2. Effet 3D tactile (Touch scale & spring) :
  *    - Compression volumétrique au toucher (scale 0.90) puis rebond élastique (spring).
  *    - Liseré supérieur biseauté 3D (reflet blanc 35%, halo d'élévation Electric Violet).
- * 3. Colorimétrie Midnight Glassmorphism :
- *    - Duo Electric Violet / Royal Indigo (#8B5CF6 / #6D28D9) sans la nuance 3 couleurs.
+ * 3. Verre violet vif, commun aux boutons principaux (VividGlassFill).
  */
 
 import React, { useRef, useCallback } from 'react';
@@ -32,15 +31,14 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import { VividGlassFill } from '@/components/ui/VividGlassFill';
 import {
   Typography,
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
-import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
 
@@ -65,7 +63,6 @@ export function GlassFloatingActionButton({
   accessibilityLabel,
   style,
 }: GlassFloatingActionButtonProps) {
-  const { palette } = useTheme();
   const styles = useThemedStyles(makeGlassFabStyles);
   const reduceMotion = useSafeReducedMotion();
 
@@ -148,12 +145,8 @@ export function GlassFloatingActionButton({
         accessibilityLabel={accessibilityLabel || label}
       >
         <Animated.View style={[styles.touchableWrapper, animatedWrapperStyle]}>
-          <LinearGradient
-            colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradient}
-          >
+          <VividGlassFill />
+          <Animated.View style={styles.gradient}>
             <Animated.View style={styles.contentRow}>
               {/* Icône toujours nette et centrée lorsque rétracté */}
               <Ionicons name={icon} size={iconSize} color="#FFFFFF" />
@@ -174,7 +167,7 @@ export function GlassFloatingActionButton({
                 </Text>
               </Animated.View>
             </Animated.View>
-          </LinearGradient>
+          </Animated.View>
         </Animated.View>
       </TouchableOpacity>
     </Animated.View>
@@ -211,10 +204,10 @@ export function makeGlassFabStyles(theme: ThemePalette) {
       borderRadius: 26,
       overflow: 'hidden',
       borderWidth: 1,
-      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(255, 255, 255, 0.60)',
-      borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.40)',
-      borderBottomColor: isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(107, 70, 193, 0.40)',
-      borderRightColor: isDark ? 'rgba(0, 0, 0, 0.20)' : 'rgba(107, 70, 193, 0.30)',
+      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.80)',
+      borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.50)',
+      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.35)',
+      borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.25)',
     },
     gradient: {
       width: '100%',

@@ -1,12 +1,12 @@
 /**
  * Button — Design system Junix Pulse.
- * Variant primary : dégradé linéaire violet→cyan (règle : 1 seul dégradé par écran).
+ * Variant primary : verre violet vif (VividGlassFill).
  * Autres variants : secondary, ghost, destructive (surfaces plates, sans dégradé).
  * Zones tactiles min 44pt (accessibilité).
  *
  * Migration P5 : Entièrement thématisé via useThemedStyles(makeButtonStyles)
- * - variant_secondary utilise theme.surface.container et theme.onSurface.primary
- * - variant_primary utilise le gradient thématique (palette.gradient.primary)
+ * - variant_secondary utilise theme.glass.control et theme.onSurface.primary
+ * - variant_primary utilise les dégradés thématiques (palette.gradient)
  * - variant_ghost et destructive utilisent les tokens d'accent dynamiques
  */
 
@@ -20,7 +20,7 @@ import {
   ViewStyle,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { VividGlassFill } from '@/components/ui/VividGlassFill';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
@@ -92,14 +92,10 @@ export function Button({
         accessibilityLabel={label}
         accessibilityState={{ disabled: isDisabled }}
       >
-        <LinearGradient
-          colors={palette.gradient.primary as unknown as readonly [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.gradient, styles[`size_${size}`]]}
-        >
+        <View style={[styles.gradient, styles[`size_${size}`]]}>
+          <VividGlassFill />
           {content}
-        </LinearGradient>
+        </View>
       </Pressable>
     );
   }
@@ -140,10 +136,10 @@ export function makeButtonStyles(theme: ThemePalette) {
 
     primaryBase: {
       borderWidth: 1,
-      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.60)',
-      borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.40)',
-      borderBottomColor: isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(107, 70, 193, 0.40)',
-      borderRightColor: isDark ? 'rgba(0, 0, 0, 0.20)' : 'rgba(107, 70, 193, 0.30)',
+      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.80)',
+      borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.50)',
+      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.35)',
+      borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.25)',
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
@@ -194,9 +190,9 @@ export function makeButtonStyles(theme: ThemePalette) {
 
     // ─── Variants (non-primary) ─────────────────────────────────────────────────
     variant_secondary: {
-      backgroundColor: isDark ? 'rgba(27, 32, 48, 0.85)' : theme.surface.container,
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
       borderRadius: Radius.full,
     },
     variant_ghost: {

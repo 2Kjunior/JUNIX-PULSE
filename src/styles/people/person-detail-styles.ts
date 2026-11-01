@@ -138,11 +138,11 @@ export function makePersonDetailStyles(theme: ThemePalette) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.surface.high,
+      backgroundColor: theme.glass.control.backgroundColor,
       paddingVertical: Spacing.sm,
       borderRadius: Radius.md,
       borderWidth: 1,
-      borderColor: theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
       gap: 6,
     },
     quickActionText: {

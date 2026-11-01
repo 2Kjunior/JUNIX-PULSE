@@ -45,12 +45,12 @@ describe('Lot 7 — Barres et composition d\'écran (DEF-16, U-06)', () => {
       expect(darkStyles.statCell.borderColor).toBe(darkPalette.glass.card.borderColor);
     });
 
-    it('utilise les jetons surface.container en mode clair pour moduleCard et statCell', () => {
+    it('utilise aussi les jetons theme.glass.card en mode clair pour moduleCard et statCell', () => {
       const lightStyles = makePulseStyles(lightPalette);
-      expect(lightStyles.moduleCard.backgroundColor).toBe(lightPalette.surface.container);
-      expect(lightStyles.moduleCard.borderColor).toBe(lightPalette.outline.variant);
-      expect(lightStyles.statCell.backgroundColor).toBe(lightPalette.surface.container);
-      expect(lightStyles.statCell.borderColor).toBe(lightPalette.outline.variant);
+      expect(lightStyles.moduleCard.backgroundColor).toBe(lightPalette.glass.card.backgroundColor);
+      expect(lightStyles.moduleCard.borderColor).toBe(lightPalette.glass.card.borderColor);
+      expect(lightStyles.statCell.backgroundColor).toBe(lightPalette.glass.card.backgroundColor);
+      expect(lightStyles.statCell.borderColor).toBe(lightPalette.glass.card.borderColor);
     });
 
     it('harmonise refuseBtn et emptyCard avec les jetons thématiques', () => {

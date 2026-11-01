@@ -53,7 +53,7 @@ export function makeCalendarStyles(theme: ThemePalette) {
       paddingHorizontal: Spacing.sm + 2,
       paddingVertical: Spacing.xs + 1,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.high : theme.glass.card.backgroundColor,
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
       borderColor: isLight ? theme.primary.default + '55' : theme.primary.default + '66',
       marginRight: 4,
@@ -76,9 +76,9 @@ export function makeCalendarStyles(theme: ThemePalette) {
       width: 36,
       height: 36,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.high : 'rgba(26, 30, 44, 0.75)',
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.10)',
+      borderColor: theme.glass.control.borderColor,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -86,9 +86,9 @@ export function makeCalendarStyles(theme: ThemePalette) {
       width: 44,
       height: 44,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.high : 'rgba(26, 30, 44, 0.75)',
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
-      borderColor: theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -97,11 +97,11 @@ export function makeCalendarStyles(theme: ThemePalette) {
       justifyContent: 'space-between',
       paddingHorizontal: Spacing.xs,
       paddingVertical: Spacing.sm,
-      backgroundColor: isLight ? theme.surface.container : 'rgba(20, 24, 36, 0.82)',
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.xl,
       marginHorizontal: Spacing.md,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.08)',
+      borderColor: theme.glass.card.borderColor,
       marginBottom: Spacing.md,
       ...Platform.select({
         ios: {
@@ -109,9 +109,6 @@ export function makeCalendarStyles(theme: ThemePalette) {
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 8,
-        },
-        android: {
-          elevation: 3,
         },
         default: {
           boxShadow: isLight
@@ -150,7 +147,7 @@ export function makeCalendarStyles(theme: ThemePalette) {
       }),
     },
     dayCellToday: {
-      backgroundColor: isLight ? theme.surface.high : 'rgba(26, 30, 44, 0.85)',
+      backgroundColor: theme.glass.controlActive,
       borderWidth: 1,
       borderColor: isLight ? theme.primary.default + '60' : 'rgba(139, 92, 246, 0.50)',
     },
@@ -289,10 +286,10 @@ export function makeCalendarStyles(theme: ThemePalette) {
       color: theme.onSurface.variant,
     },
     emptyCard: {
-      backgroundColor: isLight ? theme.surface.container : 'rgba(22, 26, 38, 0.75)',
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.xl,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.10)',
+      borderColor: theme.glass.card.borderColor,
       padding: Spacing.xl,
       alignItems: 'center',
       justifyContent: 'center',
@@ -304,9 +301,6 @@ export function makeCalendarStyles(theme: ThemePalette) {
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 12,
-        },
-        android: {
-          elevation: 4,
         },
         default: {
           boxShadow: isLight

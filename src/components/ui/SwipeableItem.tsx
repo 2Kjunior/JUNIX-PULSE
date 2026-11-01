@@ -6,8 +6,7 @@
  *   qui APPARAISSENT DEPUIS LA DROITE (pattern iOS natif).
  * - Les boutons ne sont JAMAIS dans l'arrière-plan de la card — ils sont
  *   affichés dans un panneau adjacent, révélé derrière la card qui glisse.
- * - Effet LiquidGlass sur les boutons : GlassView (expo-glass-effect) sur iOS,
- *   fallback glassmorphism semi-transparent sur Android.
+ * - Boutons en verre teinté (GlassActionButton), identiques sur iOS et Android.
  * - Couleurs issues à 100% de la palette officielle ThemePalette.
  *
  * Architecture :
@@ -15,8 +14,8 @@
  * │ ReanimatedSwipeable (RNGH)                       │
  * │  ├── [Card content]   ← glisse vers la gauche   │
  * │  └── [Right actions]  ← révélés depuis la droite│
- * │        ├── [Delete btn] GlassView + accent error │
- * │        └── [Edit btn]   GlassView + accent primary│
+ * │        ├── [Delete btn] verre teinté error       │
+ * │        └── [Edit btn]   verre teinté primary     │
  * └──────────────────────────────────────────────────┘
  *
  * Accessibilité : WCAG 2.2 AA — rôles et labels explicites.
@@ -25,10 +24,7 @@
 import React, { useRef, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
-  Platform,
   StyleProp,
   ViewStyle,
 } from 'react-native';
@@ -42,8 +38,8 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassView } from 'expo-glass-effect';
-import { Radius, Spacing, Typography } from '@/constants/theme';
+import { GlassActionButton } from '@/components/ui/GlassActionButton';
+import { Spacing } from '@/constants/theme';
 
 // ─── Types publics ────────────────────────────────────────────────────────────
 
@@ -78,9 +74,9 @@ export interface SwipeableItemProps {
 
 const ACTION_BUTTON_WIDTH = 72;
 
-// ─── Composant bouton d'action LiquidGlass ───────────────────────────────────
+// ─── Bouton d'action animé avec le geste ─────────────────────────────────────
 
-interface GlassActionButtonProps {
+interface SwipeActionButtonProps {
   action: SwipeAction;
   progress: SharedValue<number>;
   index: number;
@@ -88,13 +84,13 @@ interface GlassActionButtonProps {
   onPress: () => void;
 }
 
-function GlassActionButton({
+function SwipeActionButton({
   action,
   progress,
   index,
   total,
   onPress,
-}: GlassActionButtonProps) {
+}: SwipeActionButtonProps) {
   // Animation synchronisée avec le geste de slide
   // Le dernier bouton (index = total - 1) apparaît en premier (le plus proche du bord)
   const delay = (total - 1 - index) * 0.1;
@@ -130,45 +126,13 @@ function GlassActionButton({
 
   return (
     <Animated.View style={[styles.actionButtonWrapper, animatedStyle]}>
-      <TouchableOpacity
-        style={styles.actionTouchable}
+      <GlassActionButton
+        icon={action.icon}
+        label={action.label}
+        color={action.color}
         onPress={onPress}
-        activeOpacity={0.75}
-        accessibilityRole="button"
-        accessibilityLabel={action.label}
-      >
-        {/* LiquidGlass sur iOS, glassmorphism fallback sur Android */}
-        <GlassView
-          style={[styles.glassButton]}
-          glassEffectStyle="regular"
-          colorScheme="dark"
-        >
-          {/* Tint coloré semi-transparent pour l'identité de l'action */}
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              styles.colorTint,
-              { backgroundColor: action.color + '26' }, // 15% opacity
-            ]}
-          />
-          {/* Bordure lumineuse */}
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              styles.glassBorder,
-              { borderColor: action.color + '50' }, // 31% opacity
-            ]}
-          />
-          {/* Contenu (icône + label) */}
-          <Ionicons name={action.icon} size={22} color={action.color} />
-          <Text
-            style={[styles.actionLabel, { color: action.color }]}
-            numberOfLines={1}
-          >
-            {action.label}
-          </Text>
-        </GlassView>
-      </TouchableOpacity>
+        layout="stacked"
+      />
     </Animated.View>
   );
 }
@@ -199,7 +163,7 @@ function ActionsContainer({
       ]}
     >
       {actions.map((action, index) => (
-        <GlassActionButton
+        <SwipeActionButton
           key={action.key}
           action={action}
           progress={progress}
@@ -367,40 +331,5 @@ const styles = StyleSheet.create({
     width: ACTION_BUTTON_WIDTH,
     paddingHorizontal: Spacing.xs,
     alignSelf: 'stretch',
-  },
-  actionTouchable: {
-    flex: 1,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
-  glassButton: {
-    flex: 1,
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    // Fallback Android : fond semi-transparent sombre
-    backgroundColor: Platform.OS === 'android'
-      ? 'rgba(30, 28, 35, 0.82)'
-      : 'transparent',
-    // Ombre subtile pour séparer visuellement du fond
-    ...Platform.select({
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  colorTint: {
-    borderRadius: Radius.lg,
-  },
-  glassBorder: {
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  actionLabel: {
-    ...Typography.labelSmall,
-    fontWeight: '700',
-    fontSize: 10,
-    letterSpacing: 0.3,
   },
 });

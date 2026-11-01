@@ -15,7 +15,6 @@ import { darkPalette, type ThemePalette } from '@/constants/palettes';
 
 export function makeTodayStyles(theme: ThemePalette) {
   const isDark = theme.mode === 'dark';
-  const isLight = theme.mode === 'light';
 
   return StyleSheet.create({
     container: {
@@ -65,9 +64,9 @@ export function makeTodayStyles(theme: ThemePalette) {
       width: 44,
       height: 44,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.surface.high : 'rgba(26, 30, 44, 0.75)',
+      backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,
-      borderColor: theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
       alignItems: 'center',
       justifyContent: 'center',
       ...Platform.select({
@@ -76,9 +75,6 @@ export function makeTodayStyles(theme: ThemePalette) {
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 6,
-        },
-        android: {
-          elevation: 3,
         },
         default: {
           boxShadow: isDark
@@ -97,22 +93,19 @@ export function makeTodayStyles(theme: ThemePalette) {
     chip: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(20, 24, 36, 0.82)' : theme.surface.container,
+      backgroundColor: theme.glass.control.backgroundColor,
       borderRadius: Radius.full,
       paddingHorizontal: Spacing.md + 2,
       paddingVertical: Spacing.xs + 2,
       gap: 6,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.outline.variant,
+      borderColor: theme.glass.control.borderColor,
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 6,
-        },
-        android: {
-          elevation: 2,
         },
         default: {
           boxShadow: isDark
@@ -230,21 +223,19 @@ export function makeTodayStyles(theme: ThemePalette) {
       color: theme.onSurface.variant,
     },
     suggestionCard: {
-      backgroundColor: isDark ? 'rgba(24, 28, 42, 0.82)' : theme.glass.card.backgroundColor,
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.lg,
       padding: Spacing.lg,
       borderWidth: 1,
       borderColor: isDark ? 'rgba(139, 92, 246, 0.35)' : 'rgba(107, 70, 193, 0.35)',
       gap: Spacing.sm,
+      // Pas d'elevation Android : son ombre se verrait à travers le verre translucide
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 16,
-        },
-        android: {
-          elevation: 4,
         },
         default: {
           boxShadow: isDark
@@ -320,21 +311,19 @@ export function makeTodayStyles(theme: ThemePalette) {
       fontWeight: '700',
     },
     progressCard: {
-      backgroundColor: isDark ? 'rgba(22, 26, 38, 0.75)' : theme.glass.card.backgroundColor,
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.lg,
       padding: Spacing.md,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.glass.card.borderColor,
+      borderColor: theme.glass.card.borderColor,
       gap: Spacing.sm,
+      // Pas d'elevation Android : son ombre se verrait à travers le verre translucide
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 10,
-        },
-        android: {
-          elevation: 3,
         },
         default: {
           boxShadow: isDark
@@ -551,20 +540,17 @@ export function makeTodayStyles(theme: ThemePalette) {
     waveCard: {
       flexBasis: '47%',
       flexGrow: 1,
-      backgroundColor: isDark ? theme.surface.container : '#FFFFFF',
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.lg,
       padding: Spacing.md,
       borderWidth: 1,
-      borderColor: theme.outline.variant,
+      borderColor: theme.glass.card.borderColor,
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 6,
-        },
-        android: {
-          elevation: 2,
         },
       }),
     },

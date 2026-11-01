@@ -6,9 +6,10 @@
  */
 
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
-import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import React from 'react';
+import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
+import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
 
 function nativeGlassSupported(): boolean {
@@ -18,28 +19,6 @@ function nativeGlassSupported(): boolean {
   } catch {
     return false;
   }
-}
-
-function useReduceTransparency(): boolean {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceTransparencyEnabled?.()
-      .then(enabled => {
-        if (mounted) setReduced(Boolean(enabled));
-      })
-      .catch(() => {});
-    const subscription = AccessibilityInfo.addEventListener('reduceTransparencyChanged', enabled => {
-      if (mounted) setReduced(Boolean(enabled));
-    });
-    return () => {
-      mounted = false;
-      subscription?.remove?.();
-    };
-  }, []);
-
-  return reduced;
 }
 
 interface MascotGlassShellProps {

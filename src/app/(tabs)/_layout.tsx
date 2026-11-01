@@ -7,11 +7,13 @@
  * - Label qui fade-in/fade-out selon l'état actif
  * - Légère élévation 3D avec ombre portée
  */
-import { Radius, Spacing } from "@/constants/theme";
+import { GlowCardTokens, Radius, Spacing } from "@/constants/theme";
 import type { ThemePalette } from "@/constants/palettes";
+import { useReduceTransparency } from "@/hooks/use-reduce-transparency";
 import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { useEffect, type ComponentProps } from "react";
@@ -178,6 +180,7 @@ function CustomTabBar({ state, navigateToTab }: CustomTabBarProps) {
   const { isDark } = useTheme();
   const styles = useThemedStyles(makeTabsLayoutStyles);
   const insets = useSafeAreaInsets();
+  const reduceTransparency = useReduceTransparency();
 
   // Sur Android : garantir un espace net au-dessus de la barre système (gestes ou 3 boutons)
   const bottomMargin =
@@ -208,7 +211,16 @@ function CustomTabBar({ state, navigateToTab }: CustomTabBarProps) {
         end={{ x: 1, y: 1 }}
         style={styles.gradientBorder}
       >
-        <View style={styles.tabBarInner}>
+        <View style={[styles.tabBarInner, reduceTransparency && styles.tabBarInnerOpaque]}>
+          {/* Android affiche un simple voile sans BlurTargetView : la barre y reste translucide sans flou */}
+          {!reduceTransparency && Platform.OS !== "android" && (
+            <BlurView
+              intensity={GlowCardTokens.glass.blurIntensity}
+              tint={isDark ? "dark" : "light"}
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+          )}
           {TABS.map((tab, index) => {
             const route = state.routes.find((r) => r.name === tab.name) ?? state.routes[index];
             return (
@@ -285,22 +297,26 @@ const makeTabsLayoutStyles = (theme: ThemePalette) =>
       width: "100%",
       borderRadius: Radius.full,
       padding: 1.2,
-      // Ombre 3D portée (iOS et Android)
+      // Ombre portée sur iOS ; pas d'elevation Android, elle se verrait à travers le verre
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: theme.mode === 'dark' ? 0.65 : 0.15,
       shadowRadius: 20,
-      elevation: 24,
     },
     tabBarInner: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-around",
-      backgroundColor: theme.surface.container,
+      backgroundColor: theme.glass.nav.backgroundColor,
       borderRadius: Radius.full,
       paddingVertical: 8,
       paddingHorizontal: 4,
       borderWidth: 1,
+      borderColor: theme.glass.nav.borderColor,
+      overflow: "hidden",
+    },
+    tabBarInnerOpaque: {
+      backgroundColor: theme.surface.container,
       borderColor: theme.outline.variant,
     },
     tabItem: {

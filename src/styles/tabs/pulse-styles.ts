@@ -150,12 +150,12 @@ export function makePulseStyles(theme: ThemePalette) {
     statCell: {
       flex: 1,
       alignItems: 'center',
-      backgroundColor: isLight ? theme.surface.container : theme.glass.card.backgroundColor,
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.lg,
       paddingVertical: Spacing.md,
       paddingHorizontal: Spacing.xs,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : theme.glass.card.borderColor,
+      borderColor: theme.glass.card.borderColor,
     },
     statValue: {
       ...Typography.displayMedium,
@@ -322,12 +322,13 @@ export function makePulseStyles(theme: ThemePalette) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.md,
-      backgroundColor: isLight ? theme.surface.container : theme.glass.card.backgroundColor,
+      backgroundColor: theme.glass.card.backgroundColor,
       borderRadius: Radius.lg,
       paddingVertical: Spacing.md,
       paddingHorizontal: Spacing.lg,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : theme.glass.card.borderColor,
+      borderColor: theme.glass.card.borderColor,
+      // Pas d'elevation Android : son ombre se verrait à travers le verre translucide
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
@@ -335,7 +336,6 @@ export function makePulseStyles(theme: ThemePalette) {
           shadowOpacity: theme.shadow.smOpacity,
           shadowRadius: 6,
         },
-        android: { elevation: 2 },
       }),
     },
     moduleIcon: {

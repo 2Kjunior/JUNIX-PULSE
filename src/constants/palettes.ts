@@ -86,6 +86,8 @@ export interface ThemePalette {
   // ── Dégradé CTA ────────────────────────────────────────────────────────
   readonly gradient: {
     readonly primary: readonly [string, string];
+    /** Boutons principaux en verre vif, assez denses pour un texte blanc ≥ 4,5:1. */
+    readonly glassPrimary: readonly [string, string];
   };
 
   // ── GlowCard ────────────────────────────────────────────────────────────
@@ -103,6 +105,14 @@ export interface ThemePalette {
       readonly backgroundColor: string;
       readonly borderColor: string;
     };
+    /** Boutons, puces et badges posés sur le fond. Pas d'elevation Android : elle se voit à travers. */
+    readonly control: {
+      readonly backgroundColor: string;
+      readonly borderColor: string;
+    };
+    /** Fond d'une puce ou d'un bouton sélectionné. */
+    readonly controlActive: string;
+    /** Plus dense que les cartes : du contenu défile dessous, sans flou sur Android. */
     readonly nav: {
       readonly backgroundColor: string;
       readonly borderColor: string;
@@ -183,6 +193,7 @@ export const darkPalette: ThemePalette = {
 
   gradient: {
     primary: ['#7C3AED', '#6D28D9'], // ajusté WCAG 2.2 AA (contraste ≥ 4.5:1 avec texte blanc)
+    glassPrimary: ['rgba(124, 58, 237, 0.90)', 'rgba(79, 70, 229, 0.84)'],
   },
 
   glowCard: {
@@ -195,12 +206,17 @@ export const darkPalette: ThemePalette = {
 
   glass: {
     card: {
-      backgroundColor: 'rgba(17, 19, 26, 0.75)',
-      borderColor: 'rgba(255, 255, 255, 0.07)',
+      backgroundColor: 'rgba(30, 28, 46, 0.55)',
+      borderColor: 'rgba(255, 255, 255, 0.16)',
     },
+    control: {
+      backgroundColor: 'rgba(30, 28, 46, 0.45)',
+      borderColor: 'rgba(255, 255, 255, 0.18)',
+    },
+    controlActive: 'rgba(208, 188, 255, 0.20)',
     nav: {
-      backgroundColor: 'rgba(12, 14, 21, 0.88)',
-      borderColor: 'rgba(255, 255, 255, 0.08)',
+      backgroundColor: 'rgba(24, 22, 38, 0.82)',
+      borderColor: 'rgba(255, 255, 255, 0.18)',
     },
   },
 
@@ -276,6 +292,7 @@ export const lightPalette: ThemePalette = {
 
   gradient: {
     primary: ['#6B46C1', '#553C9A'],
+    glassPrimary: ['rgba(124, 58, 237, 0.90)', 'rgba(79, 70, 229, 0.84)'],
   },
 
   glowCard: {
@@ -288,12 +305,17 @@ export const lightPalette: ThemePalette = {
 
   glass: {
     card: {
-      backgroundColor: 'rgba(251, 247, 242, 0.85)',
-      borderColor: 'rgba(214, 211, 209, 0.60)',
+      backgroundColor: 'rgba(255, 255, 255, 0.55)',
+      borderColor: 'rgba(255, 255, 255, 0.75)',
     },
+    control: {
+      backgroundColor: 'rgba(255, 255, 255, 0.50)',
+      borderColor: 'rgba(76, 52, 120, 0.16)',
+    },
+    controlActive: 'rgba(107, 70, 193, 0.16)',
     nav: {
-      backgroundColor: 'rgba(251, 247, 242, 0.92)',
-      borderColor: 'rgba(214, 211, 209, 0.60)',
+      backgroundColor: 'rgba(255, 255, 255, 0.82)',
+      borderColor: 'rgba(255, 255, 255, 0.80)',
     },
   },
 

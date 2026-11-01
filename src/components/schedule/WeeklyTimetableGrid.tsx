@@ -363,7 +363,7 @@ export function WeeklyTimetableGrid({
   return (
     <View style={styles.wrapper}>
       {/* ─── Conteneur principal de la Grille Matricielle 7J ────────────────────── */}
-      <View style={styles.gridCard}>
+      <View style={[styles.gridCard, isDark && { backgroundColor: palette.glass.card.backgroundColor, borderColor: palette.glass.card.borderColor, shadowOpacity: 0 }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -371,7 +371,7 @@ export function WeeklyTimetableGrid({
         >
           <View style={{ width: gridContentWidth }}>
             {/* Ligne d'en-tête collante des 7 jours */}
-            <View style={styles.dayHeaderRow}>
+            <View style={[styles.dayHeaderRow, isDark && { backgroundColor: palette.glass.nav.backgroundColor }]}>
               {/* Coin haut-gauche icône horloge */}
               <View style={[styles.cornerCell, { width: TIME_COL_WIDTH }]}>
                 <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
@@ -441,7 +441,7 @@ export function WeeklyTimetableGrid({
             {/* Corps de la Grille : Colonne Heures + Colonnes Journées */}
             <View style={styles.gridBody}>
               {/* Colonne latérale gauche : Marqueurs startHour à endHour */}
-              <View style={[styles.timeGutter, { width: TIME_COL_WIDTH }]}>
+              <View style={[styles.timeGutter, { width: TIME_COL_WIDTH }, isDark && { backgroundColor: palette.glass.nav.backgroundColor }]}>
                 {Array.from({ length: totalHours }, (_, i) => {
                   const hour = startHour + i;
                   const isHighlight = hour === 9 || hour === 14 || hour === 17;
@@ -561,7 +561,7 @@ export function WeeklyTimetableGrid({
                                   height: item.heightPx,
                                   left: item.leftPx,
                                   width: item.widthPx,
-                                  backgroundColor: isDark ? 'rgba(28, 24, 40, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+                                  backgroundColor: isDark ? 'rgba(28, 24, 40, 0.72)' : 'rgba(255, 255, 255, 0.72)',
                                   borderColor: config.border,
                                 },
                               ]}
@@ -868,7 +868,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 8,
       },
-      android: { elevation: 4 },
     }),
   },
   dayHeaderRow: {
@@ -1016,7 +1015,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 3,
       },
-      android: { elevation: 2 },
     }),
   },
   conflictDot: {
