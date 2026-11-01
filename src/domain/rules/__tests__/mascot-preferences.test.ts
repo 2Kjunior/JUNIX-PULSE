@@ -4,6 +4,9 @@
 
 import {
   DEFAULT_MASCOT_PREFERENCES,
+  DEFAULT_MASCOT_SETTINGS,
+  mascotPreferencesFromSettings,
+  MascotSettings,
   isProposalFamilyEnabled,
   MAX_FIRST_NAME_LENGTH,
   MascotPreferences,
@@ -104,5 +107,48 @@ describe('proposal families', () => {
         'always'
       )
     ).toBe(true);
+  });
+});
+
+describe('mascotPreferencesFromSettings', () => {
+  const from = (overrides: Partial<MascotSettings> = {}) =>
+    mascotPreferencesFromSettings({ ...DEFAULT_MASCOT_SETTINGS, ...overrides });
+
+  it('turns the default settings into the default preferences', () => {
+    expect(from()).toEqual(DEFAULT_MASCOT_PREFERENCES);
+  });
+
+  it('keeps the presence and the way of addressing', () => {
+    expect(from({ presence: 'off', address: 'vous' })).toMatchObject({ presence: 'off', address: 'vous' });
+  });
+
+  it('is sober exactly when discreet', () => {
+    expect(from({ presence: 'discreet' }).tone).toBe('sober');
+    expect(from({ presence: 'full' }).tone).toBe('warm');
+    expect(from({ presence: 'off' }).tone).toBe('warm');
+  });
+
+  it.each([
+    ['normal', true, 'normal', 3],
+    ['rare', true, 'rare', 1],
+    ['off', false, 'normal', 0],
+  ] as const)('proposals %s give %s, %s and %i a day', (proposals, enabled, frequency, perDay) => {
+    const preferences = from({ proposals });
+    expect(preferences.proposalsEnabled).toBe(enabled);
+    expect(preferences.proposalFrequency).toBe(frequency);
+    expect(maxProposalsPerDay(preferences)).toBe(perDay);
+  });
+
+  it('never switches a proposal family off on its own, and always uses the name', () => {
+    expect(from({ proposals: 'rare', presence: 'discreet' })).toMatchObject({
+      useFirstName: true,
+      contactProposals: true,
+      habitGoalProposals: true,
+      taskPlanningProposals: true,
+    });
+  });
+
+  it('silences proposals when the mascot is off, whatever the proposals setting', () => {
+    expect(maxProposalsPerDay(from({ presence: 'off', proposals: 'normal' }))).toBe(0);
   });
 });

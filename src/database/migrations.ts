@@ -26,6 +26,7 @@
  * 021 – sanctum_notes_multi_notebooks
  * 022 – add_appearance_mode
  * 023 – add_notification_sound_enabled
+ * 024 – add_mascot_settings_and_state
  */
 
 export interface Migration {
@@ -438,6 +439,29 @@ export const MIGRATIONS: Migration[] = [
     sql: `
       -- Adds the per-user notification sound toggle (default: enabled).
       ALTER TABLE settings ADD COLUMN notification_sound_enabled INTEGER NOT NULL DEFAULT 1;
+    `,
+  },
+  {
+    version: 24,
+    name: 'add_mascot_settings_and_state',
+    sql: `
+      -- Reglages de la mascotte Pulse : quatre choix de la personne, tous avec une valeur par defaut.
+      --   mascot_presence   : 'full' | 'discreet' | 'off'
+      --   mascot_address    : 'tu' | 'vous'
+      --   mascot_proposals  : 'normal' | 'rare' | 'off'
+      --   mascot_briefings  : resume du matin et bilan du soir (1 = actives)
+      ALTER TABLE settings ADD COLUMN mascot_presence TEXT NOT NULL DEFAULT 'full';
+      ALTER TABLE settings ADD COLUMN mascot_address TEXT NOT NULL DEFAULT 'tu';
+      ALTER TABLE settings ADD COLUMN mascot_proposals TEXT NOT NULL DEFAULT 'normal';
+      ALTER TABLE settings ADD COLUMN mascot_briefings INTEGER NOT NULL DEFAULT 1;
+
+      -- Petite table cle-valeur de la mascotte : astuces deja vues, propositions du jour, refus.
+      -- Reconstruite automatiquement : elle est exclue de la sauvegarde.
+      CREATE TABLE IF NOT EXISTS mascot_state (
+        key TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `,
   },
 ];

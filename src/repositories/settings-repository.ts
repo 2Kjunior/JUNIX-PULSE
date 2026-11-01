@@ -5,9 +5,24 @@
 
 import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
-import { AppearanceMode, Settings } from '../domain/entities';
+import {
+  AppearanceMode,
+  MascotAddress,
+  MascotPresence,
+  MascotProposalsLevel,
+  Settings,
+} from '../domain/entities';
+import { DEFAULT_MASCOT_SETTINGS } from '../domain/rules/mascot-preferences';
 
 const VALID_APPEARANCE_MODES: ReadonlySet<AppearanceMode> = new Set(['system', 'light', 'dark']);
+const VALID_MASCOT_PRESENCE: ReadonlySet<string> = new Set<MascotPresence>(['full', 'discreet', 'off']);
+const VALID_MASCOT_ADDRESS: ReadonlySet<string> = new Set<MascotAddress>(['tu', 'vous']);
+const VALID_MASCOT_PROPOSALS: ReadonlySet<string> = new Set<MascotProposalsLevel>(['normal', 'rare', 'off']);
+
+/** Valeur lue si elle est valide, sinon la valeur par défaut : une ligne ancienne ou altérée ne casse rien. */
+function validOr<T extends string>(raw: unknown, valid: ReadonlySet<string>, fallback: T): T {
+  return typeof raw === 'string' && valid.has(raw) ? (raw as T) : fallback;
+}
 
 function rowToSettings(row: Record<string, unknown>): Settings {
   const rawMode = row.appearance_mode as string | undefined;
@@ -28,6 +43,11 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     morningBriefingHour: (row.morning_briefing_hour as number) ?? 8,
     appearanceMode,
     appearanceDark: row.appearance_dark !== undefined ? (row.appearance_dark as number) === 1 : true,
+    mascotPresence: validOr(row.mascot_presence, VALID_MASCOT_PRESENCE, DEFAULT_MASCOT_SETTINGS.presence),
+    mascotAddress: validOr(row.mascot_address, VALID_MASCOT_ADDRESS, DEFAULT_MASCOT_SETTINGS.address),
+    mascotProposals: validOr(row.mascot_proposals, VALID_MASCOT_PROPOSALS, DEFAULT_MASCOT_SETTINGS.proposals),
+    mascotBriefings:
+      row.mascot_briefings !== undefined ? (row.mascot_briefings as number) === 1 : DEFAULT_MASCOT_SETTINGS.briefings,
     createdAt: (row.created_at as string) || new Date().toISOString(),
     updatedAt: (row.updated_at as string) || new Date().toISOString(),
   };
@@ -90,6 +110,23 @@ export const SettingsRepository = {
     if (params.morningBriefingHour !== undefined) {
       setClauses.push('morning_briefing_hour = ?');
       values.push(params.morningBriefingHour);
+    }
+
+    if (params.mascotPresence !== undefined && VALID_MASCOT_PRESENCE.has(params.mascotPresence)) {
+      setClauses.push('mascot_presence = ?');
+      values.push(params.mascotPresence);
+    }
+    if (params.mascotAddress !== undefined && VALID_MASCOT_ADDRESS.has(params.mascotAddress)) {
+      setClauses.push('mascot_address = ?');
+      values.push(params.mascotAddress);
+    }
+    if (params.mascotProposals !== undefined && VALID_MASCOT_PROPOSALS.has(params.mascotProposals)) {
+      setClauses.push('mascot_proposals = ?');
+      values.push(params.mascotProposals);
+    }
+    if (params.mascotBriefings !== undefined) {
+      setClauses.push('mascot_briefings = ?');
+      values.push(params.mascotBriefings ? 1 : 0);
     }
 
     const safeMode =

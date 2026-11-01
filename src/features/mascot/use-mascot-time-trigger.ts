@@ -4,7 +4,8 @@
  * It re-checks when the screen is focused and every minute while it stays focused, never in
  * the background.
  *
- * The briefing switch and the planning blocks are not wired yet: the briefings are always on.
+ * It follows the user's settings: nothing when the mascot is off, no briefings when they are off.
+ * The planning blocks are not shown here yet.
  */
 
 import { useFocusEffect } from 'expo-router';
@@ -13,14 +14,13 @@ import { format } from 'date-fns';
 
 import { dueMascotTimeTriggers, MascotTimeTrigger } from '@/domain/rules/mascot-time-rules';
 import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
-import { DEFAULT_MASCOT_PREFERENCES } from '@/domain/rules/mascot-preferences';
 import { triggerToMascotMessage } from '@/domain/rules/mascot-trigger-message-rules';
 import { EventRepository } from '@/repositories/event-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { TaskRepository } from '@/repositories/task-repository';
 import { loadFiredKeys, markTriggerFired } from '@/services/mascot/mascot-fired-store';
-import { getMascotFocusState } from '@/services/mascot/mascot-runtime';
+import { getMascotFocusState, getMascotPreferences, getMascotSettings } from '@/services/mascot/mascot-runtime';
 
 const CHECK_EVERY_MS = 60 * 1000;
 
@@ -47,6 +47,13 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
       const day = format(now, 'yyyy-MM-dd');
       dayRef.current = day;
 
+      // A silent mascot says nothing, and keeps its triggers for when it is switched back on
+      const { presence, briefings } = getMascotSettings();
+      if (presence === 'off') {
+        setMessage(null);
+        return;
+      }
+
       const [settings, events, reminders, tasks, firedKeys] = await Promise.all([
         SettingsRepository.get(),
         EventRepository.findForDate(day),
@@ -66,7 +73,7 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
         dayKey: day,
         morningBriefingHour: settings.morningBriefingHour,
         endOfDayHour: settings.endOfDayHour,
-        briefingsEnabled: true,
+        briefingsEnabled: briefings,
         focusState: getMascotFocusState(),
         events: events.map(event => ({
           id: event.id,
@@ -100,7 +107,7 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
           await markTriggerFired(day, trigger.key);
           continue;
         }
-        const text = resolveMascotMessage(spoken.id, spoken.params, DEFAULT_MASCOT_PREFERENCES, nameRef.current);
+        const text = resolveMascotMessage(spoken.id, spoken.params, getMascotPreferences(), nameRef.current);
         if (text) {
           chosen = { key: trigger.key, text };
           break;

@@ -10,8 +10,10 @@
  * - Navigation 5 destinations inchangée
  */
 import { Alert, Platform, View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
+import { setGuidePermission, setWelcomeAnchorY } from '@/features/mascot/onboarding-guide-state';
+import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { Spacing, Radius, Typography } from '@/constants/theme';
@@ -30,12 +32,31 @@ import { decryptBackup, importBackup, parseBackup } from '@/services/backup-serv
 
 const { height } = Dimensions.get('window');
 
+/** Hauteur réservée à la mascotte guide : son orbe de 96 dp, puis sa bulle de deux phrases. */
+const MASCOT_ROOM_HEIGHT = 210;
+/** Centre de l'orbe, mesuré depuis le haut de cette place. */
+const MASCOT_ROOM_ANCHOR_OFFSET = 56;
+
 export default function OnboardingWelcome() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingWelcomeStyles);
   const setOnboardingComplete = useAppStore(state => state.setOnboardingComplete);
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
   const [pendingBackupContents, setPendingBackupContents] = useState<string | null>(null);
+
+  // La mascotte guide prend la place du logo, avec sa bulle juste dessous. Elle se pose à
+  // l'endroit mesuré ici ; si l'utilisateur l'a désactivée, le logo reste.
+  const { settings: mascotSettings } = useMascotPreferences();
+  const mascotPresent = mascotSettings.presence !== 'off';
+  const mascotRoomRef = useRef<React.ComponentRef<typeof View>>(null);
+  const measureMascotRoom = () => {
+    mascotRoomRef.current?.measureInWindow((_x, y) => setWelcomeAnchorY(y + MASCOT_ROOM_ANCHOR_OFFSET));
+  };
+
+  // Un nouveau passage dans l'onboarding repart d'une permission non demandée
+  useEffect(() => {
+    setGuidePermission('ask');
+  }, []);
 
   const handleRestoreBackup = async () => {
     try {
@@ -132,10 +153,19 @@ export default function OnboardingWelcome() {
 
       {/* Section hero : logo + accroche */}
       <View style={styles.heroSection}>
-        {/* Cercle de fond subtil derrière le logo */}
-        <View style={styles.logoOrb}>
-          <PulseLogo size={88} mode="idle" />
-        </View>
+        {mascotPresent ? (
+          // Place réservée à la mascotte (orbe en haut) et à sa bulle (dessous)
+          <View
+            ref={mascotRoomRef}
+            onLayout={measureMascotRoom}
+            style={{ height: MASCOT_ROOM_HEIGHT, alignSelf: 'stretch', marginBottom: Spacing.md }}
+          />
+        ) : (
+          /* Cercle de fond subtil derrière le logo */
+          <View style={styles.logoOrb}>
+            <PulseLogo size={88} mode="idle" />
+          </View>
+        )}
 
         <Text style={styles.headline}>
           Retrouvez votre{'\n'}

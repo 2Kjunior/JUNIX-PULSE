@@ -8,7 +8,7 @@
  *     1. Parsing et validation d'une sauvegarde moderne avec appearance_mode ('system'|'light'|'dark').
  *     2. Rétro-compatibilité : parsing réussi d'une sauvegarde antérieure SANS appearance_mode.
  *     3. Rejet strict si appearance_mode contient une valeur inconnue.
- * - clearAllData : annulation des notifications OS + vidage atomique des 19 tables.
+ * - clearAllData : annulation des notifications OS + vidage atomique des 20 tables.
  */
 
 import { MIGRATIONS } from '../database/migrations';
@@ -283,7 +283,7 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
       (getDatabase as jest.Mock).mockResolvedValue(mockDb);
     });
 
-    it('annule toutes les notifications OS et vide les 19 tables sous transaction', async () => {
+    it('annule toutes les notifications OS et vide les 20 tables sous transaction', async () => {
       await clearAllData();
 
       // 1. Annulation des alarmes OS
@@ -292,7 +292,7 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
       // 2. Encapsulation transactionnelle
       expect(mockDb.withTransactionAsync).toHaveBeenCalledTimes(1);
 
-      // 3. Vérification de la présence des 19 tables critiques (dont les 5 précédemment oubliées)
+      // 3. Vérification de la présence des 20 tables critiques (dont mascot_state, ajoutée avec la mascotte)
       const expectedTables = [
         'habit_completions',
         'habit_pauses',
@@ -309,6 +309,7 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
         'interactions',
         'persons',
         'suggestions',
+        'mascot_state',
         'planning_blocks',
         'personal_schedules',
         'settings',

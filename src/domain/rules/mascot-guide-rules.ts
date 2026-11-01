@@ -6,6 +6,9 @@
  * (features/launch/splash-constants.ts) to avoid a dependency between features.
  */
 
+import type { MascotMessageId } from './mascot-message-catalog';
+import type { MascotMood } from './mascot-mood-rules';
+
 export type GuideStep = 'welcome' | 'discover' | 'personalize' | 'schedule' | 'permissions' | 'home';
 export type GuideDirection = 'forward' | 'back' | 'skip';
 export type GuidePermissionPhase = 'ask' | 'done';
@@ -57,6 +60,7 @@ export interface GuideInput {
   reducedMotion: boolean;
   from: GuidePoint | null; // Current place of the mascot, null when it is not shown yet
   rowCenterY?: number; // Schedule step: height of the active row
+  anchorY?: number; // Welcome step: height where the mascot stands, measured on the screen
   target?: GuidePoint; // Centre of the element to point at
 }
 
@@ -87,6 +91,50 @@ export interface GuidePlacement {
 }
 
 const MAX_ARM_ANGLE_DEG = 160;
+
+export type GuidePermissionOutcome = 'ask' | 'granted' | 'denied';
+
+export interface GuideMessage {
+  id: MascotMessageId;
+  mood: MascotMood;
+}
+
+/** What the mascot says on each step of the onboarding, and the mood it says it in. */
+export function guideMessageFor(step: GuideStep, permission: GuidePermissionOutcome): GuideMessage | null {
+  switch (step) {
+    case 'welcome':
+      return { id: 'WELCOME', mood: 'happy' };
+    case 'discover':
+      return { id: 'DISCOVER_INTRO', mood: 'calm' };
+    case 'personalize':
+      return { id: 'PERSONALIZE_NAME', mood: 'calm' };
+    case 'schedule':
+      return { id: 'SCHEDULE_INTRO', mood: 'calm' };
+    case 'permissions':
+      if (permission === 'granted') return { id: 'PERMISSION_GRANTED', mood: 'party' };
+      if (permission === 'denied') return { id: 'PERMISSION_DENIED', mood: 'calm' };
+      return { id: 'PERMISSION_ASK', mood: 'calm' };
+    case 'home':
+      return null; // The home tour has its own messages
+  }
+}
+
+/** The onboarding screens, in order, as the router names them. */
+export const ONBOARDING_STEPS: readonly GuideStep[] = ['welcome', 'discover', 'personalize', 'schedule', 'permissions'];
+
+/**
+ * Direction of a move between two steps. Jumping straight to the last one from an earlier one
+ * is the "Passer" shortcut: a direct trip, not a stroll through the steps in between.
+ */
+export function guideDirection(from: GuideStep | null, to: GuideStep): GuideDirection {
+  if (!from) return 'forward';
+  const fromIndex = ONBOARDING_STEPS.indexOf(from);
+  const toIndex = ONBOARDING_STEPS.indexOf(to);
+  if (fromIndex < 0 || toIndex < 0) return 'forward';
+  if (toIndex < fromIndex) return 'back';
+  if (toIndex - fromIndex > 1) return 'skip';
+  return 'forward';
+}
 
 /**
  * Arm that reaches a target and the angle to rotate it by. An arm hangs down at 0 degrees;
@@ -147,7 +195,7 @@ function placeInBand(input: GuideInput, size: GuideSize, band: { top: number; bo
 
   switch (input.step) {
     case 'welcome':
-      return { x: width / 2, y: band.top + span * 0.35 };
+      return { x: width / 2, y: input.anchorY ?? band.top + span * 0.35 };
     case 'discover':
       return { x: right, y: topY };
     case 'personalize':

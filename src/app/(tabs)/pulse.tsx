@@ -41,9 +41,17 @@ import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { PulseLogo } from '@/components/ui/PulseLogo';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
+import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
+import { noteProposalRefused } from '@/services/mascot/mascot-budget-service';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
-import { suggestionAcceptLabel, suggestionDestination, suggestionMood } from '@/domain/rules/mascot-suggestion-rules';
+import {
+  suggestionAcceptLabel,
+  suggestionDestination,
+  suggestionMood,
+  suggestionProposalId,
+} from '@/domain/rules/mascot-suggestion-rules';
 import { makePulseStyles } from '@/styles/tabs/pulse-styles';
 
 // ─── Helpers visuels ─────────────────────────────────────────────────────────
@@ -104,6 +112,8 @@ export default function PulseScreen() {
   const styles = useThemedStyles(makePulseStyles);
   const isLight = theme.mode === 'light';
   const { mood: mascotMood } = useMascotDayMood();
+  const { settings: mascotSettings } = useMascotPreferences();
+  const mascotPresent = mascotSettings.presence !== 'off';
 
   const [refreshing, setRefreshing] = useState(false);
   const [habitCount, setHabitCount] = useState<number | null>(null);
@@ -147,9 +157,10 @@ export default function PulseScreen() {
     }
   };
 
-  const handleRefuse = async (id: string) => {
+  const handleRefuse = async (suggestion: Suggestion) => {
     try {
-      await SuggestionUseCases.refuseSuggestion(id);
+      await SuggestionUseCases.refuseSuggestion(suggestion.id);
+      await noteProposalRefused(suggestionProposalId(suggestion.type));
       showSnackbar('Suggestion ignorée.');
       loadData();
     } catch (e) {
@@ -241,7 +252,7 @@ export default function PulseScreen() {
           <View style={styles.orbRingOuter} />
           <View style={styles.orbRing} />
           {/* La mascotte remplace le logo : son humeur de fond suit la journée (seul élément ambiant) */}
-          <PulseMascot mood={mascotMood} size={96} />
+          {mascotPresent ? <PulseMascot mood={mascotMood} size={96} /> : <PulseLogo size={96} mode="static" />}
         </View>
 
         <Text style={styles.heroTitle}>Pulse</Text>
@@ -313,7 +324,7 @@ export default function PulseScreen() {
                       </Text>
                     </View>
                     {/* Mini-mascotte dont l'humeur suit le type de la proposition */}
-                    <PulseMascot mood={suggestionMood(s.type)} size={28} />
+                    {mascotPresent && <PulseMascot mood={suggestionMood(s.type)} size={28} />}
                   </View>
 
                   {/* Titre + explication */}
@@ -324,7 +335,7 @@ export default function PulseScreen() {
                   <View style={styles.suggActions}>
                     <TouchableOpacity
                       style={styles.refuseBtn}
-                      onPress={() => handleRefuse(s.id)}
+                      onPress={() => handleRefuse(s)}
                       accessibilityLabel="Ignorer cette suggestion"
                     >
                       <Text style={styles.refuseText}>Ignorer</Text>

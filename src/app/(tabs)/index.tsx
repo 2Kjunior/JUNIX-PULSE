@@ -45,7 +45,9 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
+import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
 import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
+import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposal';
 import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
@@ -85,6 +87,10 @@ export default function TodayScreen() {
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const { message: timeMessage, dismiss: dismissTimeMessage } = useMascotTimeTrigger(displayName);
+  const { preferences: mascotPreferences, settings: mascotSettings } = useMascotPreferences();
+  // La proposition n'est montrée que si le budget d'attention de la mascotte le permet
+  const { proposal, noteRefusal } = useVisibleProposal(topSuggestion);
+  const mascotPresent = mascotSettings.presence !== 'off';
 
   const today = new Date();
   const greeting = getGreeting(today.getHours());
@@ -180,6 +186,7 @@ export default function TodayScreen() {
   const handleRefuseSuggestion = async (sugg: Suggestion) => {
     try {
       await SuggestionUseCases.refuseSuggestion(sugg.id);
+      await noteRefusal(sugg);
       showSnackbar('Suggestion ignorée.');
       load();
     } catch (err: unknown) {
@@ -290,7 +297,9 @@ export default function TodayScreen() {
       <View style={styles.responsiveContainer}>
         {/* ─── 1. En-tête convivial & Statut immédiat ───────────────────────── */}
         <View style={styles.header}>
-          {/* Compagne : un appui ouvre ce qui compte, le rappel urgent sinon l'onglet Pulse */}
+          {/* Compagne : un appui ouvre ce qui compte, le rappel urgent sinon l'onglet Pulse.
+              Absente quand l'utilisateur a désactivé la mascotte. */}
+          {mascotPresent && (
           <TouchableOpacity
             style={styles.mascotButton}
             onPress={() =>
@@ -304,6 +313,7 @@ export default function TodayScreen() {
           >
             <PulseMascot mood={mascotMood} size={56} />
           </TouchableOpacity>
+          )}
           <View style={styles.headerInfo}>
             <Text style={styles.greeting}>
               {greeting}{displayName ? `, ${displayName}` : ''}
@@ -487,15 +497,16 @@ export default function TodayScreen() {
             />
           </View>
         )}
-        {!timeMessage && topSuggestion && (
+        {mascotPresent && !timeMessage && proposal && (
           <View style={styles.sectionBlock}>
             <MascotProposalBubble
-              suggestion={topSuggestion}
+              suggestion={proposal}
               displayName={displayName}
+              preferences={mascotPreferences}
               maxWidth={Math.min(windowWidth - Spacing.lg * 2, 560)}
               tailSide="top"
-              onAccept={() => handleAcceptSuggestion(topSuggestion)}
-              onRefuse={() => handleRefuseSuggestion(topSuggestion)}
+              onAccept={() => handleAcceptSuggestion(proposal)}
+              onRefuse={() => handleRefuseSuggestion(proposal)}
             />
           </View>
         )}

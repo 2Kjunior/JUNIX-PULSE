@@ -20,6 +20,9 @@ import {
   PlanningBlockType,
   PlanningStatus,
   InteractionType,
+  MascotPresence,
+  MascotAddress,
+  MascotProposalsLevel,
 } from '../enums';
 
 export * from '../enums';
@@ -267,6 +270,14 @@ export interface Settings {
    * @deprecated Conservé pour la rétro-compatibilité des sauvegardes. Utiliser `appearanceMode`.
    */
   appearanceDark: boolean;
+  /** Présence de la mascotte Pulse : complète, discrète (ton sobre) ou désactivée. */
+  mascotPresence: MascotPresence;
+  /** Forme de politesse employée par la mascotte. */
+  mascotAddress: MascotAddress;
+  /** Fréquence de ses propositions : normale, rare ou aucune. */
+  mascotProposals: MascotProposalsLevel;
+  /** Résumé du matin et bilan du soir. */
+  mascotBriefings: boolean;
   createdAt: string;
   updatedAt: string;
 }

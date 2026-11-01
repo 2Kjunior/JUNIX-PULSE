@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationService } from '@/services/notification-service';
+import { setGuidePermission } from '@/features/mascot/onboarding-guide-state';
 import {
   Spacing,
   Radius,
@@ -33,12 +34,15 @@ export default function OnboardingPermissions() {
     try {
       const granted = await NotificationService.requestPermissions();
       setNotifStatus(granted ? 'granted' : 'denied');
+      // La mascotte guide réagit à la réponse : petite fête si acceptée, sans insistance sinon
+      setGuidePermission(granted ? 'granted' : 'denied');
       await SettingsRepository.update({
         notificationsEnabled: granted,
         updatedAt: new Date().toISOString(),
       });
     } catch {
       setNotifStatus('denied');
+      setGuidePermission('denied');
     }
   }
 

@@ -76,6 +76,14 @@ export type SuggestionType =
   | 'LINGERING_TASK'         // Tâche de l'Inbox qui traîne depuis longtemps
   | 'WELCOME_BACK';          // Retour après quelques jours d'absence
 
+// ─── Réglages de la mascotte ─────────────────────────────────────────────────
+
+/** Complète : réagit et se montre ; Discrète : ton sobre, seulement les réactions marquées ; Désactivée : silence. */
+export type MascotPresence = 'full' | 'discreet' | 'off';
+export type MascotAddress = 'tu' | 'vous';
+/** Fréquence de ses propositions : normale (3 par jour au plus), rare (1 par jour) ou aucune. */
+export type MascotProposalsLevel = 'normal' | 'rare' | 'off';
+
 export type SuggestionStatus =
   | 'PENDING'    // Affichée, en attente de décision
   | 'ACCEPTED'

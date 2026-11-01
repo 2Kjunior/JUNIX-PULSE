@@ -28,6 +28,8 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
+import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
+import { saveMascotSettings } from '@/services/mascot/mascot-settings-service';
 
 // Fuseaux les plus courants — simplification V1
 // Un sélecteur complet est disponible dans Paramètres
@@ -52,7 +54,13 @@ function detectTimezone(): string {
   }
 }
 
+const ADDRESS_CHOICES: readonly { value: 'tu' | 'vous'; label: string }[] = [
+  { value: 'tu', label: 'Tutoiement' },
+  { value: 'vous', label: 'Vouvoiement' },
+];
+
 export default function OnboardingPersonalize() {
+  const { settings: mascotSettings } = useMascotPreferences();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingPersonalizeStyles);
   const detectedTz = detectTimezone();
@@ -119,6 +127,29 @@ export default function OnboardingPersonalize() {
             autoCorrect={false}
             testID="onboarding-name-input"
           />
+        </View>
+
+        {/* Façon dont la mascotte s'adresse à l'utilisateur (sans réponse : tutoiement) */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Façon de vous parler</Text>
+          <Text style={styles.hint}>Pulse peut tutoyer ou vouvoyer — modifiable dans Paramètres</Text>
+          <View style={styles.choiceRow}>
+            {ADDRESS_CHOICES.map(choice => {
+              const selected = mascotSettings.address === choice.value;
+              return (
+                <TouchableOpacity
+                  key={choice.value}
+                  style={[styles.choice, selected && styles.choiceSelected]}
+                  onPress={() => void saveMascotSettings({ address: choice.value }).catch(() => {})}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  testID={`onboarding-address-${choice.value}`}
+                >
+                  <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{choice.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* Fuseau horaire */}
@@ -255,6 +286,32 @@ const makeOnboardingPersonalizeStyles = (theme: ThemePalette) =>
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.md,
       minHeight: 48,
+    },
+    choiceRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    choice: {
+      flex: 1,
+      minHeight: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surface.container,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: theme.outline.variant,
+    },
+    choiceSelected: {
+      backgroundColor: theme.primary.container,
+      borderColor: theme.primary.default,
+    },
+    choiceText: {
+      ...Typography.labelLarge,
+      color: theme.onSurface.variant,
+    },
+    choiceTextSelected: {
+      color: theme.primary.onContainer,
+      fontWeight: '700',
     },
     tzSelector: {
       backgroundColor: theme.surface.container,

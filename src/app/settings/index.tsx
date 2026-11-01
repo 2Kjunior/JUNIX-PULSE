@@ -38,6 +38,7 @@ import { clearAllData } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
+import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
@@ -410,6 +411,9 @@ export default function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      {/* Section Pulse, ta mascotte */}
+      <MascotSettingsSection displayName={settings.displayName} />
 
       {/* Section Notifications */}
       <View style={styles.section}>

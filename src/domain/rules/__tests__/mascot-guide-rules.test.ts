@@ -10,6 +10,8 @@ import {
   GUIDE_SIZES,
   GuideInput,
   GuideStep,
+  guideDirection,
+  guideMessageFor,
 } from '../mascot-guide-rules';
 
 const PHONE = { width: 390, height: 844, insets: { top: 47, bottom: 34, left: 0, right: 0 } };
@@ -253,5 +255,59 @@ describe('transition', () => {
     const b = place({ from: { x: 200, y: 600 } }).transition.arcHeightDp;
     expect(a).toBe(GUIDE_MOTION.maxArcDp);
     expect(b).toBe(GUIDE_MOTION.maxArcDp);
+  });
+});
+
+describe('guideMessageFor', () => {
+  it.each([
+    ['welcome', 'ask', 'WELCOME', 'happy'],
+    ['discover', 'ask', 'DISCOVER_INTRO', 'calm'],
+    ['personalize', 'ask', 'PERSONALIZE_NAME', 'calm'],
+    ['schedule', 'ask', 'SCHEDULE_INTRO', 'calm'],
+    ['permissions', 'ask', 'PERMISSION_ASK', 'calm'],
+    ['permissions', 'granted', 'PERMISSION_GRANTED', 'party'],
+    ['permissions', 'denied', 'PERMISSION_DENIED', 'calm'],
+  ] as const)('%s with permission %s says %s in a %s mood', (step, permission, id, mood) => {
+    expect(guideMessageFor(step, permission)).toEqual({ id, mood });
+  });
+
+  it('only speaks about the permission on the last step', () => {
+    expect(guideMessageFor('welcome', 'granted')?.id).toBe('WELCOME');
+    expect(guideMessageFor('schedule', 'denied')?.id).toBe('SCHEDULE_INTRO');
+  });
+
+  it('leaves the home screen to its own tour', () => {
+    expect(guideMessageFor('home', 'ask')).toBeNull();
+  });
+});
+
+describe('guideDirection', () => {
+  it.each([
+    [null, 'welcome', 'forward'],
+    ['welcome', 'discover', 'forward'],
+    ['discover', 'personalize', 'forward'],
+    ['permissions', 'schedule', 'back'],
+    ['discover', 'welcome', 'back'],
+    ['welcome', 'permissions', 'skip'],
+    ['discover', 'permissions', 'skip'],
+    ['schedule', 'permissions', 'forward'],
+    ['personalize', 'personalize', 'forward'],
+    ['home', 'welcome', 'forward'],
+  ] as const)('from %s to %s is %s', (from, to, expected) => {
+    expect(guideDirection(from, to)).toBe(expected);
+  });
+});
+
+describe('the welcome anchor', () => {
+  it('stands where the screen says, inside the free band', () => {
+    expect(place({ step: 'welcome', from: null, anchorY: 200 }).center.y).toBe(200);
+  });
+
+  it('is kept out of the top bar', () => {
+    expect(place({ step: 'welcome', from: null, anchorY: 10 }).center.y - 48).toBeGreaterThanOrEqual(forbidden.topBarBottom);
+  });
+
+  it('falls back to the free band when the screen has not said', () => {
+    expect(place({ step: 'welcome', from: null }).center.y).toBeGreaterThan(forbidden.topBarBottom);
   });
 });

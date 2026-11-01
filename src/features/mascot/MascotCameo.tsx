@@ -16,6 +16,7 @@ import type { MascotReaction } from '@/domain/rules/mascot-reaction-rules';
 import { subscribeMascotEvents } from '@/services/mascot/mascot-event-bus';
 import { createMascotReactionEngine } from '@/services/mascot/mascot-reaction-engine';
 import { getMascotFocusState, getMascotPresence } from '@/services/mascot/mascot-runtime';
+import { loadMascotSettings } from '@/services/mascot/mascot-settings-service';
 
 import { PulseMascot } from './PulseMascot';
 import type { MascotSize } from './mascot-visuals';
@@ -41,6 +42,11 @@ export function MascotCameo() {
   const keyboardOpenRef = useRef(false);
   const counterRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The cameo lives in the root layout for the whole session: it loads the user's settings once
+  useEffect(() => {
+    void loadMascotSettings();
+  }, []);
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {

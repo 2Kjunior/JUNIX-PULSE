@@ -4,8 +4,9 @@
  * the rules never read the database themselves.
  */
 
-export type MascotPresence = 'full' | 'discreet' | 'off';
-export type MascotAddress = 'tu' | 'vous';
+import type { MascotAddress, MascotPresence, MascotProposalsLevel } from '../enums';
+
+export type { MascotAddress, MascotPresence, MascotProposalsLevel };
 export type MascotTone = 'warm' | 'sober';
 export type MascotProposalFrequency = 'normal' | 'rare';
 
@@ -32,6 +33,39 @@ export const DEFAULT_MASCOT_PREFERENCES: MascotPreferences = {
   habitGoalProposals: true,
   taskPlanningProposals: true,
 };
+
+/**
+ * What the user actually chooses: four settings. The rest of MascotPreferences follows from them:
+ * the tone is sober when the presence is discreet, proposals follow one three-way setting,
+ * the name is used whenever one was given, and no proposal family is switched off on its own.
+ */
+export interface MascotSettings {
+  presence: MascotPresence;
+  address: MascotAddress;
+  proposals: MascotProposalsLevel;
+  briefings: boolean;
+}
+
+export const DEFAULT_MASCOT_SETTINGS: MascotSettings = {
+  presence: 'full',
+  address: 'tu',
+  proposals: 'normal',
+  briefings: true,
+};
+
+export function mascotPreferencesFromSettings(settings: MascotSettings): MascotPreferences {
+  return {
+    presence: settings.presence,
+    address: settings.address,
+    useFirstName: true,
+    tone: settings.presence === 'discreet' ? 'sober' : 'warm',
+    proposalsEnabled: settings.proposals !== 'off',
+    proposalFrequency: settings.proposals === 'rare' ? 'rare' : 'normal',
+    contactProposals: true,
+    habitGoalProposals: true,
+    taskPlanningProposals: true,
+  };
+}
 
 export const MAX_FIRST_NAME_LENGTH = 20;
 export const MAX_PROPOSALS_PER_DAY = { normal: 3, rare: 1 } as const;

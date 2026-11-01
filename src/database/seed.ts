@@ -82,6 +82,7 @@ export async function clearAllData(): Promise<void> {
     'interactions',
     'persons',
     'suggestions',
+    'mascot_state',
     'planning_blocks',
     'personal_schedules',
     'settings',

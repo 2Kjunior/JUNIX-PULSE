@@ -31,6 +31,8 @@ export interface MascotBubbleProps {
   /** Side of the bubble that faces the mascot. */
   tailSide?: BubbleTailSide;
   style?: StyleProp<ViewStyle>;
+  /** Opaque instead of glass, for a bubble that sits over other content. */
+  solid?: boolean;
 }
 
 const TAIL_SIZE = 12;
@@ -50,13 +52,13 @@ function tailPosition(side: BubbleTailSide): ViewStyle {
   }
 }
 
-export function MascotBubble({ text, actions, maxWidth, tailSide = 'left', style }: MascotBubbleProps) {
+export function MascotBubble({ text, actions, maxWidth, tailSide = 'left', style, solid = false }: MascotBubbleProps) {
   const { palette } = useTheme();
-  const glass = useMascotGlassColors();
+  const glass = useMascotGlassColors(solid);
 
   return (
     <Animated.View entering={FadeIn.duration(200)} style={[{ maxWidth }, style]}>
-      <MascotGlassShell>
+      <MascotGlassShell solid={solid}>
         <View style={styles.content}>
           <Text style={[styles.text, { color: palette.onSurface.primary }]}>{text}</Text>
           {actions && actions.length > 0 ? (

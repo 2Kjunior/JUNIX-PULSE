@@ -28,11 +28,15 @@ jest.mock('expo-router', () => {
       back: jest.fn(),
       replace: jest.fn(),
     },
+    useSegments: () => [],
     useFocusEffect: (cb: () => void) => {
       ReactModule.useEffect(() => cb(), [cb]);
     },
   };
 });
+
+// La mascotte guide a ses propres tests ; ici on vérifie seulement que le layout se rend
+jest.mock('@/features/mascot/OnboardingGuide', () => ({ OnboardingGuide: () => null }));
 
 jest.mock('expo-localization', () => ({
   getLocales: () => [{ languageCode: 'fr', regionCode: 'FR' }],
