@@ -67,7 +67,7 @@ export default function OnboardingSchedule() {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Fin de journée</Text>
         <Text style={styles.sectionHint}>
-          À cette heure, Junix peut vous proposer de gérer les tâches non terminées.
+          À cette heure, Junix vous envoie votre bilan et peut vous proposer de gérer les tâches non terminées.
         </Text>
         <View style={styles.chipRow}>
           {END_OF_DAY_OPTIONS.map(h => (
@@ -88,7 +88,7 @@ export default function OnboardingSchedule() {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Résumé du matin</Text>
         <Text style={styles.sectionHint}>
-          Sur l’écran Aujourd’hui, votre journée sera prête à cette heure.
+          Une notification vous prévient à cette heure, et votre journée vous attend sur l’écran Aujourd’hui.
         </Text>
         <View style={styles.chipRow}>
           {MORNING_OPTIONS.map(h => (

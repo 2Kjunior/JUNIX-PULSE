@@ -26,6 +26,7 @@ jest.mock('expo-notifications', () => ({
   setNotificationChannelAsync: (...args: any[]) => mockSetNotificationChannelAsync(...args),
   SchedulableTriggerInputTypes: {
     DATE: 'date',
+    DAILY: 'daily',
   },
   AndroidImportance: {
     HIGH: 4,
@@ -48,6 +49,31 @@ describe('NotificationService (DEF-09 & fiabilite)', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('planifie un recap quotidien a l heure choisie, et sait l annuler', async () => {
+    await NotificationService.scheduleDailyRecap({
+      kind: 'MORNING_SUMMARY',
+      hour: 7,
+      title: 'Ton résumé du matin',
+      body: 'Ta journée est prête, viens la découvrir.',
+    });
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identifier: 'daily-recap-MORNING_SUMMARY',
+        content: expect.objectContaining({
+          title: 'Ton résumé du matin',
+          data: { type: 'DAILY_RECAP', kind: 'MORNING_SUMMARY' },
+        }),
+        trigger: expect.objectContaining({ type: 'daily', hour: 7, minute: 0 }),
+      })
+    );
+
+    await NotificationService.cancelDailyRecaps();
+
+    expect(mockCancelScheduledNotificationAsync).toHaveBeenCalledWith('daily-recap-MORNING_SUMMARY');
+    expect(mockCancelScheduledNotificationAsync).toHaveBeenCalledWith('daily-recap-EVENING_REVIEW');
   });
 
   it('planifie une notification pour une echeance future', async () => {

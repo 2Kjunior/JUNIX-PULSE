@@ -7,6 +7,7 @@
  * Seules les notifications PUSH (serveur distant) nécessitent un Development Build.
  */
 
+import type { DailyRecapKind, DailyRecapNotification } from "@/domain/rules/daily-recap-rules";
 import { logger } from "@/utils/logger";
 import { Platform } from "react-native";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
@@ -23,6 +24,12 @@ try {
 } catch {
   logger.warn("[NotificationService] expo-notifications non disponible — notifications désactivées");
 }
+
+// Canal distinct des rappels : importance normale, désactivable séparément dans Android
+const DAILY_RECAP_CHANNEL_ID = "junix-pulse-daily-recap";
+const DAILY_RECAP_KINDS: readonly DailyRecapKind[] = ["MORNING_SUMMARY", "EVENING_REVIEW"];
+
+const dailyRecapIdentifier = (kind: DailyRecapKind) => `daily-recap-${kind}`;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,6 +94,14 @@ export const NotificationService = {
           showBadge: false,
           sound: NOTIFICATION_SOUND_WAV_FILENAME,
         });
+
+        await Notifications.setNotificationChannelAsync(DAILY_RECAP_CHANNEL_ID, {
+          name: "Résumé et bilan du jour",
+          description: "Votre résumé du matin et votre bilan du soir",
+          importance: Notifications.AndroidImportance.DEFAULT,
+          lightColor: "#8B3DF0",
+          showBadge: false,
+        });
       }
     } catch {
       logger.error(
@@ -140,6 +155,46 @@ export const NotificationService = {
     } catch {
       logger.error("[NotificationService] Erreur lors de scheduleReminder");
       return `fallback-notif-${params.id}`;
+    }
+  },
+
+  /**
+   * Planifie un récap quotidien, répété chaque jour à l'heure choisie.
+   */
+  async scheduleDailyRecap(recap: DailyRecapNotification): Promise<void> {
+    if (!Notifications) return;
+    try {
+      await Notifications.scheduleNotificationAsync({
+        identifier: dailyRecapIdentifier(recap.kind),
+        content: {
+          title: recap.title,
+          body: recap.body,
+          data: { type: "DAILY_RECAP", kind: recap.kind },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: recap.hour,
+          minute: 0,
+          channelId: Platform.OS === "android" ? DAILY_RECAP_CHANNEL_ID : undefined,
+        } as import("expo-notifications").DailyTriggerInput,
+      });
+    } catch {
+      logger.error("[NotificationService] Erreur lors de scheduleDailyRecap");
+    }
+  },
+
+  /**
+   * Annule les récaps quotidiens planifiés.
+   */
+  async cancelDailyRecaps(): Promise<void> {
+    if (!Notifications) return;
+    for (const kind of DAILY_RECAP_KINDS) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(dailyRecapIdentifier(kind));
+      } catch {
+        logger.error("[NotificationService] Erreur cancelDailyRecaps");
+      }
     }
   },
 

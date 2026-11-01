@@ -38,6 +38,8 @@ import { clearAllData } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
+import { syncDailyRecapNotifications } from '@/services/daily-recap-service';
+import { NotificationService } from '@/services/notification-service';
 import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
@@ -109,6 +111,8 @@ export default function SettingsScreen() {
         updatedAt: new Date().toISOString(),
       });
       setSettings(s => s ? { ...s, notificationsEnabled: val } : s);
+      if (val) await NotificationService.requestPermissions();
+      await syncDailyRecapNotifications();
       showSnackbar(val ? 'Notifications activées' : 'Notifications désactivées');
     } catch (e) {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
@@ -153,6 +157,7 @@ export default function SettingsScreen() {
         updatedAt: new Date().toISOString(),
       });
       setSettings(s => s ? { ...s, morningBriefingHour: hour } : s);
+      await syncDailyRecapNotifications();
       showSnackbar(`Résumé matin réglé à ${hour}h00`);
     } catch (e) {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
@@ -166,6 +171,7 @@ export default function SettingsScreen() {
         updatedAt: new Date().toISOString(),
       });
       setSettings(s => s ? { ...s, endOfDayHour: hour } : s);
+      await syncDailyRecapNotifications();
       showSnackbar(`Bilan fin de journée réglé à ${hour}h00`);
     } catch (e) {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');

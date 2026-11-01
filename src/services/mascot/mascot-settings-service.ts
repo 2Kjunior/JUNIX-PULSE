@@ -5,6 +5,7 @@
 import { Settings } from '../../domain/entities';
 import { MascotSettings } from '../../domain/rules/mascot-preferences';
 import { SettingsRepository } from '../../repositories/settings-repository';
+import { syncDailyRecapNotifications } from '../daily-recap-service';
 import { getMascotSettings, setMascotSettings } from './mascot-runtime';
 
 export function mascotSettingsFrom(settings: Settings): MascotSettings {
@@ -38,5 +39,6 @@ export async function saveMascotSettings(change: Partial<MascotSettings>): Promi
     updatedAt: new Date().toISOString(),
   });
   setMascotSettings(next);
+  await syncDailyRecapNotifications();
   return next;
 }

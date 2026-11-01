@@ -39,6 +39,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
+import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
 import { NotificationService } from "@/services/notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { SessionManager } from "@/services/session/SessionManager";
@@ -186,6 +187,11 @@ export default function RootLayout() {
     }
   }, [splashFinished, appReady, dbReady, dbError, onboardingComplete, segments]);
 
+  // Récaps quotidiens : au lancement, et dès la fin de l'onboarding
+  useEffect(() => {
+    if (dbReady && onboardingComplete) void syncDailyRecapNotifications();
+  }, [dbReady, onboardingComplete]);
+
   // Écouteurs de notifications pour navigation directe & snooze
   useEffect(() => {
     // 1. Clic sur une notification système (Background / Verrouillage)
@@ -193,12 +199,16 @@ export default function RootLayout() {
       const data = response.notification.request.content.data;
       if (data?.reminderId && typeof data.reminderId === "string") {
         router.push(`/reminders/${data.reminderId}`);
+      } else if (data?.type === "DAILY_RECAP") {
+        router.navigate("/(tabs)");
       }
     });
 
     // 2. Notification reçue alors que l'application est ouverte (Foreground)
     const cleanupForeground = NotificationService.addForegroundListener((notification) => {
       const data = notification.request.content.data;
+      // Le récap apparaît aussi dans la bulle de l'accueil : pas de son en plus de la bannière
+      if (data?.type === "DAILY_RECAP") return;
       const title = notification.request.content.title ?? "Rappel Junix Pulse";
       const body = notification.request.content.body ?? "";
       const reminderId = data?.reminderId as string | undefined;
