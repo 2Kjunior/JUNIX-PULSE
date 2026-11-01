@@ -60,6 +60,16 @@ export const SuggestionRepository = {
     return rows.map(rowToSuggestion);
   },
 
+  /** Suggestions sur lesquelles l'utilisateur a statué depuis une date (ISO). */
+  async findDecidedSince(sinceIso: string): Promise<Suggestion[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM suggestions WHERE status != 'PENDING' AND decided_at IS NOT NULL AND decided_at >= ?`,
+      sinceIso
+    );
+    return rows.map(rowToSuggestion);
+  },
+
   async findAll(): Promise<Suggestion[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(

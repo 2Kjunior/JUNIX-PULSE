@@ -128,6 +128,12 @@ export const MASCOT_MESSAGES = {
     ["L'anniversaire {de:person}, c'est dans {days} {days|jour|jours}. Je vous mets un rappel ?", "{name}, l'anniversaire {de:person}, c'est dans {days} {days|jour|jours}. Je vous mets un rappel ?"],
     ["L'anniversaire {de:person} a lieu dans {days} {days|jour|jours}. Créer un rappel ?", "{name}, l'anniversaire {de:person} a lieu dans {days} {days|jour|jours}. Créer un rappel ?"],
   ),
+  BIRTHDAY_TODAY: entry(
+    ["C'est l'anniversaire {de:person} aujourd'hui. Un petit message ?", "{name}, c'est l'anniversaire {de:person} aujourd'hui. Un petit message ?"],
+    ["Aujourd'hui, c'est l'anniversaire {de:person}. Lui écrire ?", "{name}, aujourd'hui, c'est l'anniversaire {de:person}. Lui écrire ?"],
+    ["C'est l'anniversaire {de:person} aujourd'hui. Un petit message ?", "{name}, c'est l'anniversaire {de:person} aujourd'hui. Un petit message ?"],
+    ["Aujourd'hui, c'est l'anniversaire {de:person}. Lui écrire ?", "{name}, aujourd'hui, c'est l'anniversaire {de:person}. Lui écrire ?"],
+  ),
   TASKS_TO_POSTPONE: entry(
     ["Il reste {count} {count|tâche|tâches} d'aujourd'hui. On {count|la|les} décale à demain ?", "{name}, il reste {count} {count|tâche|tâches} d'aujourd'hui. On {count|la|les} décale à demain ?"],
     ["{count} {count|tâche|tâches} d'aujourd'hui {count|reste|restent} à faire. Décaler à demain ?", "{name}, {count} {count|tâche|tâches} d'aujourd'hui {count|reste|restent} à faire. Décaler à demain ?"],

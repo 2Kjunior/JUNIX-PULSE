@@ -71,7 +71,10 @@ export type SuggestionType =
   | 'BIRTHDAY_REMINDER'      // Anniversaire à venir
   | 'OVERLOADED_DAY'         // Journée surchargée → alléger
   | 'HABIT_REMINDER'         // Habitude non validée
-  | 'PLANNING_CONFLICT';     // Conflit emploi du temps / événement
+  | 'PLANNING_CONFLICT'      // Conflit emploi du temps / événement
+  | 'GOAL_APPROACHING'       // Échéance d'un objectif proche
+  | 'LINGERING_TASK'         // Tâche de l'Inbox qui traîne depuis longtemps
+  | 'WELCOME_BACK';          // Retour après quelques jours d'absence
 
 export type SuggestionStatus =
   | 'PENDING'    // Affichée, en attente de décision

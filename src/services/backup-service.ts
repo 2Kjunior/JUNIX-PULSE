@@ -110,7 +110,7 @@ const ENUM_COLUMNS: Partial<Record<BackupTable, Record<string, readonly string[]
   planning_blocks: { type: ['WORK', 'STUDY', 'REST', 'SPORT', 'HOUSE', 'FREE', 'OTHER'] },
   interactions: { type: ['CALL', 'SMS', 'WHATSAPP', 'EMAIL', 'IN_PERSON', 'OTHER'] },
   suggestions: {
-    type: ['RESCHEDULE_REMINDER', 'POSTPONE_TASK', 'FORGOTTEN_CONTACT', 'BIRTHDAY_REMINDER', 'OVERLOADED_DAY', 'HABIT_REMINDER', 'PLANNING_CONFLICT'],
+    type: ['RESCHEDULE_REMINDER', 'POSTPONE_TASK', 'FORGOTTEN_CONTACT', 'BIRTHDAY_REMINDER', 'OVERLOADED_DAY', 'HABIT_REMINDER', 'PLANNING_CONFLICT', 'GOAL_APPROACHING', 'LINGERING_TASK', 'WELCOME_BACK'],
     status: ['PENDING', 'ACCEPTED', 'MODIFIED', 'REFUSED', 'EXPIRED'],
   },
   settings: {

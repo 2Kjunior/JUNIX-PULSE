@@ -43,7 +43,7 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
-import { suggestionMood } from '@/domain/rules/mascot-suggestion-rules';
+import { suggestionAcceptLabel, suggestionDestination, suggestionMood } from '@/domain/rules/mascot-suggestion-rules';
 import { makePulseStyles } from '@/styles/tabs/pulse-styles';
 
 // ─── Helpers visuels ─────────────────────────────────────────────────────────
@@ -134,11 +134,14 @@ export default function PulseScreen() {
     }, [loadData])
   );
 
-  const handleAccept = async (id: string, _title: string) => {
+  const handleAccept = async (suggestion: Suggestion) => {
     try {
-      await SuggestionUseCases.acceptSuggestion(id);
+      await SuggestionUseCases.acceptSuggestion(suggestion.id);
       showSnackbar(`Suggestion acceptée.`);
       loadData();
+      // Certaines propositions mènent à l'écran où l'utilisateur décide (planning, objectif, rappels)
+      const destination = suggestionDestination(suggestion);
+      if (destination) router.push(destination as never);
     } catch (e) {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Erreur inattendue');
     }
@@ -329,11 +332,11 @@ export default function PulseScreen() {
 
                     <TouchableOpacity
                       style={styles.acceptBtn}
-                      onPress={() => handleAccept(s.id, s.title)}
+                      onPress={() => handleAccept(s)}
                       accessibilityLabel={`Accepter : ${s.title}`}
                     >
                       <Ionicons name="checkmark" size={14} color={isLight ? theme.primary.onContainer : theme.primary.default} />
-                      <Text style={styles.acceptText}>Accepter</Text>
+                      <Text style={styles.acceptText}>{suggestionAcceptLabel(s.type)}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

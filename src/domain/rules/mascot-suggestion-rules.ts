@@ -20,6 +20,9 @@ const PROPOSAL_BY_TYPE: Record<SuggestionType, MascotProposalId> = {
   POSTPONE_TASK: 'P5',
   OVERLOADED_DAY: 'P6',
   PLANNING_CONFLICT: 'P7',
+  GOAL_APPROACHING: 'P10',
+  LINGERING_TASK: 'P11',
+  WELCOME_BACK: 'P12',
 };
 
 const MESSAGE_BY_TYPE: Record<SuggestionType, MascotMessageId> = {
@@ -30,6 +33,9 @@ const MESSAGE_BY_TYPE: Record<SuggestionType, MascotMessageId> = {
   POSTPONE_TASK: 'TASKS_TO_POSTPONE',
   OVERLOADED_DAY: 'OVERLOADED_DAY',
   PLANNING_CONFLICT: 'PLANNING_CONFLICT',
+  GOAL_APPROACHING: 'GOAL_APPROACHING',
+  LINGERING_TASK: 'LINGERING_TASK',
+  WELCOME_BACK: 'WELCOME_BACK',
 };
 
 /** Mood of the small mascot shown with a proposal: it follows the type, never alarms. */
@@ -41,6 +47,9 @@ const MOOD_BY_TYPE: Record<SuggestionType, MascotMood> = {
   POSTPONE_TASK: 'calm',
   OVERLOADED_DAY: 'alert',
   PLANNING_CONFLICT: 'alert',
+  GOAL_APPROACHING: 'calm',
+  LINGERING_TASK: 'calm',
+  WELCOME_BACK: 'happy',
 };
 
 /** Parameters each message needs, with the type each one must have. */
@@ -52,6 +61,9 @@ const REQUIRED_PARAMS: Record<SuggestionType, Readonly<Record<string, 'string' |
   POSTPONE_TASK: { count: 'number' },
   OVERLOADED_DAY: { count: 'number' },
   PLANNING_CONFLICT: { time: 'string' },
+  GOAL_APPROACHING: { goal: 'string', days: 'number', percent: 'number' },
+  LINGERING_TASK: { title: 'string', days: 'number' },
+  WELCOME_BACK: { count: 'number' },
 };
 
 export interface SuggestionLike {
@@ -108,7 +120,49 @@ export function suggestionToMascotMessage(suggestion: SuggestionLike): MascotSug
     params[key] = value as string | number;
   }
 
+  // The day itself has its own wording: "dans 0 jour" would read wrong
+  if (suggestion.type === 'BIRTHDAY_REMINDER' && params.days === 0) {
+    return { id: 'BIRTHDAY_TODAY', params: { person: params.person } };
+  }
+
   return { id: MESSAGE_BY_TYPE[suggestion.type], params };
+}
+
+// ─── What the answers do ─────────────────────────────────────────────────────────────────────
+
+/** Types whose answer only opens the screen where the user decides, instead of acting. */
+const VIEW_ONLY_TYPES: readonly SuggestionType[] = [
+  'OVERLOADED_DAY',
+  'PLANNING_CONFLICT',
+  'GOAL_APPROACHING',
+  'WELCOME_BACK',
+];
+
+export function suggestionAcceptLabel(type: SuggestionType): string {
+  return VIEW_ONLY_TYPES.includes(type) ? 'Voir' : 'Accepter';
+}
+
+/** Where a view-only suggestion leads once accepted, or null when it acts in place. */
+export function suggestionDestination(suggestion: {
+  type: SuggestionType;
+  targetId?: string | null;
+}): string | null {
+  switch (suggestion.type) {
+    case 'BIRTHDAY_REMINDER': {
+      // The day itself ("…:0"): open the person to write to them. Earlier, accepting creates a reminder
+      const [personId, days] = (suggestion.targetId ?? '').split(':');
+      return days === '0' && personId ? `/people/${personId}` : null;
+    }
+    case 'OVERLOADED_DAY':
+    case 'PLANNING_CONFLICT':
+      return '/(tabs)/calendar';
+    case 'GOAL_APPROACHING':
+      return suggestion.targetId ? `/goals/${suggestion.targetId}` : '/goals';
+    case 'WELCOME_BACK':
+      return '/(tabs)/reminders';
+    default:
+      return null;
+  }
 }
 
 // ─── Parameter builders used when the engine creates a suggestion ────────────────────────────

@@ -43,7 +43,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
+import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
+import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
@@ -81,6 +84,7 @@ export default function TodayScreen() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const { message: timeMessage, dismiss: dismissTimeMessage } = useMascotTimeTrigger(displayName);
 
   const today = new Date();
   const greeting = getGreeting(today.getHours());
@@ -165,6 +169,9 @@ export default function TodayScreen() {
       await SuggestionUseCases.acceptSuggestion(sugg.id);
       showSnackbar(`Action appliquée : ${sugg.title}`);
       load();
+      // Certaines propositions mènent à l'écran où l'utilisateur décide (planning, objectif, rappels)
+      const destination = suggestionDestination(sugg);
+      if (destination) router.push(destination as never);
     } catch (err: unknown) {
       showSnackbar(err instanceof Error ? err.message : 'Impossible d’accepter la suggestion.');
     }
@@ -469,7 +476,18 @@ export default function TodayScreen() {
         )}
 
         {/* ─── 4. Suggestion Proactive Unique (IA locale) ─────────────────── */}
-        {topSuggestion && (
+        {/* Une seule bulle à la fois : le message du moment d'abord, sinon la proposition */}
+        {timeMessage && (
+          <View style={styles.sectionBlock}>
+            <MascotBubble
+              text={timeMessage.text}
+              maxWidth={Math.min(windowWidth - Spacing.lg * 2, 560)}
+              tailSide="top"
+              actions={[{ label: 'Fermer', onPress: dismissTimeMessage, primary: true }]}
+            />
+          </View>
+        )}
+        {!timeMessage && topSuggestion && (
           <View style={styles.sectionBlock}>
             <MascotProposalBubble
               suggestion={topSuggestion}

@@ -173,6 +173,21 @@ export const TaskRepository = {
     return rows.map(rowToTask);
   },
 
+  /**
+   * Toutes les tâches planifiées pour une date (YYYY-MM-DD), terminées comprises.
+   * `findForDate` exclut les tâches terminées : il ne permet pas de savoir si la journée est faite.
+   */
+  async findAllForDate(date: string): Promise<Task[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM tasks
+       WHERE deleted_at IS NULL AND scheduled_date = ?
+       ORDER BY priority DESC, created_at ASC`,
+      date
+    );
+    return rows.map(rowToTask);
+  },
+
   /** Tâches non terminées dont la date planifiée est dans le passé (pour end-of-day) */
   async findOverdue(beforeDate: string): Promise<Task[]> {
     const db = await getDatabase();

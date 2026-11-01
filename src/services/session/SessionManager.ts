@@ -28,6 +28,23 @@ export const FORCE_SPLASH_IN_DEV = true;
 let memoryLastActiveAt: number | null = null;
 let hasPlayedSplashInProcess = false;
 
+// Dernière activité connue AU DÉMARRAGE du process, lue avant que recordActive() ne l'écrase.
+// Sert à savoir depuis combien de jours l'utilisateur n'avait pas ouvert l'application.
+let previousLastActiveAt: number | null = null;
+let previousLastActiveLoaded = false;
+
+async function loadPreviousLastActive(): Promise<void> {
+  if (previousLastActiveLoaded) return;
+  previousLastActiveLoaded = true;
+  try {
+    const stored = await SecureStore.getItemAsync(STORAGE_KEY_LAST_ACTIVE);
+    const value = stored ? parseInt(stored, 10) : NaN;
+    previousLastActiveAt = Number.isNaN(value) ? null : value;
+  } catch {
+    previousLastActiveAt = null;
+  }
+}
+
 export const SessionManager = {
   /**
    * Indique si l'animation de splash (4s avec son) doit être jouée.
@@ -35,6 +52,9 @@ export const SessionManager = {
    * Retourne false si l'utilisateur a utilisé l'application récemment (< 15 min).
    */
   async shouldPlayLaunchSplash(): Promise<boolean> {
+    // À lire avant tout : recordActive() écrase la valeur persistée
+    await loadPreviousLastActive();
+
     // Si le splash a déjà été joué dans ce process JS en cours, ne jamais le rejouer
     if (hasPlayedSplashInProcess) {
       return false;
@@ -87,6 +107,15 @@ export const SessionManager = {
   },
 
   /**
+   * Nombre de jours entiers écoulés entre la dernière activité d'avant ce lancement et maintenant.
+   * Retourne null à la toute première ouverture ou si la valeur n'est pas disponible.
+   */
+  getDaysSinceLastOpen(now: number = Date.now()): number | null {
+    if (previousLastActiveAt === null) return null;
+    return Math.max(0, Math.floor((now - previousLastActiveAt) / (24 * 60 * 60 * 1000)));
+  },
+
+  /**
    * Enregistre l'horodatage actuel comme étant le dernier moment actif.
    */
   async recordActive(): Promise<void> {
@@ -112,6 +141,8 @@ export const SessionManager = {
   _resetForTesting(): void {
     memoryLastActiveAt = null;
     hasPlayedSplashInProcess = false;
+    previousLastActiveAt = null;
+    previousLastActiveLoaded = false;
   },
 };
 

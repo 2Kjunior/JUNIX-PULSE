@@ -12,7 +12,7 @@ import { StyleProp, ViewStyle } from 'react-native';
 import { Suggestion } from '@/domain/entities';
 import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
 import { DEFAULT_MASCOT_PREFERENCES, MascotPreferences } from '@/domain/rules/mascot-preferences';
-import { suggestionToMascotMessage } from '@/domain/rules/mascot-suggestion-rules';
+import { suggestionAcceptLabel, suggestionToMascotMessage } from '@/domain/rules/mascot-suggestion-rules';
 
 import { BubbleTailSide, MascotBubble } from './MascotBubble';
 
@@ -56,7 +56,7 @@ export function MascotProposalBubble({
       actions={[
         { label: 'Ignorer', onPress: onRefuse, accessibilityLabel: 'Ignorer cette proposition' },
         {
-          label: 'Accepter',
+          label: suggestionAcceptLabel(suggestion.type),
           onPress: onAccept,
           primary: true,
           accessibilityLabel: `Accepter : ${suggestion.title}`,

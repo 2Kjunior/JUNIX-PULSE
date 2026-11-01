@@ -47,7 +47,8 @@ async function announceTaskCompleted(task: Task): Promise<void> {
   try {
     const today = format(new Date(), 'yyyy-MM-dd');
     if (task.scheduledDate === today) {
-      const todayTasks = await TaskRepository.findForDate(today);
+      // findForDate leaves out the completed tasks, so it could never show a cleared day
+      const todayTasks = await TaskRepository.findAllForDate(today);
       if (todayTasks.length > 0 && todayTasks.every(item => item.status === 'COMPLETED')) {
         emitMascotEvent({ type: 'DAY_CLEARED' });
         return;
@@ -148,6 +149,16 @@ export const TaskUseCases = {
 
     if (isNowCompleted) await announceTaskCompleted(task);
     return newStatus;
+  },
+
+  /**
+   * Replanifie des tâches à une autre date (YYYY-MM-DD), par exemple demain.
+   */
+  async rescheduleTasks(ids: readonly string[], date: string): Promise<void> {
+    const now = new Date().toISOString();
+    for (const id of ids) {
+      await TaskRepository.update({ id, scheduledDate: date, status: 'SCHEDULED', updatedAt: now });
+    }
   },
 
   /**

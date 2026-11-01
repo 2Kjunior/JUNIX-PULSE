@@ -39,7 +39,8 @@ export function useMascotDayMood(): MascotDayMood {
           const now = new Date();
           const [reminders, todayTasks, persons] = await Promise.all([
             ReminderRepository.findAll(),
-            TaskRepository.findForDate(format(now, 'yyyy-MM-dd')),
+            // All of today's tasks, done ones included: the mood needs to know the day is cleared
+            TaskRepository.findAllForDate(format(now, 'yyyy-MM-dd')),
             PersonRepository.findAll(),
           ]);
 
