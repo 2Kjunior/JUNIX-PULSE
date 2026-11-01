@@ -32,7 +32,7 @@ import {
   startFocusSession,
   pauseFocusSession,
   resetFocusSession,
-  tickFocusSession,
+  syncFocusSessionWithClock,
   formatRemainingTime,
   calculateFocusProgress,
 } from '@/domain/rules/focus-rules';
@@ -68,29 +68,32 @@ export default function FocusScreen() {
   );
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endsAtRef = useRef(0);
 
   // ─── Horloge du minuteur ───────────────────────────────────────────────────
   useEffect(() => {
     if (session.state === 'running') {
+      // La fin est programmée dès le départ : elle sonne même si l'application passe en arrière-plan
+      endsAtRef.current = Date.now() + session.remainingSeconds * 1000;
+      NotificationService.scheduleFocusEnd(
+        new Date(endsAtRef.current),
+        session.taskTitle
+          ? `Session de focus sur « ${session.taskTitle} » terminée.`
+          : 'Votre session de focus est terminée. Prenez une pause bien méritée !'
+      );
       timerRef.current = setInterval(() => {
         setSession((prev) => {
-          const next = tickFocusSession(prev);
+          const next = syncFocusSessionWithClock(prev, endsAtRef.current);
           if (next.state === 'completed' && prev.state === 'running') {
             addFocusMinutes(prev.durationMinutes);
             emitMascotEvent({ type: 'FOCUS_COMPLETED', durationMinutes: prev.durationMinutes });
             showSnackbar('Session de focus terminée avec succès !');
-            NotificationService.sendTestNotification({
-              title: 'Temps écoulé !',
-              body: prev.taskTitle
-                ? `Session de focus sur « ${prev.taskTitle} » terminée.`
-                : 'Votre session de focus est terminée. Prenez une pause bien méritée !',
-              delaySeconds: 1,
-            });
           }
           return next;
         });
       }, 1000);
     } else {
+      if (session.state !== 'completed') NotificationService.cancelFocusEnd();
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -110,7 +113,14 @@ export default function FocusScreen() {
     setMascotFocusState(session.state);
   }, [session.state]);
 
-  useEffect(() => () => setMascotFocusState('idle'), []);
+  useEffect(
+    () => () => {
+      setMascotFocusState('idle');
+      // Quitter l'écran met fin à la session : sa notification de fin n'a plus lieu d'être
+      NotificationService.cancelFocusEnd();
+    },
+    []
+  );
 
   // ─── Gestionnaires d'actions ───────────────────────────────────────────────
   const handleTogglePlayPause = () => {

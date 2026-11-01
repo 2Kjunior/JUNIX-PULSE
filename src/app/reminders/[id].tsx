@@ -22,7 +22,6 @@ import { fr } from 'date-fns/locale';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { PersonRepository } from '@/repositories/person-repository';
-import { SettingsRepository } from '@/repositories/settings-repository';
 import {
   completeReminder,
   snoozeReminder,
@@ -72,7 +71,6 @@ export default function ReminderDetailScreen() {
   const [reminder, setReminder] = useState<Reminder | null>(null);
   const [person, setPerson] = useState<Person | null>(null);
   const [checklist, setChecklist] = useState<ReminderChecklistItem[]>([]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [error, setError] = useState('');
   const [showSnoozeSheet, setShowSnoozeSheet] = useState(false);
   const [snoozeSheet, setSnoozeSheet] = useState<SnoozeSheet>('hidden');
@@ -85,10 +83,9 @@ export default function ReminderDetailScreen() {
       return;
     }
     try {
-      const [rem, items, settings] = await Promise.all([
+      const [rem, items] = await Promise.all([
         ReminderRepository.findById(id),
         ReminderRepository.findChecklistItems(id),
-        SettingsRepository.get(),
       ]);
       if (!rem) {
         setError('Rappel introuvable');
@@ -97,7 +94,6 @@ export default function ReminderDetailScreen() {
       }
       setReminder(rem);
       setChecklist(items);
-      setNotificationsEnabled(settings.notificationsEnabled);
 
       if (rem.personId) {
         const p = await PersonRepository.findById(rem.personId);
@@ -117,7 +113,7 @@ export default function ReminderDetailScreen() {
 
   async function handleComplete() {
     if (!reminder) return;
-    await completeReminder(reminder, notificationsEnabled);
+    await completeReminder(reminder);
     showSnackbar('Rappel complété.');
     router.back();
   }
@@ -140,7 +136,7 @@ export default function ReminderDetailScreen() {
         break;
     }
 
-    await snoozeReminder(reminder, input, notificationsEnabled);
+    await snoozeReminder(reminder, input);
     showSnackbar(`Rappel reporté — ${label}`);
     router.back();
   }

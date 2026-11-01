@@ -29,6 +29,7 @@ import { getDatabase } from '@/database/sqlite';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { decryptBackup, importBackup, parseBackup } from '@/services/backup-service';
+import { reconcileOverdueRecurringReminders } from '@/use-cases/reminder-use-cases';
 
 const { height } = Dimensions.get('window');
 
@@ -102,6 +103,8 @@ export default function OnboardingWelcome() {
           onPress: async () => {
             try {
               const result = await importBackup(await getDatabase(), backupData);
+              // Les notifications suivent à la fin de l'onboarding, une fois les dates recalées
+              await reconcileOverdueRecurringReminders();
               Alert.alert(
                 'Restauration terminée',
                 `${result.inserted} enregistrements ajoutés, ${result.skipped} ignorés car ils existaient déjà.`,

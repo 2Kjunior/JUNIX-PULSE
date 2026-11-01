@@ -117,6 +117,34 @@ describe('NotificationService (DEF-09 & fiabilite)', () => {
     expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
+  it('ne fait pas passer un echec de planification pour une notification programmee', async () => {
+    mockScheduleNotificationAsync.mockRejectedValueOnce(new Error('OS'));
+
+    const result = await NotificationService.scheduleReminder({
+      id: 'rem-echec',
+      title: 'Rappel',
+      scheduledAt: new Date('2025-06-15T16:00:00.000Z'),
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('utilise l identifiant fourni, propre a une occurrence', async () => {
+    await NotificationService.scheduleReminder({
+      id: 'rem-1',
+      identifier: 'reminder-rem-1-123',
+      title: 'Rappel',
+      scheduledAt: new Date('2025-06-15T16:00:00.000Z'),
+    });
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identifier: 'reminder-rem-1-123',
+        content: expect.objectContaining({ data: expect.objectContaining({ reminderId: 'rem-1' }) }),
+      })
+    );
+  });
+
   it('DEF-09 : refuse de planifier si triggerDate est exactement egal a now', async () => {
     const result = await NotificationService.scheduleReminder({
       id: 'rem-exact',

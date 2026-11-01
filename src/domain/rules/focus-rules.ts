@@ -161,6 +161,21 @@ export function tickFocusSession(session: FocusSession, now: Date = new Date()):
 }
 
 /**
+ * Recale le décompte sur l'heure de fin : le minuteur de l'application s'arrête en arrière-plan,
+ * et la session doit avoir avancé au retour.
+ */
+export function syncFocusSessionWithClock(
+  session: FocusSession,
+  endsAtMs: number,
+  now: Date = new Date()
+): FocusSession {
+  if (session.state !== 'running') return session;
+
+  const remaining = Math.max(0, Math.ceil((endsAtMs - now.getTime()) / 1000));
+  return tickFocusSession({ ...session, remainingSeconds: remaining + 1 }, now);
+}
+
+/**
  * Formate les secondes restantes au format MM:SS.
  */
 export function formatRemainingTime(seconds: number): string {

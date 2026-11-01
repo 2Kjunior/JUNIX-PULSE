@@ -21,7 +21,6 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
-import { SettingsRepository } from '@/repositories/settings-repository';
 import { updateReminder } from '@/use-cases/reminder-use-cases';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
@@ -68,7 +67,6 @@ export default function EditReminderScreen() {
   const [scheduledAt, setScheduledAt] = useState<Date>(new Date());
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');
   const [actionType, setActionType] = useState<ActionType>('NONE');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // UI state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -82,10 +80,7 @@ export default function EditReminderScreen() {
       return;
     }
     try {
-      const [rem, settings] = await Promise.all([
-        ReminderRepository.findById(id),
-        SettingsRepository.get(),
-      ]);
+      const rem = await ReminderRepository.findById(id);
       if (!rem) {
         setError('Rappel introuvable');
         setLoading(false);
@@ -97,7 +92,6 @@ export default function EditReminderScreen() {
       setScheduledAt(new Date(rem.scheduledAt));
       setPriority(rem.priority);
       setActionType(rem.actionType);
-      setNotificationsEnabled(settings.notificationsEnabled);
       setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur de chargement');
@@ -129,8 +123,6 @@ export default function EditReminderScreen() {
         scheduledAt,
         priority,
         actionType,
-        notificationsEnabled,
-        currentNotificationId: reminder.notificationId,
       });
 
       showSnackbar('Rappel modifié ✓');

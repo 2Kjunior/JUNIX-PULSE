@@ -27,7 +27,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, isTomorrow, isPast, addHours } from 'date-fns';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
-import { SettingsRepository } from '@/repositories/settings-repository';
 import { deleteReminder, completeReminder, snoozeReminder } from '@/use-cases/reminder-use-cases';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
@@ -69,19 +68,14 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('ALL');
 
   const load = useCallback(async () => {
     try {
-      const [rems, settings] = await Promise.all([
-        ReminderRepository.findAll(),
-        SettingsRepository.get(),
-      ]);
+      const rems = await ReminderRepository.findAll();
       setReminders(rems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED'));
-      setNotificationsEnabled(settings.notificationsEnabled);
       setState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
@@ -110,17 +104,17 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
   }, [load, showSnackbar]);
 
   const handleComplete = useCallback(async (reminder: Reminder) => {
-    await completeReminder(reminder, notificationsEnabled);
+    await completeReminder(reminder);
     setReminders(prev => prev.filter(r => r.id !== reminder.id));
     showSnackbar('Rappel complété.');
-  }, [notificationsEnabled, showSnackbar]);
+  }, [showSnackbar]);
 
   const handleQuickSnooze = useCallback(async (reminder: Reminder) => {
     const twoHoursLater = addHours(new Date(), 2);
-    await snoozeReminder(reminder, { kind: 'custom', until: twoHoursLater }, notificationsEnabled);
+    await snoozeReminder(reminder, { kind: 'custom', until: twoHoursLater });
     showSnackbar('Rappel reporté de 2h.');
     load();
-  }, [notificationsEnabled, showSnackbar, load]);
+  }, [showSnackbar, load]);
 
   // Regroupement temporel selon les spécifications R-04
   const { sections, counts } = useMemo(() => {

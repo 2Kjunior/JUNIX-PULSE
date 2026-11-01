@@ -184,7 +184,7 @@ export const SuggestionUseCases = {
       } else if (sugg.type === 'RESCHEDULE_REMINDER' && sugg.targetId) {
         const rem = await ReminderRepository.findById(sugg.targetId);
         if (rem) {
-          await snoozeReminder(rem, { kind: 'tomorrow' }, true);
+          await snoozeReminder(rem, { kind: 'tomorrow' });
         }
       } else if (sugg.type === 'POSTPONE_TASK') {
         const ids = readProposedData(sugg).taskIds;
@@ -206,7 +206,6 @@ export const SuggestionUseCases = {
             scheduledAt: date,
             timezone: settings.timezone,
             personId: typeof data.personId === 'string' ? data.personId : undefined,
-            notificationsEnabled: settings.notificationsEnabled,
           });
         }
       }

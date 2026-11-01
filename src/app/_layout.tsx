@@ -20,7 +20,8 @@ import {
     useFonts,
 } from "@expo-google-fonts/inter";
 import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useSegments } from "expo-router";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useSegments, type Href } from "expo-router";
+import type { NotificationResponse } from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
@@ -41,7 +42,9 @@ import { SettingsRepository } from "@/repositories/settings-repository";
 import { detectDeviceTimezone } from "@/services/device-timezone";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
+import { notificationRoute } from "@/domain/rules/reminder-notification-rules";
 import { NotificationService } from "@/services/notification-service";
+import { onReminderSyncProblem, syncReminderNotifications } from "@/services/reminder-notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { SessionManager } from "@/services/session/SessionManager";
 import { useAppStore } from "@/store/app-store";
@@ -66,11 +69,17 @@ const TRANSPARENT_DARK_THEME = {
   colors: { ...DarkTheme.colors, background: "transparent" },
 };
 
+function openNotification(response: NotificationResponse) {
+  const route = notificationRoute(response.notification.request.content.data);
+  if (route) router.push(route as Href);
+}
+
 export default function RootLayout() {
   const {
     dbReady,
     dbError,
     onboardingComplete,
+    showSnackbar,
     setDbReady,
     setDbError,
     setOnboardingComplete,
@@ -193,21 +202,51 @@ export default function RootLayout() {
     }
   }, [splashFinished, appReady, dbReady, dbError, onboardingComplete, segments]);
 
-  // Récaps quotidiens : au lancement, et dès la fin de l'onboarding
+  // Récaps et rappels : au lancement, et dès la fin de l'onboarding
   useEffect(() => {
-    if (dbReady && onboardingComplete) void syncDailyRecapNotifications();
+    if (!dbReady || !onboardingComplete) return;
+    void syncDailyRecapNotifications();
+    void syncReminderNotifications();
   }, [dbReady, onboardingComplete]);
+
+  // Au retour dans l'application, les récurrences déjà passées repartent de la bonne date
+  useEffect(() => {
+    if (!dbReady || !onboardingComplete) return;
+    const sub = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState !== "active") return;
+      reconcileOverdueRecurringReminders()
+        .catch(() => 0)
+        .then(() => syncReminderNotifications());
+    });
+    return () => sub.remove();
+  }, [dbReady, onboardingComplete]);
+
+  // Un rappel qui ne pourra pas sonner doit se voir
+  useEffect(
+    () =>
+      onReminderSyncProblem((report) => {
+        showSnackbar(
+          report.permissionDenied
+            ? "Notifications bloquées : autorisez-les dans les réglages du téléphone pour que vos rappels sonnent."
+            : "Certains rappels n’ont pas pu être programmés."
+        );
+      }),
+    [showSnackbar]
+  );
+
+  // Notification touchée alors que l'application était fermée : à ouvrir une fois la navigation prête
+  useEffect(() => {
+    if (!dbReady || !splashFinished || !onboardingComplete) return;
+    const response = NotificationService.consumeLastResponse();
+    if (response) openNotification(response);
+  }, [dbReady, splashFinished, onboardingComplete]);
 
   // Écouteurs de notifications pour navigation directe & snooze
   useEffect(() => {
     // 1. Clic sur une notification système (Background / Verrouillage)
     const cleanupResponse = NotificationService.addResponseListener((response) => {
-      const data = response.notification.request.content.data;
-      if (data?.reminderId && typeof data.reminderId === "string") {
-        router.push(`/reminders/${data.reminderId}`);
-      } else if (data?.type === "DAILY_RECAP") {
-        router.navigate("/(tabs)");
-      }
+      NotificationService.consumeLastResponse();
+      openNotification(response);
     });
 
     // 2. Notification reçue alors que l'application est ouverte (Foreground)

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Alert, View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationService } from '@/services/notification-service';
 import { setGuidePermission } from '@/features/mascot/onboarding-guide-state';
@@ -22,8 +22,11 @@ import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
+import { useT } from '@/i18n';
+import { LanguagePicker } from '@/components/settings/LanguagePicker';
 
 export default function OnboardingPermissions() {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingPermissionsStyles);
   const { setOnboardingComplete } = useAppStore();
@@ -40,10 +43,24 @@ export default function OnboardingPermissions() {
         notificationsEnabled: granted,
         updatedAt: new Date().toISOString(),
       });
+      if (granted) await offerExactAlarms();
     } catch {
       setNotifStatus('denied');
       setGuidePermission('denied');
     }
+  }
+
+  async function offerExactAlarms() {
+    const { granted, canAsk } = await NotificationService.getExactAlarmStatus();
+    if (granted || !canAsk) return;
+    Alert.alert(
+      t('permissions.exactAlarms.title'),
+      t('permissions.exactAlarms.body'),
+      [
+        { text: t('permissions.exactAlarms.later'), style: 'cancel' },
+        { text: t('permissions.exactAlarms.allow'), onPress: () => void NotificationService.requestExactAlarms() },
+      ]
+    );
   }
 
   async function finish() {
@@ -62,11 +79,14 @@ export default function OnboardingPermissions() {
       {/* Indicateur d'étape — toutes complètes */}
       <StepIndicator total={5} current={5} />
 
-      <Text style={styles.title}>Dernière étape</Text>
-      <Text style={styles.subtitle}>
-        Ces autorisations permettent à Junix Pulse de fonctionner pleinement.
-        Elles peuvent être modifiées dans les paramètres de votre téléphone.
-      </Text>
+      <Text style={styles.title}>{t('permissions.title')}</Text>
+      <Text style={styles.subtitle}>{t('permissions.subtitle')}</Text>
+
+      {/* Langue : celle du téléphone, ou un choix */}
+      <View style={styles.permCard}>
+        <Text style={styles.permTitle}>{t('language.label')}</Text>
+        <LanguagePicker testIDPrefix="onboarding-language" />
+      </View>
 
       {/* Notification */}
       <View style={styles.permCard}>
@@ -75,16 +95,14 @@ export default function OnboardingPermissions() {
             <Ionicons name="notifications-outline" size={22} color={palette.primary.default} />
           </View>
           <View style={styles.permInfo}>
-            <Text style={styles.permTitle}>Notifications</Text>
-            <Text style={styles.permDesc}>
-              Indispensable pour recevoir vos rappels même quand l’application est fermée.
-            </Text>
+            <Text style={styles.permTitle}>{t('permissions.notifications.title')}</Text>
+            <Text style={styles.permDesc}>{t('permissions.notifications.desc')}</Text>
           </View>
         </View>
 
         {notifStatus === 'idle' ? (
           <Button
-            label="Autoriser les notifications"
+            label={t('permissions.notifications.allow')}
             onPress={requestNotifications}
             variant="secondary"
             size="md"
@@ -94,13 +112,11 @@ export default function OnboardingPermissions() {
         ) : notifStatus === 'granted' ? (
           <View style={styles.permGranted}>
             <Ionicons name="checkmark-circle" size={16} color={palette.success.default} style={{ marginRight: 6 }} />
-            <Text style={styles.permGrantedText}>Autorisées</Text>
+            <Text style={styles.permGrantedText}>{t('permissions.notifications.granted')}</Text>
           </View>
         ) : (
           <View style={styles.permDenied}>
-            <Text style={styles.permDeniedText}>
-              Non autorisées — vous pouvez les activer plus tard dans les paramètres de votre téléphone.
-            </Text>
+            <Text style={styles.permDeniedText}>{t('permissions.notifications.denied')}</Text>
           </View>
         )}
       </View>
@@ -109,24 +125,18 @@ export default function OnboardingPermissions() {
       <View style={styles.noteCard}>
         <View style={styles.noteTitleRow}>
           <Ionicons name="people-outline" size={18} color={palette.tertiary.default} style={{ marginRight: 6 }} />
-          <Text style={styles.noteTitle}>Contacts</Text>
+          <Text style={styles.noteTitle}>{t('permissions.contacts.title')}</Text>
         </View>
-        <Text style={styles.noteDesc}>
-          L’accès aux contacts sera demandé uniquement si vous souhaitez importer
-          des personnes depuis votre répertoire. Ce n’est pas requis maintenant.
-        </Text>
+        <Text style={styles.noteDesc}>{t('permissions.contacts.desc')}</Text>
       </View>
 
       <View style={styles.ready}>
-        <Text style={styles.readyTitle}>Tout est prêt&nbsp;!</Text>
-        <Text style={styles.readyDesc}>
-          Junix Pulse est configuré pour vous. Commencez par créer votre premier rappel
-          ou explorez librement.
-        </Text>
+        <Text style={styles.readyTitle}>{t('permissions.ready.title')}</Text>
+        <Text style={styles.readyDesc}>{t('permissions.ready.desc')}</Text>
       </View>
 
       <Button
-        label="Commencer à utiliser Junix Pulse"
+        label={t('permissions.start')}
         onPress={finish}
         variant="primary"
         size="lg"

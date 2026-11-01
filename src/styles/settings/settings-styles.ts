@@ -144,6 +144,10 @@ export const makeSettingsStyles = (t: ThemePalette) => {
         default: {},
       }),
     },
+    rowTextFill: {
+      flex: 1,
+      paddingRight: Spacing.sm,
+    },
     rowCol: {
       backgroundColor: rowBg,
       borderRadius: Radius.lg,

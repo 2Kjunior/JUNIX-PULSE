@@ -39,12 +39,15 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
 import { syncDailyRecapNotifications } from '@/services/daily-recap-service';
+import { syncReminderNotifications } from '@/services/reminder-notification-service';
 import { NotificationService } from '@/services/notification-service';
 import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { detectDeviceTimezone } from '@/services/device-timezone';
 import { timezoneLabel } from '@/constants/timezones';
+import { useT } from '@/i18n';
+import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
 const APPEARANCE_OPTIONS: {
@@ -62,6 +65,7 @@ export default function SettingsScreen() {
   const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode } = useAppStore();
   const { palette } = useTheme();
   const deviceTimezone = detectDeviceTimezone();
+  const t = useT();
   const styles = useThemedStyles(makeSettingsStyles);
 
 
@@ -71,11 +75,14 @@ export default function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
   const [isSanctumPinConfigured, setIsSanctumPinConfigured] = useState(false);
+  const [canEnableExactAlarms, setCanEnableExactAlarms] = useState(false);
 
   const loadSettings = useCallback(async () => {
     const s = await SettingsRepository.get();
     setSettings(s);
     setDisplayNameInput(s.displayName ?? '');
+    const exactAlarms = await NotificationService.getExactAlarmStatus();
+    setCanEnableExactAlarms(!exactAlarms.granted && exactAlarms.canAsk);
     try {
       const pinConfigured = await SanctumAuthService.isPinConfigured();
       setIsSanctumPinConfigured(pinConfigured);
@@ -116,10 +123,20 @@ export default function SettingsScreen() {
       setSettings(s => s ? { ...s, notificationsEnabled: val } : s);
       if (val) await NotificationService.requestPermissions();
       await syncDailyRecapNotifications();
+      await syncReminderNotifications();
       showSnackbar(val ? 'Notifications activées' : 'Notifications désactivées');
     } catch (e) {
       Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
     }
+  };
+
+  const handleEnableExactAlarms = async () => {
+    const granted = await NotificationService.requestExactAlarms();
+    setCanEnableExactAlarms(!granted);
+    if (!granted) return;
+    // Les notifications déjà programmées doivent l'être à nouveau pour en profiter
+    await syncReminderNotifications({ force: true });
+    showSnackbar('Vos rappels sonneront à l’heure exacte');
   };
 
   const handleToggleNotificationSound = async (val: boolean) => {
@@ -294,10 +311,15 @@ export default function SettingsScreen() {
 
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.rowLabel}>Fuseau horaire</Text>
-            <Text style={styles.rowSub}>Celui du téléphone : il suit tes déplacements</Text>
+            <Text style={styles.rowLabel}>{t('settings.timezone')}</Text>
+            <Text style={styles.rowSub}>{t('settings.timezoneHint')}</Text>
           </View>
           <Text style={styles.rowValue}>{timezoneLabel(deviceTimezone)}</Text>
+        </View>
+
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('language.label')}</Text>
+          <LanguagePicker onError={showSnackbar} />
         </View>
       </View>
 
@@ -442,6 +464,21 @@ export default function SettingsScreen() {
             thumbColor={settings.notificationsEnabled ? palette.primary.default : palette.onSurface.disabled}
           />
         </View>
+
+        {settings.notificationsEnabled && canEnableExactAlarms && (
+          <TouchableOpacity
+            style={styles.row}
+            onPress={handleEnableExactAlarms}
+            accessibilityRole="button"
+            accessibilityLabel="Autoriser les rappels à l’heure exacte"
+          >
+            <View style={styles.rowTextFill}>
+              <Text style={styles.rowLabel}>Rappels à l’heure exacte</Text>
+              <Text style={styles.rowSub}>Sans cette autorisation, Android peut les retarder</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+          </TouchableOpacity>
+        )}
 
         {/* Son des notifications — visible seulement si les notifications sont activées */}
         {settings.notificationsEnabled && (

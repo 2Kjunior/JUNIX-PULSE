@@ -143,7 +143,6 @@ export default function NewReminderScreen() {
               dayOfMonth: recurrenceType === 'MONTHLY' ? scheduledAt.getDate() : undefined,
             }
           : undefined,
-        notificationsEnabled: settings.notificationsEnabled,
       });
 
       showSnackbar('Rappel créé');

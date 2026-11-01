@@ -1,6 +1,6 @@
 /**
  * Use cases (actions métier) pour les rappels.
- * Ces fonctions orchestrent les repositories + le service de notifications.
+ * Ces fonctions orchestrent les repositories ; les notifications suivent via une synchronisation.
  * Elles constituent la couche "application" entre UI et domaine.
  *
  * Principe : aucun composant UI n'appelle les repositories directement.
@@ -9,7 +9,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { ReminderRepository } from '../repositories/reminder-repository';
-import { NotificationService } from '../services/notification-service';
+import { syncReminderNotifications } from '../services/reminder-notification-service';
 import { getNextOccurrence, computeSnoozeUntil, computeSnoozeTomorrowSameTime, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
 import { Reminder, RecurrenceRule } from '../domain/entities';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
@@ -26,7 +26,6 @@ export interface CreateReminderInput {
   personId?: string;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
   checklistItems?: { title: string; position: number }[];
-  notificationsEnabled: boolean;
 }
 
 export async function createReminder(input: CreateReminderInput): Promise<string> {
@@ -71,27 +70,8 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     }
   }
 
-  // 4. Planifier la notification si activée et dans le futur (DEF-09)
-  if (input.notificationsEnabled && input.scheduledAt > new Date()) {
-    try {
-      const notifId = await NotificationService.scheduleReminder({
-        id: reminderId,
-        title: input.title,
-        body: input.notes,
-        scheduledAt: input.scheduledAt,
-      });
-      if (notifId) {
-        await ReminderRepository.update({
-          id: reminderId,
-          notificationId: notifId,
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    } catch {
-      // La notification a échoué mais le rappel est sauvé en base
-      // L'utilisateur peut toujours voir le rappel dans l'app
-    }
-  }
+  // 4. Planifier les notifications. En cas d'échec, le rappel reste sauvé en base.
+  await syncReminderNotifications({ interactive: true });
 
   emitMascotEvent({ type: 'ITEM_CREATED' });
   return reminderId;
@@ -107,19 +87,10 @@ export interface UpdateReminderInput {
   priority?: Reminder['priority'];
   actionType?: Reminder['actionType'];
   personId?: string;
-  notificationsEnabled: boolean;
-  currentNotificationId?: string;
 }
 
 export async function updateReminder(input: UpdateReminderInput): Promise<void> {
   const now = new Date().toISOString();
-
-  // Annuler l'ancienne notification si elle existe
-  if (input.currentNotificationId) {
-    try {
-      await NotificationService.cancelReminder(input.currentNotificationId);
-    } catch { /* ignore */ }
-  }
 
   // Mettre à jour en base
   await ReminderRepository.update({
@@ -130,43 +101,16 @@ export async function updateReminder(input: UpdateReminderInput): Promise<void> 
     priority: input.priority,
     actionType: input.actionType,
     personId: input.personId,
-    notificationId: undefined, // réinitialisé
     updatedAt: now,
   });
 
-  // Replanifier si une nouvelle date future est fournie (DEF-09)
-  if (input.scheduledAt && input.notificationsEnabled && input.title && input.scheduledAt > new Date()) {
-    try {
-      const notifId = await NotificationService.scheduleReminder({
-        id: input.id,
-        title: input.title,
-        scheduledAt: input.scheduledAt,
-      });
-      if (notifId) {
-        await ReminderRepository.update({
-          id: input.id,
-          notificationId: notifId,
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    } catch { /* ignore */ }
-  }
+  await syncReminderNotifications({ interactive: true });
 }
 
 // ─── Complétion ───────────────────────────────────────────────────────────────
 
-export async function completeReminder(
-  reminder: Reminder,
-  notificationsEnabled: boolean
-): Promise<void> {
+export async function completeReminder(reminder: Reminder): Promise<void> {
   const now = new Date().toISOString();
-
-  // Annuler la notification si elle existe
-  if (reminder.notificationId) {
-    try {
-      await NotificationService.cancelReminder(reminder.notificationId);
-    } catch { /* ignore */ }
-  }
 
   // 1. Marquer ce rappel comme complété
   await ReminderRepository.update({
@@ -198,11 +142,12 @@ export async function completeReminder(
             weekPosition: rule.weekPosition,
             endDate: rule.endDate,
           },
-          notificationsEnabled,
         });
       }
     }
   }
+
+  await syncReminderNotifications();
 
   emitMascotEvent({ type: 'REMINDER_COMPLETED', priority: reminder.priority });
 }
@@ -222,8 +167,7 @@ export type SnoozeInput =
 
 export async function snoozeReminder(
   reminder: Reminder,
-  input: SnoozeInput,
-  notificationsEnabled: boolean
+  input: SnoozeInput
 ): Promise<void> {
   // Calcule la nouvelle échéance selon la forme choisie
   let snoozedUntil: string;
@@ -239,15 +183,7 @@ export async function snoozeReminder(
       break;
   }
 
-  const snoozedUntilDate = new Date(snoozedUntil);
   const now = new Date().toISOString();
-
-  // Annuler l'ancienne notification
-  if (reminder.notificationId) {
-    try {
-      await NotificationService.cancelReminder(reminder.notificationId);
-    } catch { /* ignore */ }
-  }
 
   await ReminderRepository.update({
     id: reminder.id,
@@ -257,24 +193,7 @@ export async function snoozeReminder(
     updatedAt: now,
   });
 
-  // Replanifier avec la nouvelle heure si dans le futur (DEF-09)
-  if (notificationsEnabled && snoozedUntilDate > new Date()) {
-    try {
-      const notifId = await NotificationService.scheduleReminder({
-        id: reminder.id,
-        title: reminder.title,
-        body: `Rappel reporté — ${reminder.notes ?? ''}`,
-        scheduledAt: snoozedUntilDate,
-      });
-      if (notifId) {
-        await ReminderRepository.update({
-          id: reminder.id,
-          notificationId: notifId,
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    } catch { /* ignore */ }
-  }
+  await syncReminderNotifications({ interactive: true });
 
   emitMascotEvent({ type: 'REMINDER_SNOOZED' });
 }
@@ -291,15 +210,9 @@ export async function deleteReminder(
 ): Promise<DeleteReminderResult> {
   const now = new Date().toISOString();
 
-  // Annuler la notification
-  if (reminder.notificationId) {
-    try {
-      await NotificationService.cancelReminder(reminder.notificationId);
-    } catch { /* ignore */ }
-  }
-
   // Suppression logique immédiate
   await ReminderRepository.softDelete(reminder.id, now);
+  await syncReminderNotifications();
   emitMascotEvent({ type: 'ITEM_DELETED' });
 
   // Retourner la fonction d'annulation
@@ -311,8 +224,7 @@ export async function deleteReminder(
     undo: async () => {
       clearTimeout(timer);
       await ReminderRepository.undoDelete(reminder.id, new Date().toISOString());
-      // Si notifications activées, replanifier
-      // (simplifié : l'utilisateur devra ré-ouvrir le rappel pour replanifier)
+      await syncReminderNotifications();
     },
   };
 }

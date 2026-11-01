@@ -19,7 +19,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.READ_CONTACTS"
+        "android.permission.READ_CONTACTS",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "blockedPermissions": [
         "android.permission.WRITE_CONTACTS"

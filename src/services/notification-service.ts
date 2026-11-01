@@ -30,11 +30,14 @@ const DAILY_RECAP_CHANNEL_ID = "junix-pulse-daily-recap";
 const DAILY_RECAP_KINDS: readonly DailyRecapKind[] = ["MORNING_SUMMARY", "EVENING_REVIEW"];
 
 const dailyRecapIdentifier = (kind: DailyRecapKind) => `daily-recap-${kind}`;
+const FOCUS_END_IDENTIFIER = "focus-end";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ScheduleReminderParams {
-  id: string; // ID du rappel Junix Pulse (utilisé comme identifier)
+  id: string; // ID du rappel Junix Pulse
+  /** Identifiant de la notification : un rappel récurrent en planifie plusieurs. */
+  identifier?: string;
   title: string;
   body?: string;
   scheduledAt: Date;
@@ -112,7 +115,8 @@ export const NotificationService = {
 
   /**
    * Planifie une notification locale pour un rappel.
-   * Retourne l'identifiant de notification ou null si la date est passée (DEF-09).
+   * Retourne l'identifiant de notification, ou null si la date est passée (DEF-09) ou si la
+   * planification a échoué : un échec ne doit jamais passer pour une notification programmée.
    */
   async scheduleReminder(params: ScheduleReminderParams): Promise<string | null> {
     if (!Notifications) {
@@ -120,9 +124,6 @@ export const NotificationService = {
     }
 
     try {
-      // S'assurer que les permissions sont accordées sur Android / iOS
-      await this.requestPermissions();
-
       const triggerDate = params.scheduledAt;
       const now = new Date();
       if (triggerDate <= now) {
@@ -133,7 +134,7 @@ export const NotificationService = {
       }
 
       return await Notifications.scheduleNotificationAsync({
-        identifier: `reminder-${params.id}`,
+        identifier: params.identifier ?? `reminder-${params.id}`,
         content: {
           title: params.title,
           body: params.body ?? "Rappel Junix Pulse",
@@ -154,7 +155,86 @@ export const NotificationService = {
       });
     } catch {
       logger.error("[NotificationService] Erreur lors de scheduleReminder");
-      return `fallback-notif-${params.id}`;
+      return null;
+    }
+  },
+
+  /**
+   * Planifie la fin d'une session de focus : elle sonne même si l'application est en arrière-plan.
+   */
+  async scheduleFocusEnd(endsAt: Date, body: string): Promise<void> {
+    if (!Notifications) return;
+    try {
+      if (!(await this.requestPermissions())) return;
+      await Notifications.scheduleNotificationAsync({
+        identifier: FOCUS_END_IDENTIFIER,
+        content: {
+          title: "Temps écoulé !",
+          body,
+          data: { type: "FOCUS_END" },
+          sound: NOTIFICATION_SOUND_WAV_FILENAME,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: endsAt,
+          channelId: Platform.OS === "android" ? NOTIFICATION_CHANNEL_ID : undefined,
+        } as import("expo-notifications").DateTriggerInput,
+      });
+    } catch {
+      logger.error("[NotificationService] Erreur lors de scheduleFocusEnd");
+    }
+  },
+
+  /**
+   * Annule la fin de session de focus planifiée.
+   */
+  async cancelFocusEnd(): Promise<void> {
+    if (!Notifications) return;
+    try {
+      await Notifications.cancelScheduledNotificationAsync(FOCUS_END_IDENTIFIER);
+    } catch {
+      logger.error("[NotificationService] Erreur cancelFocusEnd");
+    }
+  },
+
+  /**
+   * État des alarmes exactes : sur Android 14 et plus, elles sont refusées par défaut.
+   * `canAsk` est faux si l'application installée ne déclare pas encore la permission.
+   */
+  async getExactAlarmStatus(): Promise<{ granted: boolean; canAsk: boolean }> {
+    if (!Notifications || Platform.OS !== "android") return { granted: true, canAsk: false };
+    try {
+      const { granted, canAskAgain } = await Notifications.getExactAlarmPermissionsAsync();
+      return { granted, canAsk: canAskAgain };
+    } catch {
+      return { granted: false, canAsk: false };
+    }
+  },
+
+  /**
+   * Ouvre l'écran système des alarmes exactes et indique si elles sont autorisées au retour.
+   */
+  async requestExactAlarms(): Promise<boolean> {
+    if (!Notifications || Platform.OS !== "android") return true;
+    try {
+      const { granted } = await Notifications.requestExactAlarmPermissionsAsync();
+      return granted;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Notification qui a ouvert l'application alors qu'elle était fermée, une seule fois.
+   */
+  consumeLastResponse(): import("expo-notifications").NotificationResponse | null {
+    if (!Notifications) return null;
+    try {
+      const response = Notifications.getLastNotificationResponse();
+      if (response) Notifications.clearLastNotificationResponse();
+      return response;
+    } catch {
+      return null;
     }
   },
 
