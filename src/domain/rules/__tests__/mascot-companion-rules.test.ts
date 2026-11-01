@@ -3,6 +3,10 @@ import { MASCOT_MESSAGES } from '../mascot-message-catalog';
 import type { MascotEventType } from '../mascot-reaction-rules';
 import {
   COMPANION_BOTTOM_MARGIN,
+  COMPANION_GLANCE_AFTER_MS,
+  COMPANION_GLANCE_FOR_MS,
+  glancePointAt,
+  glanceTarget,
   COMPANION_BUBBLE_MAX_WIDTH,
   COMPANION_DOZE_AFTER_MS,
   COMPANION_PROFILES,
@@ -112,9 +116,9 @@ describe('profiles', () => {
     }
   });
 
-  it('only peeks on screens with a form or a bottom action', () => {
+  it('is absent from forms, details, settings and search: it would cover a field or a chip', () => {
     for (const screen of ['form', 'detail', 'settings', 'search'] as const) {
-      expect(COMPANION_PROFILES[screen]).toMatchObject({ zone: 'peek', size: 40 });
+      expect(COMPANION_PROFILES[screen].zone).toBe('hidden');
     }
   });
 });
@@ -189,16 +193,6 @@ describe('computeCompanionPlacement', () => {
       const placement = place({ screen: 'list' });
       const bottom = (placement?.center.y ?? 0) + (placement?.size ?? 0) / 2;
       expect(bottom).toBe(PHONE.height - PHONE.insets.bottom - COMPANION_BOTTOM_MARGIN);
-    });
-  });
-
-  describe('peeking', () => {
-    it('is small, on the right, under the top bar', () => {
-      const placement = place({ screen: 'form' });
-      expect(placement?.size).toBe(40);
-      expect(placement?.center.x).toBe(PHONE.width - GUIDE_LAYOUT.edgeMargin - 20);
-      const top = (placement?.center.y ?? 0) - 20;
-      expect(top).toBeGreaterThanOrEqual(PHONE.insets.top + GUIDE_LAYOUT.topBarHeight);
     });
   });
 
@@ -427,5 +421,57 @@ describe('reactionHasBubble', () => {
 
   it('never speaks when off', () => {
     expect(reactionHasBubble('large', 'off')).toBe(false);
+  });
+});
+
+describe('what the user can do here', () => {
+  const docked = (screen: CompanionScreen) => {
+    const placement = place({ screen });
+    if (!placement) throw new Error('expected a placement');
+    return placement;
+  };
+
+  it('looks at the main button after a quiet moment, then stops', () => {
+    expect(COMPANION_GLANCE_AFTER_MS).toBeGreaterThan(0);
+    expect(COMPANION_GLANCE_FOR_MS).toBeLessThan(COMPANION_GLANCE_AFTER_MS);
+  });
+
+  it('finds the floating button on the right, at the height of the mascot', () => {
+    for (const screen of ['reminders', 'tasks', 'calendar', 'people', 'list'] as const) {
+      const placement = docked(screen);
+      const target = glanceTarget(screen, placement, PHONE);
+      expect(target).not.toBeNull();
+      expect(target?.y).toBe(placement.center.y);
+      expect(target?.x).toBeGreaterThan(PHONE.width / 2);
+      expect(target?.x).toBeLessThan(PHONE.width);
+    }
+  });
+
+  it('has no button to look at on Home and Pulse, where the mascot stands in the screen', () => {
+    expect(glanceTarget('home', docked('home'), PHONE)).toBeNull();
+    expect(glanceTarget('pulse', docked('pulse'), PHONE)).toBeNull();
+  });
+
+  it('has none when the mascot does not wait on the left', () => {
+    const right = { ...docked('tasks'), center: { x: 300, y: 700 } };
+    expect(glanceTarget('tasks', right, PHONE)).toBeNull();
+  });
+
+  it('reaches to the right with the right arm, level with the mascot', () => {
+    const placement = docked('tasks');
+    const target = glanceTarget('tasks', placement, PHONE);
+    expect(target).not.toBeNull();
+    if (!target) return;
+    const pointAt = glancePointAt(placement, target);
+    expect(pointAt.arm).toBe('right');
+    expect(pointAt.angleDeg).toBe(-90);
+  });
+
+  it('points while glancing, but a reaction and a doze take over', () => {
+    expect(companionBehavior(behaviorInput({ screen: 'tasks', glancing: true })).pose).toBe('pointAt');
+    expect(
+      companionBehavior(behaviorInput({ glancing: true, reaction: { mood: 'happy', level: 'medium' } })).pose
+    ).toBe('happy');
+    expect(companionBehavior(behaviorInput({ glancing: true, idleMs: COMPANION_DOZE_AFTER_MS })).mood).toBe('sleepy');
   });
 });

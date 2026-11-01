@@ -19,11 +19,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   COMPANION_DOZE_AFTER_MS,
+  COMPANION_GLANCE_AFTER_MS,
+  COMPANION_GLANCE_FOR_MS,
   companionBehavior,
   companionDirection,
   CompanionScreen,
   companionScreenFromSegments,
   computeCompanionPlacement,
+  glancePointAt,
+  glanceTarget,
   reactionHasBubble,
   reactionMessageId,
 } from '@/domain/rules/mascot-companion-rules';
@@ -40,6 +44,7 @@ import { getMascotFocusState, getMascotPresence } from '@/services/mascot/mascot
 
 import { ANCHORED_SCREENS, measureCompanionAnchor } from './CompanionAnchor';
 import { MascotBubble } from './MascotBubble';
+import type { MascotReactionTrigger } from './PulseMascot';
 import { PulseMascotMover } from './PulseMascotMover';
 import { layoutBubble, layoutBubbleAbove } from './mascot-bubble-layout';
 import { loadMascotDayMood } from './use-mascot-day-mood';
@@ -80,6 +85,8 @@ export function MascotCompanion() {
   const [baseMood, setBaseMood] = useState<MascotMood>('calm');
   const [shown, setShown] = useState<ShownReaction | null>(null);
   const [idle, setIdle] = useState(false);
+  const [glancing, setGlancing] = useState(false);
+  const [trigger, setTrigger] = useState<MascotReactionTrigger | null>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [anchorSettled, setAnchorSettled] = useState(false);
   const [placement, setPlacement] = useState<GuidePlacement | null>(null);
@@ -88,6 +95,9 @@ export function MascotCompanion() {
   const engineRef = useRef(createMascotReactionEngine());
   const keyboardOpenRef = useRef(false);
   const counterRef = useRef(0);
+  const dozingRef = useRef(false);
+  const baseMoodRef = useRef<MascotMood>('calm');
+  baseMoodRef.current = baseMood;
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const centerRef = useRef<{ x: number; y: number } | null>(null);
   const previousScreenRef = useRef<CompanionScreen | null>(null);
@@ -109,9 +119,36 @@ export function MascotCompanion() {
   // Nothing touched for a while: a calm mascot dozes off. Any change of screen, any reaction,
   // any keyboard movement wakes it.
   useEffect(() => {
+    if (dozingRef.current) {
+      dozingRef.current = false;
+      // Waking up from a doze: a small stretch of the arms, unless a reaction is already playing
+      if (!shown && (baseMoodRef.current === 'calm' || baseMoodRef.current === 'happy')) {
+        counterRef.current += 1;
+        setTrigger({ level: 'micro', key: counterRef.current });
+      }
+    }
     setIdle(false);
-    const timer = setTimeout(() => setIdle(true), COMPANION_DOZE_AFTER_MS);
+    const timer = setTimeout(() => {
+      dozingRef.current = true;
+      setIdle(true);
+    }, COMPANION_DOZE_AFTER_MS);
     return () => clearTimeout(timer);
+  }, [screen, shown, keyboardOpen]);
+
+  // A quiet moment on a screen with a main button: the mascot points at it for a few seconds,
+  // once per quiet moment. Any change of screen, any reaction, any keyboard movement starts over.
+  useEffect(() => {
+    setGlancing(false);
+    if (keyboardOpen) return;
+    let stopTimer: ReturnType<typeof setTimeout> | undefined;
+    const startTimer = setTimeout(() => {
+      setGlancing(true);
+      stopTimer = setTimeout(() => setGlancing(false), COMPANION_GLANCE_FOR_MS);
+    }, COMPANION_GLANCE_AFTER_MS);
+    return () => {
+      clearTimeout(startTimer);
+      if (stopTimer) clearTimeout(stopTimer);
+    };
   }, [screen, shown, keyboardOpen]);
 
   useEffect(() => {
@@ -150,6 +187,7 @@ export function MascotCompanion() {
 
       const show = (text: string | null) => {
         setShown({ id, reaction, text });
+        setTrigger({ level: reaction.level, key: id });
         if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
         const stay = text ? Math.max(reaction.durationMs, BUBBLE_MIN_MS) : reaction.durationMs;
         hideTimerRef.current = setTimeout(() => {
@@ -178,7 +216,10 @@ export function MascotCompanion() {
   // The app comes back from the background: a mascot that was dozing starts the day afresh
   useEffect(() => {
     const subscription = AppState.addEventListener('change', state => {
-      if (state === 'active') setIdle(false);
+      if (state === 'active') {
+        dozingRef.current = false;
+        setIdle(false);
+      }
     });
     return () => subscription.remove();
   }, []);
@@ -244,19 +285,21 @@ export function MascotCompanion() {
     setPlacement(next);
   }, [screen, presence, direction, width, height, insets, keyboardOpen, reducedMotion, anchor, anchorSettled]);
 
+  const canGlance = placement !== null && glanceTarget(screen, placement, { width, insets }) !== null;
   const behavior = companionBehavior({
     baseMood,
     reaction: shown ? { mood: shown.reaction.mood, level: shown.reaction.level } : null,
     idleMs: idle ? COMPANION_DOZE_AFTER_MS : 0,
     screen,
+    glancing: glancing && canGlance,
   });
 
   // The pose changes in place: the trip of the mover does not restart for it
-  const posed = useMemo(() => (placement ? { ...placement, pose: behavior.pose } : null), [placement, behavior.pose]);
-  const reactionTrigger = useMemo(
-    () => (shown ? { level: shown.reaction.level, key: shown.id } : null),
-    [shown]
-  );
+  const posed = useMemo(() => {
+    if (!placement) return null;
+    const target = behavior.pose === 'pointAt' ? glanceTarget(screen, placement, { width, insets }) : null;
+    return { ...placement, pose: behavior.pose, pointAt: target ? glancePointAt(placement, target) : null };
+  }, [placement, behavior.pose, screen, width, insets]);
 
   // Waiting low on the screen, by the floating button: the bubble rises above the mascot
   const bubble =
@@ -268,7 +311,7 @@ export function MascotCompanion() {
 
   return (
     <View ref={layerRef} collapsable={false} pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <PulseMascotMover placement={posed} mood={behavior.mood} reaction={reactionTrigger} />
+      <PulseMascotMover placement={posed} mood={behavior.mood} reaction={trigger} />
       {bubble && shown?.text ? (
         <View pointerEvents="none" style={bubble.style}>
           <MascotBubble

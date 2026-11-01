@@ -12,11 +12,13 @@
 
 import {
   buildTransition,
+  computePointAt,
   GUIDE_LAYOUT,
   GuideDirection,
   GuideInsets,
   GuidePlacement,
   GuidePoint,
+  GuidePointAt,
   GuidePose,
   GuideSize,
 } from './mascot-guide-rules';
@@ -90,7 +92,8 @@ export function companionScreenFromSegments(segments: readonly string[]): Compan
 
 /**
  * - dock: low on the screen, above the tab bar when there is one, beside the floating button
- * - peek: small, in the top corner under the header, on screens that have a form or a bottom action
+ * - peek: small, in the top corner under the header. No screen uses it for now: forms, details,
+ *   settings and search have fields or chips right under their header, which it would cover
  * - hidden: not there (private space, focus session, onboarding which has its own guide)
  */
 export type CompanionZone = 'dock' | 'peek' | 'hidden';
@@ -105,7 +108,6 @@ export interface CompanionProfile {
 }
 
 const TAB_PROFILE: CompanionProfile = { zone: 'dock', tabBar: true, side: 'left', size: 48 };
-const PEEK_PROFILE: CompanionProfile = { zone: 'peek', tabBar: false, side: 'right', size: 40 };
 const HIDDEN_PROFILE: CompanionProfile = { zone: 'hidden', tabBar: false, side: 'left', size: 40 };
 
 export const COMPANION_PROFILES: Readonly<Record<CompanionScreen, CompanionProfile>> = {
@@ -116,10 +118,10 @@ export const COMPANION_PROFILES: Readonly<Record<CompanionScreen, CompanionProfi
   people: TAB_PROFILE,
   pulse: TAB_PROFILE,
   list: { zone: 'dock', tabBar: false, side: 'left', size: 48 },
-  detail: PEEK_PROFILE,
-  form: PEEK_PROFILE,
-  settings: PEEK_PROFILE,
-  search: PEEK_PROFILE,
+  detail: HIDDEN_PROFILE,
+  form: HIDDEN_PROFILE,
+  settings: HIDDEN_PROFILE,
+  search: HIDDEN_PROFILE,
   sanctum: HIDDEN_PROFILE,
   focus: HIDDEN_PROFILE,
   onboarding: HIDDEN_PROFILE,
@@ -253,6 +255,8 @@ export interface CompanionBehaviorInput {
   /** Time since the last touch on the app. */
   idleMs: number;
   screen: CompanionScreen;
+  /** True while the mascot looks at the main button of the screen (see glanceTarget). */
+  glancing?: boolean;
 }
 
 export interface CompanionBehavior {
@@ -282,8 +286,41 @@ export function companionBehavior(input: CompanionBehaviorInput): CompanionBehav
     return { mood: 'sleepy', pose: 'rest' };
   }
 
+  if (input.glancing) return { mood: input.baseMood, pose: 'pointAt' };
   if (ATTENTIVE_SCREENS.includes(input.screen)) return { mood: input.baseMood, pose: 'attentive' };
   return { mood: input.baseMood, pose: 'rest' };
+}
+
+// ─── What the user can do here ──────────────────────────────────────────────────────────────
+
+/** After this long on a screen without a touch, the mascot points at the main button. */
+export const COMPANION_GLANCE_AFTER_MS = 12_000;
+/** How long it keeps pointing. */
+export const COMPANION_GLANCE_FOR_MS = 2_500;
+
+/** Screens with a floating button on the right, which is what the user can do there. */
+const MAIN_BUTTON_SCREENS: readonly CompanionScreen[] = ['reminders', 'tasks', 'calendar', 'people', 'list'];
+/** Centre of the floating button from the right edge of the screen. */
+const MAIN_BUTTON_CENTER_FROM_EDGE = GUIDE_LAYOUT.edgeMargin + 28;
+
+/**
+ * Where the main button of the screen is, as the mascot sees it from where it waits: on the
+ * right, at its own height. Null on a screen without such a button, or when the mascot does not
+ * wait on the left (the Home and Pulse mascot stands in the screen itself).
+ */
+export function glanceTarget(
+  screen: CompanionScreen,
+  placement: GuidePlacement,
+  window: { width: number; insets: GuideInsets }
+): GuidePoint | null {
+  if (!MAIN_BUTTON_SCREENS.includes(screen) || COMPANION_PROFILES[screen].zone !== 'dock') return null;
+  if (placement.center.x > window.width / 2) return null;
+  return { x: window.width - window.insets.right - MAIN_BUTTON_CENTER_FROM_EDGE, y: placement.center.y };
+}
+
+/** The arm that reaches the target, from where the mascot stands. */
+export function glancePointAt(placement: GuidePlacement, target: GuidePoint): GuidePointAt {
+  return computePointAt(placement.center, target);
 }
 
 /**
