@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   COMPANION_DOZE_AFTER_MS,
+  COMPANION_EXPRESSION_HOLD_MS,
   COMPANION_GLANCE_AFTER_MS,
   COMPANION_GLANCE_FOR_MS,
   companionBehavior,
@@ -189,7 +190,9 @@ export function MascotCompanion() {
         setShown({ id, reaction, text });
         setTrigger({ level: reaction.level, key: id });
         if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-        const stay = text ? Math.max(reaction.durationMs, BUBBLE_MIN_MS) : reaction.durationMs;
+        // The gesture is short, the mood stays long enough to be seen
+        const hold = COMPANION_EXPRESSION_HOLD_MS[reaction.level];
+        const stay = text ? Math.max(hold, BUBBLE_MIN_MS) : hold;
         hideTimerRef.current = setTimeout(() => {
           setShown(current => (current?.id === id ? null : current));
         }, stay + FADE_MS);

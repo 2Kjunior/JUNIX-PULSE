@@ -244,6 +244,18 @@ export function computeCompanionPlacement(input: CompanionPlacementInput): Guide
 
 // ─── How it looks and stands ────────────────────────────────────────────────────────────────
 
+/**
+ * How long the mood of a reaction stays on the mascot, face and arms, once its gesture is over: long
+ * enough for the user to see it. The gesture itself keeps the short duration of the reaction rules.
+ * Only the doze, which has its own rules below, is not held this way.
+ */
+export const COMPANION_EXPRESSION_HOLD_MS: Readonly<Record<MascotReactionLevel, number>> = {
+  micro: 2500,
+  small: 3500,
+  medium: 4500,
+  large: 6000,
+};
+
 /** After this long without a touch, a calm or happy mascot dozes off. */
 export const COMPANION_DOZE_AFTER_MS = 60_000;
 

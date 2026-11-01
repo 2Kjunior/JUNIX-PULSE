@@ -1,8 +1,10 @@
 import { GUIDE_LAYOUT, GUIDE_MOTION } from '../mascot-guide-rules';
 import { MASCOT_MESSAGES } from '../mascot-message-catalog';
+import { REACTION_DURATIONS_MS } from '../mascot-reaction-rules';
 import type { MascotEventType } from '../mascot-reaction-rules';
 import {
   COMPANION_BOTTOM_MARGIN,
+  COMPANION_EXPRESSION_HOLD_MS,
   COMPANION_GLANCE_AFTER_MS,
   COMPANION_GLANCE_FOR_MS,
   glancePointAt,
@@ -473,5 +475,24 @@ describe('what the user can do here', () => {
       companionBehavior(behaviorInput({ glancing: true, reaction: { mood: 'happy', level: 'medium' } })).pose
     ).toBe('happy');
     expect(companionBehavior(behaviorInput({ glancing: true, idleMs: COMPANION_DOZE_AFTER_MS })).mood).toBe('sleepy');
+  });
+});
+
+describe('COMPANION_EXPRESSION_HOLD_MS', () => {
+  const levels = ['micro', 'small', 'medium', 'large'] as const;
+
+  it('keeps every mood on screen longer than its gesture, and a bigger one longer', () => {
+    for (const level of levels) {
+      expect(COMPANION_EXPRESSION_HOLD_MS[level]).toBeGreaterThan(REACTION_DURATIONS_MS[level]);
+    }
+    for (let index = 1; index < levels.length; index += 1) {
+      expect(COMPANION_EXPRESSION_HOLD_MS[levels[index]]).toBeGreaterThan(
+        COMPANION_EXPRESSION_HOLD_MS[levels[index - 1]]
+      );
+    }
+  });
+
+  it('stays shorter than the time before the mascot dozes off', () => {
+    expect(COMPANION_EXPRESSION_HOLD_MS.large).toBeLessThan(COMPANION_DOZE_AFTER_MS);
   });
 });
