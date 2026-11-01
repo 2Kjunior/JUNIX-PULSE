@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Junix Pulse – Simulation fond ambiant</title>
+<style>
+@property --c{syntax:'<color>';inherits:false;initial-value:#ffffff}
+:root{--page:#F3F2F9;--ink:#1A1040;--muted:#6B6785;--line:#DEDBEC;--v:#8B3DF0;--cy:#0AE8F0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0E0C1A;--ink:#F2F0FF;--muted:#A9A4C4;--line:#2a2646}}
+:root[data-theme="dark"]{--page:#0E0C1A;--ink:#F2F0FF;--muted:#A9A4C4;--line:#2a2646}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page);color:var(--ink);font-family:"Inter","Segoe UI",system-ui,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px}
+
+/* ---- Tokens de thème de l'app (à reprendre dans le projet) ---- */
+.phone{--base:#F7F6FD;--b1:#A78BFA;--b2:#67E8F9;--b3:#93A8FB;--b4:#C4B5FD;--o1:.50;--o2:.45;--o3:.40;--o4:.35;
+--tx:#1A1040;--mu:#6B6785;--glass:rgba(255,255,255,.58);--gb:rgba(255,255,255,.85);--sh:rgba(139,61,240,.14)}
+.phone[data-t="dark"]{--base:#0A0916;--b1:#8B3DF0;--b2:#0AE8F0;--b3:#5E7BF2;--b4:#6D28D9;--o1:.62;--o2:.50;--o3:.48;--o4:.45;
+--tx:#F2F0FF;--mu:#A9A4C4;--glass:rgba(255,255,255,.08);--gb:rgba(255,255,255,.18);--sh:rgba(0,0,0,.35)}
+
+.phone{position:relative;width:min(100%,320px);aspect-ratio:9/16;border-radius:32px;overflow:hidden;border:1px solid var(--line);
+background:var(--base);transition:background .6s ease;color:var(--tx)}
+.bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;aspect-ratio:1;border-radius:50%;will-change:transform;pointer-events:none;
+background:radial-gradient(circle,var(--c) 0%,color-mix(in srgb,var(--c) 45%,transparent) 38%,transparent 68%);
+transition:--c .6s ease,opacity .6s ease;transform:translate(-50%,-50%)}
+.k1{left:18%;top:20%;width:78%;--c:var(--b1);opacity:var(--o1);animation:f1 24s ease-in-out infinite}
+.k2{left:86%;top:36%;width:68%;--c:var(--b2);opacity:var(--o2);animation:f2 28s ease-in-out -9s infinite}
+.k3{left:28%;top:76%;width:64%;--c:var(--b3);opacity:var(--o3);animation:f3 32s ease-in-out -17s infinite}
+.k4{left:84%;top:90%;width:50%;--c:var(--b4);opacity:var(--o4);animation:f4 20s ease-in-out -5s infinite}
+@keyframes f1{0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}33%{transform:translate(-50%,-50%) translate(14%,8%) scale(1.12)}66%{transform:translate(-50%,-50%) translate(-6%,14%) scale(.94)}}
+@keyframes f2{0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}33%{transform:translate(-50%,-50%) translate(-12%,10%) scale(.92)}66%{transform:translate(-50%,-50%) translate(6%,-12%) scale(1.1)}}
+@keyframes f3{0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}33%{transform:translate(-50%,-50%) translate(12%,-10%) scale(1.1)}66%{transform:translate(-50%,-50%) translate(-8%,-4%) scale(.95)}}
+@keyframes f4{0%,100%{transform:translate(-50%,-50%) translate(0,0) scale(1)}50%{transform:translate(-50%,-50%) translate(-14%,-12%) scale(1.15)}}
+.phone{--sp:1}.phone.fast{--sp:4}
+.k1{animation-duration:calc(24s/var(--sp))}.k2{animation-duration:calc(28s/var(--sp))}.k3{animation-duration:calc(32s/var(--sp))}.k4{animation-duration:calc(20s/var(--sp))}
+.phone.paused .blob{animation-play-state:paused}
+.phone.still .blob{animation:none}
+
+/* ---- Faux écran d'accueil pour juger la lisibilité ---- */
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:34px 16px 14px}
+.h{font-weight:700;font-size:20px;letter-spacing:.02em}
+.s{font-size:12px;color:var(--mu);margin-top:-6px}
+.g{background:var(--glass);border:1px solid var(--gb);border-radius:18px;padding:12px 14px;
+-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);box-shadow:0 10px 26px var(--sh)}
+.g b{display:block;font-size:14px}.g span{font-size:12px;color:var(--mu)}
+.sp{flex:1}
+.tab{display:flex;justify-content:space-around;border-radius:22px;padding:12px}
+.tab i{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#8B3DF0,#0AE8F0);opacity:.85;display:block}
+.tab i:not(:first-child){opacity:.35}
+
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:340px}
+button{font:inherit;font-size:14px;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+button[aria-pressed="true"]{border:0;color:#fff;background:linear-gradient(90deg,var(--v),var(--cy))}
+.t{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
+</style>
+</head>
+<body>
+<div class="phone fast" id="phone" data-t="light">
+<div class="bg" aria-hidden="true"><div class="blob k1"></div><div class="blob k2"></div><div class="blob k3"></div><div class="blob k4"></div></div>
+<div class="ui">
+<div class="h">Aujourd’hui</div><div class="s">3 moments · 2 rappels</div>
+<div class="g"><b>Dîner avec Awa</b><span>19:30 · Cocody</span></div>
+<div class="g"><b>Rappel : appeler papa</b><span>Demain · 09:00</span></div>
+<div class="g"><b>Idée de projet</b><span>Noter avant ce soir</span></div>
+<div class="sp"></div>
+<div class="g tab"><i></i><i></i><i></i><i></i></div>
+</div>
+</div>
+<div class="row">
+<button id="tl" aria-pressed="true">Mode clair</button>
+<button id="td" aria-pressed="false">Mode sombre</button>
+</div>
+<div class="row">
+<button id="rm" aria-pressed="false">Animations réduites</button>
+<button id="ps" aria-pressed="false">App en arrière-plan</button>
+<button id="fs" aria-pressed="true">Démo ×4</button>
+</div>
+<div class="t" id="note">Démo ×4 activée pour que tu voies le mouvement. Dans l’app, le cycle réel dure 20 à 32 s, volontairement lent. Touche « Démo ×4 » pour voir la vitesse réelle.</div>
+<script>
+var p=document.getElementById('phone');
+function th(t){p.dataset.t=t;document.getElementById('tl').setAttribute('aria-pressed',t==='light');document.getElementById('td').setAttribute('aria-pressed',t==='dark')}
+function tg(id,cls){var b=document.getElementById(id),on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);p.classList.toggle(cls,on)}
+document.getElementById('tl').onclick=function(){th('light')};
+document.getElementById('td').onclick=function(){th('dark')};
+document.getElementById('rm').onclick=function(){tg('rm','still')};
+document.getElementById('ps').onclick=function(){tg('ps','paused')};
+document.getElementById('fs').onclick=function(){tg('fs','fast')};
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){document.getElementById('note').textContent='Ton téléphone a « réduire les animations » activé : dans l’app réelle, le fond resterait donc fixe pour toi. Ici, la démo reste animée pour que tu juges le rendu.'}
+</script>
+</body>
+</html>

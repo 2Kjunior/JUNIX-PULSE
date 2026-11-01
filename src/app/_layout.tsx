@@ -20,7 +20,7 @@ import {
     useFonts,
 } from "@expo-google-fonts/inter";
 import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
-import { Stack, router, useSegments } from "expo-router";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
@@ -30,7 +30,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { Snackbar } from "@/components/feedback/Snackbar";
-import { AnimatedBackgroundGlow } from "@/components/ui/AnimatedBackgroundGlow";
+import { AmbientBackground } from "@/components/ui/AmbientBackground";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
 import { SplashAnimation } from "@/features/launch/SplashAnimation";
@@ -53,6 +53,16 @@ LogBox.ignoreLogs([
 
 // Garder le splash screen visible pendant l'initialisation
 SplashScreen.preventAutoHideAsync();
+
+// Navigators paint their theme background over AmbientBackground unless it is transparent.
+const TRANSPARENT_LIGHT_THEME = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: "transparent" },
+};
+const TRANSPARENT_DARK_THEME = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: "transparent" },
+};
 
 export default function RootLayout() {
   const {
@@ -251,72 +261,74 @@ export default function RootLayout() {
   return (
     <>
       <GestureHandlerRootView style={styles.root}>
-        <AnimatedBackgroundGlow />
+        <AmbientBackground visible={segments[0] === "(tabs)"} revealed={splashFinished} />
         <SafeAreaProvider>
           <StatusBar style={!splashFinished ? "dark" : (isDark ? "light" : "dark")} />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          >
-            {/* Onboarding — affiché uniquement au premier lancement */}
-            <Stack.Screen
-              name="(onboarding)"
-              options={{ animation: "fade" }}
-            />
-            {/* Application principale — redirigée si onboarding non terminé */}
-            <Stack.Screen
-              name="(tabs)"
-              options={{ animation: "fade" }}
-            />
-            {/* Routes de détail — Rappels */}
-            <Stack.Screen
-              name="reminders/index"
-              options={{ presentation: "card" }}
-            />
-            <Stack.Screen
-              name="reminders/[id]"
-              options={{ presentation: "card" }}
-            />
-            <Stack.Screen
-              name="reminders/new"
-              options={{ presentation: "modal" }}
-            />
-            <Stack.Screen
-              name="reminders/edit/[id]"
-              options={{ presentation: "modal" }}
-            />
-            {/* Tâches */}
-            <Stack.Screen name="tasks/[id]" options={{ presentation: "card" }} />
-            <Stack.Screen name="tasks/new" options={{ presentation: "modal" }} />
-            {/* Personnes */}
-            <Stack.Screen name="people/[id]" options={{ presentation: "card" }} />
-            <Stack.Screen name="people/new" options={{ presentation: "modal" }} />
-            {/* Événements */}
-            <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
-            <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
-            {/* Habitudes */}
-            <Stack.Screen
-              name="habits/index"
-              options={{ presentation: "card" }}
-            />
-            <Stack.Screen name="habits/[id]" options={{ presentation: "card" }} />
-            <Stack.Screen name="habits/new" options={{ presentation: "modal" }} />
-            {/* Objectifs */}
-            <Stack.Screen name="goals/index" options={{ presentation: "card" }} />
-            <Stack.Screen name="goals/[id]" options={{ presentation: "card" }} />
-            <Stack.Screen name="goals/new" options={{ presentation: "modal" }} />
-            {/* Paramètres */}
-            <Stack.Screen
-              name="settings/index"
-              options={{ presentation: "card" }}
-            />
-            {/* Modules transversaux (Vague 9) */}
-            <Stack.Screen name="capture" options={{ presentation: "modal" }} />
-            <Stack.Screen name="sanctum" options={{ presentation: "card" }} />
-            <Stack.Screen name="search" options={{ presentation: "card" }} />
-          </Stack>
+          <ThemeProvider value={isDark ? TRANSPARENT_DARK_THEME : TRANSPARENT_LIGHT_THEME}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            >
+              {/* Onboarding — affiché uniquement au premier lancement */}
+              <Stack.Screen
+                name="(onboarding)"
+                options={{ animation: "fade" }}
+              />
+              {/* Application principale — redirigée si onboarding non terminé */}
+              <Stack.Screen
+                name="(tabs)"
+                options={{ animation: "fade" }}
+              />
+              {/* Routes de détail — Rappels */}
+              <Stack.Screen
+                name="reminders/index"
+                options={{ presentation: "card" }}
+              />
+              <Stack.Screen
+                name="reminders/[id]"
+                options={{ presentation: "card" }}
+              />
+              <Stack.Screen
+                name="reminders/new"
+                options={{ presentation: "modal" }}
+              />
+              <Stack.Screen
+                name="reminders/edit/[id]"
+                options={{ presentation: "modal" }}
+              />
+              {/* Tâches */}
+              <Stack.Screen name="tasks/[id]" options={{ presentation: "card" }} />
+              <Stack.Screen name="tasks/new" options={{ presentation: "modal" }} />
+              {/* Personnes */}
+              <Stack.Screen name="people/[id]" options={{ presentation: "card" }} />
+              <Stack.Screen name="people/new" options={{ presentation: "modal" }} />
+              {/* Événements */}
+              <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
+              <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
+              {/* Habitudes */}
+              <Stack.Screen
+                name="habits/index"
+                options={{ presentation: "card" }}
+              />
+              <Stack.Screen name="habits/[id]" options={{ presentation: "card" }} />
+              <Stack.Screen name="habits/new" options={{ presentation: "modal" }} />
+              {/* Objectifs */}
+              <Stack.Screen name="goals/index" options={{ presentation: "card" }} />
+              <Stack.Screen name="goals/[id]" options={{ presentation: "card" }} />
+              <Stack.Screen name="goals/new" options={{ presentation: "modal" }} />
+              {/* Paramètres */}
+              <Stack.Screen
+                name="settings/index"
+                options={{ presentation: "card" }}
+              />
+              {/* Modules transversaux (Vague 9) */}
+              <Stack.Screen name="capture" options={{ presentation: "modal" }} />
+              <Stack.Screen name="sanctum" options={{ presentation: "card" }} />
+              <Stack.Screen name="search" options={{ presentation: "card" }} />
+            </Stack>
+          </ThemeProvider>
           {/* Snackbar global (au-dessus de tout le contenu) */}
           <Snackbar />
           {/* Caméo de la mascotte : une seule instance, au-dessus du Snackbar */}

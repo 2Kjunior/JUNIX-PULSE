@@ -33,6 +33,7 @@ import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/constants/theme';
 import { LoadingState, ErrorState, EmptyState } from '@/components/feedback/States';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
@@ -205,7 +206,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, hideBackButton && styles.containerInTab, { paddingTop: insets.top }]}>
       {/* ─── En-tête R-04 ──────────────────────────────────────────────────────── */}
       <View style={styles.topBar}>
         {!hideBackButton && (
@@ -277,7 +278,10 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
         <SectionList
           sections={sections}
           keyExtractor={item => item.id}
-          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 90 }]}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: hideBackButton ? TAB_BAR_TOTAL_HEIGHT + 104 : insets.bottom + 90 },
+          ]}
           stickySectionHeadersEnabled={false}
           refreshControl={
             <RefreshControl
@@ -361,8 +365,9 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
       {/* ─── Bouton Flottant 3D (Unique CTA R-04) ─────────────────────────── */}
       <GlassFloatingActionButton
         label="Nouveau rappel"
-        icon="notifications-outline"
-        bottomOffset={insets.bottom + 20}
+        icon="add"
+        // Dans l'onglet : position par défaut, au-dessus de la barre d'onglets
+        bottomOffset={hideBackButton ? undefined : insets.bottom + 20}
         onPress={() => router.push('/reminders/new')}
       />
     </View>

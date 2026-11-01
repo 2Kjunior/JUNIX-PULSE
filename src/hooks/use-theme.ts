@@ -38,7 +38,6 @@ export interface UseThemeResult {
   glowCard: ThemePalette['glowCard'];
   glass: ThemePalette['glass'];
   shadow: ThemePalette['shadow'];
-  backgroundGlow: ThemePalette['backgroundGlow'];
 }
 
 export function useTheme(): UseThemeResult {
@@ -73,7 +72,6 @@ export function useTheme(): UseThemeResult {
       glowCard: theme.glowCard,
       glass: theme.glass,
       shadow: theme.shadow,
-      backgroundGlow: theme.backgroundGlow,
     }),
     [theme, mode, themeMode, setThemeMode]
   );

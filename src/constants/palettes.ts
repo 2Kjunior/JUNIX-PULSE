@@ -118,12 +118,6 @@ export interface ThemePalette {
 
   // ── StatusBar ───────────────────────────────────────────────────────────
   readonly statusBarStyle: 'light' | 'dark';
-
-  // ── Fond animé ──────────────────────────────────────────────────────────
-  readonly backgroundGlow: {
-    readonly enabled: boolean;
-    readonly staticHaloColor: string | null;
-  };
 }
 
 // ─── Palette sombre ──────────────────────────────────────────────────────────
@@ -217,11 +211,6 @@ export const darkPalette: ThemePalette = {
   },
 
   statusBarStyle: 'light',
-
-  backgroundGlow: {
-    enabled: true,
-    staticHaloColor: null, // les halos animés sont actifs en sombre
-  },
 };
 
 // ─── Palette claire ──────────────────────────────────────────────────────────
@@ -315,9 +304,4 @@ export const lightPalette: ThemePalette = {
   },
 
   statusBarStyle: 'dark',
-
-  backgroundGlow: {
-    enabled: false,
-    staticHaloColor: 'rgba(253, 186, 116, 0.22)', // D-14 : halo pêche statique
-  },
 };

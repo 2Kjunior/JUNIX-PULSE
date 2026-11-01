@@ -20,7 +20,7 @@ export function makeTodayStyles(theme: ThemePalette) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      // Transparent : AnimatedBackgroundGlow est visible derrière cet écran
+      // Transparent : AmbientBackground est visible derrière cet écran
       backgroundColor: 'transparent',
     },
     content: {

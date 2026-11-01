@@ -17,6 +17,10 @@ export function makeRemindersStyles(theme: ThemePalette) {
       flex: 1,
       backgroundColor: theme.surface.base,
     },
+    // Transparent : AmbientBackground est visible derrière l'onglet Rappels
+    containerInTab: {
+      backgroundColor: 'transparent',
+    },
     topBar: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -69,7 +69,7 @@ export function GlassFloatingActionButton({
   const styles = useThemedStyles(makeGlassFabStyles);
   const reduceMotion = useSafeReducedMotion();
 
-  // Valeur d'expansion Reanimated : 1 = étendu (largeur ~168px), 0 = compact (cercle 52x52)
+  // Valeur d'expansion Reanimated : 1 = étendu (largeur ~176px), 0 = compact (cercle 52x52)
   const expandAnim = useSharedValue(reduceMotion ? 0 : 1);
   // Valeur d'échelle 3D (touch press)
   const scaleAnim = useSharedValue(1);
@@ -120,11 +120,11 @@ export function GlassFloatingActionButton({
   }));
 
   const animatedWrapperStyle = useAnimatedStyle(() => ({
-    width: interpolate(expandAnim.value, [0, 1], [52, 168]),
+    width: interpolate(expandAnim.value, [0, 1], [52, 176]),
   }));
 
   const animatedLabelWrapperStyle = useAnimatedStyle(() => ({
-    width: interpolate(expandAnim.value, [0, 1], [0, 98]),
+    width: interpolate(expandAnim.value, [0, 1], [0, 116]),
     opacity: interpolate(expandAnim.value, [0, 0.35, 1], [0, 0, 1]),
     marginLeft: interpolate(expandAnim.value, [0, 1], [0, 6]),
     transform: [{ scale: interpolate(expandAnim.value, [0, 1], [0.85, 1]) }],
