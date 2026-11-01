@@ -216,7 +216,10 @@ function placeInBand(input: GuideInput, size: GuideSize, band: { top: number; bo
   }
 }
 
-function buildTransition(input: GuideInput, to: GuidePoint, firstEntry: boolean): GuideTransition {
+/** What a trip depends on: shared with the companion, which travels the same way. */
+export type TransitionInput = Pick<GuideInput, 'direction' | 'reducedMotion' | 'from'>;
+
+export function buildTransition(input: TransitionInput, to: GuidePoint, firstEntry: boolean): GuideTransition {
   const base = { armDelayMs: 0, squash: false, bounceEntry: false, arcHeightDp: 0, arcSign: 1 } as const;
 
   if (input.reducedMotion) {
