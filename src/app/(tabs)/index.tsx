@@ -47,6 +47,7 @@ import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
 import { TourTarget } from '@/features/mascot/TourTarget';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
+import { useScreenFocused } from '@/features/mascot/use-screen-focused';
 import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
 import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposal';
 import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
@@ -92,6 +93,7 @@ export default function TodayScreen() {
   // La proposition n'est montrée que si le budget d'attention de la mascotte le permet
   const { proposal, noteRefusal } = useVisibleProposal(topSuggestion);
   const mascotPresent = mascotSettings.presence !== 'off';
+  const screenFocused = useScreenFocused();
 
   const today = new Date();
   const greeting = getGreeting(today.getHours());
@@ -313,7 +315,7 @@ export default function TodayScreen() {
             accessibilityRole="button"
             accessibilityLabel={urgentReminderId ? 'Ouvrir le rappel urgent' : 'Ouvrir Pulse'}
           >
-            <PulseMascot mood={mascotMood} size={56} />
+            <PulseMascot mood={mascotMood} size={56} animated={screenFocused} />
           </TouchableOpacity>
           </TourTarget>
           )}

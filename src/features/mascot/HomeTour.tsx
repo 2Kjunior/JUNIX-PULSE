@@ -175,7 +175,8 @@ export function HomeTour() {
         }}
       >
         <View pointerEvents="none" style={{ width: MASCOT_COLUMN_DP, alignItems: 'center', paddingTop: 8 }}>
-          <PulseMascot mood="happy" size={40} pose="pointAt" pointAt={{ arm: 'right', angleDeg: -90 }} />
+                    {/* Still: the home screen already has its own animated mascot behind this one */}
+          <PulseMascot mood="happy" size={40} pose="pointAt" pointAt={{ arm: 'right', angleDeg: -90 }} animated={false} />
         </View>
         <MascotBubble
           key={tour.index}
