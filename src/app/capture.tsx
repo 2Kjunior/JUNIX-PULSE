@@ -37,6 +37,7 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 
 import { parseQuickCapture } from '@/domain/rules/capture-rules';
+import { callAdvice, WEEKDAY_NAMES_FR } from '@/domain/rules/person-availability-rules';
 
 export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();
@@ -90,6 +91,20 @@ export default function QuickCaptureScreen() {
 
   const isDateTimePast = computedDateTime <= new Date();
 
+  // Calling someone who lives elsewhere: what time it will be there, and whether it suits them
+  const advice = useMemo(
+    () =>
+      actionType === 'CALL' && targetPerson && !isDateTimePast
+        ? callAdvice(targetPerson, computedDateTime, userTimezone)
+        : null,
+    [actionType, targetPerson, computedDateTime, userTimezone, isDateTimePast]
+  );
+
+  const applySuggestedSlot = (instant: Date) => {
+    setTargetDate(instant);
+    setTargetTime(format(instant, 'HH:mm'));
+  };
+
   const handleCreate = async () => {
     if (!cleanTitle.trim()) return;
     if (computedDateTime <= new Date()) {
@@ -105,7 +120,6 @@ export default function QuickCaptureScreen() {
         priority,
         actionType,
         personId: targetPerson?.id,
-        notificationsEnabled: true,
       });
 
       showSnackbar('Rappel créé via Quick Capture');
@@ -271,6 +285,36 @@ export default function QuickCaptureScreen() {
               Astuce : Touchez un badge pour changer l'action ou la priorité.
             </Text>
 
+            {advice && targetPerson && (
+              <View style={styles.adviceBox} testID="capture-call-advice">
+                <Ionicons
+                  name={advice.kind === 'outside' ? 'moon-outline' : 'earth-outline'}
+                  size={16}
+                  color={advice.kind === 'outside' ? palette.priority.HIGH : palette.primary.default}
+                />
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.adviceText}>
+                    {advice.kind === 'info' && `À ce moment, il sera ${advice.localTime} chez ${targetPerson.displayName}.`}
+                    {advice.kind === 'inside' &&
+                      `Il sera ${advice.localTime} chez ${targetPerson.displayName} : un bon moment pour appeler.`}
+                    {advice.kind === 'outside' &&
+                      `Il sera ${advice.localTime} chez ${targetPerson.displayName}, en dehors de ses heures d’appel.`}
+                  </Text>
+                  {advice.kind === 'outside' && advice.suggestion && (
+                    <TouchableOpacity
+                      onPress={() => advice.suggestion && applySuggestedSlot(advice.suggestion.instant)}
+                      accessibilityRole="button"
+                      testID="capture-use-suggested-slot"
+                    >
+                      <Text style={styles.adviceAction}>
+                        {`Plutôt ${WEEKDAY_NAMES_FR[advice.suggestion.here.weekday - 1]} à ${advice.suggestion.here.time} (${advice.suggestion.there.time} chez elle)`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+
             {isDateTimePast && (
               <Text style={[styles.hint, { color: palette.error.default, marginTop: 8 }]}>
                 ⚠️ Cette heure est déjà passée aujourd'hui. Touchez la date pour choisir demain ou un autre jour.
@@ -338,6 +382,23 @@ const makeQuickCaptureStyles = (theme: ThemePalette) =>
       color: theme.onSurface.primary,
       minHeight: 80,
       textAlignVertical: 'top',
+    },
+    adviceBox: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: Spacing.sm,
+      backgroundColor: theme.surface.high,
+      borderRadius: Radius.md,
+      padding: Spacing.md,
+    },
+    adviceText: {
+      ...Typography.bodyMedium,
+      color: theme.onSurface.primary,
+    },
+    adviceAction: {
+      ...Typography.labelMedium,
+      color: theme.primary.default,
+      fontWeight: '700',
     },
     interpretationSection: {
       backgroundColor: theme.surface.container,

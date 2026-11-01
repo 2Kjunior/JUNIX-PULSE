@@ -4,7 +4,8 @@
 
 import { randomUUID } from 'expo-crypto';
 import { PersonRepository } from '../repositories/person-repository';
-import { Interaction, InteractionType } from '../domain/entities';
+import { Interaction, InteractionType, PersonAvailability } from '../domain/entities';
+import { isValidAvailability, isValidTimezone } from '../domain/rules/person-availability-rules';
 import { isPersonForgotten } from '../domain/rules/person-rules';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
@@ -17,6 +18,8 @@ export interface CreatePersonInput {
   notes?: string;
   forgottenThresholdDays?: number;
   importedFromContacts?: boolean;
+  timezone?: string;
+  availability?: PersonAvailability;
 }
 
 export interface UpdatePersonInput {
@@ -28,6 +31,21 @@ export interface UpdatePersonInput {
   birthDate?: string;
   notes?: string;
   forgottenThresholdDays?: number;
+  /** Null clears it. */
+  timezone?: string | null;
+  /** Null clears it. */
+  availability?: PersonAvailability | null;
+}
+
+/** A window means nothing without the zone it is in, and an invalid one is dropped. */
+function cleanTimeInfo(
+  timezone: string | null | undefined,
+  availability: PersonAvailability | null | undefined
+): { timezone: string | null | undefined; availability: PersonAvailability | null | undefined } {
+  const validZone = timezone === undefined || timezone === null ? timezone : isValidTimezone(timezone) ? timezone : null;
+  const validWindow =
+    availability && validZone && isValidAvailability(availability) ? availability : availability === undefined ? undefined : null;
+  return { timezone: validZone, availability: validWindow };
 }
 
 export interface LogInteractionInput {
@@ -45,6 +63,7 @@ export const PersonUseCases = {
   async createPerson(input: CreatePersonInput): Promise<string> {
     const personId = randomUUID();
     const now = new Date().toISOString();
+    const timeInfo = cleanTimeInfo(input.timezone, input.availability);
 
     await PersonRepository.create({
       id: personId,
@@ -56,6 +75,8 @@ export const PersonUseCases = {
       notes: input.notes?.trim(),
       forgottenThresholdDays: input.forgottenThresholdDays ?? 30,
       importedFromContacts: input.importedFromContacts ?? false,
+      timezone: timeInfo.timezone ?? undefined,
+      availability: timeInfo.availability ?? undefined,
       createdAt: now,
       updatedAt: now,
     });
@@ -69,8 +90,11 @@ export const PersonUseCases = {
    */
   async updatePerson(input: UpdatePersonInput): Promise<void> {
     const now = new Date().toISOString();
+    const timeInfo = cleanTimeInfo(input.timezone, input.availability);
     await PersonRepository.update({
       ...input,
+      timezone: timeInfo.timezone,
+      availability: timeInfo.availability,
       displayName: input.displayName?.trim(),
       relationship: input.relationship?.trim(),
       phone: input.phone?.trim(),

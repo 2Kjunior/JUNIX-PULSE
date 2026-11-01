@@ -6,6 +6,11 @@ import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Person, Interaction } from '../domain/entities';
 import { isPersonForgotten } from '../domain/rules/person-rules';
+import {
+  isValidTimezone,
+  parseAvailability,
+  serializeAvailability,
+} from '../domain/rules/person-availability-rules';
 
 type NullableFields<T> = {
   [K in keyof T]?: T[K] | null;
@@ -25,6 +30,8 @@ function rowToPerson(row: Record<string, unknown>): Person {
     lastInteractionAt: (row.last_interaction_at as string | null) ?? undefined,
     forgottenThresholdDays: (row.forgotten_threshold_days as number) ?? 30,
     importedFromContacts: (row.imported_from_contacts as number) === 1,
+    timezone: isValidTimezone(row.timezone as string | null) ? (row.timezone as string) : undefined,
+    availability: parseAvailability(row.availability as string | null) ?? undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     deletedAt: (row.deleted_at as string | null) ?? undefined,
@@ -48,8 +55,9 @@ export const PersonRepository = {
     const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO persons (id, display_name, relationship, phone, email, birth_date,
-        notes, last_interaction_at, forgotten_threshold_days, imported_from_contacts, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        notes, last_interaction_at, forgotten_threshold_days, imported_from_contacts, timezone, availability,
+        created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       person.id,
       person.displayName,
       person.relationship ?? null,
@@ -60,6 +68,8 @@ export const PersonRepository = {
       person.lastInteractionAt ?? null,
       person.forgottenThresholdDays ?? 30,
       person.importedFromContacts ? 1 : 0,
+      person.timezone ?? null,
+      person.availability ? serializeAvailability(person.availability) : null,
       person.createdAt,
       person.updatedAt
     );
@@ -104,6 +114,14 @@ export const PersonRepository = {
     if (params.importedFromContacts !== undefined) {
       setClauses.push('imported_from_contacts = ?');
       values.push(params.importedFromContacts ? 1 : 0);
+    }
+    if (params.timezone !== undefined) {
+      setClauses.push('timezone = ?');
+      values.push(params.timezone);
+    }
+    if (params.availability !== undefined) {
+      setClauses.push('availability = ?');
+      values.push(params.availability ? serializeAvailability(params.availability) : null);
     }
     if (params.deletedAt !== undefined) {
       setClauses.push('deleted_at = ?');

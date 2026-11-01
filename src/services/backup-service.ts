@@ -30,7 +30,7 @@ type SqlValue = string | number | null;
 type BackupRow = Record<string, SqlValue>;
 
 const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
-  persons: ['id', 'display_name', 'relationship', 'phone', 'email', 'birth_date', 'notes', 'last_interaction_at', 'forgotten_threshold_days', 'imported_from_contacts', 'created_at', 'updated_at', 'deleted_at'],
+  persons: ['id', 'display_name', 'relationship', 'phone', 'email', 'birth_date', 'notes', 'last_interaction_at', 'forgotten_threshold_days', 'imported_from_contacts', 'timezone', 'availability', 'created_at', 'updated_at', 'deleted_at'],
   recurrence_rules: ['id', 'type', 'interval_val', 'days_of_week', 'day_of_month', 'week_position', 'end_date'],
   reminders: ['id', 'title', 'notes', 'scheduled_at', 'timezone', 'priority', 'status', 'action_type', 'person_id', 'recurrence_rule_id', 'notification_id', 'snoozed_until', 'created_at', 'updated_at', 'completed_at', 'deleted_at'],
   reminder_checklist_items: ['id', 'reminder_id', 'title', 'is_completed', 'position'],

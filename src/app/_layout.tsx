@@ -38,6 +38,7 @@ import { MascotCompanion } from "@/features/mascot/MascotCompanion";
 import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
+import { detectDeviceTimezone } from "@/services/device-timezone";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
 import { NotificationService } from "@/services/notification-service";
@@ -119,7 +120,12 @@ export default function RootLayout() {
         // 2. Lire les paramètres utilisateur
         const settings = await SettingsRepository.get();
         setOnboardingComplete(settings.onboardingCompleted);
-        setUserTimezone(settings.timezone);
+        // Le fuseau de l'utilisateur est celui du téléphone : il suit ses déplacements
+        const deviceTimezone = detectDeviceTimezone();
+        setUserTimezone(deviceTimezone);
+        if (deviceTimezone !== settings.timezone) {
+          await SettingsRepository.update({ timezone: deviceTimezone, updatedAt: new Date().toISOString() }).catch(() => {});
+        }
         setThemeMode(settings.appearanceMode);
 
         // 3. Initialiser les notifications (handler + canal Android)

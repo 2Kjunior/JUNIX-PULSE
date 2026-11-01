@@ -27,6 +27,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
+import { PersonTimeCard } from '@/components/people/PersonTimeCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makePersonDetailStyles } from '@/styles/people/person-detail-styles';
@@ -65,7 +66,7 @@ function formatWhatsAppUrl(rawPhone?: string): string {
 export default function PersonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { showSnackbar } = useAppStore();
+  const { showSnackbar, userTimezone } = useAppStore();
   const { theme } = useTheme();
   const styles = useThemedStyles(makePersonDetailStyles);
 
@@ -326,6 +327,16 @@ export default function PersonDetailScreen() {
           )}
         </View>
         </GlowCard>
+
+        {/* Heure chez la personne et meilleur moment pour l'appeler */}
+        <View style={styles.section}>
+          <PersonTimeCard
+            person={person}
+            userTimezone={userTimezone}
+            onSaved={load}
+            onError={showSnackbar}
+          />
+        </View>
 
         {/* Section : Enregistrer une nouvelle interaction */}
         <View style={styles.section}>

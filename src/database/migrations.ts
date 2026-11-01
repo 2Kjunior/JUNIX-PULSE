@@ -464,5 +464,17 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 25,
+    name: 'add_person_timezone_and_availability',
+    sql: `
+      -- Fuseau horaire de la personne (nom IANA, par exemple America/New_York), vide si inconnu.
+      ALTER TABLE persons ADD COLUMN timezone TEXT;
+
+      -- Quand la personne accepte d etre appelee, en heure locale chez elle : JSON avec les jours
+      -- (1 lundi a 7 dimanche) et le debut et la fin en minutes depuis minuit. Vide si non precise.
+      ALTER TABLE persons ADD COLUMN availability TEXT;
+    `,
+  },
 ];
 

@@ -130,9 +130,18 @@ export interface Person {
   lastInteractionAt?: string;  // ISO 8601 — mis à jour automatiquement
   forgottenThresholdDays: number; // Seuil en jours pour suggestion "longtemps" (défaut: 30)
   importedFromContacts: boolean;
+  timezone?: string;           // IANA, ex: 'America/New_York' — fuseau de la personne, pour connaître l'heure chez elle
+  availability?: PersonAvailability; // Quand elle accepte d'être appelée, en heure locale chez elle
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
+}
+
+// ─── Disponibilité d'une personne pour un appel ──────────────────────────────
+export interface PersonAvailability {
+  days: number[];              // Jours de la semaine, 1 = lundi à 7 = dimanche
+  startMinutes: number;        // Début de la plage, en minutes depuis minuit, heure locale de la personne
+  endMinutes: number;          // Fin de la plage (strictement après le début, le même jour)
 }
 
 // ─── Interaction avec une personne ───────────────────────────────────────────

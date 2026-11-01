@@ -30,6 +30,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
+import { PersonTimeFields, PersonTimeValue } from '@/components/people/PersonTimeFields';
 
 const RELATIONSHIP_OPTIONS = [
   'Ami·e',
@@ -61,6 +62,7 @@ export default function NewPersonScreen() {
   const [birthDate, setBirthDate] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState('');
   const [forgottenThresholdDays, setForgottenThresholdDays] = useState<number>(30);
+  const [timeInfo, setTimeInfo] = useState<PersonTimeValue>({});
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -157,6 +159,8 @@ export default function NewPersonScreen() {
         notes: notes.trim() || undefined,
         forgottenThresholdDays,
         importedFromContacts,
+        timezone: timeInfo.timezone,
+        availability: timeInfo.availability,
       });
 
       showSnackbar('Personne ajoutée avec succès');
@@ -320,6 +324,11 @@ export default function NewPersonScreen() {
               </TouchableOpacity>
             )}
           </TouchableOpacity>
+        </View>
+
+        {/* Où vit la personne, et quand l'appeler */}
+        <View style={styles.field}>
+          <PersonTimeFields value={timeInfo} onChange={setTimeInfo} />
         </View>
 
         {/* Fréquence de contact souhaitée */}

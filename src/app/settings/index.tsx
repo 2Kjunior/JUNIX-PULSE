@@ -43,6 +43,8 @@ import { NotificationService } from '@/services/notification-service';
 import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
+import { detectDeviceTimezone } from '@/services/device-timezone';
+import { timezoneLabel } from '@/constants/timezones';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
 const APPEARANCE_OPTIONS: {
@@ -59,6 +61,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode } = useAppStore();
   const { palette } = useTheme();
+  const deviceTimezone = detectDeviceTimezone();
   const styles = useThemedStyles(makeSettingsStyles);
 
 
@@ -290,8 +293,11 @@ export default function SettingsScreen() {
         </TouchableOpacity>
 
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Fuseau horaire</Text>
-          <Text style={styles.rowValue}>{settings.timezone}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowLabel}>Fuseau horaire</Text>
+            <Text style={styles.rowSub}>Celui du téléphone : il suit tes déplacements</Text>
+          </View>
+          <Text style={styles.rowValue}>{timezoneLabel(deviceTimezone)}</Text>
         </View>
       </View>
 
