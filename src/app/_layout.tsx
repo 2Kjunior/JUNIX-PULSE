@@ -34,7 +34,7 @@ import { AmbientBackground } from "@/components/ui/AmbientBackground";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
 import { SplashAnimation } from "@/features/launch/SplashAnimation";
-import { MascotCameo } from "@/features/mascot/MascotCameo";
+import { MascotCompanion } from "@/features/mascot/MascotCompanion";
 import { useTheme } from "@/hooks/use-theme";
 import { useThemedStyles } from "@/hooks/use-themed-styles";
 import { SettingsRepository } from "@/repositories/settings-repository";
@@ -331,8 +331,8 @@ export default function RootLayout() {
           </ThemeProvider>
           {/* Snackbar global (au-dessus de tout le contenu) */}
           <Snackbar />
-          {/* Caméo de la mascotte : une seule instance, au-dessus du Snackbar */}
-          <MascotCameo />
+          {/* Compagne Pulse : une seule instance, qui suit l'utilisateur d'un écran à l'autre, au-dessus du Snackbar */}
+          <MascotCompanion />
         </SafeAreaProvider>
       </GestureHandlerRootView>
       {splashOverlay}

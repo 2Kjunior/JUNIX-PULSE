@@ -27,6 +27,21 @@ import { MASCOT_BASE_SIZE, mascotDimensions } from './mascot-visuals';
 const BASE = mascotDimensions(MASCOT_BASE_SIZE);
 const ENTRY_OFFSET_Y = 160; // First entry: rises from this far below its place
 
+function tripKeyOf(placement: GuidePlacement): string {
+  const { center, size, transition } = placement;
+  return [
+    center.x,
+    center.y,
+    size,
+    transition.mode,
+    transition.durationMs,
+    transition.arcHeightDp,
+    transition.arcSign,
+    transition.squash,
+    transition.bounceEntry,
+  ].join('|');
+}
+
 export interface PulseMascotMoverProps {
   placement: GuidePlacement | null;
   mood: MascotMood;
@@ -52,7 +67,14 @@ export function PulseMascotMover({ placement, mood, reaction = null, onArrive }:
   const onArriveRef = useRef(onArrive);
   onArriveRef.current = onArrive;
 
+  // A trip starts when where, how big or how it travels changes, not on every new placement
+  // object: a pose that changes in place (it dozes off, it raises its arms) must not restart it
+  const placementRef = useRef(placement);
+  placementRef.current = placement;
+  const tripKey = placement ? tripKeyOf(placement) : null;
+
   useEffect(() => {
+    const placement = placementRef.current;
     if (!placement) {
       visible.value = withTiming(0, { duration: GUIDE_MOTION.fadeMs });
       placedRef.current = false;
@@ -102,7 +124,7 @@ export function PulseMascotMover({ placement, mood, reaction = null, onArrive }:
       }
     );
   }, [
-    placement,
+    tripKey,
     progress, fromX, fromY, fromScale, toX, toY, toScale, arcHeight, arcSign, fadeMode, landing, visible,
   ]);
 

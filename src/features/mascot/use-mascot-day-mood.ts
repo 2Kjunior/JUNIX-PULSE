@@ -27,46 +27,46 @@ export interface MascotDayMood {
 
 const NEUTRAL: MascotDayMood = { mood: 'calm', urgentReminderId: null };
 
+/** The mood of the day and the urgent reminder, read from the local data now. */
+export async function loadMascotDayMood(): Promise<MascotDayMood> {
+  try {
+    const now = new Date();
+    const [reminders, todayTasks, persons] = await Promise.all([
+      ReminderRepository.findAll(),
+      // All of today's tasks, done ones included: the mood needs to know the day is cleared
+      TaskRepository.findAllForDate(format(now, 'yyyy-MM-dd')),
+      PersonRepository.findAll(),
+    ]);
+
+    const input = {
+      now,
+      focusState: 'idle' as const,
+      reminders,
+      todayTasks,
+      persons,
+      daysSinceLastOpen: null,
+    };
+    const urgent = pendingUrgentReminders(reminders, now);
+
+    return {
+      mood: deriveMascotMood(buildMascotMoodInput(input)).mood,
+      urgentReminderId: urgent.length > 0 ? urgent[0].id : null,
+    };
+  } catch {
+    // The mascot is decoration: on any failure it simply stays calm
+    return NEUTRAL;
+  }
+}
+
 export function useMascotDayMood(): MascotDayMood {
   const [state, setState] = useState<MascotDayMood>(NEUTRAL);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-
-      async function load() {
-        try {
-          const now = new Date();
-          const [reminders, todayTasks, persons] = await Promise.all([
-            ReminderRepository.findAll(),
-            // All of today's tasks, done ones included: the mood needs to know the day is cleared
-            TaskRepository.findAllForDate(format(now, 'yyyy-MM-dd')),
-            PersonRepository.findAll(),
-          ]);
-
-          const input = {
-            now,
-            focusState: 'idle' as const,
-            reminders,
-            todayTasks,
-            persons,
-            daysSinceLastOpen: null,
-          };
-          const urgent = pendingUrgentReminders(reminders, now);
-
-          if (active) {
-            setState({
-              mood: deriveMascotMood(buildMascotMoodInput(input)).mood,
-              urgentReminderId: urgent.length > 0 ? urgent[0].id : null,
-            });
-          }
-        } catch {
-          // The mascot is decoration: on any failure it simply stays calm
-          if (active) setState(NEUTRAL);
-        }
-      }
-
-      load();
+      loadMascotDayMood().then(next => {
+        if (active) setState(next);
+      });
       return () => {
         active = false;
       };

@@ -276,6 +276,32 @@ export const MASCOT_MESSAGES = {
     ["C'est l'heure de votre séance de sport !", "{name}, c'est l'heure de votre séance de sport !"],
     ["Séance de sport.", "{name}, séance de sport."],
   ),
+
+  // ─── Reactions (said by the companion after a medium or large reaction) ───────────────────
+  REACT_DONE: entry(
+    ["C'est fait, bien joué !", "Bien joué, {name} !"],
+    ["C'est fait.", "{name}, c'est fait."],
+    ["C'est fait, bravo !", "Bravo, {name} !"],
+    ["C'est fait.", "{name}, c'est fait."],
+  ),
+  REACT_DAY_CLEARED: entry(
+    ["Journée dégagée. Tu peux souffler.", "{name}, journée dégagée. Tu peux souffler."],
+    ["Journée terminée : tout est fait.", "{name}, journée terminée : tout est fait."],
+    ["Journée dégagée. Vous pouvez souffler.", "{name}, journée dégagée. Vous pouvez souffler."],
+    ["Journée terminée : tout est fait.", "{name}, journée terminée : tout est fait."],
+  ),
+  REACT_GOAL: entry(
+    ["Objectif atteint, bravo !", "Objectif atteint, bravo {name} !"],
+    ["Objectif atteint.", "{name}, objectif atteint."],
+    ["Objectif atteint, bravo !", "Objectif atteint, bravo {name} !"],
+    ["Objectif atteint.", "{name}, objectif atteint."],
+  ),
+  REACT_CONTACT: entry(
+    ["Tu as repris contact. Ça compte.", "{name}, tu as repris contact. Ça compte."],
+    ["Contact repris.", "{name}, contact repris."],
+    ["Vous avez repris contact. Ça compte.", "{name}, vous avez repris contact. Ça compte."],
+    ["Contact repris.", "{name}, contact repris."],
+  ),
 } as const satisfies Record<string, MessageEntry>;
 
 export type MascotMessageId = keyof typeof MASCOT_MESSAGES;

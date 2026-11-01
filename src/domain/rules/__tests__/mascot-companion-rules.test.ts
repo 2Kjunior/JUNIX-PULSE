@@ -1,4 +1,6 @@
 import { GUIDE_LAYOUT, GUIDE_MOTION } from '../mascot-guide-rules';
+import { MASCOT_MESSAGES } from '../mascot-message-catalog';
+import type { MascotEventType } from '../mascot-reaction-rules';
 import {
   COMPANION_BOTTOM_MARGIN,
   COMPANION_BUBBLE_MAX_WIDTH,
@@ -13,6 +15,7 @@ import {
   CompanionScreen,
   computeCompanionPlacement,
   reactionHasBubble,
+  reactionMessageId,
   TAB_SCREENS,
 } from '../mascot-companion-rules';
 
@@ -231,6 +234,32 @@ describe('computeCompanionPlacement', () => {
     });
   });
 
+  describe('with an anchor held by the screen', () => {
+    const anchor = { center: { x: 44, y: 110 }, size: 56 as const };
+
+    it('takes the place and the size the screen gives', () => {
+      const placement = place({ screen: 'home', anchor });
+      expect(placement?.center).toEqual(anchor.center);
+      expect(placement?.size).toBe(56);
+    });
+
+    it('keeps the size of the anchor even on a short screen: the screen decides', () => {
+      const short = { width: 320, height: 568, insets: PHONE.insets };
+      expect(place({ screen: 'home', anchor, window: short })?.size).toBe(56);
+    });
+
+    it('stays inside the screen when the anchor is measured out of it', () => {
+      const placement = place({ screen: 'home', anchor: { center: { x: -30, y: 5000 }, size: 56 } });
+      expect(placement?.center.x).toBeGreaterThanOrEqual(28);
+      expect(placement?.center.y).toBeLessThanOrEqual(PHONE.height - PHONE.insets.bottom - 28);
+    });
+
+    it('is still absent when the mascot is off or the keyboard is open', () => {
+      expect(place({ screen: 'home', anchor, presence: 'off' })).toBeNull();
+      expect(place({ screen: 'home', anchor, keyboardOpen: true })).toBeNull();
+    });
+  });
+
   describe('bubble', () => {
     it('is allowed, and never wider than 70 % of the width', () => {
       const placement = place();
@@ -338,6 +367,48 @@ describe('companionBehavior', () => {
         expect(companionBehavior(behaviorInput({ baseMood, idleMs: COMPANION_DOZE_AFTER_MS * 5 })).mood).toBe(baseMood);
       }
     });
+  });
+});
+
+describe('reactionMessageId', () => {
+  it('has a message in the catalogue for every event it speaks for', () => {
+    const events: MascotEventType[] = [
+      'TASK_COMPLETED',
+      'REMINDER_COMPLETED',
+      'FOCUS_COMPLETED',
+      'HABIT_COMPLETED',
+      'HABIT_RESUMED',
+      'SUGGESTION_ACCEPTED',
+      'BACKUP_DONE',
+      'DAY_CLEARED',
+      'GOAL_COMPLETED',
+      'PERSON_CONTACTED',
+    ];
+    for (const event of events) {
+      const id = reactionMessageId(event);
+      expect(id).not.toBeNull();
+      expect(MASCOT_MESSAGES).toHaveProperty(id as string);
+    }
+  });
+
+  it('says nothing for events that have their own bubble or nothing to celebrate', () => {
+    const silent: MascotEventType[] = [
+      'REMINDER_ARRIVED',
+      'REMINDER_MISSED',
+      'EVENT_APPROACHING',
+      'REMINDER_SNOOZED',
+      'SUGGESTION_DISMISSED',
+      'ITEM_DELETED',
+      'ITEM_CREATED',
+      'SUBTASK_COMPLETED',
+    ];
+    for (const event of silent) expect(reactionMessageId(event)).toBeNull();
+  });
+
+  it('picks the message that fits', () => {
+    expect(reactionMessageId('DAY_CLEARED')).toBe('REACT_DAY_CLEARED');
+    expect(reactionMessageId('GOAL_COMPLETED')).toBe('REACT_GOAL');
+    expect(reactionMessageId('TASK_COMPLETED')).toBe('REACT_DONE');
   });
 });
 

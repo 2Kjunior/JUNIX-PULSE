@@ -45,13 +45,12 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
+import { CompanionAnchor } from '@/features/mascot/CompanionAnchor';
 import { TourTarget } from '@/features/mascot/TourTarget';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
-import { useScreenFocused } from '@/features/mascot/use-screen-focused';
 import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
 import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposal';
 import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
-import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
 
@@ -74,7 +73,7 @@ export default function TodayScreen() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
   const { width: windowWidth } = useWindowDimensions();
-  const { mood: mascotMood, urgentReminderId } = useMascotDayMood();
+  const { urgentReminderId } = useMascotDayMood();
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -93,7 +92,6 @@ export default function TodayScreen() {
   // La proposition n'est montrée que si le budget d'attention de la mascotte le permet
   const { proposal, noteRefusal } = useVisibleProposal(topSuggestion);
   const mascotPresent = mascotSettings.presence !== 'off';
-  const screenFocused = useScreenFocused();
 
   const today = new Date();
   const greeting = getGreeting(today.getHours());
@@ -315,7 +313,7 @@ export default function TodayScreen() {
             accessibilityRole="button"
             accessibilityLabel={urgentReminderId ? 'Ouvrir le rappel urgent' : 'Ouvrir Pulse'}
           >
-            <PulseMascot mood={mascotMood} size={56} animated={screenFocused} />
+            <CompanionAnchor screen="home" size={56} />
           </TouchableOpacity>
           </TourTarget>
           )}

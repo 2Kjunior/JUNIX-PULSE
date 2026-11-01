@@ -20,9 +20,10 @@ import {
   GuidePose,
   GuideSize,
 } from './mascot-guide-rules';
+import type { MascotMessageId } from './mascot-message-catalog';
 import type { MascotMood } from './mascot-mood-rules';
 import type { MascotPresence } from './mascot-preferences';
-import type { MascotReactionLevel } from './mascot-reaction-rules';
+import type { MascotEventType, MascotReactionLevel } from './mascot-reaction-rules';
 
 // ─── Which screen is this ───────────────────────────────────────────────────────────────────
 
@@ -178,6 +179,12 @@ export interface CompanionPlacementInput {
   reducedMotion: boolean;
   /** Where the mascot stands now, null when it is not shown yet. */
   from: GuidePoint | null;
+  /**
+   * A place the screen itself holds for the mascot (the header of the home screen, the hero of
+   * the Pulse tab), measured in the same coordinates as the window. It replaces the default
+   * place and size: the screen decides where its own mascot stands.
+   */
+  anchor?: { center: GuidePoint; size: GuideSize };
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -195,20 +202,25 @@ export function computeCompanionPlacement(input: CompanionPlacementInput): Guide
 
   const { width, height, insets } = input.window;
   const compact = height < GUIDE_LAYOUT.smallScreenHeight || width > height;
-  const size: GuideSize = compact ? 40 : profile.size;
+  const size: GuideSize = input.anchor ? input.anchor.size : compact ? 40 : profile.size;
   const half = size / 2;
 
-  const x =
-    profile.side === 'left'
-      ? insets.left + GUIDE_LAYOUT.edgeMargin + half
-      : width - insets.right - GUIDE_LAYOUT.edgeMargin - half;
-
+  let x: number;
   let y: number;
-  if (profile.zone === 'peek') {
-    y = insets.top + GUIDE_LAYOUT.topBarHeight + GUIDE_LAYOUT.edgeMargin + half;
+  if (input.anchor) {
+    x = input.anchor.center.x;
+    y = input.anchor.center.y;
   } else {
-    const reserve = profile.tabBar ? COMPANION_TAB_BAR_RESERVE : COMPANION_BOTTOM_MARGIN;
-    y = height - insets.bottom - reserve - half;
+    x =
+      profile.side === 'left'
+        ? insets.left + GUIDE_LAYOUT.edgeMargin + half
+        : width - insets.right - GUIDE_LAYOUT.edgeMargin - half;
+    if (profile.zone === 'peek') {
+      y = insets.top + GUIDE_LAYOUT.topBarHeight + GUIDE_LAYOUT.edgeMargin + half;
+    } else {
+      const reserve = profile.tabBar ? COMPANION_TAB_BAR_RESERVE : COMPANION_BOTTOM_MARGIN;
+      y = height - insets.bottom - reserve - half;
+    }
   }
 
   const center = {
@@ -272,6 +284,32 @@ export function companionBehavior(input: CompanionBehaviorInput): CompanionBehav
 
   if (ATTENTIVE_SCREENS.includes(input.screen)) return { mood: input.baseMood, pose: 'attentive' };
   return { mood: input.baseMood, pose: 'rest' };
+}
+
+/**
+ * What the companion says after a reaction, by the event that caused it. Events that already
+ * have their own bubble (a reminder arriving, an event approaching) or that mean nothing to
+ * celebrate (a deletion, a snooze) say nothing here.
+ */
+export function reactionMessageId(eventType: MascotEventType): MascotMessageId | null {
+  switch (eventType) {
+    case 'TASK_COMPLETED':
+    case 'REMINDER_COMPLETED':
+    case 'FOCUS_COMPLETED':
+    case 'HABIT_COMPLETED':
+    case 'HABIT_RESUMED':
+    case 'SUGGESTION_ACCEPTED':
+    case 'BACKUP_DONE':
+      return 'REACT_DONE';
+    case 'DAY_CLEARED':
+      return 'REACT_DAY_CLEARED';
+    case 'GOAL_COMPLETED':
+      return 'REACT_GOAL';
+    case 'PERSON_CONTACTED':
+      return 'REACT_CONTACT';
+    default:
+      return null;
+  }
 }
 
 /**

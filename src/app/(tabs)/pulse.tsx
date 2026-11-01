@@ -44,9 +44,8 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { PulseLogo } from '@/components/ui/PulseLogo';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
-import { useScreenFocused } from '@/features/mascot/use-screen-focused';
+import { CompanionAnchor } from '@/features/mascot/CompanionAnchor';
 import { noteProposalRefused } from '@/services/mascot/mascot-budget-service';
-import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
 import {
   suggestionAcceptLabel,
   suggestionDestination,
@@ -112,10 +111,8 @@ export default function PulseScreen() {
   const { theme } = useTheme();
   const styles = useThemedStyles(makePulseStyles);
   const isLight = theme.mode === 'light';
-  const { mood: mascotMood } = useMascotDayMood();
   const { settings: mascotSettings } = useMascotPreferences();
   const mascotPresent = mascotSettings.presence !== 'off';
-  const screenFocused = useScreenFocused();
 
   const [refreshing, setRefreshing] = useState(false);
   const [habitCount, setHabitCount] = useState<number | null>(null);
@@ -254,7 +251,7 @@ export default function PulseScreen() {
           <View style={styles.orbRingOuter} />
           <View style={styles.orbRing} />
           {/* La mascotte remplace le logo : son humeur de fond suit la journée (seul élément ambiant) */}
-          {mascotPresent ? <PulseMascot mood={mascotMood} size={96} animated={screenFocused} /> : <PulseLogo size={96} mode="static" />}
+          {mascotPresent ? <CompanionAnchor screen="pulse" size={96} /> : <PulseLogo size={96} mode="static" />}
         </View>
 
         <Text style={styles.heroTitle}>Pulse</Text>

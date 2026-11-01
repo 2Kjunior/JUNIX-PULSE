@@ -10,7 +10,7 @@
 
 import { useSegments } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, StyleSheet, useWindowDimensions, View, ViewStyle } from 'react-native';
+import { Keyboard, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -26,8 +26,9 @@ import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
 import { SettingsRepository } from '@/repositories/settings-repository';
 
-import { BubbleTailSide, MascotBubble } from './MascotBubble';
+import { MascotBubble } from './MascotBubble';
 import { PulseMascotMover } from './PulseMascotMover';
+import { layoutBubble } from './mascot-bubble-layout';
 import { useOnboardingGuideState } from './onboarding-guide-state';
 import { useMascotPreferences } from './use-mascot-preferences';
 
@@ -36,10 +37,6 @@ const BUBBLE_READING_MS = 7000;
 /** Delay before the first card is pointed at, then the time spent on each. */
 const CARD_FIRST_MS = 1200;
 const CARD_EACH_MS = 2800;
-const BUBBLE_GAP_DP = 6;
-const EDGE_MARGIN_DP = 12;
-/** The whole drawing, arms included, is 1.5 times as wide as the orb. */
-const FOOTPRINT_HALF_WIDTH = 0.78;
 
 /** The onboarding step a route stands for, or null outside the onboarding. */
 export function stepFromSegments(segments: readonly string[]): GuideStep | null {
@@ -47,46 +44,6 @@ export function stepFromSegments(segments: readonly string[]): GuideStep | null 
   const last = segments[segments.length - 1];
   if (last === '(onboarding)' || last === 'index') return 'welcome';
   return (ONBOARDING_STEPS as readonly string[]).includes(last) ? (last as GuideStep) : null;
-}
-
-interface BubbleLayout {
-  style: ViewStyle;
-  maxWidth: number;
-  tailSide: BubbleTailSide;
-  centered: boolean;
-}
-
-/** Where the bubble goes: beside the mascot when it stands at a side, under it when it is central. */
-function layoutBubble(placement: GuidePlacement, windowWidth: number): BubbleLayout {
-  const { center, size } = placement;
-  const reach = size * FOOTPRINT_HALF_WIDTH + BUBBLE_GAP_DP;
-
-  if (center.x < windowWidth * 0.4) {
-    const left = center.x + reach;
-    return {
-      style: { position: 'absolute', left, top: center.y - size / 2 },
-      maxWidth: Math.min(placement.bubbleMaxWidth, windowWidth - left - EDGE_MARGIN_DP),
-      tailSide: 'left',
-      centered: false,
-    };
-  }
-
-  if (center.x > windowWidth * 0.6) {
-    const right = windowWidth - (center.x - reach);
-    return {
-      style: { position: 'absolute', right, top: center.y - size / 2 },
-      maxWidth: Math.min(placement.bubbleMaxWidth, center.x - reach - EDGE_MARGIN_DP),
-      tailSide: 'right',
-      centered: false,
-    };
-  }
-
-  return {
-    style: { position: 'absolute', left: 0, right: 0, top: center.y + size / 2 + 12, alignItems: 'center' },
-    maxWidth: placement.bubbleMaxWidth,
-    tailSide: 'top',
-    centered: true,
-  };
 }
 
 export function OnboardingGuide() {
