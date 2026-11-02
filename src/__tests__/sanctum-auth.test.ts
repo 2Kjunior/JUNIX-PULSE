@@ -26,6 +26,7 @@ jest.mock('../database/sqlite', () => {
         return null;
       }),
       getAllAsync: jest.fn(async () => []),
+      withExclusiveTransactionAsync: jest.fn(async (callback: (tx: unknown) => Promise<void>) => callback({})),
       runAsync: jest.fn(async (query: string, ...params: any[]) => {
         if (query.includes("DELETE FROM sanctum_notes WHERE id = '__pin_hash__'")) {
           mockRows.delete('__pin_hash__');
@@ -59,8 +60,9 @@ describe('SanctumAuthService — Gestion moderne via SecureStore', () => {
     const configured = await SanctumAuthService.isPinConfigured();
     expect(configured).toBe(true);
 
-    const bioKey = await SanctumAuthService.getStoredBiometricKey();
-    expect(bioKey).toEqual(key);
+    // La biométrie n'est jamais activée sans l'accord de l'utilisateur
+    expect(await SanctumAuthService.isBiometricUnlockEnabled()).toBe(false);
+    expect(await SanctumAuthService.unlockWithBiometrics()).toEqual({ status: 'unavailable' });
   });
 
   it('déverrouille avec le bon PIN et renvoie la même clé', async () => {
@@ -87,8 +89,7 @@ describe('SanctumAuthService — Gestion moderne via SecureStore', () => {
     const configured = await SanctumAuthService.isPinConfigured();
     expect(configured).toBe(false);
 
-    const bioKey = await SanctumAuthService.getStoredBiometricKey();
-    expect(bioKey).toBeNull();
+    expect(await SanctumAuthService.isBiometricUnlockEnabled()).toBe(false);
   });
 
   it('modifie le code PIN avec succès et permet de déverrouiller avec le nouveau PIN', async () => {
@@ -108,9 +109,8 @@ describe('SanctumAuthService — Gestion moderne via SecureStore', () => {
     expect(newUnlock.success).toBe(true);
     expect(newUnlock.key).toEqual(changeResult.newKey);
 
-    // La clé biométrique doit être mise à jour avec la nouvelle clé
-    const bioKey = await SanctumAuthService.getStoredBiometricKey();
-    expect(bioKey).toEqual(changeResult.newKey);
+    // L'ancienne clé biométrique ne vaut plus rien : le choix sera reproposé
+    expect(await SanctumAuthService.isBiometricUnlockEnabled()).toBe(false);
   });
 
   it('échoue lors du changement de PIN si l’ancien code est incorrect', async () => {
@@ -180,9 +180,8 @@ describe('SanctumAuthService — Migration transparente legacy', () => {
     expect(unlockResult.success).toBe(true);
     expect(unlockResult.key?.length).toBe(32);
 
-    // Vérifier que la clé biométrique est maintenant initialisée dans SecureStore
-    const bioKey = await SanctumAuthService.getStoredBiometricKey();
-    expect(bioKey).toEqual(unlockResult.key);
+    // La migration n'active pas la biométrie à la place de l'utilisateur
+    expect(await SanctumAuthService.isBiometricUnlockEnabled()).toBe(false);
 
     // Vérifier qu'un mauvais PIN échoue toujours
     const badUnlock = await SanctumAuthService.verifyAndUnlockWithPin('0000');

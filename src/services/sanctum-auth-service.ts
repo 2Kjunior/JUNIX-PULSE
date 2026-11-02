@@ -6,7 +6,8 @@
  *   dans le trousseau sécurisé matériel (Keychain iOS / Android Keystore) via `expo-secure-store`.
  * - Élimination définitive du faux enregistrement '__pin_hash__' dans la table SQLite `sanctum_notes`.
  * - Migration transparente des anciens PIN configurés sous l'ancien schéma SHA-256 à sel fixe.
- * - Support biométrique sécurisé : conservation protégée de la clé dérivée pour éviter de retaper le PIN.
+ * - Déverrouillage biométrique au choix de l'utilisateur : la clé n'est lisible qu'après une authentification
+ *   exigée par le système (requireAuthentication), et devient invalide si les empreintes changent.
  */
 
 import * as SecureStore from 'expo-secure-store';
@@ -32,11 +33,41 @@ import {
 const SECURE_STORE_KEYS = {
   SALT: 'jp_sanctum_salt_v1',
   VERIFIER: 'jp_sanctum_verifier_v1',
-  BIOMETRIC_KEY: 'jp_sanctum_biometric_key_v1',
+  BIOMETRIC_KEY: 'jp_sanctum_biometric_key_v2',
+  BIOMETRIC_ENABLED: 'jp_sanctum_biometric_enabled_v2',
+  BIOMETRIC_DECLINED: 'jp_sanctum_biometric_declined_v2',
+  LEGACY_BIOMETRIC_KEY: 'jp_sanctum_biometric_key_v1',
+  KDF_N: 'jp_sanctum_kdf_n_v1',
   LOCKOUT: 'jp_sanctum_lockout_v1',
 } as const;
 
 const VERIFIER_SENTINEL = '__SANCTUM_PIN_VERIFIER_TOKEN__';
+const BIOMETRIC_KEY_OPTIONS: SecureStore.SecureStoreOptions = {
+  requireAuthentication: true,
+  authenticationPrompt: 'Accéder au Sanctuaire privé',
+  keychainAccessible: SecureStore.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+};
+
+/** What a backup needs for its notes to open with the same PIN on another phone. Never the key itself. */
+export interface SanctumBackupKeys {
+  salt: string;
+  verifier: string;
+  kdfN: number;
+}
+
+export type SanctumKeysRestore = 'restored' | 'same' | 'conflict';
+
+export type SanctumBiometricUnlock =
+  | { status: 'unlocked'; key: Uint8Array }
+  /** Authentication canceled or refused: the user can retry or use the PIN. */
+  | { status: 'cancelled' }
+  /** The key is gone, for instance because the enrolled fingerprints changed: the PIN is needed. */
+  | { status: 'unavailable' };
+
+/** The legacy biometric key was readable without authentication: it must not stay on the device. */
+async function purgeLegacyBiometricKey(): Promise<void> {
+  await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.LEGACY_BIOMETRIC_KEY).catch(() => {});
+}
 
 /**
  * Calcule l'empreinte de l'ancien système (SHA-256 avec sel fixe) pour la migration.
@@ -94,8 +125,7 @@ export const SanctumAuthService = {
    * 2. Dérive la clé symétrique maître de 32 octets via scrypt.
    * 3. Chiffre une chaîne sentinelle de vérification avec cette clé.
    * 4. Stocke le sel et le vérificateur dans SecureStore.
-   * 5. Active l'accès biométrique en conservant la clé dérivée dans SecureStore.
-   * 6. Purge l'ancien '__pin_hash__' SQLite s'il existait.
+   * 5. Purge l'ancien '__pin_hash__' SQLite s'il existait.
    *
    * @returns La clé symétrique de 32 octets pour la session active.
    */
@@ -109,10 +139,11 @@ export const SanctumAuthService = {
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, bytesToHex(salt));
     await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, verifierPayload);
     await SecureStore.setItemAsync(
-      SECURE_STORE_KEYS.BIOMETRIC_KEY,
-      bytesToHex(masterKey),
-      { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
+      SECURE_STORE_KEYS.KDF_N,
+      String(SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N)
     );
+    await this.disableBiometricUnlock();
+    await purgeLegacyBiometricKey();
 
     // Réinitialiser tout lockout éventuel
     await this.resetLockout();
@@ -206,20 +237,22 @@ export const SanctumAuthService = {
     if (storedSaltHex && storedVerifier) {
       try {
         const salt = hexToBytes(storedSaltHex);
-        const derivedKey = await deriveSanctumKey(pin, salt);
+        const storedN = await SecureStore.getItemAsync(SECURE_STORE_KEYS.KDF_N);
+        const n = storedN ? Number(storedN) : SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N;
+        const derivedKey = await deriveSanctumKey(pin, salt, n);
 
         // Validation en déchiffrant la sentinelle
         const decryptedSentinel = await decryptSanctumNote(storedVerifier, derivedKey);
         if (decryptedSentinel === VERIFIER_SENTINEL) {
           // Succès : réinitialiser le compteur d'échecs
           await this.resetLockout();
+          await purgeLegacyBiometricKey();
 
-          // Mettre à jour la clé biométrique pour les accès ultérieurs
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.BIOMETRIC_KEY,
-            bytesToHex(derivedKey),
-            { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
-          );
+          // Une clé dérivée avec d'anciens paramètres est convertie maintenant que le PIN est connu
+          if (n < SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N) {
+            const upgraded = await this.changePinWithActiveKey(derivedKey, pin);
+            if (upgraded.success && upgraded.newKey) return { success: true, key: upgraded.newKey };
+          }
           return { success: true, key: derivedKey };
         }
       } catch {
@@ -267,21 +300,82 @@ export const SanctumAuthService = {
   },
 
   /**
-   * Tente de récupérer la clé de chiffrement pour un déverrouillage biométrique réussi.
-   * Retourne null si aucune clé n'est en mémoire protégée (ex: après réinitialisation).
+   * Indique si le déverrouillage biométrique a été activé. Ne demande aucune authentification.
    */
-  async getStoredBiometricKey(): Promise<Uint8Array | null> {
-    const keyHex = await SecureStore.getItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY);
-    if (!keyHex) return null;
+  async isBiometricUnlockEnabled(): Promise<boolean> {
+    return (await SecureStore.getItemAsync(SECURE_STORE_KEYS.BIOMETRIC_ENABLED)) === '1';
+  },
+
+  /**
+   * Indique s'il faut proposer le déverrouillage biométrique : appareil compatible,
+   * pas encore activé, et pas déjà refusé par l'utilisateur.
+   */
+  async shouldOfferBiometricUnlock(): Promise<boolean> {
     try {
-      const key = hexToBytes(keyHex);
-      if (key.length === SANCTUM_CRYPTO_CONSTANTS.KEY_LENGTH) {
-        return key;
-      }
-      return null;
+      if (!SecureStore.canUseBiometricAuthentication()) return false;
+      if (await this.isBiometricUnlockEnabled()) return false;
+      return (await SecureStore.getItemAsync(SECURE_STORE_KEYS.BIOMETRIC_DECLINED)) !== '1';
     } catch {
-      return null;
+      return false;
     }
+  },
+
+  /**
+   * Mémorise le refus du déverrouillage biométrique, jusqu'au prochain changement de PIN.
+   */
+  async declineBiometricUnlock(): Promise<void> {
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.BIOMETRIC_DECLINED, '1');
+  },
+
+  /**
+   * Active le déverrouillage biométrique avec la clé de la session.
+   * Retourne false si l'utilisateur annule ou si l'appareil refuse.
+   */
+  async enableBiometricUnlock(key: Uint8Array): Promise<boolean> {
+    try {
+      await SecureStore.setItemAsync(
+        SECURE_STORE_KEYS.BIOMETRIC_KEY,
+        bytesToHex(key),
+        BIOMETRIC_KEY_OPTIONS
+      );
+      await SecureStore.setItemAsync(SECURE_STORE_KEYS.BIOMETRIC_ENABLED, '1');
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Désactive le déverrouillage biométrique et efface sa clé.
+   */
+  async disableBiometricUnlock(): Promise<void> {
+    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY).catch(() => {});
+    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_ENABLED).catch(() => {});
+  },
+
+  /**
+   * Lit la clé protégée : c'est le système qui exige l'authentification biométrique pour la rendre.
+   */
+  async unlockWithBiometrics(): Promise<SanctumBiometricUnlock> {
+    let keyHex: string | null;
+    try {
+      keyHex = await SecureStore.getItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY, BIOMETRIC_KEY_OPTIONS);
+    } catch {
+      return { status: 'cancelled' };
+    }
+
+    if (keyHex) {
+      try {
+        const key = hexToBytes(keyHex);
+        if (key.length === SANCTUM_CRYPTO_CONSTANTS.KEY_LENGTH) return { status: 'unlocked', key };
+      } catch {
+        // Clé illisible : même traitement qu'une clé absente
+      }
+    }
+
+    // Clé invalidée (empreintes modifiées) : le PIN reste la seule voie, on pourra la reproposer
+    await this.disableBiometricUnlock();
+    return { status: 'unavailable' };
   },
 
   /**
@@ -312,21 +406,22 @@ export const SanctumAuthService = {
       const newSalt = await generateRandomBytes(SANCTUM_CRYPTO_CONSTANTS.SALT_LENGTH);
       const newMasterKey = await deriveSanctumKey(newPin, newSalt);
 
-      // 2. Re-chiffrement transparent de toutes les notes avec la nouvelle clé
-      await SanctumRepository.reencryptAllNotes(activeKey, newMasterKey);
-
-      // 3. Mise à jour du vérificateur
       const newVerifierPayload = await encryptSanctumNote(VERIFIER_SENTINEL, newMasterKey);
 
-      // 4. Stockage dans SecureStore
-      await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, bytesToHex(newSalt));
-      await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, newVerifierPayload);
-      await SecureStore.setItemAsync(
-        SECURE_STORE_KEYS.BIOMETRIC_KEY,
-        bytesToHex(newMasterKey),
-        { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
-      );
+      // 2. Re-chiffrement dans une transaction. Les secrets sont écrits juste avant sa validation :
+      //    si l'une des deux étapes échoue, les notes restent lisibles avec l'ancien PIN.
+      await SanctumRepository.reencryptAllNotes(activeKey, newMasterKey, async () => {
+        await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, bytesToHex(newSalt));
+        await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, newVerifierPayload);
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.KDF_N,
+          String(SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N)
+        );
+      });
 
+      // 3. La clé biométrique correspond à l'ancienne clé : le choix sera reproposé
+      await this.disableBiometricUnlock();
+      await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_DECLINED).catch(() => {});
       await this.resetLockout();
 
       return { success: true, newKey: newMasterKey };
@@ -336,13 +431,48 @@ export const SanctumAuthService = {
   },
 
   /**
+   * Éléments à placer dans une sauvegarde, null si aucun PIN moderne n'est configuré.
+   */
+  async exportBackupKeys(): Promise<SanctumBackupKeys | null> {
+    const salt = await SecureStore.getItemAsync(SECURE_STORE_KEYS.SALT);
+    const verifier = await SecureStore.getItemAsync(SECURE_STORE_KEYS.VERIFIER);
+    if (!salt || !verifier) return null;
+    const storedN = await SecureStore.getItemAsync(SECURE_STORE_KEYS.KDF_N);
+    return {
+      salt,
+      verifier,
+      kdfN: storedN ? Number(storedN) : SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N,
+    };
+  },
+
+  /**
+   * Restaure les éléments d'une sauvegarde, pour que son code PIN ouvre ses notes.
+   * Un PIN déjà configuré ici n'est jamais remplacé : cela rendrait illisibles les notes actuelles.
+   */
+  async restoreBackupKeys(keys: SanctumBackupKeys): Promise<SanctumKeysRestore> {
+    if (await this.isPinConfigured()) {
+      const currentSalt = await SecureStore.getItemAsync(SECURE_STORE_KEYS.SALT);
+      return currentSalt === keys.salt ? 'same' : 'conflict';
+    }
+
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.SALT, keys.salt);
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.VERIFIER, keys.verifier);
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.KDF_N, String(keys.kdfN));
+    await this.resetLockout();
+    return 'restored';
+  },
+
+  /**
    * Efface l'ensemble des clés et secrets du Sanctuaire de SecureStore.
    * Appelable lors d'une réinitialisation complète des données (DEF-02).
    */
   async clearSanctumSecrets(): Promise<void> {
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.SALT);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.VERIFIER);
-    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY);
+    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.KDF_N);
+    await this.disableBiometricUnlock();
+    await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_DECLINED);
+    await purgeLegacyBiometricKey();
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.LOCKOUT);
   },
 };

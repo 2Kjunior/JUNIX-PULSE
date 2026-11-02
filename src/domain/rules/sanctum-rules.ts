@@ -10,6 +10,7 @@ export interface SanctumNoteItem {
   folder: string;
   created_at: string;
   updated_at: string;
+  unreadable?: boolean;
 }
 
 export const DEFAULT_SANCTUM_FOLDERS = [

@@ -38,6 +38,7 @@ import { clearAllData } from '@/database/seed';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
+import { purgeBackupExports } from '@/services/backup-export-cleanup';
 import { syncDailyRecapNotifications } from '@/services/daily-recap-service';
 import { syncReminderNotifications } from '@/services/reminder-notification-service';
 import { NotificationService } from '@/services/notification-service';
@@ -78,6 +79,7 @@ export default function SettingsScreen() {
   const [canEnableExactAlarms, setCanEnableExactAlarms] = useState(false);
 
   const loadSettings = useCallback(async () => {
+    purgeBackupExports();
     const s = await SettingsRepository.get();
     setSettings(s);
     setDisplayNameInput(s.displayName ?? '');
@@ -219,6 +221,7 @@ export default function SettingsScreen() {
 
     const contents = await createBackup(await getDatabase());
     const encryptedContents = await encryptBackup(contents, password);
+    purgeBackupExports();
     const file = new File(Paths.cache, `junix-pulse-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
     file.create({ overwrite: true });
     await file.write(encryptedContents);

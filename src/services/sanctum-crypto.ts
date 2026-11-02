@@ -4,7 +4,8 @@
  * Spécification (DEF-01 / I-02, P1) :
  * - Chiffrement symétrique authentifié XChaCha20-Poly1305 (@noble/ciphers).
  * - Nonce aléatoire de 24 octets (192 bits) par note chiffrée.
- * - Dérivation de clé par scrypt (@noble/hashes) avec N=16384, r=8, p=1 (16 Mo, adapté mobile).
+ * - Dérivation de clé par scrypt (@noble/hashes) avec N=32768, r=8, p=1 (32 Mo, comme les sauvegardes).
+ *   Les clés créées avec N=16384 sont converties au déverrouillage suivant.
  * - Format de stockage versionné : `xcha:v1:<nonce_hex>:<ciphertext_hex>`.
  * - Tolérance rétrocompatible : détection transparente des notes non chiffrées (legacy).
  *
@@ -17,7 +18,8 @@ import * as Crypto from 'expo-crypto';
 
 export const SANCTUM_CRYPTO_CONSTANTS = {
   FORMAT_PREFIX: 'xcha:v1:',
-  SCRYPT_PARAMS: { N: 16384, r: 8, p: 1, dkLen: 32 } as const,
+  SCRYPT_PARAMS: { N: 32768, r: 8, p: 1, dkLen: 32 } as const,
+  LEGACY_SCRYPT_N: 16384,
   KEY_LENGTH: 32,
   NONCE_LENGTH: 24,
   SALT_LENGTH: 16,
@@ -86,7 +88,11 @@ export async function generateRandomBytes(length: number): Promise<Uint8Array> {
  * Dérive une clé cryptographique symétrique de 32 octets (256 bits)
  * à partir du code PIN utilisateur et d'un sel aléatoire de 16 octets.
  */
-export async function deriveSanctumKey(pin: string, salt: Uint8Array): Promise<Uint8Array> {
+export async function deriveSanctumKey(
+  pin: string,
+  salt: Uint8Array,
+  n: number = SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N
+): Promise<Uint8Array> {
   const trimmedPin = pin.trim();
   if (trimmedPin.length < 4 || trimmedPin.length > 8 || !/^\d+$/.test(trimmedPin)) {
     throw new Error('Le code PIN doit comporter entre 4 et 8 chiffres numériques.');
@@ -99,7 +105,7 @@ export async function deriveSanctumKey(pin: string, salt: Uint8Array): Promise<U
   }
 
   const pinBytes = new TextEncoder().encode(trimmedPin);
-  return scryptAsync(pinBytes, salt, SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS);
+  return scryptAsync(pinBytes, salt, { ...SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS, N: n });
 }
 
 /**

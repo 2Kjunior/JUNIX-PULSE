@@ -80,6 +80,8 @@ jest.mock('@/services/backup-service', () => ({
   decryptBackup: jest.fn(),
   importBackup: jest.fn(),
   parseBackup: jest.fn(),
+  parseBackupSanctumKeys: jest.fn(() => null),
+  restoreBackupSanctum: jest.fn(async () => 'none'),
 }));
 
 jest.mock('@/database/sqlite', () => ({

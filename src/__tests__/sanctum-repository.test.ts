@@ -32,8 +32,27 @@ jest.mock('../database/sqlite', () => {
         }
         return null;
       }),
+      withExclusiveTransactionAsync: jest.fn(async (callback: (tx: any) => Promise<void>) => {
+        // Comme une transaction : tout est annulé si le travail échoue
+        const snapshot = new Map(notesTable);
+        const transaction = {
+          runAsync: async (_query: string, title: string, content: string, folder: string, id: string) => {
+            notesTable.set(id, { ...notesTable.get(id), title, content, folder });
+          },
+        };
+        try {
+          await callback(transaction);
+        } catch (error) {
+          notesTable.clear();
+          snapshot.forEach((row, id) => notesTable.set(id, row));
+          throw error;
+        }
+      }),
       runAsync: jest.fn(async (query: string, ...params: any[]) => {
-        if (query.startsWith('INSERT INTO sanctum_notes')) {
+        if (query.includes('folder = ? WHERE id = ?')) {
+          const [title, content, folder, id] = params;
+          notesTable.set(id, { ...notesTable.get(id), title, content, folder });
+        } else if (query.startsWith('INSERT INTO sanctum_notes')) {
           const [id, title, content, folder, created_at, updated_at] = params;
           notesTable.set(id, { id, title, content, folder, created_at, updated_at });
         } else if (query.startsWith('UPDATE sanctum_notes SET title = ?')) {
@@ -92,6 +111,84 @@ describe('SanctumRepository — Persistance chiffrée XChaCha20-Poly1305', () =>
 
     // 3. Le contenu en base est authentifié au format versionné xcha:v1:
     expect(isSanctumNoteEncrypted(rawSqlRow.content)).toBe(true);
+
+    // 4. Le titre et le dossier ne révèlent rien non plus
+    expect(isSanctumNoteEncrypted(rawSqlRow.title)).toBe(true);
+    expect(isSanctumNoteEncrypted(rawSqlRow.folder)).toBe(true);
+  });
+
+  it('restitue le titre et le dossier chiffrés', async () => {
+    const saved = await SanctumRepository.saveNote(
+      { title: 'Banque', content: 'Code', folder: 'Coffre' },
+      masterKey
+    );
+
+    const note = await SanctumRepository.getNoteById(saved.id, masterKey);
+
+    expect(note).toMatchObject({ title: 'Banque', content: 'Code', folder: 'Coffre' });
+    expect(note?.unreadable).toBeUndefined();
+  });
+
+  it('signale une note indéchiffrable sans jamais afficher le texte chiffré', async () => {
+    await SanctumRepository.saveNote({ title: 'Banque', content: 'Code', folder: 'Coffre' }, masterKey);
+    const otherKey = await deriveSanctumKey('135790', mockSalt);
+
+    const [note] = await SanctumRepository.getAllNotes(otherKey);
+
+    expect(note.unreadable).toBe(true);
+    expect(note.title).toBe('Note illisible');
+    expect(isSanctumNoteEncrypted(note.content)).toBe(false);
+  });
+
+  it('chiffre les champs encore en clair écrits par une ancienne version', async () => {
+    const db = await getDatabase();
+    (db as any).__seedRawRow({
+      id: 'legacy-2',
+      title: 'Titre en clair',
+      content: 'Contenu en clair',
+      folder: 'Général',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z',
+    });
+
+    await SanctumRepository.encryptLegacyFields(masterKey);
+
+    const raw = (db as any).__getRawRow('legacy-2');
+    expect([raw.title, raw.content, raw.folder].every(isSanctumNoteEncrypted)).toBe(true);
+    const note = await SanctumRepository.getNoteById('legacy-2', masterKey);
+    expect(note).toMatchObject({ title: 'Titre en clair', content: 'Contenu en clair' });
+  });
+
+  it('ne perd aucune note si le changement de clé échoue avant sa validation', async () => {
+    const saved = await SanctumRepository.saveNote(
+      { title: 'Banque', content: 'Code', folder: 'Coffre' },
+      masterKey
+    );
+    const newKey = await deriveSanctumKey('135790', mockSalt);
+
+    await expect(
+      SanctumRepository.reencryptAllNotes(masterKey, newKey, async () => {
+        throw new Error('SecureStore');
+      })
+    ).rejects.toThrow('SecureStore');
+
+    const note = await SanctumRepository.getNoteById(saved.id, masterKey);
+    expect(note).toMatchObject({ content: 'Code' });
+  });
+
+  it('laisse intacte une note déjà illisible lors du changement de clé', async () => {
+    const otherKey = await deriveSanctumKey('135790', mockSalt);
+    const saved = await SanctumRepository.saveNote(
+      { title: 'Ancienne', content: 'Secret', folder: 'Coffre' },
+      otherKey
+    );
+    const db = await getDatabase();
+    const before = (db as any).__getRawRow(saved.id).content;
+    const newKey = await deriveSanctumKey('246801', mockSalt);
+
+    await SanctumRepository.reencryptAllNotes(masterKey, newKey);
+
+    expect((db as any).__getRawRow(saved.id).content).toBe(before);
   });
 
   it('déchiffre fidèlement les notes avec la bonne clé', async () => {

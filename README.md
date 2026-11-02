@@ -1,7 +1,7 @@
 # ⚡ Junix Pulse V1.0 — Personal Life OS (Offline-First)
 
-**Junix Pulse** est une application mobile personnelle de gestion quotidienne développée avec **React Native**, **Expo SDK 57** et **SQLite**. 
-Elle est conçue selon le principe **Local-First / Offline-First** : 100% de vos données restent stockées localement sur votre téléphone avec un chiffrement local et zéro dépendance à des serveurs tiers.
+**Junix Pulse** est une application mobile personnelle de gestion quotidienne développée avec **React Native**, **Expo SDK 58** et **SQLite**. 
+Elle est conçue selon le principe **Local-First / Offline-First** : 100% de vos données restent stockées localement sur votre téléphone, sans dépendance à des serveurs tiers. Les notes du Sanctuaire et les sauvegardes exportées sont chiffrées ; le reste de la base locale ne l'est pas encore.
 
 ---
 
@@ -64,14 +64,14 @@ Elle est conçue selon le principe **Local-First / Offline-First** : 100% de vos
 
 | Élément | Technologie |
 |---|---|
-| **Framework** | React Native `0.86.3` (Expo SDK `~57.0.30`) |
-| **Routing** | Expo Router v4 (`~57.0.28`, File-based navigation) |
+| **Framework** | React Native `0.88.0` (Expo SDK `~58.0.20`) |
+| **Routing** | Expo Router (`~58.0.27`, File-based navigation) |
 | **Language** | TypeScript (Strict mode) |
 | **Base de données** | SQLite via `expo-sqlite` (WAL Mode, Migrations versionnées 001-020) |
-| **Sécurité** | XChaCha20-Poly1305 + scrypt ($N=32768$) + `expo-secure-store` |
+| **Sécurité** | Sanctuaire et sauvegardes : XChaCha20-Poly1305 + scrypt ($N=32768$) + `expo-secure-store` |
 | **State Management** | Zustand (Store UI & Snackbar) |
 | **Design System** | Tokens Midnight Glassmorphism (`src/constants/theme.ts`) |
-| **Tests Automatisés** | Jest + React Test Renderer (25 suites, 299 tests) |
+| **Tests Automatisés** | Jest + React Test Renderer |
 
 ---
 
@@ -87,7 +87,7 @@ npm install
 npx expo start --clear
 ```
 
-### 3. Conformité Expo SDK 57
+### 3. Conformité Expo SDK 58
 ```bash
 npx expo-doctor
 ```

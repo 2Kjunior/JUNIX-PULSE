@@ -7,10 +7,10 @@
  *  2. Vue liste          — Carnets secrets filtrables par dossier/recherche avec GlassFAB 3D
  *  3. Vue éditeur        — Création / édition d'un carnet secret dans des cartes de verre
  *
- * Règle R-12 : pas de cryptographie maison, délégation native (expo-local-authentication).
- * Fallback PIN : si le téléphone n'a ni biométrie ni écran de verrouillage,
- * on propose un code PIN applicatif de 4 à 8 chiffres (stocké hashé en settings).
+ * Règle R-12 : pas de cryptographie maison, délégation native (expo-secure-store).
+ * Le code PIN protège toujours le coffre ; la biométrie est un raccourci proposé à l'utilisateur.
  * Auto-verrouillage au passage en arrière-plan (AppState listener).
+ * Captures d'écran et aperçu des applications récentes bloqués tant que l'écran est ouvert.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -30,7 +30,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as LocalAuthentication from 'expo-local-authentication';
+import * as ScreenCapture from 'expo-screen-capture';
 
 import { SanctumRepository, type SanctumNote } from '@/repositories/sanctum-repository';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
@@ -73,7 +73,7 @@ export default function SanctumScreen() {
   const [currentView, setCurrentView] = useState<SanctumView>('locked');
   const [authenticating, setAuthenticating] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [hasBiometrics, setHasBiometrics] = useState(true);
+  const [hasBiometrics, setHasBiometrics] = useState(false);
   const [hasPinConfigured, setHasPinConfigured] = useState(false);
 
   // ─── PIN state (Création & Déverrouillage) ──────────────────────────────
@@ -130,6 +130,16 @@ export default function SanctumScreen() {
   const [saving, setSaving] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
 
+  // ─── Le contenu du coffre ne doit apparaître ni en capture ni dans les applications récentes ──
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync('sanctum').catch(() => {});
+    if (Platform.OS === 'ios') ScreenCapture.enableAppSwitcherProtectionAsync().catch(() => {});
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync('sanctum').catch(() => {});
+      if (Platform.OS === 'ios') ScreenCapture.disableAppSwitcherProtectionAsync().catch(() => {});
+    };
+  }, []);
+
   // ─── Auto-lock quand l'app passe en arrière-plan (purge la clé en RAM) ──
   const appState = useRef(AppState.currentState);
 
@@ -157,10 +167,8 @@ export default function SanctumScreen() {
   useEffect(() => {
     async function checkSecurityCapabilities() {
       try {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        const biometricsAvailable = hasHardware && isEnrolled;
-        setHasBiometrics(biometricsAvailable);
+        const biometricsEnabled = await SanctumAuthService.isBiometricUnlockEnabled();
+        setHasBiometrics(biometricsEnabled);
 
         const pinConfigured = await SanctumAuthService.isPinConfigured();
         setHasPinConfigured(pinConfigured);
@@ -171,8 +179,8 @@ export default function SanctumScreen() {
           return;
         }
 
-        // Si biométrie disponible et PIN configuré, tenter l'authentification biométrique directe
-        if (biometricsAvailable && pinConfigured) {
+        // Si la biométrie a été activée, tenter le déverrouillage direct
+        if (biometricsEnabled) {
           authenticateBiometric();
         }
       } catch {
@@ -187,26 +195,14 @@ export default function SanctumScreen() {
     setAuthenticating(true);
     setAuthError('');
     try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Accéder au Sanctuaire privé',
-        cancelLabel: 'Annuler',
-        disableDeviceFallback: true,
-      });
-
-      if (result.success) {
-        // En cas de succès biométrique, déverrouillage direct SANS redemander de PIN
-        const bioKey = await SanctumAuthService.getStoredBiometricKey();
-        if (bioKey) {
-          activeKeyRef.current = bioKey;
-          await onAuthSuccess(bioKey);
-          return;
-        }
-        // Si aucune clé stockée (cas théorique de premier accès non finalisé), demander le PIN
-        setCurrentView('pin_verify');
-      } else {
-        if (result.error !== 'user_cancel') {
-          setAuthError('Empreinte non reconnue. Utilisez votre code PIN.');
-        }
+      // Le système exige lui-même l'authentification avant de rendre la clé
+      const result = await SanctumAuthService.unlockWithBiometrics();
+      if (result.status === 'unlocked') {
+        activeKeyRef.current = result.key;
+        await onAuthSuccess(result.key);
+      } else if (result.status === 'unavailable') {
+        setHasBiometrics(false);
+        setAuthError('La biométrie du téléphone a changé. Utilisez votre code PIN.');
       }
     } catch {
       setAuthError('Erreur d’authentification biométrique');
@@ -215,11 +211,31 @@ export default function SanctumScreen() {
     }
   };
 
+  // ─── Biométrie : proposée après un code PIN correct, jamais activée sans accord ──
+  const offerBiometricUnlock = async (key: Uint8Array) => {
+    if (!(await SanctumAuthService.shouldOfferBiometricUnlock())) return;
+    Alert.alert(
+      'Déverrouiller par biométrie ?',
+      'Vous pourrez ouvrir le Sanctuaire avec votre empreinte ou votre visage. Le code PIN reste nécessaire si la biométrie du téléphone change.',
+      [
+        { text: 'Non merci', style: 'cancel', onPress: () => void SanctumAuthService.declineBiometricUnlock() },
+        {
+          text: 'Activer',
+          onPress: async () => {
+            const enabled = await SanctumAuthService.enableBiometricUnlock(key);
+            setHasBiometrics(enabled);
+            if (!enabled) showSnackbar('Biométrie non activée');
+          },
+        },
+      ]
+    );
+  };
+
   // ─── Transition succès d'authentification ─────────────────────────────
-  const onAuthSuccess = async (key?: Uint8Array) => {
+  const onAuthSuccess = async (key: Uint8Array) => {
     try {
-      const currentKey = key ?? activeKeyRef.current;
-      const allNotes = await SanctumRepository.getAllNotes(currentKey ?? undefined);
+      await SanctumRepository.encryptLegacyFields(key);
+      const allNotes = await SanctumRepository.getAllNotes(key);
       setNotes(allNotes);
       if (params.action === 'change_pin') {
         setCurrentView('pin_change');
@@ -262,6 +278,7 @@ export default function SanctumScreen() {
       setPinError('');
       showSnackbar('Code PIN initial configuré avec succès');
       await onAuthSuccess(masterKey);
+      void offerBiometricUnlock(masterKey);
     } catch {
       setPinError('Erreur lors de la configuration du code PIN');
     }
@@ -300,7 +317,9 @@ export default function SanctumScreen() {
         showSnackbar('Code PIN modifié & carnets re-chiffrés');
         const allNotes = await SanctumRepository.getAllNotes(result.newKey);
         setNotes(allNotes);
+        setHasBiometrics(false);
         setCurrentView('list');
+        void offerBiometricUnlock(result.newKey);
       } else {
         setPinChangeError(result.error ?? 'Échec lors du changement de code PIN');
       }
@@ -332,6 +351,7 @@ export default function SanctumScreen() {
         setPinError('');
         setLockoutRemaining(0);
         await onAuthSuccess(result.key);
+        void offerBiometricUnlock(result.key);
       } else {
         if (result.isLocked && result.remainingSeconds) {
           setLockoutRemaining(result.remainingSeconds);
@@ -355,6 +375,11 @@ export default function SanctumScreen() {
   };
 
   const handleEditNote = (note: SanctumNote) => {
+    // L'enregistrer écraserait définitivement le contenu d'origine
+    if (note.unreadable) {
+      showSnackbar('Cette note ne peut pas être déchiffrée');
+      return;
+    }
     setEditingNote(note);
     setEditorTitle(note.title);
     setEditorContent(note.content);
@@ -369,6 +394,12 @@ export default function SanctumScreen() {
       return;
     }
 
+    const key = activeKeyRef.current;
+    if (!key) {
+      handleLock();
+      return;
+    }
+
     setSaving(true);
     try {
       await SanctumRepository.saveNote(
@@ -378,9 +409,9 @@ export default function SanctumScreen() {
           content: editorContent,
           folder: editorFolder,
         },
-        activeKeyRef.current ?? undefined
+        key
       );
-      const allNotes = await SanctumRepository.getAllNotes(activeKeyRef.current ?? undefined);
+      const allNotes = await SanctumRepository.getAllNotes(key);
       setNotes(allNotes);
       showSnackbar(editingNote ? 'Carnet mis à jour' : 'Nouveau carnet chiffré créé');
       setCurrentView('list');
@@ -402,8 +433,7 @@ export default function SanctumScreen() {
           style: 'destructive',
           onPress: async () => {
             await SanctumRepository.deleteNote(note.id);
-            const allNotes = await SanctumRepository.getAllNotes(activeKeyRef.current ?? undefined);
-            setNotes(allNotes);
+            setNotes(current => current.filter(item => item.id !== note.id));
             showSnackbar('Carnet supprimé');
             if (currentView === 'editor') {
               setCurrentView('list');

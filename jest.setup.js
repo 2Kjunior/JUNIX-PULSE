@@ -105,6 +105,8 @@ jest.mock('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 1,
   WHEN_UNLOCKED: 2,
   ALWAYS_THIS_DEVICE_ONLY: 3,
+  canUseBiometricAuthentication: jest.fn(() => false),
+  WHEN_PASSCODE_SET_THIS_DEVICE_ONLY: 'WHEN_PASSCODE_SET_THIS_DEVICE_ONLY',
   __resetMockStorage: () => mockSecureStoreMap.clear(),
 }));
 

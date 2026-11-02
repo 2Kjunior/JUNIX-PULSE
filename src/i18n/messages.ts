@@ -106,7 +106,7 @@ const fr = {
   'common.hourShort': '{hour}h',
 
   // ─── Onboarding : bienvenue ───
-  'welcome.skipA11y': 'Passer l’onboarding',
+  'welcome.skipA11y': "Passer l'onboarding",
   'welcome.headline': 'Retrouvez votre',
   'welcome.headlineAccent': 'rythme naturel',
   'welcome.tagline': 'Se souvenir. Planifier. Vivre.',
@@ -133,6 +133,9 @@ const fr = {
   'welcome.restore.import': 'Importer',
   'welcome.restore.doneTitle': 'Restauration terminée',
   'welcome.restore.doneBody': '{inserted} enregistrements ajoutés, {skipped} ignorés car ils existaient déjà.',
+  'welcome.restore.sanctumRestored': 'Vos notes du Sanctuaire s’ouvrent avec le code PIN de cette sauvegarde.',
+  'welcome.restore.sanctumConflict': 'Un autre code PIN est déjà configuré ici : les notes du Sanctuaire de cette sauvegarde resteront illisibles.',
+  'welcome.restore.sanctumMissing': 'Cette sauvegarde est ancienne : ses notes du Sanctuaire ne s’ouvriront que sur le téléphone d’origine, avec le même code PIN.',
   'welcome.restore.failTitle': 'Échec de la restauration',
   'welcome.restore.failBody': 'Aucune donnée n’a été importée.',
   'welcome.restore.unlockTitle': 'Déverrouiller la sauvegarde',
@@ -361,6 +364,9 @@ const en: Record<MessageKey, string> = {
   'welcome.restore.import': 'Import',
   'welcome.restore.doneTitle': 'Restore complete',
   'welcome.restore.doneBody': '{inserted} records added, {skipped} skipped because they already existed.',
+  'welcome.restore.sanctumRestored': 'Your Sanctuary notes open with the PIN of this backup.',
+  'welcome.restore.sanctumConflict': 'Another PIN is already set here: the Sanctuary notes of this backup will stay unreadable.',
+  'welcome.restore.sanctumMissing': 'This backup is an old one: its Sanctuary notes only open on the original phone, with the same PIN.',
   'welcome.restore.failTitle': 'Restore failed',
   'welcome.restore.failBody': 'No data was imported.',
   'welcome.restore.unlockTitle': 'Unlock the backup',

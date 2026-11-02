@@ -2,6 +2,8 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { z } from 'zod';
 import { decryptBackupContents, encryptBackupContents } from './backup-crypto';
+import { isSanctumNoteEncrypted, SANCTUM_CRYPTO_CONSTANTS } from './sanctum-crypto';
+import { SanctumAuthService, type SanctumBackupKeys } from './sanctum-auth-service';
 
 const BACKUP_TABLES = [
   'persons',
@@ -155,11 +157,22 @@ const BackupDataSchema = z.object({
   sanctum_notes: z.array(BackupRowSchema),
 }).strict();
 
+// The file comes from outside: only known parameters, as a huge scrypt cost would freeze the phone
+const SanctumKeysSchema = z.object({
+  salt: z.string().regex(new RegExp(`^[0-9a-f]{${SANCTUM_CRYPTO_CONSTANTS.SALT_LENGTH * 2}}$`)),
+  verifier: z.string().startsWith(SANCTUM_CRYPTO_CONSTANTS.FORMAT_PREFIX),
+  kdfN: z.union([
+    z.literal(SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N),
+    z.literal(SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N),
+  ]),
+}).strict();
+
 const BackupSchema = z.object({
   format: z.literal('junix-pulse-backup'),
   version: z.literal(1),
   exportedAt: z.string().datetime(),
   data: BackupDataSchema,
+  sanctumKeys: SanctumKeysSchema.optional(),
 }).strict();
 
 export type BackupData = z.infer<typeof BackupDataSchema>;
@@ -168,6 +181,13 @@ export interface BackupImportResult {
   inserted: number;
   skipped: number;
 }
+
+/**
+ * What happened to the Sanctuary of a restored backup.
+ * none: no encrypted note. restored or same: its PIN opens them.
+ * conflict: another PIN is set on this phone. missing: older backup, without its keys.
+ */
+export type BackupSanctumRestore = 'none' | 'restored' | 'same' | 'conflict' | 'missing';
 
 function validateRows(data: BackupData): void {
   for (const table of BACKUP_TABLES) {
@@ -224,11 +244,14 @@ export async function createBackup(db: SQLiteDatabase): Promise<string> {
     }
   }
 
+  const sanctumKeys = await SanctumAuthService.exportBackupKeys();
+
   return JSON.stringify({
     format: 'junix-pulse-backup',
     version: 1,
     exportedAt: new Date().toISOString(),
     data,
+    ...(sanctumKeys ? { sanctumKeys } : {}),
   }, null, 2);
 }
 
@@ -247,6 +270,24 @@ export function parseBackup(contents: string): BackupData {
 
   validateRows(parsed.data.data);
   return parsed.data.data;
+}
+
+/** The Sanctuary keys of an already validated backup, if it carries them. */
+export function parseBackupSanctumKeys(contents: string): SanctumBackupKeys | null {
+  return BackupSchema.safeParse(JSON.parse(contents)).data?.sanctumKeys ?? null;
+}
+
+/** To call once the backup is imported, so that a failed import leaves the Sanctuary untouched. */
+export async function restoreBackupSanctum(
+  data: BackupData,
+  keys: SanctumBackupKeys | null
+): Promise<BackupSanctumRestore> {
+  const hasEncryptedNotes = data.sanctum_notes.some(
+    note => typeof note.content === 'string' && isSanctumNoteEncrypted(note.content)
+  );
+  if (!hasEncryptedNotes) return 'none';
+  if (!keys) return 'missing';
+  return SanctumAuthService.restoreBackupKeys(keys);
 }
 
 export async function importBackup(db: SQLiteDatabase, data: BackupData): Promise<BackupImportResult> {

@@ -28,7 +28,15 @@ import { ValueBadge } from '@/components/ui/ValueBadge';
 import { getDatabase } from '@/database/sqlite';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
-import { decryptBackup, importBackup, parseBackup } from '@/services/backup-service';
+import {
+  decryptBackup,
+  importBackup,
+  parseBackup,
+  parseBackupSanctumKeys,
+  restoreBackupSanctum,
+  type BackupSanctumRestore,
+} from '@/services/backup-service';
+import type { MessageKey } from '@/i18n/messages';
 import { reconcileOverdueRecurringReminders } from '@/use-cases/reminder-use-cases';
 import { useT } from '@/i18n';
 
@@ -38,6 +46,14 @@ const { height } = Dimensions.get('window');
 const MASCOT_ROOM_HEIGHT = 210;
 /** Centre de l'orbe, mesuré depuis le haut de cette place. */
 const MASCOT_ROOM_ANCHOR_OFFSET = 56;
+
+const SANCTUM_RESTORE_NOTICE: Record<BackupSanctumRestore, MessageKey | null> = {
+  none: null,
+  restored: 'welcome.restore.sanctumRestored',
+  same: null,
+  conflict: 'welcome.restore.sanctumConflict',
+  missing: 'welcome.restore.sanctumMissing',
+};
 
 export default function OnboardingWelcome() {
   const t = useT();
@@ -91,6 +107,7 @@ export default function OnboardingWelcome() {
 
     const plaintext = await decryptBackup(pendingBackupContents, password);
     const backupData = parseBackup(plaintext);
+    const sanctumKeys = parseBackupSanctumKeys(plaintext);
     const rowCount = Object.values(backupData).reduce((total, rows) => total + rows.length, 0);
     setBackupPasswordVisible(false);
     setPendingBackupContents(null);
@@ -105,11 +122,14 @@ export default function OnboardingWelcome() {
           onPress: async () => {
             try {
               const result = await importBackup(await getDatabase(), backupData);
+              const sanctum = await restoreBackupSanctum(backupData, sanctumKeys);
+              const sanctumNotice = SANCTUM_RESTORE_NOTICE[sanctum];
               // Les notifications suivent à la fin de l'onboarding, une fois les dates recalées
               await reconcileOverdueRecurringReminders();
               Alert.alert(
                 t('welcome.restore.doneTitle'),
-                t('welcome.restore.doneBody', { inserted: result.inserted, skipped: result.skipped }),
+                t('welcome.restore.doneBody', { inserted: result.inserted, skipped: result.skipped }) +
+                  (sanctumNotice ? `\n\n${t(sanctumNotice)}` : ''),
                 [{
                   text: t('common.continue'),
                   onPress: async () => {
