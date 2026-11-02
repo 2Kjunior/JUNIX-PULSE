@@ -26,6 +26,7 @@ import {
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { hasSeenTip, markTipSeen } from '@/services/mascot/mascot-tips-service';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 import { MascotBubble } from './MascotBubble';
 import { PulseMascot } from './PulseMascot';
@@ -56,6 +57,7 @@ export function HomeTour() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { palette } = useTheme();
+  const t = useT();
   const { preferences, settings } = useMascotPreferences();
 
   const [tour, setTour] = useState<ActiveTour | null>(null);
@@ -185,7 +187,7 @@ export function HomeTour() {
   if (!text) return layer(null);
 
   const last = tour.index === tour.stops.length - 1;
-  const position = `${tour.index + 1} sur ${tour.stops.length}`;
+  const position = t('homeTour.position', { current: tour.index + 1, total: tour.stops.length });
 
   return (
     <View ref={layerRef} collapsable={false} pointerEvents="box-none" style={StyleSheet.absoluteFill}>
@@ -230,12 +232,12 @@ export function HomeTour() {
           tailSide="left"
           solid
           actions={[
-            { label: 'Passer', onPress: finish, accessibilityLabel: 'Passer la présentation' },
+            { label: t('common.skip'), onPress: finish, accessibilityLabel: t('homeTour.skipA11y') },
             {
-              label: last ? 'Terminer' : `Suivant (${position})`,
+              label: last ? t('homeTour.finish') : t('homeTour.next', { position }),
               onPress: next,
               primary: true,
-              accessibilityLabel: last ? 'Terminer la présentation' : `Étape suivante, ${position}`,
+              accessibilityLabel: last ? t('homeTour.finishA11y') : t('homeTour.nextA11y', { position }),
             },
           ]}
         />

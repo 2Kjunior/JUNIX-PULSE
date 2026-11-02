@@ -10,6 +10,7 @@ import { Task } from '@/domain/entities';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/today-styles';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/i18n';
 
 interface TaskCardProps {
   task: Task;
@@ -18,6 +19,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onComplete }: TaskCardProps) {
   const { palette } = useTheme();
+  const t = useT();
   const isCompleted = task.status === 'COMPLETED';
 
   // tone="neutral" : aucune priorité n'est affichée sur cette carte.
@@ -32,7 +34,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           activeOpacity={0.65}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isCompleted }}
-          accessibilityLabel={isCompleted ? 'Marquer tâche non terminée' : 'Marquer tâche terminée'}
+          accessibilityLabel={isCompleted ? t('taskCard.markUndone') : t('taskCard.markDone')}
         >
           <Ionicons
             name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}

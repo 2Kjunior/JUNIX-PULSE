@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useDateLocale, useT } from '@/i18n';
 import { router } from 'expo-router';
 
 import { Spacing, Radius, Typography } from '@/constants/theme';
@@ -37,6 +37,8 @@ export const CalendarActionModal = memo(function CalendarActionModal({
   slotHour,
 }: CalendarActionModalProps) {
   const { theme } = useTheme();
+  const t = useT();
+  const dateLocale = useDateLocale();
   const styles = useThemedStyles(makeActionModalStyles);
   const isLight = theme.mode === 'light';
 
@@ -46,7 +48,7 @@ export const CalendarActionModal = memo(function CalendarActionModal({
   const taskAccentColor = isLight ? '#059669' : '#34D399';
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
-  const dateFormatted = format(selectedDate, 'EEEE d MMMM', { locale: fr });
+  const dateFormatted = format(selectedDate, 'EEEE d MMMM', { locale: dateLocale });
   const hasHour = slotHour !== undefined && slotHour !== null;
 
   const handleSelectEvent = () => {
@@ -93,7 +95,7 @@ export const CalendarActionModal = memo(function CalendarActionModal({
         activeOpacity={1}
         onPress={onClose}
         accessibilityRole="button"
-        accessibilityLabel="Fermer la boîte de sélection"
+        accessibilityLabel={t('calendarAction.closeBox')}
       >
         <View style={styles.sheet}>
           {/* Poignée de feuille */}
@@ -104,8 +106,8 @@ export const CalendarActionModal = memo(function CalendarActionModal({
             <View style={styles.headerCol}>
               <Text style={styles.title}>
                 {hasHour
-                  ? `Créneau de ${String(slotHour).padStart(2, '0')}:00`
-                  : 'Ajouter au planning'}
+                  ? t('calendarAction.slotOf', { hour: String(slotHour).padStart(2, '0') })
+                  : t('calendarAction.addToPlanning')}
               </Text>
               <Text style={styles.subtitle}>
                 {dateFormatted}
@@ -115,14 +117,14 @@ export const CalendarActionModal = memo(function CalendarActionModal({
               style={styles.closeBtn}
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Fermer la fenêtre d'ajout"
+              accessibilityLabel={t('calendarAction.closeSheet')}
             >
               <Ionicons name="close" size={20} color={theme.onSurface.variant} />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.question}>
-            Que souhaitez-vous planifier pour cette journée ?
+            {t('calendarAction.question')}
           </Text>
 
           {/* Liste des 3 options */}
@@ -133,14 +135,14 @@ export const CalendarActionModal = memo(function CalendarActionModal({
               onPress={handleSelectEvent}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Créer un événement : rendez-vous, réunion ou bloc fixe"
+              accessibilityLabel={t('calendarAction.eventA11y')}
             >
               <View style={[styles.optionIconBox, { backgroundColor: eventAccentColor + '20' }]}>
                 <Ionicons name="calendar" size={20} color={eventAccentColor} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>Événement</Text>
-                <Text style={styles.optionDesc}>Rendez-vous, réunion ou bloc horaire fixe</Text>
+                <Text style={styles.optionTitle}>{t('search.type.event')}</Text>
+                <Text style={styles.optionDesc}>{t('calendarAction.eventDesc')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={eventAccentColor} />
             </TouchableOpacity>
@@ -151,14 +153,14 @@ export const CalendarActionModal = memo(function CalendarActionModal({
               onPress={handleSelectReminder}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Créer un rappel : alerte sonore et notification précise"
+              accessibilityLabel={t('calendarAction.reminderA11y')}
             >
               <View style={[styles.optionIconBox, { backgroundColor: reminderAccentColor + '20' }]}>
                 <Ionicons name="notifications" size={20} color={reminderAccentColor} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>Rappel</Text>
-                <Text style={styles.optionDesc}>Alerte sonore et notification précise</Text>
+                <Text style={styles.optionTitle}>{t('search.type.reminder')}</Text>
+                <Text style={styles.optionDesc}>{t('calendarAction.reminderDesc')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={reminderAccentColor} />
             </TouchableOpacity>
@@ -169,14 +171,14 @@ export const CalendarActionModal = memo(function CalendarActionModal({
               onPress={handleSelectTask}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Créer une tâche : action à cocher avec durée estimée"
+              accessibilityLabel={t('calendarAction.taskA11y')}
             >
               <View style={[styles.optionIconBox, { backgroundColor: taskAccentColor + '20' }]}>
                 <Ionicons name="checkbox" size={20} color={taskAccentColor} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>Tâche du jour</Text>
-                <Text style={styles.optionDesc}>Action concrète avec durée estimée</Text>
+                <Text style={styles.optionTitle}>{t('calendarAction.taskTitle')}</Text>
+                <Text style={styles.optionDesc}>{t('calendarAction.taskDesc')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={taskAccentColor} />
             </TouchableOpacity>

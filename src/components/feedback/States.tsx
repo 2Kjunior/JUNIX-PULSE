@@ -11,6 +11,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '../ui/Button';
+import { useT } from '@/i18n';
 
 // ─── État vide ────────────────────────────────────────────────────────────────
 
@@ -101,26 +102,27 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Une erreur est survenue',
+  title,
   message,
-  retryLabel = 'Réessayer',
+  retryLabel,
   onRetry,
   style,
   testID,
 }: ErrorStateProps) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStatesStyles);
+  const t = useT();
 
   return (
     <View style={[styles.centered, style]} testID={testID}>
       <View style={styles.errorIconContainer}>
         <Ionicons name="alert-circle-outline" size={28} color={palette.error.default} />
       </View>
-      <Text style={styles.errorTitle}>{title}</Text>
+      <Text style={styles.errorTitle}>{title ?? t('common.genericError')}</Text>
       <Text style={styles.errorMessage}>{message}</Text>
       {onRetry && (
         <View style={styles.emptyAction}>
-          <Button label={retryLabel} onPress={onRetry} variant="secondary" size="sm" />
+          <Button label={retryLabel ?? t('states.retry')} onPress={onRetry} variant="secondary" size="sm" />
         </View>
       )}
     </View>

@@ -11,24 +11,26 @@ import { Spacing, Radius, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useT } from '@/i18n';
 import { Button } from '@/components/ui/Button';
 
 export default function NotFoundScreen() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeNotFoundStyles);
+  const t = useT();
 
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
         <Ionicons name="compass-outline" size={44} color={palette.onSurface.disabled} />
       </View>
-      <Text style={styles.title}>Destination introuvable</Text>
+      <Text style={styles.title}>{t('notFound.title')}</Text>
       <Text style={styles.subtitle}>
-        Cet écran n'existe pas ou a été déplacé dans Junix Pulse.
+        {t('notFound.text')}
       </Text>
       <View style={styles.actionContainer}>
         <Button
-          label="Retour à l'accueil"
+          label={t('notFound.home')}
           onPress={() => router.replace('/(tabs)')}
           variant="primary"
           size="md"

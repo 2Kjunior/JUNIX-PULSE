@@ -8,6 +8,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
+import { useT } from '@/i18n';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 
 interface StepIndicatorProps {
@@ -18,12 +19,13 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ total, current, showLabel = true }: StepIndicatorProps) {
   const styles = useThemedStyles(makeStepIndicatorStyles);
+  const t = useT();
 
   return (
     <View style={styles.container}>
       {showLabel && (
-        <Text style={styles.label} accessibilityLabel={`Étape ${current} sur ${total}`}>
-          ÉTAPE {current} SUR {total}
+        <Text style={styles.label} accessibilityLabel={t('step.a11y', { current, total })}>
+          {t('step.label', { current, total })}
         </Text>
       )}
       <View style={styles.bars} accessibilityRole="progressbar">

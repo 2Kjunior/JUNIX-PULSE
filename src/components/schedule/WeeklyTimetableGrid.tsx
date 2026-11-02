@@ -23,7 +23,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, isToday } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useDateLocale, useT } from '@/i18n';
 
 import { PlanningBlock, PlanningBlockType } from '@/domain/entities';
 import { useTheme } from '@/hooks/use-theme';
@@ -183,6 +183,8 @@ export function WeeklyTimetableGrid({
   onPressTasksDay,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
+  const t = useT();
+  const dateLocale = useDateLocale();
 
   // Détection s'il y a des tâches réparties sur la semaine
   const hasAnyTasks = useMemo(() => {
@@ -216,15 +218,24 @@ export function WeeklyTimetableGrid({
     if (weekDays && weekDays.length === 7) {
       return weekDays.map(d => {
         const num = d.getDay();
-        const label = format(d, 'EEE', { locale: fr }).toUpperCase();
-        const full = format(d, 'EEEE', { locale: fr });
+        const label = format(d, 'EEE', { locale: dateLocale }).toUpperCase();
+        const full = format(d, 'EEEE', { locale: dateLocale });
         const dateNum = format(d, 'dd');
         const isCurrentDay = isToday(d);
         return { num, label, full, dateNum, isCurrentDay };
       });
     }
-    return DAYS_DEFINITION.map(d => ({ ...d, isCurrentDay: false }));
-  }, [weekDays]);
+    // 2024-01-01 is a Monday: a fixed reference week gives the localized day names
+    return DAYS_DEFINITION.map(d => {
+      const ref = new Date(2024, 0, d.num === 0 ? 7 : d.num);
+      return {
+        ...d,
+        label: format(ref, 'EEE', { locale: dateLocale }).toUpperCase(),
+        full: format(ref, 'EEEE', { locale: dateLocale }),
+        isCurrentDay: false,
+      };
+    });
+  }, [weekDays, dateLocale]);
 
   // Calcul des statistiques par catégorie pour la légende Stitch
   const stats = useMemo(() => {
@@ -414,7 +425,7 @@ export function WeeklyTimetableGrid({
               <View style={styles.allDayRow}>
                 <View style={[styles.allDayGutter, { width: TIME_COL_WIDTH }]}>
                   <Ionicons name="checkbox-outline" size={13} color={palette.tertiary.default} />
-                  <Text style={styles.allDayGutterText}>Tâches</Text>
+                  <Text style={styles.allDayGutterText}>{t('tab.tasks')}</Text>
                 </View>
                 {displayedDays.map(d => {
                   const count = tasksCountByDay?.[d.num] ?? 0;
@@ -425,10 +436,10 @@ export function WeeklyTimetableGrid({
                           style={styles.allDayTaskPill}
                           onPress={() => onPressTasksDay ? onPressTasksDay(d.num) : onAddBlock(d.num)}
                           activeOpacity={0.75}
-                          accessibilityLabel={`${count} tâches à faire pour ce jour`}
+                          accessibilityLabel={t('weekGrid.tasksA11y', { count })}
                         >
                           <Text style={styles.allDayTaskPillText} numberOfLines={1}>
-                            {count} tâche{count > 1 ? 's' : ''}
+                            {t(count > 1 ? 'weekGrid.taskMany' : 'weekGrid.taskOne', { count })}
                           </Text>
                         </TouchableOpacity>
                       ) : null}
@@ -504,7 +515,7 @@ export function WeeklyTimetableGrid({
                           style={StyleSheet.absoluteFill}
                           activeOpacity={0.9}
                           onPress={() => onAddBlock(d.num, '09:00')}
-                          accessibilityLabel={`Ajouter un bloc pour ${d.full}`}
+                          accessibilityLabel={t('weekGrid.addBlock', { day: d.full })}
                         />
 
                         {/* 1. LAYER 0 : Blocs de vie récurrents (Fond contextuel en filigrane) */}
@@ -534,7 +545,7 @@ export function WeeklyTimetableGrid({
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
                               onLongPress={() => onDeleteBlock(block.id, block.label)}
                               accessibilityRole="button"
-                              accessibilityLabel={`${block.label}, de ${block.startTime} à ${block.endTime}.`}
+                              accessibilityLabel={t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })}
                             >
                               <View style={styles.backgroundBlockHeader}>
                                 <Ionicons name={config.icon as any} size={9} color={config.accent} style={{ opacity: 0.8 }} />
@@ -569,7 +580,7 @@ export function WeeklyTimetableGrid({
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
                               onLongPress={() => onDeleteBlock(block.id, block.label)}
                               accessibilityRole="button"
-                              accessibilityLabel={`${block.label}, de ${block.startTime} à ${block.endTime}.`}
+                              accessibilityLabel={t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })}
                             >
                               <LinearGradient
                                 colors={[config.accent + '33', 'transparent']}
@@ -629,7 +640,7 @@ export function WeeklyTimetableGrid({
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
                               onLongPress={() => onDeleteBlock(block.id, block.label)}
                               accessibilityRole="button"
-                              accessibilityLabel={`Rappel : ${block.label} à ${block.startTime}.`}
+                              accessibilityLabel={t('weekGrid.reminderA11y', { label: block.label, time: block.startTime })}
                             >
                               <Ionicons name="notifications" size={10} color="#F59E0B" />
                               <Text style={styles.reminderPillText} numberOfLines={1}>
@@ -652,18 +663,18 @@ export function WeeklyTimetableGrid({
       <View style={styles.summaryBar}>
         <View style={styles.summaryItem}>
           <View style={[styles.summaryDot, { backgroundColor: palette.primary.default }]} />
-          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>Événements</Text>
+          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>{t('search.filter.events')}</Text>
         </View>
         <View style={styles.summaryItem}>
           <View style={[styles.summaryDot, { backgroundColor: '#F59E0B' }]} />
-          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>Rappels</Text>
+          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>{t('tab.reminders')}</Text>
         </View>
         <View style={styles.summaryItem}>
           <View style={[styles.summaryDot, { backgroundColor: palette.tertiary.default }]} />
-          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>Tâches</Text>
+          <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>{t('tab.tasks')}</Text>
         </View>
         <Text style={[styles.summaryTotalText, { color: palette.primary.default }]}>
-          {stats.totalHours > 0 ? `${stats.totalHours}h occupées` : 'Semaine libre'}
+          {stats.totalHours > 0 ? t('weekGrid.busyHours', { hours: stats.totalHours }) : t('weekGrid.freeWeek')}
         </Text>
       </View>
     </View>

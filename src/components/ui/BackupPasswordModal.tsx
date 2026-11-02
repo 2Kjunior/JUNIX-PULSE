@@ -14,6 +14,7 @@ import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useT } from '@/i18n';
 
 interface BackupPasswordModalProps {
   visible: boolean;
@@ -34,6 +35,7 @@ export function BackupPasswordModal({
 }: BackupPasswordModalProps) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeBackupPasswordModalStyles);
+  const t = useT();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -50,11 +52,11 @@ export function BackupPasswordModal({
 
   const handleSubmit = async () => {
     if (password.length < 16 || password.length > 256) {
-      setError('Utilisez un mot de passe de 16 à 256 caractères.');
+      setError(t('backupPassword.length'));
       return;
     }
     if (confirmPassword && password !== confirmation) {
-      setError('Les mots de passe ne correspondent pas.');
+      setError(t('backupPassword.mismatch'));
       return;
     }
 
@@ -63,7 +65,7 @@ export function BackupPasswordModal({
     try {
       await onSubmit(password);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Opération impossible.');
+      setError(submitError instanceof Error ? submitError.message : t('backupPassword.failed'));
     } finally {
       setBusy(false);
     }
@@ -78,12 +80,12 @@ export function BackupPasswordModal({
         <View style={styles.dialog}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description}>
-            Le mot de passe n’est pas enregistré. Vous en aurez besoin pour restaurer ce fichier.
+            {t('backupPassword.notice')}
           </Text>
           <TextInput
             value={password}
             onChangeText={setPassword}
-            placeholder="Mot de passe, 16 caractères minimum"
+            placeholder={t('backupPassword.placeholder')}
             placeholderTextColor={palette.onSurface.disabled}
             secureTextEntry
             autoCapitalize="none"
@@ -92,13 +94,13 @@ export function BackupPasswordModal({
             returnKeyType={confirmPassword ? 'next' : 'done'}
             onSubmitEditing={confirmPassword ? undefined : handleSubmit}
             style={styles.input}
-            accessibilityLabel="Mot de passe de sauvegarde"
+            accessibilityLabel={t('backupPassword.a11y')}
           />
           {confirmPassword && (
             <TextInput
               value={confirmation}
               onChangeText={setConfirmation}
-              placeholder="Confirmer le mot de passe"
+              placeholder={t('backupPassword.confirmPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               secureTextEntry
               autoCapitalize="none"
@@ -107,14 +109,14 @@ export function BackupPasswordModal({
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
               style={styles.input}
-              accessibilityLabel="Confirmer le mot de passe de sauvegarde"
+              accessibilityLabel={t('backupPassword.confirmA11y')}
             />
           )}
           {error && <Text style={styles.error}>{error}</Text>}
           <View style={styles.actions}>
-            <Button label="Annuler" variant="ghost" onPress={onCancel} disabled={busy} style={styles.action} />
+            <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} disabled={busy} style={styles.action} />
             <Button
-              label={busy ? 'Traitement...' : confirmLabel}
+              label={busy ? t('backupPassword.busy') : confirmLabel}
               variant="secondary"
               onPress={handleSubmit}
               disabled={busy}

@@ -14,7 +14,7 @@ import {
   Modal,
 } from 'react-native';
 import { format, isToday, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useT } from '@/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
@@ -49,6 +49,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
   tasks,
 }: CalendarTimetableProps) {
   const { theme } = useTheme();
+  const t = useT();
   const styles = useThemedStyles(makeTimetableStyles);
   const isLight = theme.mode === 'light';
 
@@ -149,10 +150,10 @@ export const CalendarTimetable = memo(function CalendarTimetable({
       <View style={styles.summaryBar}>
         <View style={styles.summaryInfo}>
           <Text style={styles.summaryTitle}>
-            {totalOccupiedSlots} créneau{totalOccupiedSlots > 1 ? 'x' : ''} occupé{totalOccupiedSlots > 1 ? 's' : ''}
+            {t(totalOccupiedSlots > 1 ? 'timetable.occupiedMany' : 'timetable.occupiedOne', { count: totalOccupiedSlots })}
           </Text>
           <Text style={styles.summarySub}>
-            {events.length} évt • {reminders.length} rappel • {tasks.length} tâche
+            {t('timetable.counts', { events: events.length, reminders: reminders.length, tasks: tasks.length })}
           </Text>
         </View>
 
@@ -160,15 +161,15 @@ export const CalendarTimetable = memo(function CalendarTimetable({
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: eventAccentColor }]} />
-            <Text style={styles.legendText}>Événement</Text>
+            <Text style={styles.legendText}>{t('search.type.event')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: theme.primary.default }]} />
-            <Text style={styles.legendText}>Rappel</Text>
+            <Text style={styles.legendText}>{t('search.type.reminder')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: taskAccentColor }]} />
-            <Text style={styles.legendText}>Tâche</Text>
+            <Text style={styles.legendText}>{t('search.type.task')}</Text>
           </View>
         </View>
       </View>
@@ -179,32 +180,32 @@ export const CalendarTimetable = memo(function CalendarTimetable({
           <View style={styles.tasksHeader}>
             <Ionicons name="checkbox-outline" size={16} color={taskAccentColor} />
             <Text style={[styles.tasksTitle, { color: taskAccentColor }]}>
-              Objectifs & Tâches du jour ({tasks.length})
+              {t('timetable.tasksOfDay', { count: tasks.length })}
             </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tasksScroll}>
-            {tasks.map((t, idx) => (
+            {tasks.map((task, idx) => (
               <GlowCard
-                key={t.id}
+                key={task.id}
                 index={idx}
                 tone="success"
                 intensity="soft"
                 style={styles.taskMiniCard}
-                onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}
-                accessibilityLabel={`Tâche : ${t.title}${t.status === 'COMPLETED' ? ', terminée' : ''}`}
+                onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
+                accessibilityLabel={t('timetable.taskA11y', { title: task.title, done: task.status === 'COMPLETED' ? t('timetable.doneSuffix') : '' })}
               >
                 <View style={styles.taskMiniContent}>
                   <Ionicons
-                    name={t.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
+                    name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
                     size={16}
                     color={taskAccentColor}
                   />
                   <Text style={styles.taskMiniTitle} numberOfLines={1}>
-                    {t.title}
+                    {task.title}
                   </Text>
-                  {t.estimatedMinutes ? (
+                  {task.estimatedMinutes ? (
                     <Text style={[styles.taskMiniDuration, { color: taskAccentColor }]}>
-                      {t.estimatedMinutes}m
+                      {task.estimatedMinutes}m
                     </Text>
                   ) : null}
                 </View>
@@ -244,7 +245,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                     <View style={styles.nowBadge}>
                       <View style={styles.nowPulseDot} />
                       <Text style={styles.nowBadgeText}>
-                        MAINTENANT • {format(now, 'HH:mm')}
+                        {t('timetable.now', { time: format(now, 'HH:mm') })}
                       </Text>
                     </View>
                     <View style={styles.nowLine} />
@@ -276,13 +277,13 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                           intensity="default"
                           style={[styles.eventCard, { minHeight: proportionalMinHeight }]}
                           onPress={() => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
-                          accessibilityLabel={`Événement : ${e.title}, horaire ${timeStr}${e.location ? `, lieu ${e.location}` : ''}`}
+                          accessibilityLabel={t('timetable.eventA11y', { title: e.title, time: timeStr, place: e.location ? t('timetable.place', { place: e.location }) : '' })}
                         >
                           <View style={styles.cardHeaderRow}>
                             <View style={styles.eventBadge}>
                               <Ionicons name="calendar" size={11} color={eventAccentColor} />
                               <Text style={[styles.eventBadgeText, { color: eventAccentColor }]}>
-                                ÉVÉNEMENT
+                                {t('timetable.eventBadge')}
                               </Text>
                             </View>
                             <Text style={styles.cardTimeText}>{timeStr}</Text>
@@ -323,7 +324,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                           intensity="default"
                           style={styles.reminderCard}
                           onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
-                          accessibilityLabel={`Rappel : ${r.title}, heure ${reminderTimeStr}${isUrgent ? ', urgent' : ''}`}
+                          accessibilityLabel={t('timetable.reminderA11y', { title: r.title, time: reminderTimeStr, urgent: isUrgent ? t('timetable.urgentSuffix') : '' })}
                         >
                           <View style={styles.cardHeaderRow}>
                             <View style={[styles.reminderBadge, isUrgent && styles.reminderBadgeUrgent]}>
@@ -338,7 +339,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                                   isUrgent && styles.reminderBadgeTextUrgent,
                                 ]}
                               >
-                                {isUrgent ? 'RAPPEL URGENT' : 'RAPPEL'}
+                                {isUrgent ? t('timetable.reminderUrgent') : t('timetable.reminderBadge')}
                               </Text>
                             </View>
                             <Text style={styles.cardTimeText}>{reminderTimeStr}</Text>
@@ -376,10 +377,10 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                     onPress={() => setSelectedSlotHour(hour)}
                     activeOpacity={0.65}
                     accessibilityRole="button"
-                    accessibilityLabel={`Créneau de ${hour}h disponible. Appuyer pour choisir une action.`}
+                    accessibilityLabel={t('timetable.freeA11y', { hour })}
                   >
                     <View style={styles.freeSlotInner}>
-                      <Text style={styles.freeSlotText}>Créneau disponible • Choisir une action</Text>
+                      <Text style={styles.freeSlotText}>{t('timetable.free')}</Text>
                       <Ionicons name="add" size={14} color={theme.primary.default} />
                     </View>
                   </TouchableOpacity>
