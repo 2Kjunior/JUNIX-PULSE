@@ -35,6 +35,7 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
+import { useT } from '@/i18n';
 
 const COLOR_PRESETS: Record<string, string> = {
   green: '#4CAF50',
@@ -51,6 +52,7 @@ function resolveHabitColor(colorKey: string | undefined | null, palette: ThemePa
 }
 
 export default function HabitsListScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -67,12 +69,12 @@ export default function HabitsListScreen() {
       const data = await HabitUseCases.getAllHabitsWithStats();
       setStatsList(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur lors du chargement des habitudes');
+      setError(e instanceof Error ? e.message : t('habits.loadError'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,30 +87,30 @@ export default function HabitsListScreen() {
       const nowCompleted = await HabitUseCases.toggleHabitCompletion(item.habit.id);
       showSnackbar(
         nowCompleted
-          ? `Habitude "${item.habit.title}" validée`
-          : `Validation retirée pour "${item.habit.title}"`
+          ? t('home.habits.checked', { title: item.habit.title })
+          : t('home.habits.unchecked', { title: item.habit.title })
       );
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : "Impossible de mettre à jour l'habitude");
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('home.habits.error'));
     }
   };
 
   const handleDelete = (habitId: string, title: string) => {
     Alert.alert(
-      "Supprimer l'habitude",
-      `Supprimer "${title}" ? Cette action est irréversible.`,
+      t('habits.deleteTitle'),
+      t('habits.deleteBody', { title }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('form.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               const result = await HabitUseCases.deleteHabit(habitId);
               setStatsList(prev => prev.filter(s => s.habit.id !== habitId));
-              showSnackbar(`Habitude "${title}" supprimée`, {
-                actionLabel: 'Annuler',
+              showSnackbar(t('habits.deletedNamed', { title }), {
+                actionLabel: t('taskDetail.undo'),
                 onAction: async () => {
                   await result.undo();
                   loadData();
@@ -116,7 +118,7 @@ export default function HabitsListScreen() {
                 durationMs: 5_000,
               });
             } catch (e) {
-              Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de supprimer');
+              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('habits.deleteError'));
             }
           },
         },
@@ -127,15 +129,15 @@ export default function HabitsListScreen() {
   const handleResume = async (habitId: string, title: string) => {
     try {
       await HabitUseCases.resumeHabit(habitId);
-      showSnackbar(`Habitude "${title}" reprise`);
+      showSnackbar(t('habits.resumedNamed', { title }));
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
   if (loading) {
-    return <LoadingState message="Chargement de vos habitudes..." />;
+    return <LoadingState message={t('habits.loading')} />;
   }
 
   if (error) {
@@ -152,11 +154,11 @@ export default function HabitsListScreen() {
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Habitudes & Streaks</Text>
+        <Text style={styles.headerTitle}>{t('habits.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -182,7 +184,7 @@ export default function HabitsListScreen() {
               <Text style={styles.summaryVal}>
                 {statsList.reduce((acc, curr) => acc + curr.currentStreak, 0)}
               </Text>
-              <Text style={styles.summarySub}>Jours cumulés</Text>
+              <Text style={styles.summarySub}>{t('habits.cumulative')}</Text>
             </View>
           </GlowCard>
           <GlowCard tone="neutral" style={{ flex: 1 }}>
@@ -191,14 +193,14 @@ export default function HabitsListScreen() {
               <Text style={styles.summaryVal}>
                 {activeHabits.filter(s => s.completedToday).length} / {activeHabits.length}
               </Text>
-              <Text style={styles.summarySub}>Validées aujourd'hui</Text>
+              <Text style={styles.summarySub}>{t('habits.doneToday')}</Text>
             </View>
           </GlowCard>
         </View>
 
         {/* Section Habitudes Actives */}
         <Text style={styles.sectionTitle}>
-          Habitudes en cours ({activeHabits.length})
+          {t('habits.active', { count: activeHabits.length })}
         </Text>
 
         {activeHabits.length === 0 ? (
@@ -207,9 +209,9 @@ export default function HabitsListScreen() {
               <View style={styles.emptyIconCircle}>
                 <Ionicons name="repeat-outline" size={32} color={palette.primary.default} />
               </View>
-              <Text style={styles.emptyTitle}>Aucune habitude active</Text>
+              <Text style={styles.emptyTitle}>{t('habits.emptyTitle')}</Text>
               <Text style={styles.emptyDescription}>
-                Créez des habitudes quotidiennes pour suivre vos routines et séries.
+                {t('habits.emptyDesc')}
               </Text>
             </View>
           </GlowCard>
@@ -234,7 +236,7 @@ export default function HabitsListScreen() {
                   tone={item.completedToday ? 'success' : 'neutral'}
                   intensity="soft"
                   onPress={() => router.push(`/habits/${item.habit.id}`)}
-                  accessibilityLabel={`${item.habit.title}${item.completedToday ? ', validée aujourd\'hui' : ''}`}
+                  accessibilityLabel={`${item.habit.title}${item.completedToday ? t('habits.doneTodayA11y') : ''}`}
                 >
                   <View style={styles.habitRow}>
                     <TouchableOpacity
@@ -261,14 +263,14 @@ export default function HabitsListScreen() {
                       ) : null}
                       <Text style={styles.habitFreq}>
                         {item.habit.frequency === 'DAILY'
-                          ? 'Tous les jours'
-                          : `${item.habit.targetDaysPerWeek || 1}x par semaine`}
+                          ? t('habits.everyDay')
+                          : t('habits.timesPerWeek', { count: item.habit.targetDaysPerWeek || 1 })}
                       </Text>
                     </View>
 
                     <View style={styles.streakBadge}>
                       <Ionicons name="flame" size={18} color="#FF9800" />
-                      <Text style={styles.streakText}>{item.currentStreak} j</Text>
+                      <Text style={styles.streakText}>{t('habits.streakDays', { days: item.currentStreak })}</Text>
                     </View>
                   </View>
                 </GlowCard>
@@ -281,7 +283,7 @@ export default function HabitsListScreen() {
         {pausedHabits.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-              En pause ({pausedHabits.length})
+              {t('habits.pausedCount', { count: pausedHabits.length })}
             </Text>
             {pausedHabits.map(item => (
               <GlowCard key={item.habit.id} tone="neutral">
@@ -290,7 +292,7 @@ export default function HabitsListScreen() {
                     <Text style={[styles.habitTitle, { color: palette.onSurface.variant }]}>
                       {item.habit.title}
                     </Text>
-                    <Text style={styles.pausedSub}>Streak conservé ({item.currentStreak} j)</Text>
+                    <Text style={styles.pausedSub}>{t('habits.streakKept', { days: item.currentStreak })}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.resumeBtn}
@@ -298,7 +300,7 @@ export default function HabitsListScreen() {
                     activeOpacity={0.7}
                   >
                     <Ionicons name="play" size={16} color={palette.primary.default} />
-                    <Text style={styles.resumeText}>Reprendre</Text>
+                    <Text style={styles.resumeText}>{t('habits.resume')}</Text>
                   </TouchableOpacity>
                 </View>
               </GlowCard>
@@ -309,7 +311,7 @@ export default function HabitsListScreen() {
 
       {/* FAB 3D Glassmorphism */}
       <GlassFloatingActionButton
-        label="Habitude"
+        label={t('habits.fab')}
         icon="repeat-outline"
         bottomOffset={insets.bottom + 16}
         onPress={() => router.push('/habits/new')}

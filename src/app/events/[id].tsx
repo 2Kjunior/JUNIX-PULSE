@@ -68,7 +68,7 @@ export default function EventDetailScreen() {
       setError(err instanceof Error ? err.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     load();

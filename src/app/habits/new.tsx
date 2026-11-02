@@ -27,8 +27,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { makeFormStyles } from '@/styles/common/form-styles';
+import { useT } from '@/i18n';
 
 export default function NewHabitScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -54,7 +56,7 @@ export default function NewHabitScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setTitleError('Le nom de l\'habitude est requis');
+      setTitleError(t('habitNew.nameRequired'));
       return;
     }
     setTitleError('');
@@ -69,10 +71,10 @@ export default function NewHabitScreen() {
         color,
       });
 
-      showSnackbar(`Habitude "${title.trim()}" créée avec succès`);
+      showSnackbar(t('habitNew.created', { title: title.trim() }));
       router.back();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de créer l\'habitude.');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('habitNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -89,22 +91,22 @@ export default function NewHabitScreen() {
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Annuler"
+          accessibilityLabel={t('form.cancel')}
         >
-          <Text style={formStyles.toolbarCancel}>Annuler</Text>
+          <Text style={formStyles.toolbarCancel}>{t('form.cancel')}</Text>
         </TouchableOpacity>
         <View style={formStyles.toolbarCenter}>
-          <Text style={formStyles.toolbarTitle}>Nouvelle habitude</Text>
-          <Text style={formStyles.toolbarSubtitle}>Discipline & Routine</Text>
+          <Text style={formStyles.toolbarTitle}>{t('habitNew.title')}</Text>
+          <Text style={formStyles.toolbarSubtitle}>{t('habitNew.subtitle')}</Text>
         </View>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Créer l'habitude"
+          accessibilityLabel={t('habitNew.create')}
         >
           <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
-            {saving ? 'Création...' : 'Créer'}
+            {saving ? t('taskNew.creating') : t('taskNew.create')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -119,11 +121,11 @@ export default function NewHabitScreen() {
         <View style={formStyles.cardGroup}>
           <TextInput
             style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
-            placeholder="ex: Méditation 10 min, Boire 2L d'eau..."
+            placeholder={t('habitNew.titlePlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             value={title}
-            onChangeText={t => {
-              setTitle(t);
+            onChangeText={text => {
+              setTitle(text);
               if (titleError) setTitleError('');
             }}
             maxLength={60}
@@ -135,7 +137,7 @@ export default function NewHabitScreen() {
             <Ionicons name="document-text-outline" size={18} color={palette.onSurface.variant} style={formStyles.notesIcon} />
             <TextInput
               style={formStyles.notesInput}
-              placeholder="Pourquoi cette habitude et comment la maintenir..."
+              placeholder={t('habitNew.descPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               value={description}
               onChangeText={setDescription}
@@ -151,7 +153,7 @@ export default function NewHabitScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="repeat-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Rythme & Fréquence</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('habitNew.rhythmHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -174,7 +176,7 @@ export default function NewHabitScreen() {
                   frequency === 'DAILY' && formStyles.chipTextActive,
                 ]}
               >
-                Quotidienne (Tous les jours)
+                {t('habitNew.daily')}
               </Text>
             </TouchableOpacity>
 
@@ -196,7 +198,7 @@ export default function NewHabitScreen() {
                   frequency === 'WEEKLY' && formStyles.chipTextActive,
                 ]}
               >
-                Hebdomadaire
+                {t('habitNew.weekly')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -204,7 +206,7 @@ export default function NewHabitScreen() {
           {/* Jours visés si Hebdomadaire */}
           {frequency === 'WEEKLY' && (
             <View style={styles.daysSelectorContainer}>
-              <Text style={formStyles.fieldSub}>Objectif : {targetDaysPerWeek} jours par semaine</Text>
+              <Text style={formStyles.fieldSub}>{t('habitNew.target', { days: targetDaysPerWeek })}</Text>
               <View style={styles.daysSelector}>
                 {[1, 2, 3, 4, 5, 6].map(num => (
                   <TouchableOpacity
@@ -221,7 +223,7 @@ export default function NewHabitScreen() {
                         targetDaysPerWeek === num && styles.dayPillTextActive,
                       ]}
                     >
-                      {num}j
+                      {t('habitNew.dayShort', { days: num })}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -235,7 +237,7 @@ export default function NewHabitScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="color-palette-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Couleur distinctive</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('habitNew.colorHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -259,7 +261,7 @@ export default function NewHabitScreen() {
         </View>
 
         <Button
-          label="Créer l'habitude"
+          label={t('habitNew.create')}
           onPress={handleSave}
           variant="primary"
           size="lg"

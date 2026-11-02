@@ -19,7 +19,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { GoalUseCases } from '@/use-cases/goal-use-cases';
 import { useAppStore } from '@/store/app-store';
@@ -29,8 +28,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { makeFormStyles } from '@/styles/common/form-styles';
+import { useDateLocale, useT } from '@/i18n';
 
 export default function NewGoalScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -46,7 +48,7 @@ export default function NewGoalScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setTitleError('Le titre de l\'objectif est requis');
+      setTitleError(t('goalNew.titleRequired'));
       return;
     }
     setTitleError('');
@@ -59,10 +61,10 @@ export default function NewGoalScreen() {
         deadline: deadline ? deadline.toISOString() : undefined,
       });
 
-      showSnackbar(`Objectif "${title.trim()}" créé avec succès`);
+      showSnackbar(t('goalNew.created', { title: title.trim() }));
       router.back();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de créer l\'objectif.');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('goalNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -79,22 +81,22 @@ export default function NewGoalScreen() {
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Annuler"
+          accessibilityLabel={t('form.cancel')}
         >
-          <Text style={formStyles.toolbarCancel}>Annuler</Text>
+          <Text style={formStyles.toolbarCancel}>{t('form.cancel')}</Text>
         </TouchableOpacity>
         <View style={formStyles.toolbarCenter}>
-          <Text style={formStyles.toolbarTitle}>Nouvel objectif</Text>
-          <Text style={formStyles.toolbarSubtitle}>Vision & Accomplissement</Text>
+          <Text style={formStyles.toolbarTitle}>{t('goalNew.title')}</Text>
+          <Text style={formStyles.toolbarSubtitle}>{t('goalNew.subtitle')}</Text>
         </View>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Créer l'objectif"
+          accessibilityLabel={t('goalNew.create')}
         >
           <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
-            {saving ? 'Création...' : 'Créer'}
+            {saving ? t('taskNew.creating') : t('taskNew.create')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -109,11 +111,11 @@ export default function NewGoalScreen() {
         <View style={formStyles.cardGroup}>
           <TextInput
             style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
-            placeholder="ex: Lancer mon produit, Courir un marathon..."
+            placeholder={t('goalNew.titlePlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             value={title}
-            onChangeText={t => {
-              setTitle(t);
+            onChangeText={text => {
+              setTitle(text);
               if (titleError) setTitleError('');
             }}
             maxLength={80}
@@ -125,7 +127,7 @@ export default function NewGoalScreen() {
             <Ionicons name="compass-outline" size={18} color={palette.primary.default} style={formStyles.notesIcon} />
             <TextInput
               style={formStyles.notesInput}
-              placeholder="Pourquoi cet objectif compte et quelle est votre stratégie..."
+              placeholder={t('goalNew.descPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               value={description}
               onChangeText={setDescription}
@@ -141,7 +143,7 @@ export default function NewGoalScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="calendar-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Échéance visée</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('goalNew.deadlineHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -154,11 +156,11 @@ export default function NewGoalScreen() {
                 <Ionicons name="flag-outline" size={18} color={palette.primary.default} />
               </View>
               <View>
-                <Text style={formStyles.selectorLabel}>DATE BUTOIR</Text>
+                <Text style={formStyles.selectorLabel}>{t('goalNew.deadlineLabel')}</Text>
                 <Text style={formStyles.selectorValue}>
                   {deadline
-                    ? format(deadline, 'd MMMM yyyy', { locale: fr })
-                    : 'Aucune date limite fixée'}
+                    ? format(deadline, 'd MMMM yyyy', { locale: dateLocale })
+                    : t('goalNew.noDeadline')}
                 </Text>
               </View>
             </View>
@@ -176,7 +178,7 @@ export default function NewGoalScreen() {
         </View>
 
         <Button
-          label="Créer l'objectif"
+          label={t('goalNew.create')}
           onPress={handleSave}
           variant="primary"
           size="lg"
@@ -194,9 +196,9 @@ export default function NewGoalScreen() {
           setDeadline(date);
         }}
         onCancel={() => setShowDatePicker(false)}
-        confirmTextIOS="Confirmer"
-        cancelTextIOS="Annuler"
-        locale="fr_FR"
+        confirmTextIOS={t('personNew.confirm')}
+        cancelTextIOS={t('form.cancel')}
+        locale={dateLocale.code === 'fr' ? 'fr_FR' : 'en_US'}
       />
     </KeyboardAvoidingView>
   );

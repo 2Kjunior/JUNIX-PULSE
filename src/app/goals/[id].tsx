@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { GoalUseCases, GoalDetails } from '@/use-cases/goal-use-cases';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
@@ -33,8 +32,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { useDateLocale, useT } from '@/i18n';
 
 export default function GoalDetailScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -53,21 +55,21 @@ export default function GoalDetailScreen() {
       setError('');
       const data = await GoalUseCases.getGoalWithDetails(id);
       if (!data) {
-        setError('Objectif introuvable.');
+        setError(t('goalDetail.notFound'));
         return;
       }
       setDetails(data);
 
       // Charger toutes les tâches actives pour la liaison
       const allTasks = await TaskRepository.findAllActive();
-      const linkedIds = new Set(data.associatedTasks.map(t => t.id));
-      setAvailableTasks(allTasks.filter(t => !linkedIds.has(t.id)));
+      const linkedIds = new Set(data.associatedTasks.map(task => task.id));
+      setAvailableTasks(allTasks.filter(task => !linkedIds.has(task.id)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur lors de la récupération.');
+      setError(e instanceof Error ? e.message : t('goalDetail.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadData();
@@ -77,11 +79,11 @@ export default function GoalDetailScreen() {
     if (!id) return;
     try {
       await GoalUseCases.linkTask(id, taskId);
-      showSnackbar('Tâche associée à l\'objectif !');
+      showSnackbar(t('goalDetail.linked'));
       setShowTaskPicker(false);
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -89,28 +91,28 @@ export default function GoalDetailScreen() {
     if (!id) return;
     try {
       await GoalUseCases.unlinkTask(id, taskId);
-      showSnackbar(`Tâche "${title}" dissociée.`);
+      showSnackbar(t('goalDetail.unlinked', { title }));
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
   const handleToggleTask = async (taskId: string) => {
     try {
       const newStatus = await TaskUseCases.toggleComplete(taskId);
-      showSnackbar(newStatus === 'COMPLETED' ? 'Tâche terminée !' : 'Tâche rouverte');
+      showSnackbar(newStatus === 'COMPLETED' ? t('goalDetail.taskDone') : t('tasks.reopened'));
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
   const handleDelete = async () => {
     if (!id || !details) return;
     const result = await GoalUseCases.deleteGoal(id);
-    showSnackbar('Objectif supprimé', {
-      actionLabel: 'Annuler (30s)',
+    showSnackbar(t('goalDetail.deleted'), {
+      actionLabel: t('common.undo30'),
       onAction: async () => {
         await result.undo();
         loadData();
@@ -121,11 +123,11 @@ export default function GoalDetailScreen() {
   };
 
   if (loading) {
-    return <LoadingState message="Chargement de l'objectif..." />;
+    return <LoadingState message={t('goalDetail.loading')} />;
   }
 
   if (error || !details) {
-    return <ErrorState message={error || 'Introuvable'} onRetry={loadData} />;
+    return <ErrorState message={error || t('habitDetail.missing')} onRetry={loadData} />;
   }
 
   const { goal, associatedTasks, progress, isOverdue, daysLeft } = details;
@@ -138,7 +140,7 @@ export default function GoalDetailScreen() {
           style={styles.backBtn}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Retour à la liste des objectifs"
+          accessibilityLabel={t('goalDetail.backA11y')}
         >
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
@@ -149,7 +151,7 @@ export default function GoalDetailScreen() {
           style={styles.deleteBtn}
           onPress={handleDelete}
           accessibilityRole="button"
-          accessibilityLabel="Supprimer cet objectif"
+          accessibilityLabel={t('goalDetail.deleteA11y')}
         >
           <Ionicons name="trash-outline" size={22} color={palette.error.default} />
         </TouchableOpacity>
@@ -170,7 +172,7 @@ export default function GoalDetailScreen() {
               <View style={styles.metaItem}>
                 <Ionicons name="calendar-outline" size={16} color={palette.onSurface.variant} />
                 <Text style={styles.metaText}>
-                  {format(new Date(goal.deadline), 'd MMMM yyyy', { locale: fr })}
+                  {format(new Date(goal.deadline), 'd MMMM yyyy', { locale: dateLocale })}
                 </Text>
               </View>
             )}
@@ -182,8 +184,8 @@ export default function GoalDetailScreen() {
                 ]}
               >
                 {isOverdue
-                  ? `Overdue (${Math.abs(daysLeft)} j)`
-                  : `${daysLeft} jours restants`}
+                  ? t('goalDetail.overdue', { days: Math.abs(daysLeft) })
+                  : t('goalDetail.daysLeft', { days: daysLeft })}
               </Text>
             )}
           </View>
@@ -194,7 +196,7 @@ export default function GoalDetailScreen() {
         <View style={styles.progressCardSpacing}>
         <GlowCard tone={progress === 100 ? 'success' : 'neutral'}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Progression globale</Text>
+            <Text style={styles.progressTitle}>{t('goalDetail.progress')}</Text>
             <Text style={styles.progressPercent}>
               {progress !== null ? `${progress}%` : '—'}
             </Text>
@@ -215,14 +217,14 @@ export default function GoalDetailScreen() {
           {progress === 100 && (
             <View style={styles.completedBadge}>
               <Ionicons name="trophy-outline" size={16} color={palette.success.default} />
-              <Text style={styles.completedBadgeText}>Objectif accompli à 100% !</Text>
+              <Text style={styles.completedBadgeText}>{t('goalDetail.complete')}</Text>
             </View>
           )}
 
           <Text style={styles.progressSub}>
             {associatedTasks.length > 0
-              ? `${associatedTasks.filter(t => t.status === 'COMPLETED').length} / ${associatedTasks.length} tâches terminées`
-              : 'Aucune tâche associée. Associez des tâches pour calculer la progression.'}
+              ? t('goalDetail.tasksDone', { done: associatedTasks.filter(task => task.status === 'COMPLETED').length, total: associatedTasks.length })
+              : t('goalDetail.noTasks')}
           </Text>
         </GlowCard>
         </View>
@@ -231,37 +233,37 @@ export default function GoalDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              Tâches associées ({associatedTasks.length})
+              {t('goalDetail.tasksLinked', { count: associatedTasks.length })}
             </Text>
             <TouchableOpacity
               style={styles.linkBtn}
               onPress={() => setShowTaskPicker(!showTaskPicker)}
               accessibilityRole="button"
-              accessibilityLabel="Lier une tâche à cet objectif"
+              accessibilityLabel={t('goalDetail.linkA11y')}
             >
               <Ionicons name="add" size={18} color={palette.primary.default} />
-              <Text style={styles.linkBtnText}>Lier une tâche</Text>
+              <Text style={styles.linkBtnText}>{t('goalDetail.link')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* Picker de tâches à lier */}
           {showTaskPicker && (
             <View style={styles.pickerBox}>
-              <Text style={styles.pickerTitle}>Sélectionnez une tâche à lier :</Text>
+              <Text style={styles.pickerTitle}>{t('goalDetail.pick')}</Text>
               {availableTasks.length === 0 ? (
                 <Text style={styles.pickerEmpty}>
-                  Toutes vos tâches sont déjà liées ou aucune tâche disponible.
+                  {t('goalDetail.pickEmpty')}
                 </Text>
               ) : (
-                availableTasks.map(t => (
+                availableTasks.map(task => (
                   <TouchableOpacity
-                    key={t.id}
+                    key={task.id}
                     style={styles.pickerItem}
-                    onPress={() => handleLinkTask(t.id)}
+                    onPress={() => handleLinkTask(task.id)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Associer la tâche ${t.title}`}
+                    accessibilityLabel={t('goalDetail.linkTaskA11y', { title: task.title })}
                   >
-                    <Text style={styles.pickerItemText}>{t.title}</Text>
+                    <Text style={styles.pickerItemText}>{task.title}</Text>
                     <Ionicons name="link" size={18} color={palette.primary.default} />
                   </TouchableOpacity>
                 ))
@@ -272,44 +274,44 @@ export default function GoalDetailScreen() {
           {/* Liste des tâches liées */}
           {associatedTasks.length === 0 ? (
             <Text style={styles.emptyText}>
-              Aucune tâche liée pour le moment. Cliquez sur "Lier une tâche" pour lier une tâche existante à cet objectif.
+              {t('goalDetail.emptyTasks')}
             </Text>
           ) : (
-            associatedTasks.map(t => (
-              <View key={t.id} style={styles.taskCardSpacing}>
+            associatedTasks.map(task => (
+              <View key={task.id} style={styles.taskCardSpacing}>
               <GlowCard tone="neutral">
                 <View style={styles.taskRow}>
                   <TouchableOpacity
-                    onPress={() => handleToggleTask(t.id)}
+                    onPress={() => handleToggleTask(task.id)}
                     style={styles.taskCheckBtn}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="checkbox"
-                    accessibilityState={{ checked: t.status === 'COMPLETED' }}
-                    accessibilityLabel={t.status === 'COMPLETED' ? `Marquer la tâche ${t.title} non terminée` : `Marquer la tâche ${t.title} terminée`}
+                    accessibilityState={{ checked: task.status === 'COMPLETED' }}
+                    accessibilityLabel={task.status === 'COMPLETED' ? t('goalDetail.markUndoneA11y', { title: task.title }) : t('goalDetail.markDoneA11y', { title: task.title })}
                   >
                     <Ionicons
                       name={
-                        t.status === 'COMPLETED'
+                        task.status === 'COMPLETED'
                           ? 'checkmark-circle'
                           : 'ellipse-outline'
                       }
                       size={22}
-                      color={t.status === 'COMPLETED' ? palette.success.default : palette.onSurface.disabled}
+                      color={task.status === 'COMPLETED' ? palette.success.default : palette.onSurface.disabled}
                     />
                   </TouchableOpacity>
                   <Text
                     style={[
                       styles.taskTitle,
-                      t.status === 'COMPLETED' && { textDecorationLine: 'line-through', opacity: 0.7 },
+                      task.status === 'COMPLETED' && { textDecorationLine: 'line-through', opacity: 0.7 },
                     ]}
-                    onPress={() => handleToggleTask(t.id)}
+                    onPress={() => handleToggleTask(task.id)}
                   >
-                    {t.title}
+                    {task.title}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => handleUnlinkTask(t.id, t.title)}
+                    onPress={() => handleUnlinkTask(task.id, task.title)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Dissocier la tâche ${t.title} de cet objectif`}
+                    accessibilityLabel={t('goalDetail.unlinkA11y', { title: task.title })}
                   >
                     <Ionicons name="unlink-outline" size={20} color={palette.onSurface.disabled} />
                   </TouchableOpacity>

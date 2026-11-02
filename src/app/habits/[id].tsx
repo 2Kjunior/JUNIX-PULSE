@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, subDays, isSameDay } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
 import { useAppStore } from '@/store/app-store';
@@ -30,8 +29,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { useDateLocale, useT } from '@/i18n';
 
 export default function HabitDetailScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -48,16 +50,16 @@ export default function HabitDetailScreen() {
       setError('');
       const data = await HabitUseCases.getHabitWithStats(id);
       if (!data) {
-        setError('Habitude introuvable.');
+        setError(t('habitDetail.notFound'));
         return;
       }
       setStats(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur lors de la récupération de l\'habitude.');
+      setError(e instanceof Error ? e.message : t('habitDetail.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadData();
@@ -69,7 +71,7 @@ export default function HabitDetailScreen() {
       await HabitUseCases.toggleHabitCompletion(id, dateStr);
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -78,16 +80,16 @@ export default function HabitDetailScreen() {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
     Alert.alert(
-      'Mettre en pause',
-      'Une habitude en pause conserve son streak actif. Les jours de pause ne comptent ni comme succès ni comme échec.',
+      t('habitDetail.pause'),
+      t('habitDetail.pauseBody'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('form.cancel'), style: 'cancel' },
         {
-          text: 'Mettre en pause',
+          text: t('habitDetail.pause'),
           style: 'default',
           onPress: async () => {
             await HabitUseCases.pauseHabit(id, todayStr, undefined, 'Pause utilisateur');
-            showSnackbar('Habitude mise en pause');
+            showSnackbar(t('habitDetail.paused'));
             loadData();
           },
         },
@@ -99,18 +101,18 @@ export default function HabitDetailScreen() {
     if (!id) return;
     try {
       await HabitUseCases.resumeHabit(id);
-      showSnackbar('Habitude reprise avec succès !');
+      showSnackbar(t('habitDetail.resumed'));
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
   const handleDelete = async () => {
     if (!id || !stats) return;
     const result = await HabitUseCases.deleteHabit(id);
-    showSnackbar('Habitude supprimée', {
-      actionLabel: 'Annuler (30s)',
+    showSnackbar(t('habitDetail.deleted'), {
+      actionLabel: t('common.undo30'),
       onAction: async () => {
         await result.undo();
         loadData();
@@ -121,11 +123,11 @@ export default function HabitDetailScreen() {
   };
 
   if (loading) {
-    return <LoadingState message="Chargement du détail..." />;
+    return <LoadingState message={t('habitDetail.loading')} />;
   }
 
   if (error || !stats) {
-    return <ErrorState message={error || 'Introuvable'} onRetry={loadData} />;
+    return <ErrorState message={error || t('habitDetail.missing')} onRetry={loadData} />;
   }
 
   // Générer les 14 derniers jours pour le calendrier
@@ -136,8 +138,8 @@ export default function HabitDetailScreen() {
     return {
       date: day,
       dateStr,
-      dayLabel: format(day, 'dd', { locale: fr }),
-      weekDayLabel: format(day, 'EEEEEE', { locale: fr }),
+      dayLabel: format(day, 'dd', { locale: dateLocale }),
+      weekDayLabel: format(day, 'EEEEEE', { locale: dateLocale }),
       isToday: isSameDay(day, new Date()),
       isCompleted,
     };
@@ -170,11 +172,11 @@ export default function HabitDetailScreen() {
           <View style={styles.badgeRow}>
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>
-                {stats.habit.status === 'PAUSED' ? 'En pause' : 'Active'}
+                {stats.habit.status === 'PAUSED' ? t('habitDetail.statusPaused') : t('habitDetail.statusActive')}
               </Text>
             </View>
             <Text style={styles.freqTag}>
-              {stats.habit.frequency === 'DAILY' ? 'Quotidienne' : 'Hebdomadaire'}
+              {stats.habit.frequency === 'DAILY' ? t('habitDetail.daily') : t('habitNew.weekly')}
             </Text>
           </View>
         </GlowCard>
@@ -186,7 +188,7 @@ export default function HabitDetailScreen() {
             <View style={styles.streakBoxInner}>
               <Ionicons name="flame" size={28} color="#FF9800" />
               <Text style={styles.streakVal}>{stats.currentStreak}</Text>
-              <Text style={styles.streakLabel}>Série actuelle (jours)</Text>
+              <Text style={styles.streakLabel}>{t('habitDetail.currentStreak')}</Text>
             </View>
           </GlowCard>
 
@@ -194,14 +196,14 @@ export default function HabitDetailScreen() {
             <View style={styles.streakBoxInner}>
               <Ionicons name="trophy" size={28} color={palette.primary.default} />
               <Text style={styles.streakVal}>{stats.bestStreak}</Text>
-              <Text style={styles.streakLabel}>Meilleure série</Text>
+              <Text style={styles.streakLabel}>{t('habitDetail.bestStreak')}</Text>
             </View>
           </GlowCard>
         </View>
 
         {/* Historique 14 derniers jours */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Historique des 14 derniers jours</Text>
+          <Text style={styles.sectionTitle}>{t('habitDetail.history')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.historyRow}>
             {last14Days.map(d => (
               <TouchableOpacity
@@ -232,14 +234,14 @@ export default function HabitDetailScreen() {
 
         {/* Actions (Pause / Reprise) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gestion de la routine</Text>
+          <Text style={styles.sectionTitle}>{t('habitDetail.manage')}</Text>
           {stats.habit.status === 'PAUSED' ? (
             <GlowCard tone="neutral" onPress={handleResume}>
               <View style={styles.actionRowInner}>
                 <Ionicons name="play" size={22} color={palette.primary.default} />
                 <View style={styles.actionTextCol}>
-                  <Text style={styles.actionTitle}>Reprendre l'habitude</Text>
-                  <Text style={styles.actionDesc}>Réactiver la validation quotidienne.</Text>
+                  <Text style={styles.actionTitle}>{t('habitDetail.resume')}</Text>
+                  <Text style={styles.actionDesc}>{t('habitDetail.resumeDesc')}</Text>
                 </View>
               </View>
             </GlowCard>
@@ -248,8 +250,8 @@ export default function HabitDetailScreen() {
               <View style={styles.actionRowInner}>
                 <Ionicons name="pause" size={22} color="#FF9800" />
                 <View style={styles.actionTextCol}>
-                  <Text style={styles.actionTitle}>Mettre en pause</Text>
-                  <Text style={styles.actionDesc}>Garder votre streak intact pendant les vacances.</Text>
+                  <Text style={styles.actionTitle}>{t('habitDetail.pause')}</Text>
+                  <Text style={styles.actionDesc}>{t('habitDetail.pauseDesc')}</Text>
                 </View>
               </View>
             </GlowCard>
