@@ -2,7 +2,7 @@
   "expo": {
     "name": "Junix Pulse",
     "slug": "junix-pulse",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "junixpulse",
@@ -21,7 +21,8 @@
       "allowBackup": false,
       "permissions": [
         "android.permission.READ_CONTACTS",
-        "android.permission.SCHEDULE_EXACT_ALARM"
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_BIOMETRIC"
       ],
       "blockedPermissions": [
         "android.permission.WRITE_CONTACTS",
@@ -52,7 +53,9 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#8B5CF6",
-          "sounds": ["./assets/sounds/junix_pulse_notification.wav"],
+          "sounds": [
+            "./assets/sounds/junix_pulse_notification.wav"
+          ],
           "androidChannels": [
             {
               "name": "junix-pulse-reminders-v2",
@@ -66,8 +69,6 @@
           ]
         }
       ],
-      "expo-image",
-      "expo-web-browser",
       [
         "expo-contacts",
         {
@@ -88,7 +89,8 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

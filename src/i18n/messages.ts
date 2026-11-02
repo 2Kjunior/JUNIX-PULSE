@@ -106,6 +106,11 @@ const fr = {
   'common.back': 'Retour',
   'common.continue': 'Continuer',
   'common.cancel': 'Annuler',
+  'error.crashTitle': 'Un problème est survenu',
+  'error.crashBody': 'Cet écran n’a pas pu s’afficher. Vos données ne sont pas touchées.',
+  'error.startTitle': 'Impossible de démarrer',
+  'error.startBody': 'L’application n’a pas pu ouvrir ses données.',
+  'error.retry': 'Réessayer',
   'common.hourShort': '{hour}h',
 
   // ─── Onboarding : bienvenue ───
@@ -622,6 +627,11 @@ const en: Record<MessageKey, string> = {
   'common.back': 'Back',
   'common.continue': 'Continue',
   'common.cancel': 'Cancel',
+  'error.crashTitle': 'Something went wrong',
+  'error.crashBody': 'This screen could not be displayed. Your data is not affected.',
+  'error.startTitle': 'Unable to start',
+  'error.startBody': 'The app could not open its data.',
+  'error.retry': 'Try again',
   'common.hourShort': '{hour}:00',
 
   'welcome.skipA11y': 'Skip the onboarding',

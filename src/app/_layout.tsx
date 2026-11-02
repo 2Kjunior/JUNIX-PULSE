@@ -20,18 +20,20 @@ import {
     useFonts,
 } from "@expo-google-fonts/inter";
 import { Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useSegments, type Href } from "expo-router";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useSegments, type ErrorBoundaryProps, type Href } from "expo-router";
 import type { NotificationResponse } from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useEffect, useState } from "react";
-import { Alert, Appearance, AppState, LogBox, StyleSheet, Text, View } from "react-native";
+import { Alert, Appearance, AppState, LogBox, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { ErrorScreen } from "@/components/feedback/ErrorScreen";
 import { Snackbar } from "@/components/feedback/Snackbar";
-import { t as tNow } from "@/i18n";
+import { t as tNow, useT } from "@/i18n";
+import { logger } from "@/utils/logger";
 import { AmbientBackground } from "@/components/ui/AmbientBackground";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
@@ -71,6 +73,36 @@ const TRANSPARENT_DARK_THEME = {
   colors: { ...DarkTheme.colors, background: "transparent" },
 };
 
+/** A screen that crashes must not close the app: Expo Router shows this instead. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const t = useT();
+
+  useEffect(() => {
+    logger.error("[RootLayout] Écran en erreur", error);
+  }, [error]);
+
+  return (
+    <ErrorScreen
+      title={t("error.crashTitle")}
+      body={t("error.crashBody")}
+      detail={error.message}
+      onRetry={retry}
+    />
+  );
+}
+
+function StartupError({ detail, onRetry }: { detail: string; onRetry: () => void }) {
+  const t = useT();
+  return (
+    <ErrorScreen
+      title={t("error.startTitle")}
+      body={t("error.startBody")}
+      detail={detail}
+      onRetry={onRetry}
+    />
+  );
+}
+
 function openNotification(response: NotificationResponse) {
   const route = notificationRoute(response.notification.request.content.data);
   if (route) router.push(route as Href);
@@ -107,6 +139,7 @@ export default function RootLayout() {
   const [splashFinished, setSplashFinished] = useState(false);
   // Le splash animé n'est monté qu'après la décision (jamais de clignotement à la reprise de session)
   const [splashPlaying, setSplashPlaying] = useState(false);
+  const [startAttempt, setStartAttempt] = useState(0);
 
   useEffect(() => {
     // Option A : Masquer le splash natif une fois que les polices ET la base sont prêtes (DEF-06)
@@ -145,15 +178,17 @@ export default function RootLayout() {
         //    Isolé pour ne jamais bloquer le démarrage si expo-notifications est limité dans Expo Go
         try {
           await NotificationService.initialize();
-        } catch {
-          // Ignoré silencieusement en environnement Expo Go sans push
+        } catch (error) {
+          // Ne bloque pas le démarrage, par exemple dans Expo Go sans push
+          logger.warn("[RootLayout] Notifications non initialisées", error);
         }
 
         // 4. Réconcilier les rappels récurrents en retard (DEF-03)
         try {
           await reconcileOverdueRecurringReminders();
-        } catch {
-          // Tolérance aux erreurs de réconciliation
+        } catch (error) {
+          // Ne bloque pas le démarrage : la réconciliation repasse au retour dans l'application
+          logger.error("[RootLayout] Réconciliation des rappels impossible", error);
         }
 
         setDbReady(true);
@@ -168,7 +203,7 @@ export default function RootLayout() {
     }
 
     initialize();
-  }, [appReady]);
+  }, [appReady, startAttempt]);
 
   // Synchroniser le thème avec les composants natifs et l'arrière-plan système
   useEffect(() => {
@@ -308,10 +343,13 @@ export default function RootLayout() {
   if (dbError) {
     return (
       <>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Impossible de démarrer</Text>
-          <Text style={styles.errorMessage}>{dbError}</Text>
-        </View>
+        <StartupError
+          detail={dbError}
+          onRetry={() => {
+            setDbError(null);
+            setStartAttempt((attempt) => attempt + 1);
+          }}
+        />
         {splashOverlay}
       </>
     );
@@ -404,25 +442,5 @@ const makeRootLayoutStyles = (theme: ThemePalette) =>
     root: {
       flex: 1,
       backgroundColor: theme.surface.base,
-    },
-    errorContainer: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 32,
-      backgroundColor: theme.surface.base,
-    },
-    errorTitle: {
-      fontSize: 20,
-      fontWeight: "600",
-      color: theme.onSurface.primary,
-      marginBottom: 12,
-      textAlign: "center",
-    },
-    errorMessage: {
-      fontSize: 14,
-      color: theme.onSurface.variant,
-      textAlign: "center",
-      lineHeight: 20,
     },
   });

@@ -10,6 +10,7 @@
  */
 
 import * as SQLite from 'expo-sqlite';
+import { logger } from '../utils/logger';
 import { MIGRATIONS } from './migrations';
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -35,7 +36,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   await db.runAsync(
     `INSERT OR IGNORE INTO settings (id, timezone, created_at, updated_at)
      VALUES ('1', 'UTC', datetime('now'), datetime('now'))`
-  ).catch(() => {});
+  ).catch(error => logger.error('[Database] Ligne de réglages non créée', error));
 
   dbInstance = db;
   return dbInstance;

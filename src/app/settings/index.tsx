@@ -326,71 +326,69 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Section Apparence (D-08: visible en mode DEV) */}
-      {(__DEV__ || true) && (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('settingsScreen.appearance')}</Text>
-          <View
-            style={styles.segmentedControl}
-            accessibilityRole="radiogroup"
-            accessibilityLabel={t('settingsScreen.appearanceA11y')}
-          >
-            {APPEARANCE_OPTIONS.map((opt) => {
-              const selected = (settings.appearanceMode ?? themeMode) === opt.value;
-              return (
-                <TouchableOpacity
-                  key={opt.value}
+      {/* Section Apparence */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>{t('settingsScreen.appearance')}</Text>
+        <View
+          style={styles.segmentedControl}
+          accessibilityRole="radiogroup"
+          accessibilityLabel={t('settingsScreen.appearanceA11y')}
+        >
+          {APPEARANCE_OPTIONS.map((opt) => {
+            const selected = (settings.appearanceMode ?? themeMode) === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.segmentBtn,
+                  selected && styles.segmentBtnActive,
+                ]}
+                onPress={() => handleSelectAppearance(opt.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`${t(opt.labelKey)}${selected ? t('settingsScreen.selectedSuffix') : ''}`}
+              >
+                <Ionicons
+                  name={opt.icon}
+                  size={16}
+                  color={selected ? palette.primary.on : palette.onSurface.variant}
+                  style={{ marginRight: 6 }}
+                />
+                <Text
                   style={[
-                    styles.segmentBtn,
-                    selected && styles.segmentBtnActive,
+                    styles.segmentText,
+                    selected && styles.segmentTextActive,
                   ]}
-                  onPress={() => handleSelectAppearance(opt.value)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${t(opt.labelKey)}${selected ? t('settingsScreen.selectedSuffix') : ''}`}
                 >
-                  <Ionicons
-                    name={opt.icon}
-                    size={16}
-                    color={selected ? palette.primary.on : palette.onSurface.variant}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.segmentText,
-                      selected && styles.segmentTextActive,
-                    ]}
-                  >
-                    {t(opt.labelKey)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                  {t(opt.labelKey)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-          <Text style={styles.appearanceHelp}>
-            {t('settingsScreen.appearanceHelp')}
-          </Text>
+        <Text style={styles.appearanceHelp}>
+          {t('settingsScreen.appearanceHelp')}
+        </Text>
 
-          {/* Mini aperçu en direct avec GlowCard */}
-          <View style={styles.previewContainer}>
-            <GlowCard tone="primary" intensity="soft" size="list">
-              <View style={styles.previewCardInner}>
+        {/* Mini aperçu en direct avec GlowCard */}
+        <View style={styles.previewContainer}>
+          <GlowCard tone="primary" intensity="soft" size="list">
+            <View style={styles.previewCardInner}>
 
-                <View style={styles.previewHeader}>
-                  <Ionicons name="sparkles" size={16} color={palette.primary.default} />
-                  <Text style={styles.previewTitle}>
-                    {t('settingsScreen.preview')}
-                  </Text>
-                </View>
-                <Text style={styles.previewDesc}>
-                  {t('settingsScreen.themeActive', { mode: t(palette.mode === 'light' ? 'settingsScreen.light' : 'settingsScreen.dark') })}
+              <View style={styles.previewHeader}>
+                <Ionicons name="sparkles" size={16} color={palette.primary.default} />
+                <Text style={styles.previewTitle}>
+                  {t('settingsScreen.preview')}
                 </Text>
               </View>
-            </GlowCard>
-          </View>
+              <Text style={styles.previewDesc}>
+                {t('settingsScreen.themeActive', { mode: t(palette.mode === 'light' ? 'settingsScreen.light' : 'settingsScreen.dark') })}
+              </Text>
+            </View>
+          </GlowCard>
         </View>
-      )}
+      </View>
 
       {/* Section Horaires des briefings */}
       <View style={styles.section}>

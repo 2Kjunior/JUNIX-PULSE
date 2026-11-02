@@ -4,6 +4,23 @@ Toutes les modifications notables apportées à ce projet sont documentées dans
 
 ---
 
+## [Non publié]
+
+### Fiabilité des rappels
+- Synchronisation unique entre les rappels et les notifications du téléphone, avec 14 occurrences planifiées à l'avance pour les récurrences et l'autorisation d'alarmes exactes sur Android.
+
+### Sécurité
+- Clé biométrique du Sanctuaire protégée par le système, titres et dossiers chiffrés, changement de PIN transactionnel, scrypt à N=32768, captures d'écran bloquées, permissions réduites et sauvegarde cloud Android désactivée.
+- Les sauvegardes permettent désormais de rouvrir le Sanctuaire sur un nouveau téléphone.
+
+### Design et récap
+- Cartes, navigation et boutons en verre liquide, et notification quotidienne du résumé et du bilan.
+
+### Qualité
+- Tests lancés par la CI, écran d'erreur avec réessai, code et dépendances inutilisés retirés.
+
+---
+
 ## [1.1.0] - 2026-10-21
 
 ### ⏱️ Module Focus Timer / Pomodoro

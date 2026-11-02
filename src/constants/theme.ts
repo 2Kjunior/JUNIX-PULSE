@@ -200,22 +200,6 @@ export const GlowCardTokens = {
   },
 } as const;
 
-// ─── Glassmorphism — deux niveaux, hiérarchie stricte ────────────────────────
-// glass-card : cartes de contenu standard
-// glass-nav  : navigation flottante, modales (niveau élevé)
-export const Glass = {
-  card: {
-    backgroundColor: 'rgba(17, 19, 26, 0.75)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.07)',
-  },
-  nav: {
-    backgroundColor: 'rgba(12, 14, 21, 0.88)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-  },
-} as const;
-
 // ─── Ombres (légères, performantes) ─────────────────────────────────────────
 export const Shadow = {
   sm: {

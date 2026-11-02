@@ -8,7 +8,7 @@ on:
 
 jobs:
   verify:
-    name: Typecheck & Lint
+    name: Typecheck, Lint & Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,6 @@ jobs:
 
       - name: Run ESLint
         run: npx expo lint
+
+      - name: Run tests
+        run: npx jest --ci --maxWorkers=2
