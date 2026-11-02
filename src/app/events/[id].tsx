@@ -16,7 +16,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, differenceInMinutes } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { EventRepository } from '@/repositories/event-repository';
 import { EventUseCases } from '@/use-cases/event-use-cases';
@@ -28,10 +27,13 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
+import { useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
 export default function EventDetailScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -45,7 +47,7 @@ export default function EventDetailScreen() {
 
   const load = useCallback(async () => {
     if (!id) {
-      setError('ID manquant');
+      setError(t('person.missingId'));
       setScreenState('error');
       return;
     }
@@ -55,7 +57,7 @@ export default function EventDetailScreen() {
         EventRepository.findEventPersons(id),
       ]);
       if (!e) {
-        setError('Événement introuvable');
+        setError(t('eventDetail.notFound'));
         setScreenState('error');
         return;
       }
@@ -63,7 +65,7 @@ export default function EventDetailScreen() {
       setAssociatedPersons(persons);
       setScreenState('content');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de chargement');
+      setError(err instanceof Error ? err.message : t('common.loadError'));
       setScreenState('error');
     }
   }, [id]);
@@ -75,17 +77,17 @@ export default function EventDetailScreen() {
   async function handleDelete() {
     if (!event) return;
     Alert.alert(
-      'Supprimer cet événement ?',
-      'Vous pourrez annuler cette action pendant 30 secondes.',
+      t('eventDetail.deleteTitle'),
+      t('eventDetail.deleteBody'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('form.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             await EventUseCases.deleteEvent(event.id);
-            showSnackbar('Événement supprimé', {
-              actionLabel: 'Annuler (30s)',
+            showSnackbar(t('eventDetail.deleted'), {
+              actionLabel: t('common.undo30'),
               onAction: async () => {
                 await EventUseCases.undoDelete(event.id);
                 load();
@@ -108,8 +110,10 @@ export default function EventDetailScreen() {
 
   const durationLabel =
     durationMins >= 60
-      ? `${Math.floor(durationMins / 60)}h${durationMins % 60 > 0 ? ` ${durationMins % 60}m` : ''}`
-      : `${durationMins} min`;
+      ? durationMins % 60 > 0
+        ? t('eventDetail.hoursMinutes', { hours: Math.floor(durationMins / 60), minutes: durationMins % 60 })
+        : t('eventDetail.hours', { hours: Math.floor(durationMins / 60) })
+      : t('tasks.minutes', { minutes: durationMins });
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -119,7 +123,7 @@ export default function EventDetailScreen() {
           style={styles.headerBtn}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
@@ -130,7 +134,7 @@ export default function EventDetailScreen() {
           style={styles.headerBtn}
           onPress={handleDelete}
           accessibilityRole="button"
-          accessibilityLabel="Supprimer l'événement"
+          accessibilityLabel={t('eventDetail.deleteA11y')}
         >
           <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
@@ -157,7 +161,7 @@ export default function EventDetailScreen() {
                   { color: event.type === 'BUSY' ? theme.primary.onContainer : theme.tertiary.default },
                 ]}
               >
-                {event.type === 'BUSY' ? 'Occupé' : 'Libre'}
+                {event.type === 'BUSY' ? t('calendar.busy') : t('calendar.free')}
               </Text>
             </View>
           </View>
@@ -167,10 +171,10 @@ export default function EventDetailScreen() {
             <Ionicons name="calendar-outline" size={20} color={theme.primary.default} />
             <View>
               <Text style={styles.infoTitle}>
-                {format(startD, 'EEEE d MMMM yyyy', { locale: fr })}
+                {format(startD, 'EEEE d MMMM yyyy', { locale: dateLocale })}
               </Text>
               <Text style={styles.infoSub}>
-                {format(startD, 'HH:mm', { locale: fr })} ➔ {format(endD, 'HH:mm', { locale: fr })}{' '}
+                {format(startD, 'HH:mm', { locale: dateLocale })} ➔ {format(endD, 'HH:mm', { locale: dateLocale })}{' '}
                 ({durationLabel})
               </Text>
             </View>
@@ -181,7 +185,7 @@ export default function EventDetailScreen() {
             <View style={styles.infoRow}>
               <Ionicons name="car-outline" size={20} color={theme.tertiary.default} />
               <Text style={styles.infoTitle}>
-                Marge de trajet : {event.travelBufferMinutes} min avant
+                {t('eventDetail.travel', { minutes: event.travelBufferMinutes })}
               </Text>
             </View>
           )}
@@ -198,12 +202,12 @@ export default function EventDetailScreen() {
                 )
               }
               accessibilityRole="button"
-              accessibilityLabel={`Ouvrir le lieu ${event.location} dans Google Maps`}
+              accessibilityLabel={t('eventDetail.openMapsA11y', { place: event.location })}
             >
               <Ionicons name="location-outline" size={20} color={theme.primary.default} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoTitle}>{event.location}</Text>
-                <Text style={styles.linkSub}>Ouvrir dans Maps ↗</Text>
+                <Text style={styles.linkSub}>{t('eventDetail.openMaps')}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -211,7 +215,7 @@ export default function EventDetailScreen() {
           {/* Notes */}
           {!!event.notes && (
             <View style={styles.notesBox}>
-              <Text style={styles.notesTitle}>Notes :</Text>
+              <Text style={styles.notesTitle}>{t('eventDetail.notes')}</Text>
               <Text style={styles.notesText}>{event.notes}</Text>
             </View>
           )}
@@ -221,9 +225,7 @@ export default function EventDetailScreen() {
         {/* Personnes associées */}
         {associatedPersons.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Personnes associées ({associatedPersons.length})
-            </Text>
+            <Text style={styles.sectionTitle}>{t('eventDetail.people', { count: associatedPersons.length })}</Text>
             {associatedPersons.map(p => {
               const initials = p.displayName
                 .split(' ')
@@ -238,7 +240,7 @@ export default function EventDetailScreen() {
                   style={styles.personRow}
                   onPress={() => router.push({ pathname: '/people/[id]', params: { id: p.id } })}
                   accessibilityRole="button"
-                  accessibilityLabel={`Voir le contact ${p.displayName}${p.relationship ? `, relation : ${p.relationship}` : ''}`}
+                  accessibilityLabel={`${t('eventDetail.viewContactA11y', { name: p.displayName })}${p.relationship ? t('eventDetail.relationA11y', { relation: p.relationship }) : ''}`}
                 >
                   <View style={styles.personAvatar}>
                     <Text style={styles.personAvatarText}>{initials}</Text>

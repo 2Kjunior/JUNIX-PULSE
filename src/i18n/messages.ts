@@ -6,6 +6,9 @@
  * Keys are grouped by screen or by part of the app: `area.what`.
  */
 
+import { REST_EN } from './messages-rest-en';
+import { REST_FR } from './messages-rest-fr';
+
 const fr = {
   // ─── Barre d'onglets ───
   'tab.home': 'Accueil',
@@ -526,6 +529,8 @@ const fr = {
   'taskDetail.addSubtaskPlaceholder': 'Ajouter une sous-tâche...',
   'taskDetail.addSubtaskA11y': 'Ajouter la sous-tâche',
   'taskDetail.saveChanges': 'Enregistrer les modifications',
+  // Texts of the remaining screens, kept in their own file
+  ...REST_FR,
 } as const;
 
 export type MessageKey = keyof typeof fr;
@@ -1024,6 +1029,7 @@ const en: Record<MessageKey, string> = {
   'taskDetail.addSubtaskPlaceholder': 'Add a subtask...',
   'taskDetail.addSubtaskA11y': 'Add the subtask',
   'taskDetail.saveChanges': 'Save changes',
+  ...REST_EN,
 };
 
 export const MESSAGES: Readonly<Record<'fr' | 'en', Readonly<Record<MessageKey, string>>>> = { fr, en };

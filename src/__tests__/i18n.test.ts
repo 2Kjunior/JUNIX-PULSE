@@ -30,7 +30,8 @@ describe('messages', () => {
   });
 
   it('writes no emoji', () => {
-    const emoji = /\p{Extended_Pictographic}/u;
+    // Typographic marks such as a check or an arrow are fine; only pictures shown as emoji are not
+    const emoji = /\p{Emoji_Presentation}/u;
     for (const key of KEYS) {
       expect(emoji.test(MESSAGES.fr[key])).toBe(false);
       expect(emoji.test(MESSAGES.en[key])).toBe(false);

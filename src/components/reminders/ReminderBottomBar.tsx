@@ -11,6 +11,7 @@ import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { makeReminderDetailStyles } from '@/styles/reminders/reminder-detail-styles';
+import { useT } from '@/i18n';
 
 interface ReminderBottomBarProps {
   insetsBottom: number;
@@ -25,6 +26,7 @@ export function ReminderBottomBar({
   onComplete,
   onDelete,
 }: ReminderBottomBarProps) {
+  const t = useT();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(makeReminderDetailStyles);
   const reduceTransparency = useReduceTransparency();
@@ -48,26 +50,26 @@ export function ReminderBottomBar({
       )}
       <GlassActionButton
         icon="alarm-outline"
-        label="Reporter"
+        label={t('bottomBar.snooze')}
         color={theme.tertiary.default}
         onPress={onSnooze}
-        accessibilityLabel="Reporter ce rappel"
+        accessibilityLabel={t('bottomBar.snoozeA11y')}
         style={styles.bottomBtn}
       />
       <GlassActionButton
         icon="checkmark-circle-outline"
-        label="Terminer"
+        label={t('tasks.complete')}
         color={theme.success.default}
         onPress={onComplete}
-        accessibilityLabel="Marquer le rappel comme terminé"
+        accessibilityLabel={t('reminders.markDoneA11y')}
         style={styles.bottomBtn}
       />
       <GlassActionButton
         icon="trash-outline"
-        label="Supprimer"
+        label={t('common.delete')}
         color={theme.error.default}
         onPress={onDelete}
-        accessibilityLabel="Supprimer ce rappel"
+        accessibilityLabel={t('bottomBar.deleteA11y')}
         style={styles.bottomBtn}
       />
     </View>

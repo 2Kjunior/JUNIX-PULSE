@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { updateReminder } from '@/use-cases/reminder-use-cases';
@@ -30,27 +29,31 @@ import { Spacing } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { makeEditReminderStyles } from '@/styles/reminders/edit-reminder-styles';
+import { MessageKey, useDateLocale, useLanguage, useT } from '@/i18n';
 
 type PriorityKey = Reminder['priority'];
 type ActionType = Reminder['actionType'];
 
-const PRIORITY_OPTIONS: { key: PriorityKey; label: string }[] = [
-  { key: 'LOW', label: 'Faible' },
-  { key: 'NORMAL', label: 'Normal' },
-  { key: 'HIGH', label: 'Haute' },
-  { key: 'URGENT', label: 'Urgent' },
+const PRIORITY_OPTIONS: { key: PriorityKey; labelKey: MessageKey }[] = [
+  { key: 'LOW', labelKey: 'form.priority.low' },
+  { key: 'NORMAL', labelKey: 'remNew.priority.normal' },
+  { key: 'HIGH', labelKey: 'priority.high' },
+  { key: 'URGENT', labelKey: 'priority.urgent' },
 ];
 
-const ACTION_OPTIONS: { key: ActionType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'NONE', label: 'Aucune', icon: 'remove-outline' },
-  { key: 'CALL', label: 'Appeler', icon: 'call-outline' },
-  { key: 'MESSAGE', label: 'Message', icon: 'chatbubble-outline' },
-  { key: 'EMAIL', label: 'Email', icon: 'mail-outline' },
-  { key: 'MEET', label: 'Rencontrer', icon: 'people-outline' },
-  { key: 'TASK', label: 'Faire', icon: 'checkbox-outline' },
+const ACTION_OPTIONS: { key: ActionType; labelKey: MessageKey; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'NONE', labelKey: 'form.none', icon: 'remove-outline' },
+  { key: 'CALL', labelKey: 'people.call', icon: 'call-outline' },
+  { key: 'MESSAGE', labelKey: 'reminders.action.MESSAGE', icon: 'chatbubble-outline' },
+  { key: 'EMAIL', labelKey: 'reminders.action.EMAIL', icon: 'mail-outline' },
+  { key: 'MEET', labelKey: 'remNew.action.meet', icon: 'people-outline' },
+  { key: 'TASK', labelKey: 'reminders.action.TASK', icon: 'checkbox-outline' },
 ];
 
 export default function EditReminderScreen() {
+  const t = useT();
+  const language = useLanguage();
+  const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -75,14 +78,14 @@ export default function EditReminderScreen() {
 
   const loadReminder = useCallback(async () => {
     if (!id) {
-      setError('ID manquant');
+      setError(t('person.missingId'));
       setLoading(false);
       return;
     }
     try {
       const rem = await ReminderRepository.findById(id);
       if (!rem) {
-        setError('Rappel introuvable');
+        setError(t('remDetail.notFound'));
         setLoading(false);
         return;
       }
@@ -94,10 +97,10 @@ export default function EditReminderScreen() {
       setActionType(rem.actionType);
       setLoading(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setError(e instanceof Error ? e.message : t('common.loadError'));
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadReminder();
@@ -105,7 +108,7 @@ export default function EditReminderScreen() {
 
   function validate(): boolean {
     if (!title.trim()) {
-      setTitleError('Le titre est requis');
+      setTitleError(t('form.titleRequired'));
       return false;
     }
     setTitleError('');
@@ -125,10 +128,10 @@ export default function EditReminderScreen() {
         actionType,
       });
 
-      showSnackbar('Rappel modifié ✓');
+      showSnackbar(t('remEdit.updated'));
       router.back();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible de modifier le rappel');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('remEdit.updateError'));
     } finally {
       setSaving(false);
     }
@@ -146,15 +149,15 @@ export default function EditReminderScreen() {
         {/* Barre supérieure */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.back()} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Annuler</Text>
+            <Text style={styles.cancelText}>{t('form.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={styles.screenTitle}>Modifier le rappel</Text>
+          <Text style={styles.screenTitle}>{t('remEdit.title')}</Text>
           <TouchableOpacity
             onPress={handleSave}
             disabled={saving}
             style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
           >
-            <Text style={styles.saveText}>{saving ? '...' : 'Enregistrer'}</Text>
+            <Text style={styles.saveText}>{saving ? '...' : t('personTime.save')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -165,14 +168,14 @@ export default function EditReminderScreen() {
         >
           {/* Titre */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Titre *</Text>
+            <Text style={styles.label}>{t('remEdit.titleLabel')}</Text>
             <TextInput
               style={[styles.input, !!titleError && styles.inputError]}
-              placeholder="Ex: Appeler le comptable"
+              placeholder={t('remEdit.titlePlaceholder')}
               placeholderTextColor={palette.onSurface.variant}
               value={title}
-              onChangeText={(t) => {
-                setTitle(t);
+              onChangeText={(text) => {
+                setTitle(text);
                 if (titleError) setTitleError('');
               }}
               autoFocus
@@ -182,14 +185,14 @@ export default function EditReminderScreen() {
 
           {/* Date & Heure */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Date et heure</Text>
+            <Text style={styles.label}>{t('remEdit.dateLabel')}</Text>
             <TouchableOpacity
               style={styles.datePickerBtn}
               onPress={() => setShowDatePicker(true)}
             >
               <Ionicons name="calendar-outline" size={20} color={palette.primary.default} />
               <Text style={styles.datePickerText}>
-                {format(scheduledAt, "EEEE d MMMM 'à' HH:mm", { locale: fr })}
+                {format(scheduledAt, t('remNew.dateLabel'), { locale: dateLocale })}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={palette.onSurface.variant} />
             </TouchableOpacity>
@@ -197,7 +200,7 @@ export default function EditReminderScreen() {
 
           {/* Priorité */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Priorité</Text>
+            <Text style={styles.label}>{t('taskDetail.priorityLabel')}</Text>
             <View style={styles.chipsRow}>
               {PRIORITY_OPTIONS.map((opt) => {
                 const isSelected = priority === opt.key;
@@ -218,7 +221,7 @@ export default function EditReminderScreen() {
                         isSelected && { color: chipColor, fontWeight: '700' },
                       ]}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -228,7 +231,7 @@ export default function EditReminderScreen() {
 
           {/* Action rapide */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Action associée</Text>
+            <Text style={styles.label}>{t('remEdit.actionLabel')}</Text>
             <View style={styles.actionGrid}>
               {ACTION_OPTIONS.map((opt) => {
                 const isSelected = actionType === opt.key;
@@ -252,7 +255,7 @@ export default function EditReminderScreen() {
                         isSelected && styles.actionLabelSelected,
                       ]}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -262,10 +265,10 @@ export default function EditReminderScreen() {
 
           {/* Note / Description */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Notes</Text>
+            <Text style={styles.label}>{t('remEdit.notes')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Précisions, liens, contexte..."
+              placeholder={t('remEdit.notesPlaceholder')}
               placeholderTextColor={palette.onSurface.variant}
               value={notes}
               onChangeText={setNotes}
@@ -278,7 +281,7 @@ export default function EditReminderScreen() {
           {/* Bouton de validation final */}
           <View style={styles.footerBtn}>
             <Button
-              label="Enregistrer les modifications"
+              label={t('taskDetail.saveChanges')}
               variant="primary"
               onPress={handleSave}
               loading={saving}
@@ -296,9 +299,9 @@ export default function EditReminderScreen() {
             setScheduledAt(d);
           }}
           onCancel={() => setShowDatePicker(false)}
-          locale="fr-FR"
-          confirmTextIOS="Confirmer"
-          cancelTextIOS="Annuler"
+          locale={language === 'fr' ? 'fr-FR' : 'en-US'}
+          confirmTextIOS={t('personNew.confirm')}
+          cancelTextIOS={t('form.cancel')}
         />
       </View>
     </KeyboardAvoidingView>

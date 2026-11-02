@@ -6,7 +6,6 @@
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { Button } from '@/components/ui/Button';
@@ -16,6 +15,7 @@ import { SNOOZE_OPTIONS_MINUTES } from '@/domain/rules/reminder-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { makeReminderDetailStyles } from '@/styles/reminders/reminder-detail-styles';
+import { useDateLocale, useT } from '@/i18n';
 
 type SnoozeSheetMode = 'hidden' | 'picker';
 
@@ -40,6 +40,8 @@ export function ReminderSnoozeSheet({
   onClose,
   onSnooze,
 }: ReminderSnoozeSheetProps) {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeReminderDetailStyles);
 
@@ -48,10 +50,10 @@ export function ReminderSnoozeSheet({
       <TouchableOpacity style={styles.snoozeBackdrop} onPress={onClose} />
       <View style={[styles.snoozeSheet, { paddingBottom: insetsBottom + Spacing.lg }]}>
         <View style={styles.sheetHandle} />
-        <Text style={styles.snoozeTitle}>Reporter ce rappel</Text>
+        <Text style={styles.snoozeTitle}>{t('snooze.title')}</Text>
 
         {/* 4 durées rapides en grille de chips (R-06) */}
-        <Text style={styles.snoozeSubtitle}>Raccourcis rapides</Text>
+        <Text style={styles.snoozeSubtitle}>{t('snooze.shortcuts')}</Text>
         <View style={styles.snoozeGrid}>
           {SNOOZE_OPTIONS_MINUTES.map(minutes => (
             <TouchableOpacity
@@ -79,10 +81,10 @@ export function ReminderSnoozeSheet({
             <View style={styles.snoozeOptionLeft}>
               <Ionicons name="sunny-outline" size={18} color={theme.priority.HIGH} />
               <View>
-                <Text style={styles.snoozeOptionLabel}>Demain même heure</Text>
+                <Text style={styles.snoozeOptionLabel}>{t('snooze.tomorrow')}</Text>
                 <Text style={styles.snoozeOptionHint}>
-                  {format(addDays(new Date(scheduledAt), 1), "EEEE d MMM 'à' HH:mm", {
-                    locale: fr,
+                  {format(addDays(new Date(scheduledAt), 1), t('snooze.tomorrowFormat'), {
+                    locale: dateLocale,
                   })}
                 </Text>
               </View>
@@ -101,7 +103,7 @@ export function ReminderSnoozeSheet({
           >
             <View style={styles.snoozeOptionLeft}>
               <Ionicons name="calendar-outline" size={18} color={theme.primary.default} />
-              <Text style={styles.snoozeOptionLabel}>Choisir une date & heure</Text>
+              <Text style={styles.snoozeOptionLabel}>{t('snooze.pick')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
           </TouchableOpacity>
@@ -131,7 +133,7 @@ export function ReminderSnoozeSheet({
         {/* Bouton de confirmation sur iOS */}
         {snoozeSheet === 'picker' && Platform.OS === 'ios' && (
           <Button
-            label="Confirmer la date"
+            label={t('snooze.confirm')}
             onPress={() => {
               onSnoozeSheetChange('hidden');
               onSnooze({ kind: 'custom', until: customDate });

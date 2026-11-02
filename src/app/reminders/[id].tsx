@@ -18,7 +18,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { PersonRepository } from '@/repositories/person-repository';
@@ -38,29 +37,33 @@ import { ReminderBottomBar } from '@/components/reminders/ReminderBottomBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { ReminderSnoozeSheet } from '@/components/reminders/ReminderSnoozeSheet';
 import { makeReminderDetailStyles } from '@/styles/reminders/reminder-detail-styles';
+import { MessageKey, TFunction, useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type SnoozeSheet = 'hidden' | 'picker';
 
-const PRIORITY_LABELS: Record<string, string> = {
-  URGENT: 'Urgent',
-  HIGH: 'Haute',
-  NORMAL: 'Normal',
-  LOW: 'Faible',
+const PRIORITY_LABELS: Record<string, MessageKey> = {
+  URGENT: 'priority.urgent',
+  HIGH: 'priority.high',
+  NORMAL: 'remNew.priority.normal',
+  LOW: 'form.priority.low',
 };
 
 const getActionConfig = (
-  theme: ThemePalette
+  theme: ThemePalette,
+  t: TFunction
 ): Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }> => ({
-  CALL: { label: 'Appeler', icon: 'call-outline', color: theme.primary.default },
-  MESSAGE: { label: 'Message', icon: 'chatbubble-outline', color: theme.tertiary.default },
-  EMAIL: { label: 'Email', icon: 'mail-outline', color: theme.mode === 'light' ? '#0284C7' : '#38BDF8' },
-  MEET: { label: 'Rencontre', icon: 'people-outline', color: theme.mode === 'light' ? '#D97706' : '#F59E0B' },
-  TASK: { label: 'Action à faire', icon: 'checkmark-outline', color: theme.success.default },
+  CALL: { label: t('people.call'), icon: 'call-outline', color: theme.primary.default },
+  MESSAGE: { label: t('reminders.action.MESSAGE'), icon: 'chatbubble-outline', color: theme.tertiary.default },
+  EMAIL: { label: t('reminders.action.EMAIL'), icon: 'mail-outline', color: theme.mode === 'light' ? '#0284C7' : '#38BDF8' },
+  MEET: { label: t('reminders.action.MEET'), icon: 'people-outline', color: theme.mode === 'light' ? '#D97706' : '#F59E0B' },
+  TASK: { label: t('remDetail.actionTask'), icon: 'checkmark-outline', color: theme.success.default },
   NONE: { label: '', icon: 'remove-outline', color: theme.onSurface.variant },
 });
 
 export default function ReminderDetailScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -78,7 +81,7 @@ export default function ReminderDetailScreen() {
 
   const load = useCallback(async () => {
     if (!id) {
-      setError('ID manquant');
+      setError(t('person.missingId'));
       setState('error');
       return;
     }
@@ -88,7 +91,7 @@ export default function ReminderDetailScreen() {
         ReminderRepository.findChecklistItems(id),
       ]);
       if (!rem) {
-        setError('Rappel introuvable');
+        setError(t('remDetail.notFound'));
         setState('error');
         return;
       }
@@ -102,10 +105,10 @@ export default function ReminderDetailScreen() {
 
       setState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur');
+      setError(e instanceof Error ? e.message : t('common.error'));
       setState('error');
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     load();
@@ -114,7 +117,7 @@ export default function ReminderDetailScreen() {
   async function handleComplete() {
     if (!reminder) return;
     await completeReminder(reminder);
-    showSnackbar('Rappel complété.');
+    showSnackbar(t('reminders.completed'));
     router.back();
   }
 
@@ -126,26 +129,26 @@ export default function ReminderDetailScreen() {
     let label: string;
     switch (input.kind) {
       case 'quick':
-        label = `${input.minutes} min`;
+        label = t('tasks.minutes', { minutes: input.minutes });
         break;
       case 'tomorrow':
-        label = 'demain même heure';
+        label = t('remDetail.snoozeTomorrow');
         break;
       case 'custom':
-        label = format(input.until, "d MMM 'à' HH:mm", { locale: fr });
+        label = format(input.until, t('remDetail.snoozeCustomFormat'), { locale: dateLocale });
         break;
     }
 
     await snoozeReminder(reminder, input);
-    showSnackbar(`Rappel reporté — ${label}`);
+    showSnackbar(t('remDetail.snoozed', { label }));
     router.back();
   }
 
   async function handleDelete() {
     if (!reminder) return;
     const result = await deleteReminder(reminder);
-    showSnackbar('Rappel supprimé', {
-      actionLabel: 'Annuler (30s)',
+    showSnackbar(t('reminders.deleted'), {
+      actionLabel: t('common.undo30'),
       onAction: async () => {
         await result.undo();
       },
@@ -176,9 +179,9 @@ export default function ReminderDetailScreen() {
   if (state === 'error' || !reminder) return <ErrorState message={error} onRetry={load} />;
 
   const scheduledDate = new Date(reminder.scheduledAt);
-  const dateStr = format(scheduledDate, "EEEE d MMMM 'à' HH:mm", { locale: fr });
+  const dateStr = format(scheduledDate, t('remNew.dateLabel'), { locale: dateLocale });
   const priorityColor = theme.priority[reminder.priority as keyof typeof theme.priority] ?? theme.priority.NORMAL;
-  const actionConfigs = getActionConfig(theme);
+  const actionConfigs = getActionConfig(theme, t);
   const actionInfo = reminder.actionType ? actionConfigs[reminder.actionType] : null;
 
   return (
@@ -188,19 +191,19 @@ export default function ReminderDetailScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.navBtn}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="chevron-back" size={22} color={theme.onSurface.primary} />
         </TouchableOpacity>
 
-        <Text style={styles.navTitle}>Détail du rappel</Text>
+        <Text style={styles.navTitle}>{t('remDetail.title')}</Text>
 
         <TouchableOpacity
           onPress={() => router.push({ pathname: '/reminders/edit/[id]', params: { id: reminder.id } })}
           style={styles.editBtn}
-          accessibilityLabel="Modifier"
+          accessibilityLabel={t('common.edit')}
         >
-          <Text style={styles.editLabel}>Modifier</Text>
+          <Text style={styles.editLabel}>{t('common.edit')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -217,7 +220,7 @@ export default function ReminderDetailScreen() {
             <View style={[styles.priorityBadge, { borderColor: priorityColor + '40' }]}>
               <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
               <Text style={[styles.priorityBadgeText, { color: priorityColor }]}>
-                {PRIORITY_LABELS[reminder.priority]}
+                {t(PRIORITY_LABELS[reminder.priority])}
               </Text>
             </View>
 
@@ -225,7 +228,7 @@ export default function ReminderDetailScreen() {
             {reminder.recurrenceRuleId && (
               <View style={styles.metaPill}>
                 <Ionicons name="repeat-outline" size={13} color={theme.tertiary.default} />
-                <Text style={styles.metaPillText}>Récurrent</Text>
+                <Text style={styles.metaPillText}>{t('remDetail.recurring')}</Text>
               </View>
             )}
           </View>
@@ -253,7 +256,7 @@ export default function ReminderDetailScreen() {
                 <View>
                   <Text style={styles.actionCardLabel}>{actionInfo.label}</Text>
                   {person ? (
-                    <Text style={styles.actionCardTarget}>avec {person.displayName}</Text>
+                    <Text style={styles.actionCardTarget}>{t('remDetail.with', { name: person.displayName })}</Text>
                   ) : null}
                 </View>
               </View>
@@ -263,7 +266,7 @@ export default function ReminderDetailScreen() {
                   style={styles.actionExecuteBtn}
                   onPress={handleExecuteAction}
                 >
-                  <Text style={styles.actionExecuteText}>Lancer</Text>
+                  <Text style={styles.actionExecuteText}>{t('remDetail.launch')}</Text>
                   <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
                 </TouchableOpacity>
               ) : null}
@@ -278,7 +281,7 @@ export default function ReminderDetailScreen() {
           <View style={styles.notesCardInner}>
             <View style={styles.notesHeader}>
               <Ionicons name="document-text-outline" size={16} color={theme.onSurface.variant} />
-              <Text style={styles.sectionTitle}>Notes & Contexte</Text>
+              <Text style={styles.sectionTitle}>{t('remDetail.notes')}</Text>
             </View>
             <Text style={styles.notesText}>{reminder.notes}</Text>
           </View>
@@ -291,7 +294,7 @@ export default function ReminderDetailScreen() {
           <View style={styles.checklistCardInner}>
             <View style={styles.notesHeader}>
               <Ionicons name="checkbox-outline" size={16} color={theme.onSurface.variant} />
-              <Text style={styles.sectionTitle}>Liste de contrôle</Text>
+              <Text style={styles.sectionTitle}>{t('remDetail.checklist')}</Text>
             </View>
             {checklist.map(item => (
               <TouchableOpacity

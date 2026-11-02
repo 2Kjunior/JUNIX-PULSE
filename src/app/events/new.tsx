@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format, addHours } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { EventUseCases } from '@/use-cases/event-use-cases';
 import { PersonRepository } from '@/repositories/person-repository';
@@ -26,16 +25,20 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { makeFormStyles } from '@/styles/common/form-styles';
+import { MessageKey, useDateLocale, useLanguage, useT } from '@/i18n';
 
-const BUFFER_OPTIONS = [
-  { minutes: 0, label: 'Aucune' },
+const BUFFER_OPTIONS: { minutes: number; labelKey?: MessageKey; label?: string }[] = [
+  { minutes: 0, labelKey: 'form.none' },
   { minutes: 15, label: '15 min' },
   { minutes: 30, label: '30 min' },
   { minutes: 45, label: '45 min' },
-  { minutes: 60, label: '1 h' },
+  { minutes: 60, labelKey: 'taskNew.hours1' },
 ];
 
 export default function NewEventScreen() {
+  const t = useT();
+  const language = useLanguage();
+  const dateLocale = useDateLocale();
   const insets = useSafeAreaInsets();
   const { showSnackbar, userTimezone } = useAppStore();
   const { palette } = useTheme();
@@ -103,11 +106,11 @@ export default function NewEventScreen() {
 
   function validate(): boolean {
     if (!title.trim()) {
-      setTitleError('Le titre de l\'événement est requis');
+      setTitleError(t('eventNew.titleRequired'));
       return false;
     }
     if (endAt <= startAt) {
-      showSnackbar('L\'heure de fin doit être postérieure à l\'heure de début');
+      showSnackbar(t('eventNew.endAfterStart'));
       return false;
     }
     setTitleError('');
@@ -131,10 +134,10 @@ export default function NewEventScreen() {
         personIds: selectedPersonIds,
       });
 
-      showSnackbar('Événement créé avec succès');
+      showSnackbar(t('eventNew.created'));
       router.back();
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
+      showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -151,22 +154,22 @@ export default function NewEventScreen() {
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Annuler"
+          accessibilityLabel={t('form.cancel')}
         >
-          <Text style={formStyles.toolbarCancel}>Annuler</Text>
+          <Text style={formStyles.toolbarCancel}>{t('form.cancel')}</Text>
         </TouchableOpacity>
         <View style={formStyles.toolbarCenter}>
-          <Text style={formStyles.toolbarTitle}>Nouvel événement</Text>
-          <Text style={formStyles.toolbarSubtitle}>Agenda & Calendrier</Text>
+          <Text style={formStyles.toolbarTitle}>{t('eventNew.title')}</Text>
+          <Text style={formStyles.toolbarSubtitle}>{t('eventNew.subtitle')}</Text>
         </View>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Créer l'événement"
+          accessibilityLabel={t('eventNew.createA11y')}
         >
           <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
-            {saving ? 'Création...' : 'Créer'}
+            {saving ? t('taskNew.creating') : t('taskNew.create')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -182,11 +185,11 @@ export default function NewEventScreen() {
           <TextInput
             style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
             value={title}
-            onChangeText={t => {
-              setTitle(t);
+            onChangeText={text => {
+              setTitle(text);
               if (titleError) setTitleError('');
             }}
-            placeholder="Ex: Réunion projet, Déjeuner, Atelier..."
+            placeholder={t('eventNew.titlePlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             autoFocus
           />
@@ -198,7 +201,7 @@ export default function NewEventScreen() {
               style={styles.inlineInput}
               value={location}
               onChangeText={setLocation}
-              placeholder="Lieu / Adresse (ex: Salle B, Visioconférence)..."
+              placeholder={t('eventNew.locationPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
             />
           </View>
@@ -209,7 +212,7 @@ export default function NewEventScreen() {
               style={formStyles.notesInput}
               value={notes}
               onChangeText={setNotes}
-              placeholder="Ordre du jour, contexte, détails utiles..."
+              placeholder={t('eventNew.notesPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               multiline
               numberOfLines={3}
@@ -223,7 +226,7 @@ export default function NewEventScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="time-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Créneau horaire</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('eventNew.slotHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -235,13 +238,13 @@ export default function NewEventScreen() {
             >
               <View style={styles.timeBoxHeader}>
                 <Ionicons name="play-circle-outline" size={14} color={palette.primary.default} />
-                <Text style={styles.timeBoxLabel}>Début</Text>
+                <Text style={styles.timeBoxLabel}>{t('eventNew.start')}</Text>
               </View>
               <Text style={styles.timeBoxValue}>
                 {format(startAt, 'HH:mm')}
               </Text>
               <Text style={styles.timeBoxDate}>
-                {format(startAt, 'd MMM yyyy', { locale: fr })}
+                {format(startAt, t('eventNew.shortDate'), { locale: dateLocale })}
               </Text>
             </TouchableOpacity>
 
@@ -256,13 +259,13 @@ export default function NewEventScreen() {
             >
               <View style={styles.timeBoxHeader}>
                 <Ionicons name="stop-circle-outline" size={14} color={palette.tertiary.default} />
-                <Text style={styles.timeBoxLabel}>Fin</Text>
+                <Text style={styles.timeBoxLabel}>{t('eventNew.end')}</Text>
               </View>
               <Text style={styles.timeBoxValue}>
                 {format(endAt, 'HH:mm')}
               </Text>
               <Text style={styles.timeBoxDate}>
-                {format(endAt, 'd MMM yyyy', { locale: fr })}
+                {format(endAt, t('eventNew.shortDate'), { locale: dateLocale })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -273,7 +276,7 @@ export default function NewEventScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="briefcase-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Disponibilité</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('eventNew.availabilityHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -288,7 +291,7 @@ export default function NewEventScreen() {
                 color={eventType === 'BUSY' ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, eventType === 'BUSY' && formStyles.chipTextActive]}>
-                Occupé (bloque le créneau)
+                {t('eventNew.busy')}
               </Text>
             </TouchableOpacity>
 
@@ -302,7 +305,7 @@ export default function NewEventScreen() {
                 color={eventType === 'FREE' ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, eventType === 'FREE' && formStyles.chipTextActive]}>
-                Temps libre
+                {t('eventNew.free')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -313,7 +316,7 @@ export default function NewEventScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="car-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Marge de trajet / Buffer</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('eventNew.bufferHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -327,7 +330,7 @@ export default function NewEventScreen() {
                   onPress={() => setTravelBufferMinutes(opt.minutes)}
                 >
                   <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
-                    {opt.label}
+                    {opt.labelKey ? t(opt.labelKey) : opt.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -342,7 +345,7 @@ export default function NewEventScreen() {
               <View style={formStyles.sectionHeaderIconBadge}>
                 <Ionicons name="people-outline" size={14} color={palette.primary.default} />
               </View>
-              <Text style={formStyles.sectionHeaderTitle}>Contacts associés ({selectedPersonIds.length})</Text>
+              <Text style={formStyles.sectionHeaderTitle}>{t('eventNew.peopleHeader', { count: selectedPersonIds.length })}</Text>
             </View>
 
             <View style={formStyles.cardGroup}>
@@ -373,7 +376,7 @@ export default function NewEventScreen() {
 
         {/* Bouton Créer */}
         <Button
-          label="Créer l'événement"
+          label={t('eventNew.submit')}
           onPress={handleSave}
           variant="primary"
           size="lg"
@@ -399,9 +402,9 @@ export default function NewEventScreen() {
           setActivePicker(null);
         }}
         onCancel={() => setActivePicker(null)}
-        confirmTextIOS="Confirmer"
-        cancelTextIOS="Annuler"
-        locale="fr_FR"
+        confirmTextIOS={t('personNew.confirm')}
+        cancelTextIOS={t('form.cancel')}
+        locale={language === 'fr' ? 'fr_FR' : 'en_US'}
       />
     </KeyboardAvoidingView>
   );
