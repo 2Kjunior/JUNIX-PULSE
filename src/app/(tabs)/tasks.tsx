@@ -20,7 +20,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
@@ -41,6 +40,7 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
 import { makeTasksStyles } from '@/styles/tabs/tasks-styles';
+import { useDateLocale, useT } from '@/i18n';
 
 type FilterTab = 'inbox' | 'today' | 'all';
 type ScreenState = 'loading' | 'content' | 'error';
@@ -51,6 +51,7 @@ interface TaskWithSubtasks {
 }
 
 export default function TasksScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { theme } = useTheme();
@@ -109,10 +110,10 @@ export default function TasksScreen() {
       setItems(sorted);
       setScreenState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [activeTab, todayStr]);
+  }, [activeTab, todayStr, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,15 +141,15 @@ export default function TasksScreen() {
         )
       );
 
-      showSnackbar(isCompleted ? 'Tâche terminée.' : 'Tâche réouverte.', {
-        actionLabel: 'Annuler (30s)',
+      showSnackbar(isCompleted ? t('tasks.completed') : t('tasks.reopened'), {
+        actionLabel: t('common.undo30'),
         onAction: async () => {
           await TaskUseCases.toggleComplete(task.id);
           load();
         },
       });
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur');
+      showSnackbar(e instanceof Error ? e.message : t('common.error'));
       load();
     }
   }
@@ -158,8 +159,8 @@ export default function TasksScreen() {
       // Retrait optimiste de la liste
       setItems(prev => prev.filter(item => item.task.id !== task.id));
       const result = await TaskUseCases.deleteTask(task.id);
-      showSnackbar('Tâche supprimée.', {
-        actionLabel: 'Annuler (30s)',
+      showSnackbar(t('tasks.deleted'), {
+        actionLabel: t('common.undo30'),
         onAction: async () => {
           await result.undo();
           load();
@@ -167,7 +168,7 @@ export default function TasksScreen() {
         durationMs: 30000,
       });
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur');
+      showSnackbar(e instanceof Error ? e.message : t('common.error'));
       load();
     }
   }
@@ -180,8 +181,8 @@ export default function TasksScreen() {
       {/* ─── En-tête R-08 ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Tâches</Text>
-          <Text style={styles.subtitle}>Gestion d'action • Focus</Text>
+          <Text style={styles.title}>{t('tab.tasks')}</Text>
+          <Text style={styles.subtitle}>{t('tasks.subtitle')}</Text>
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
@@ -189,7 +190,7 @@ export default function TasksScreen() {
             style={styles.settingsBtn}
             onPress={() => router.push('/focus' as any)}
             accessibilityRole="button"
-            accessibilityLabel="Minuteur Focus Pomodoro"
+            accessibilityLabel={t('tasks.focusA11y')}
           >
             <Ionicons name="timer-outline" size={20} color={theme.tertiary.default} />
           </TouchableOpacity>
@@ -198,7 +199,7 @@ export default function TasksScreen() {
             style={styles.settingsBtn}
             onPress={() => router.push('/settings')}
             accessibilityRole="button"
-            accessibilityLabel="Paramètres"
+            accessibilityLabel={t('common.settings')}
           >
             <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
           </TouchableOpacity>
@@ -208,9 +209,9 @@ export default function TasksScreen() {
       {/* ─── Segmented Control R-08 ────────────────────────────────────────────── */}
       <PillTopBar
         tabs={[
-          { key: 'inbox', label: 'Inbox', count: counts.inbox, icon: 'file-tray-outline' },
-          { key: 'today', label: "Aujourd'hui", count: counts.today, icon: 'today-outline' },
-          { key: 'all', label: 'Toutes', count: counts.all, icon: 'list-outline' },
+          { key: 'inbox', label: t('tasks.filter.inbox'), count: counts.inbox, icon: 'file-tray-outline' },
+          { key: 'today', label: t('tasks.filter.today'), count: counts.today, icon: 'today-outline' },
+          { key: 'all', label: t('tasks.filter.all'), count: counts.all, icon: 'list-outline' },
         ]}
         activeTab={activeTab}
         onTabChange={(k) => setActiveTab(k as FilterTab)}
@@ -229,17 +230,15 @@ export default function TasksScreen() {
             iconName="checkmark-circle-outline"
             title={
               activeTab === 'inbox'
-                ? 'Votre Inbox est vide'
+                ? t('tasks.empty.inboxTitle')
                 : activeTab === 'today'
-                ? 'Aucune tâche pour aujourd’hui'
-                : 'Aucune tâche active'
+                ? t('tasks.empty.todayTitle')
+                : t('tasks.empty.allTitle')
             }
             description={
-              activeTab === 'inbox'
-                ? 'Capturez rapidement vos intentions sans contrainte de date.'
-                : 'Concentrez-vous sur ce qui compte maintenant ou planifiez depuis l’Inbox.'
+              activeTab === 'inbox' ? t('tasks.empty.inboxDesc') : t('tasks.empty.otherDesc')
             }
-            actionLabel="+ Nouvelle tâche"
+            actionLabel={t('tasks.newCta')}
             onAction={() => router.push('/tasks/new')}
           />
         ) : (
@@ -250,14 +249,14 @@ export default function TasksScreen() {
                 palette: theme,
                 onDelete: () => handleDeleteTask(task),
                 onEdit: () => router.push(`/tasks/${task.id}`),
-                deleteLabel: 'Supprimer',
-                editLabel: 'Modifier',
+                deleteLabel: t('common.delete'),
+                editLabel: t('common.edit'),
               })}
               leftActions={[
                 {
                   key: 'complete',
                   icon: task.status === 'COMPLETED' ? 'refresh-outline' : 'checkmark-circle-outline',
-                  label: task.status === 'COMPLETED' ? 'Réouvrir' : 'Terminer',
+                  label: task.status === 'COMPLETED' ? t('tasks.reopen') : t('tasks.complete'),
                   color: theme.success.default,
                   onPress: () => handleToggleComplete(task),
                 },
@@ -277,7 +276,7 @@ export default function TasksScreen() {
 
       {/* ─── Bouton Flottant 3D Glassmorphism (Unique CTA R-08) ─────────────── */}
       <GlassFloatingActionButton
-        label="Nouvelle tâche"
+        label={t('tasks.new')}
         icon="add"
         onPress={() => router.push('/tasks/new')}
       />
@@ -300,6 +299,8 @@ function TaskCardR08({
   styles: ReturnType<typeof makeTasksStyles>;
   onToggleComplete: () => void;
 }) {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const isCompleted = task.status === 'COMPLETED';
   const isOverdue = !isCompleted && isTaskOverdue(task);
   const progress = calculateTaskProgress(task, subtasks);
@@ -325,7 +326,7 @@ function TaskCardR08({
       tone={glowTone}
       intensity="soft"
       onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
-      accessibilityLabel={`${task.title}${isCompleted ? ', terminée' : ''}${isOverdue ? ', en retard' : ''}`}
+      accessibilityLabel={`${task.title}${isCompleted ? t('tasks.doneA11y') : ''}${isOverdue ? t('tasks.overdueA11y') : ''}`}
     >
       <View style={[styles.taskRow, isCompleted && styles.taskRowCompleted]}>
         {/* Case à cocher tactile isolée (44x44px accessible) */}
@@ -339,7 +340,7 @@ function TaskCardR08({
           activeOpacity={0.65}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isCompleted }}
-          accessibilityLabel={isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
+          accessibilityLabel={isCompleted ? t('tasks.markUndone') : t('tasks.markDone')}
         >
           <Ionicons
             name={isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
@@ -361,7 +362,7 @@ function TaskCardR08({
           {totalSubs > 0 ? (
             <View
               style={styles.progressTrack}
-              accessibilityLabel={`Progression : ${progress.percentage}%`}
+              accessibilityLabel={t('tasks.progressA11y', { percent: progress.percentage })}
             >
               <View style={[styles.progressFill, { width: `${progress.percentage}%` }]} />
             </View>
@@ -379,14 +380,14 @@ function TaskCardR08({
                 />
                 <Text style={[styles.metaPillText, isOverdue && styles.metaPillTextOverdue]}>
                   {isOverdue
-                    ? `En retard (${format(new Date(task.scheduledDate), 'd MMM', { locale: fr })})`
-                    : format(new Date(task.scheduledDate), 'd MMM', { locale: fr })}
+                    ? t('tasks.overdue', { date: format(new Date(task.scheduledDate), 'd MMM', { locale: dateLocale }) })
+                    : format(new Date(task.scheduledDate), 'd MMM', { locale: dateLocale })}
                 </Text>
               </View>
             ) : (
               <View style={styles.metaPill}>
                 <Ionicons name="file-tray-outline" size={11} color={theme.onSurface.variant} />
-                <Text style={styles.metaPillText}>Inbox</Text>
+                <Text style={styles.metaPillText}>{t('tasks.filter.inbox')}</Text>
               </View>
             )}
 
@@ -404,7 +405,7 @@ function TaskCardR08({
             {task.estimatedMinutes ? (
               <View style={styles.metaPill}>
                 <Ionicons name="time-outline" size={11} color={theme.onSurface.variant} />
-                <Text style={styles.metaPillText}>{task.estimatedMinutes} min</Text>
+                <Text style={styles.metaPillText}>{t('tasks.minutes', { minutes: task.estimatedMinutes })}</Text>
               </View>
             ) : null}
 
@@ -413,7 +414,11 @@ function TaskCardR08({
               <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
                 <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
                 <Text style={[styles.metaPillText, { color: priorityColor }]}>
-                  {task.priority === 'URGENT' ? 'Urgent' : task.priority === 'HIGH' ? 'Haute' : 'Normale'}
+                  {task.priority === 'URGENT'
+                    ? t('priority.urgent')
+                    : task.priority === 'HIGH'
+                    ? t('priority.high')
+                    : t('priority.normal')}
                 </Text>
               </View>
             ) : null}
