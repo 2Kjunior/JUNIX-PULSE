@@ -44,11 +44,12 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { PulseLogo } from '@/components/ui/PulseLogo';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
-import { useT, type TFunction } from '@/i18n';
+import { useLanguage, useT, type TFunction } from '@/i18n';
+import { suggestionTexts } from '@/i18n/suggestion-text';
 import { CompanionAnchor } from '@/features/mascot/CompanionAnchor';
 import { noteProposalRefused } from '@/services/mascot/mascot-budget-service';
 import {
-  suggestionAcceptLabel,
+  isViewOnlySuggestion,
   suggestionDestination,
   suggestionMood,
   suggestionProposalId,
@@ -108,6 +109,7 @@ function getSuggMeta(type: Suggestion['type'], theme: ThemePalette, t: TFunction
 
 export default function PulseScreen() {
   const t = useT();
+  const language = useLanguage();
   const insets = useSafeAreaInsets();
   const { showSnackbar, todayFocusMinutes } = useAppStore();
   const { theme } = useTheme();
@@ -307,6 +309,7 @@ export default function PulseScreen() {
         <View style={styles.suggestionsList}>
           {suggestions.map(s => {
             const meta = getSuggMeta(s.type, theme, t);
+            const texts = suggestionTexts(s, language, t);
             return (
               <GlowCard
                 key={s.id}
@@ -328,8 +331,8 @@ export default function PulseScreen() {
                   </View>
 
                   {/* Titre + explication */}
-                  <Text style={styles.suggTitle}>{s.title}</Text>
-                  <Text style={styles.suggExplanation}>{s.explanation}</Text>
+                  <Text style={styles.suggTitle}>{texts.title}</Text>
+                  <Text style={styles.suggExplanation}>{texts.explanation}</Text>
 
                   {/* Actions */}
                   <View style={styles.suggActions}>
@@ -344,10 +347,10 @@ export default function PulseScreen() {
                     <TouchableOpacity
                       style={styles.acceptBtn}
                       onPress={() => handleAccept(s)}
-                      accessibilityLabel={t('pulse.acceptA11y', { title: s.title })}
+                      accessibilityLabel={t('pulse.acceptA11y', { title: texts.title })}
                     >
                       <Ionicons name="checkmark" size={14} color={isLight ? theme.primary.onContainer : theme.primary.default} />
-                      <Text style={styles.acceptText}>{suggestionAcceptLabel(s.type)}</Text>
+                      <Text style={styles.acceptText}>{isViewOnlySuggestion(s.type) ? t('proposal.view') : t('proposal.accept')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

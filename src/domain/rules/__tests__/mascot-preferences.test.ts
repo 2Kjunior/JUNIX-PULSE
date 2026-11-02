@@ -24,6 +24,7 @@ const prefs = (overrides: Partial<MascotPreferences>): MascotPreferences => ({
 describe('defaults', () => {
   it('match the settings table of the brief', () => {
     expect(DEFAULT_MASCOT_PREFERENCES).toEqual({
+      language: 'fr',
       presence: 'full',
       address: 'tu',
       useFirstName: true,

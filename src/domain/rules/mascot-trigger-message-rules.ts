@@ -4,7 +4,8 @@
  * so the mascot stays quiet rather than announcing "0 tâche".
  */
 
-import { formatFrenchTime, MascotSuggestionMessage } from './mascot-suggestion-rules';
+import type { AppLanguage } from './language-rules';
+import { formatSpokenTime, MascotSuggestionMessage } from './mascot-suggestion-rules';
 import { MascotTimeTrigger } from './mascot-time-rules';
 
 export interface TriggerEventInfo {
@@ -23,7 +24,8 @@ export interface TriggerMessageContext {
 
 export function triggerToMascotMessage(
   trigger: MascotTimeTrigger,
-  context: TriggerMessageContext
+  context: TriggerMessageContext,
+  language: AppLanguage = 'fr'
 ): MascotSuggestionMessage | null {
   if (!trigger.hasMessage) return null;
 
@@ -40,7 +42,7 @@ export function triggerToMascotMessage(
 
     case 'EVENT_IN_60':
       if (!event) return null;
-      return { id: 'EVENT_IN_60', params: { title: event.title, time: formatFrenchTime(new Date(event.startAt)) } };
+      return { id: 'EVENT_IN_60', params: { title: event.title, time: formatSpokenTime(new Date(event.startAt), language) } };
 
     case 'EVENT_IN_15':
       if (!event) return null;

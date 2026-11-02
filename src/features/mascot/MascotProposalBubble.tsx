@@ -12,7 +12,9 @@ import { StyleProp, ViewStyle } from 'react-native';
 import { Suggestion } from '@/domain/entities';
 import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
 import { DEFAULT_MASCOT_PREFERENCES, MascotPreferences } from '@/domain/rules/mascot-preferences';
-import { suggestionAcceptLabel, suggestionToMascotMessage } from '@/domain/rules/mascot-suggestion-rules';
+import { isViewOnlySuggestion, suggestionToMascotMessage } from '@/domain/rules/mascot-suggestion-rules';
+import { useT } from '@/i18n';
+import { suggestionTexts } from '@/i18n/suggestion-text';
 
 import { BubbleTailSide, MascotBubble } from './MascotBubble';
 
@@ -37,7 +39,8 @@ export function MascotProposalBubble({
   onRefuse,
   style,
 }: MascotProposalBubbleProps) {
-  const message = suggestionToMascotMessage(suggestion);
+  const t = useT();
+  const message = suggestionToMascotMessage(suggestion, preferences.language);
   let text: string | null = null;
   if (message) {
     try {
@@ -49,17 +52,17 @@ export function MascotProposalBubble({
 
   return (
     <MascotBubble
-      text={text ?? suggestion.title}
+      text={text ?? suggestionTexts(suggestion, preferences.language, t).title}
       maxWidth={maxWidth}
       tailSide={tailSide}
       style={style}
       actions={[
-        { label: 'Ignorer', onPress: onRefuse, accessibilityLabel: 'Ignorer cette proposition' },
+        { label: t('pulse.ignore'), onPress: onRefuse, accessibilityLabel: t('proposal.ignoreA11y') },
         {
-          label: suggestionAcceptLabel(suggestion.type),
+          label: isViewOnlySuggestion(suggestion.type) ? t('proposal.view') : t('proposal.accept'),
           onPress: onAccept,
           primary: true,
-          accessibilityLabel: `Accepter : ${suggestion.title}`,
+          accessibilityLabel: t('pulse.acceptA11y', { title: suggestionTexts(suggestion, preferences.language, t).title }),
         },
       ]}
     />

@@ -5,12 +5,14 @@
  */
 
 import type { MascotAddress, MascotPresence, MascotProposalsLevel } from '../enums';
+import type { AppLanguage } from './language-rules';
 
 export type { MascotAddress, MascotPresence, MascotProposalsLevel };
 export type MascotTone = 'warm' | 'sober';
 export type MascotProposalFrequency = 'normal' | 'rare';
 
 export interface MascotPreferences {
+  language: AppLanguage; // The mascot speaks French or English; tu and vous only exist in French
   presence: MascotPresence;
   address: MascotAddress;
   useFirstName: boolean;
@@ -23,6 +25,7 @@ export interface MascotPreferences {
 }
 
 export const DEFAULT_MASCOT_PREFERENCES: MascotPreferences = {
+  language: 'fr',
   presence: 'full',
   address: 'tu',
   useFirstName: true,
@@ -53,8 +56,12 @@ export const DEFAULT_MASCOT_SETTINGS: MascotSettings = {
   briefings: true,
 };
 
-export function mascotPreferencesFromSettings(settings: MascotSettings): MascotPreferences {
+export function mascotPreferencesFromSettings(
+  settings: MascotSettings,
+  language: AppLanguage = 'fr'
+): MascotPreferences {
   return {
+    language,
     presence: settings.presence,
     address: settings.address,
     useFirstName: true,

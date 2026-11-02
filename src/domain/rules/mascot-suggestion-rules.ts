@@ -6,6 +6,7 @@
  */
 
 import { SuggestionType } from '../enums';
+import type { AppLanguage } from './language-rules';
 import { MascotMessageId } from './mascot-message-catalog';
 import { MascotMessageParams } from './mascot-message-rules';
 import { MascotMood } from './mascot-mood-rules';
@@ -92,6 +93,19 @@ export function formatFrenchTime(date: Date): string {
   return minutes === 0 ? `${hours} h` : `${hours} h ${String(minutes).padStart(2, '0')}`;
 }
 
+/** The time of day as said aloud: "9 h 30" in French, "9:30" in English. */
+export function formatSpokenTime(date: Date, language: AppLanguage = 'fr'): string {
+  if (language === 'en') return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return formatFrenchTime(date);
+}
+
+/** A time stored in its French form ("9 h 30"), said in the language being shown. */
+export function localizeSpokenTime(time: string, language: AppLanguage): string {
+  if (language === 'fr') return time;
+  const match = /^(\d{1,2}) h(?: (\d{2}))?$/.exec(time);
+  return match ? `${match[1]}:${match[2] ?? '00'}` : time;
+}
+
 function parseParams(proposedData: string | null | undefined): Record<string, unknown> | null {
   if (!proposedData) return null;
   try {
@@ -108,7 +122,10 @@ function parseParams(proposedData: string | null | undefined): Record<string, un
  * The catalogue message of a suggestion, or null when its parameters are missing or malformed.
  * The caller then shows the stored title instead.
  */
-export function suggestionToMascotMessage(suggestion: SuggestionLike): MascotSuggestionMessage | null {
+export function suggestionToMascotMessage(
+  suggestion: SuggestionLike,
+  language: AppLanguage = 'fr'
+): MascotSuggestionMessage | null {
   const data = parseParams(suggestion.proposedData);
   if (!data) return null;
 
@@ -119,6 +136,7 @@ export function suggestionToMascotMessage(suggestion: SuggestionLike): MascotSug
     if (kind === 'number' && !Number.isFinite(value)) return null;
     params[key] = value as string | number;
   }
+  if (typeof params.time === 'string') params.time = localizeSpokenTime(params.time, language);
 
   // The day itself has its own wording: "dans 0 jour" would read wrong
   if (suggestion.type === 'BIRTHDAY_REMINDER' && params.days === 0) {
@@ -138,8 +156,13 @@ const VIEW_ONLY_TYPES: readonly SuggestionType[] = [
   'WELCOME_BACK',
 ];
 
+/** Whether accepting only opens the screen where the user decides. */
+export function isViewOnlySuggestion(type: SuggestionType): boolean {
+  return VIEW_ONLY_TYPES.includes(type);
+}
+
 export function suggestionAcceptLabel(type: SuggestionType): string {
-  return VIEW_ONLY_TYPES.includes(type) ? 'Voir' : 'Accepter';
+  return isViewOnlySuggestion(type) ? 'Voir' : 'Accepter';
 }
 
 /** Where a view-only suggestion leads once accepted, or null when it acts in place. */

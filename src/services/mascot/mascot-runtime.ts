@@ -6,6 +6,7 @@
  */
 
 import type { FocusState } from '../../domain/rules/focus-rules';
+import type { AppLanguage } from '../../domain/rules/language-rules';
 import {
   DEFAULT_MASCOT_SETTINGS,
   MascotPreferences,
@@ -16,7 +17,8 @@ import {
 
 let focusState: FocusState = 'idle';
 let settings: MascotSettings = DEFAULT_MASCOT_SETTINGS;
-let preferences: MascotPreferences = mascotPreferencesFromSettings(settings);
+let language: AppLanguage = 'fr';
+let preferences: MascotPreferences = mascotPreferencesFromSettings(settings, language);
 
 const listeners = new Set<() => void>();
 
@@ -31,7 +33,15 @@ export function getMascotFocusState(): FocusState {
 /** Applies the user's settings. Everything that reads them sees the change straight away. */
 export function setMascotSettings(next: MascotSettings): void {
   settings = next;
-  preferences = mascotPreferencesFromSettings(next);
+  preferences = mascotPreferencesFromSettings(next, language);
+  for (const listener of [...listeners]) listener();
+}
+
+/** The language the mascot speaks: it follows the language of the app. */
+export function setMascotLanguage(next: AppLanguage): void {
+  if (next === language) return;
+  language = next;
+  preferences = mascotPreferencesFromSettings(settings, language);
   for (const listener of [...listeners]) listener();
 }
 

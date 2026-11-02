@@ -102,7 +102,7 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
       // A trigger with nothing to say is settled, so it does not hold the next one back
       let chosen: MascotTimeMessage | null = null;
       for (const trigger of due as MascotTimeTrigger[]) {
-        const spoken = triggerToMascotMessage(trigger, context);
+        const spoken = triggerToMascotMessage(trigger, context, getMascotPreferences().language);
         if (!spoken) {
           await markTriggerFired(day, trigger.key);
           continue;

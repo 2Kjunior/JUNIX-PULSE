@@ -5,6 +5,7 @@
  */
 
 import { MASCOT_MESSAGES, MascotMessageId } from './mascot-message-catalog';
+import { MASCOT_MESSAGES_EN } from './mascot-message-catalog-en';
 import { MascotMood } from './mascot-mood-rules';
 import { MascotPreferences, resolveFirstName } from './mascot-preferences';
 import { MascotReaction } from './mascot-reaction-rules';
@@ -69,7 +70,10 @@ export function resolveMascotMessage(
   if (preferences.presence === 'off') return null;
 
   const firstName = resolveFirstName(preferences, displayName);
-  const variants = MASCOT_MESSAGES[id][preferences.address][preferences.tone];
+  const variants =
+    preferences.language === 'en'
+      ? MASCOT_MESSAGES_EN[id][preferences.tone]
+      : MASCOT_MESSAGES[id][preferences.address][preferences.tone];
 
   if (firstName) {
     return renderMascotTemplate(variants.named, { ...params, name: firstName });

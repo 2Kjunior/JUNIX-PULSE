@@ -4,6 +4,7 @@
  */
 
 import { MASCOT_MESSAGES, MascotMessageId } from '../mascot-message-catalog';
+import { MASCOT_MESSAGES_EN } from '../mascot-message-catalog-en';
 import {
   buildMascotSignal,
   renderMascotTemplate,
@@ -102,6 +103,73 @@ describe('catalogue', () => {
         expect(v.text).not.toContain('!');
       }
     }
+  });
+});
+
+describe('English catalogue', () => {
+  it('has the same messages as the French one', () => {
+    expect(Object.keys(MASCOT_MESSAGES_EN).sort()).toEqual([...ids].sort());
+  });
+
+  describe.each(ids)('%s', id => {
+    const english = MASCOT_MESSAGES_EN[id];
+    const variants = tones.flatMap(tone => forms.map(form => ({ tone, form, text: english[tone][form] as string })));
+
+    it('has four variants, none empty', () => {
+      expect(variants).toHaveLength(4);
+      expect(variants.every(v => v.text.trim().length > 0)).toBe(true);
+    });
+
+    it('uses {name} in the named forms only', () => {
+      for (const v of variants) {
+        expect(v.text.includes('{name}')).toBe(v.form === 'named');
+      }
+    });
+
+    it('needs the same parameters as the French message', () => {
+      const french = templateParams(MASCOT_MESSAGES[id].tu.warm.plain).join(',');
+      for (const v of variants) {
+        expect(templateParams(v.text).join(',')).toBe(french);
+      }
+    });
+
+    it('renders without a missing parameter or leftover brace, within two sentences', () => {
+      for (const v of variants) {
+        const text = renderMascotTemplate(v.text, SAMPLE_PARAMS);
+        expect(text).not.toMatch(/[{}]/);
+        expect(sentenceCount(text)).toBeLessThanOrEqual(2);
+        expect(v.text).not.toMatch(/\p{Extended_Pictographic}/u);
+      }
+    });
+
+    it('keeps the sober tone free of exclamation marks', () => {
+      for (const v of variants.filter(item => item.tone === 'sober')) {
+        expect(v.text).not.toContain('!');
+      }
+    });
+  });
+
+  it('is used when the mascot speaks English, whatever the address', () => {
+    const english = prefs({ language: 'en' });
+    expect(resolveMascotMessage('PERMISSION_GRANTED', {}, english, 'Awa')).toBe(
+      "Perfect Awa, I'll take care of the rest."
+    );
+    expect(resolveMascotMessage('PERMISSION_GRANTED', {}, { ...english, address: 'vous' }, null)).toBe(
+      "Perfect, I'll take care of the rest."
+    );
+    expect(resolveMascotMessage('EVENT_START', { title: 'Meeting' }, { ...english, tone: 'sober' }, null)).toBe(
+      'Meeting starts now.'
+    );
+  });
+
+  it('picks the plural form of a count', () => {
+    const english = prefs({ language: 'en', tone: 'sober' });
+    expect(resolveMascotMessage('TASKS_TO_POSTPONE', { count: 1 }, english, null)).toBe(
+      '1 task from today remains to do. Move to tomorrow?'
+    );
+    expect(resolveMascotMessage('TASKS_TO_POSTPONE', { count: 3 }, english, null)).toBe(
+      '3 tasks from today remain to do. Move to tomorrow?'
+    );
   });
 });
 
