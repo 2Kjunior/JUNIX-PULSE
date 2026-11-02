@@ -38,6 +38,7 @@ import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionBu
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makeRemindersStyles } from '@/styles/reminders/reminders-styles';
 import { SwipeableItem, type SwipeAction } from '@/components/ui/SwipeableItem';
+import { MessageKey, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type FilterTab = 'ALL' | 'TONIGHT' | 'TOMORROW' | 'MISSED';
@@ -51,16 +52,16 @@ interface ReminderSection {
   data: Reminder[];
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  CALL: 'Appeler',
-  MESSAGE: 'Message',
-  EMAIL: 'Email',
-  MEET: 'Rencontre',
-  TASK: 'Faire',
-  NONE: '',
+const ACTION_KEYS: Record<string, MessageKey | undefined> = {
+  CALL: 'reminders.action.CALL',
+  MESSAGE: 'reminders.action.MESSAGE',
+  EMAIL: 'reminders.action.EMAIL',
+  MEET: 'reminders.action.MEET',
+  TASK: 'reminders.action.TASK',
 };
 
 export default function RemindersListScreen({ hideBackButton = false }: { hideBackButton?: boolean }) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -78,10 +79,10 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
       setReminders(rems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED'));
       setState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur');
+      setError(e instanceof Error ? e.message : t('common.error'));
       setState('error');
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,28 +94,28 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
     const result = await deleteReminder(reminder);
     setReminders(prev => prev.filter(r => r.id !== reminder.id));
 
-    showSnackbar('Rappel supprimé', {
-      actionLabel: 'Annuler (30s)',
+    showSnackbar(t('reminders.deleted'), {
+      actionLabel: t('common.undo30'),
       onAction: async () => {
         await result.undo();
         load();
       },
       durationMs: 30_000,
     });
-  }, [load, showSnackbar]);
+  }, [load, showSnackbar, t]);
 
   const handleComplete = useCallback(async (reminder: Reminder) => {
     await completeReminder(reminder);
     setReminders(prev => prev.filter(r => r.id !== reminder.id));
-    showSnackbar('Rappel complété.');
-  }, [showSnackbar]);
+    showSnackbar(t('reminders.completed'));
+  }, [showSnackbar, t]);
 
   const handleQuickSnooze = useCallback(async (reminder: Reminder) => {
     const twoHoursLater = addHours(new Date(), 2);
     await snoozeReminder(reminder, { kind: 'custom', until: twoHoursLater });
-    showSnackbar('Rappel reporté de 2h.');
+    showSnackbar(t('reminders.snoozed'));
     load();
-  }, [showSnackbar, load]);
+  }, [showSnackbar, load, t]);
 
   // Regroupement temporel selon les spécifications R-04
   const { sections, counts } = useMemo(() => {
@@ -151,8 +152,8 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
     if ((activeFilter === 'ALL' || activeFilter === 'MISSED') && missed.length > 0) {
       sectionList.push({
-        title: 'En retard',
-        subtitle: 'À traiter en priorité',
+        title: t('reminders.section.missed'),
+        subtitle: t('reminders.section.missedSub'),
         icon: 'alert-circle',
         iconColor: palette.error.default,
         key: 'missed',
@@ -162,8 +163,8 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
     if ((activeFilter === 'ALL' || activeFilter === 'TONIGHT') && tonight.length > 0) {
       sectionList.push({
-        title: 'Ce soir',
-        subtitle: 'Avant 23:00',
+        title: t('reminders.section.tonight'),
+        subtitle: t('reminders.section.tonightSub'),
         icon: 'moon-outline',
         iconColor: palette.tertiary.default,
         key: 'tonight',
@@ -173,8 +174,8 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
     if ((activeFilter === 'ALL' || activeFilter === 'TOMORROW') && tomorrow.length > 0) {
       sectionList.push({
-        title: 'Demain',
-        subtitle: 'Matinée',
+        title: t('reminders.section.tomorrow'),
+        subtitle: t('reminders.section.tomorrowSub'),
         icon: 'sunny-outline',
         iconColor: '#F59E0B',
         key: 'tomorrow',
@@ -184,8 +185,8 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
     if (activeFilter === 'ALL' && upcoming.length > 0) {
       sectionList.push({
-        title: 'À venir',
-        subtitle: 'Prochains jours',
+        title: t('reminders.section.upcoming'),
+        subtitle: t('reminders.section.upcomingSub'),
         icon: 'calendar-outline',
         iconColor: palette.primary.default,
         key: 'upcoming',
@@ -194,7 +195,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
     }
 
     return { sections: sectionList, counts: countsMap };
-  }, [reminders, activeFilter, palette]);
+  }, [reminders, activeFilter, palette, t]);
 
   if (state === 'loading') return <LoadingState />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
@@ -207,7 +208,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backBtn}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
           >
             <Ionicons name="chevron-back" size={22} color={palette.onSurface.primary} />
           </TouchableOpacity>
@@ -215,18 +216,18 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
         <View style={styles.titleCol}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>Rappels</Text>
+            <Text style={styles.title}>{t('tab.reminders')}</Text>
             <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{counts.all} actifs</Text>
+              <Text style={styles.countBadgeText}>{t('reminders.active', { count: counts.all })}</Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>Rythme quotidien • Sanctuaire</Text>
+          <Text style={styles.subtitle}>{t('reminders.subtitle')}</Text>
         </View>
 
         <TouchableOpacity
           style={styles.actionIconBtn}
           onPress={() => router.push('/settings')}
-          accessibilityLabel="Paramètres"
+          accessibilityLabel={t('common.settings')}
         >
           <Ionicons name="options-outline" size={20} color={palette.onSurface.variant} />
         </TouchableOpacity>
@@ -236,22 +237,22 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
       <View style={styles.filtersWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContainer}>
           <FilterChip
-            label={`Tous • ${counts.all}`}
+            label={t('reminders.filter.all', { count: counts.all })}
             active={activeFilter === 'ALL'}
             onPress={() => setActiveFilter('ALL')}
           />
           <FilterChip
-            label={`Ce soir ${counts.tonight}`}
+            label={t('reminders.filter.tonight', { count: counts.tonight })}
             active={activeFilter === 'TONIGHT'}
             onPress={() => setActiveFilter('TONIGHT')}
           />
           <FilterChip
-            label={`Demain ${counts.tomorrow}`}
+            label={t('reminders.filter.tomorrow', { count: counts.tomorrow })}
             active={activeFilter === 'TOMORROW'}
             onPress={() => setActiveFilter('TOMORROW')}
           />
           <FilterChip
-            label={`En retard ${counts.missed}`}
+            label={t('reminders.filter.missed', { count: counts.missed })}
             active={activeFilter === 'MISSED'}
             badgeColor={counts.missed > 0 ? palette.error.default : undefined}
             onPress={() => setActiveFilter('MISSED')}
@@ -263,9 +264,9 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
       {sections.length === 0 ? (
         <EmptyState
           iconName="notifications-outline"
-          title="Aucun rappel actif"
-          description="Tous vos rappels programmés apparaîtront ici avec leur échéance."
-          actionLabel="+ Créer un rappel"
+          title={t('reminders.empty.title')}
+          description={t('reminders.empty.desc')}
+          actionLabel={t('reminders.empty.cta')}
           onAction={() => router.push('/reminders/new')}
         />
       ) : (
@@ -314,7 +315,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
               {
                 key: 'delete',
                 icon: 'trash-outline',
-                label: 'Supprimer',
+                label: t('common.delete'),
                 color: palette.error.default,
                 onPress: () => handleDelete(item),
               },
@@ -323,7 +324,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
               {
                 key: 'complete',
                 icon: 'checkmark-circle-outline',
-                label: 'Terminer',
+                label: t('tasks.complete'),
                 color: palette.success.default,
                 onPress: () => handleComplete(item),
               },
@@ -347,10 +348,8 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
             <View style={styles.nightModeCard}>
               <Ionicons name="bed-outline" size={20} color={palette.tertiary.default} />
               <View style={styles.nightModeTextCol}>
-                <Text style={styles.nightModeTitle}>Mode Nuit activé dès 22h30</Text>
-                <Text style={styles.nightModeDesc}>
-                  Les rappels non urgents basculent automatiquement au réveil.
-                </Text>
+                <Text style={styles.nightModeTitle}>{t('reminders.nightTitle')}</Text>
+                <Text style={styles.nightModeDesc}>{t('reminders.nightDesc')}</Text>
               </View>
             </View>
           }
@@ -359,7 +358,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
 
       {/* ─── Bouton Flottant 3D (Unique CTA R-04) ─────────────────────────── */}
       <GlassFloatingActionButton
-        label="Nouveau rappel"
+        label={t('reminders.new')}
         icon="add"
         // Dans l'onglet : position par défaut, au-dessus de la barre d'onglets
         bottomOffset={hideBackButton ? undefined : insets.bottom + 20}
@@ -416,12 +415,14 @@ function ReminderCardR04({
   onComplete: () => void;
   onQuickSnooze: () => void;
 }) {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeRemindersStyles);
   const priorityColor = palette.priority[reminder.priority];
   const d = new Date(reminder.scheduledAt);
   const timeStr = format(d, 'HH:mm');
-  const actionLabel = reminder.actionType && ACTION_LABELS[reminder.actionType];
+  const actionKey = reminder.actionType ? ACTION_KEYS[reminder.actionType] : undefined;
+  const actionLabel = actionKey ? t(actionKey) : '';
   // La couleur suit le sens : un rappel à venir reste neutre
   const tone = reminder.priority === 'URGENT' ? 'urgent' : isPast(d) ? 'attention' : 'neutral';
 
@@ -438,7 +439,7 @@ function ReminderCardR04({
           style={styles.checkCircle}
           onPress={onComplete}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Marquer le rappel comme terminé"
+          accessibilityLabel={t('reminders.markDoneA11y')}
         >
           <Ionicons name="ellipse-outline" size={22} color={palette.onSurface.variant} />
         </TouchableOpacity>
@@ -469,7 +470,7 @@ function ReminderCardR04({
               <View style={[styles.metaPill, { borderColor: priorityColor + '40' }]}>
                 <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
                 <Text style={[styles.metaPillText, { color: priorityColor }]}>
-                  {reminder.priority === 'URGENT' ? 'Urgent' : 'Haute'}
+                  {reminder.priority === 'URGENT' ? t('priority.urgent') : t('priority.high')}
                 </Text>
               </View>
             ) : null}
@@ -488,7 +489,7 @@ function ReminderCardR04({
           style={styles.quickSnoozeBtn}
           onPress={onQuickSnooze}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-          accessibilityLabel="Reporter de 2 heures"
+          accessibilityLabel={t('reminders.snoozeA11y')}
         >
           <Text style={styles.quickSnoozeText}>+2h</Text>
         </TouchableOpacity>
