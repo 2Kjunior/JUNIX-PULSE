@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { useAppStore } from '@/store/app-store';
@@ -25,17 +24,21 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { makeFormStyles } from '@/styles/common/form-styles';
+import { MessageKey, useDateLocale, useLanguage, useT } from '@/i18n';
 
-const ESTIMATED_TIME_OPTIONS: { minutes?: number; label: string }[] = [
-  { minutes: undefined, label: 'Aucune' },
+const ESTIMATED_TIME_OPTIONS: { minutes?: number; labelKey?: MessageKey; label?: string }[] = [
+  { minutes: undefined, labelKey: 'form.none' },
   { minutes: 15, label: '15 min' },
   { minutes: 30, label: '30 min' },
   { minutes: 45, label: '45 min' },
-  { minutes: 60, label: '1 h' },
-  { minutes: 120, label: '2 h+' },
+  { minutes: 60, labelKey: 'taskNew.hours1' },
+  { minutes: 120, labelKey: 'taskNew.hours2' },
 ];
 
 export default function NewTaskScreen() {
+  const t = useT();
+  const language = useLanguage();
+  const dateLocale = useDateLocale();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -68,11 +71,11 @@ export default function NewTaskScreen() {
 
   // Options de priorité thématiques
   const priorityOptions = useMemo(() => [
-    { key: 'LOW' as ReminderPriority, label: 'Faible', color: palette.priority.LOW },
-    { key: 'NORMAL' as ReminderPriority, label: 'Normale', color: palette.priority.NORMAL },
-    { key: 'HIGH' as ReminderPriority, label: 'Haute', color: palette.priority.HIGH },
-    { key: 'URGENT' as ReminderPriority, label: 'Urgente', color: palette.priority.URGENT },
-  ], [palette]);
+    { key: 'LOW' as ReminderPriority, label: t('form.priority.low'), color: palette.priority.LOW },
+    { key: 'NORMAL' as ReminderPriority, label: t('priority.normal'), color: palette.priority.NORMAL },
+    { key: 'HIGH' as ReminderPriority, label: t('priority.high'), color: palette.priority.HIGH },
+    { key: 'URGENT' as ReminderPriority, label: t('form.priority.urgentF'), color: palette.priority.URGENT },
+  ], [palette, t]);
 
   function addSubtask() {
     const trimmed = subtaskInput.trim();
@@ -88,7 +91,7 @@ export default function NewTaskScreen() {
 
   function validate(): boolean {
     if (!title.trim()) {
-      setTitleError('Le titre de la tâche est requis');
+      setTitleError(t('taskNew.titleRequired'));
       return false;
     }
     setTitleError('');
@@ -109,10 +112,10 @@ export default function NewTaskScreen() {
         subtasks,
       });
 
-      showSnackbar('Tâche créée avec succès');
+      showSnackbar(t('taskNew.created'));
       router.back();
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
+      showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -129,22 +132,22 @@ export default function NewTaskScreen() {
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Annuler"
+          accessibilityLabel={t('form.cancel')}
         >
-          <Text style={formStyles.toolbarCancel}>Annuler</Text>
+          <Text style={formStyles.toolbarCancel}>{t('form.cancel')}</Text>
         </TouchableOpacity>
         <View style={formStyles.toolbarCenter}>
-          <Text style={formStyles.toolbarTitle}>Nouvelle tâche</Text>
-          <Text style={formStyles.toolbarSubtitle}>Action & Projet</Text>
+          <Text style={formStyles.toolbarTitle}>{t('taskNew.title')}</Text>
+          <Text style={formStyles.toolbarSubtitle}>{t('taskNew.subtitle')}</Text>
         </View>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Créer la tâche"
+          accessibilityLabel={t('taskNew.createA11y')}
         >
           <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
-            {saving ? 'Création...' : 'Créer'}
+            {saving ? t('taskNew.creating') : t('taskNew.create')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -160,11 +163,11 @@ export default function NewTaskScreen() {
           <TextInput
             style={[formStyles.titleInput, !!titleError && styles.inputErrorBorder]}
             value={title}
-            onChangeText={t => {
-              setTitle(t);
+            onChangeText={text => {
+              setTitle(text);
               if (titleError) setTitleError('');
             }}
-            placeholder="Que devez-vous accomplir ?"
+            placeholder={t('taskNew.titlePlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             autoFocus
           />
@@ -176,7 +179,7 @@ export default function NewTaskScreen() {
               style={formStyles.notesInput}
               value={description}
               onChangeText={setDescription}
-              placeholder="Contextes, notes, liens utiles..."
+              placeholder={t('taskNew.notesPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               multiline
               numberOfLines={3}
@@ -190,7 +193,7 @@ export default function NewTaskScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="flag-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Priorité d'exécution</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('taskNew.priorityHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -224,7 +227,7 @@ export default function NewTaskScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="calendar-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Date planifiée</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('taskNew.dateHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -239,7 +242,7 @@ export default function NewTaskScreen() {
                 color={!scheduledDateStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, !scheduledDateStr && formStyles.chipTextActive]}>
-                Inbox (sans date)
+                {t('taskNew.inboxNoDate')}
               </Text>
             </TouchableOpacity>
 
@@ -253,7 +256,7 @@ export default function NewTaskScreen() {
                 color={scheduledDateStr === todayStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, scheduledDateStr === todayStr && formStyles.chipTextActive]}>
-                Aujourd'hui
+                {t('common.today')}
               </Text>
             </TouchableOpacity>
 
@@ -267,7 +270,7 @@ export default function NewTaskScreen() {
                 color={scheduledDateStr === tomorrowStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, scheduledDateStr === tomorrowStr && formStyles.chipTextActive]}>
-                Demain
+                {t('reminders.section.tomorrow')}
               </Text>
             </TouchableOpacity>
 
@@ -281,7 +284,7 @@ export default function NewTaskScreen() {
                 color={scheduledDateStr === nextWeekStr ? palette.primary.default : palette.onSurface.variant}
               />
               <Text style={[formStyles.chipText, scheduledDateStr === nextWeekStr && formStyles.chipTextActive]}>
-                Lundi prochain
+                {t('taskNew.nextMonday')}
               </Text>
             </TouchableOpacity>
 
@@ -304,8 +307,8 @@ export default function NewTaskScreen() {
                 ]}
               >
                 {scheduledDateStr && ![todayStr, tomorrowStr, nextWeekStr].includes(scheduledDateStr)
-                  ? format(new Date(scheduledDateStr + 'T12:00:00'), 'd MMMM yyyy', { locale: fr })
-                  : 'Autre date...'}
+                  ? format(new Date(scheduledDateStr + 'T12:00:00'), t('form.dateFormat'), { locale: dateLocale })
+                  : t('form.pickDate')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -316,7 +319,7 @@ export default function NewTaskScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="hourglass-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Durée estimée</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('taskNew.durationHeader')}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -330,7 +333,7 @@ export default function NewTaskScreen() {
                   onPress={() => setEstimatedMinutes(opt.minutes)}
                 >
                   <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
-                    {opt.label}
+                    {opt.labelKey ? t(opt.labelKey) : opt.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -343,7 +346,7 @@ export default function NewTaskScreen() {
           <View style={formStyles.sectionHeaderIconBadge}>
             <Ionicons name="list-outline" size={14} color={palette.primary.default} />
           </View>
-          <Text style={formStyles.sectionHeaderTitle}>Sous-tâches ({subtasks.length})</Text>
+          <Text style={formStyles.sectionHeaderTitle}>{t('taskNew.subtasksHeader', { count: subtasks.length })}</Text>
         </View>
 
         <View style={formStyles.cardGroup}>
@@ -362,7 +365,7 @@ export default function NewTaskScreen() {
               style={styles.subtaskInputField}
               value={subtaskInput}
               onChangeText={setSubtaskInput}
-              placeholder="Ajouter une étape (ex: Rédiger le plan)..."
+              placeholder={t('taskNew.subtaskPlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               onSubmitEditing={addSubtask}
               returnKeyType="done"
@@ -375,7 +378,7 @@ export default function NewTaskScreen() {
 
         {/* Bouton de confirmation */}
         <Button
-          label="Créer la tâche"
+          label={t('taskNew.submit')}
           onPress={handleSave}
           variant="primary"
           size="lg"
@@ -394,9 +397,9 @@ export default function NewTaskScreen() {
           setScheduledDateStr(format(d, 'yyyy-MM-dd'));
         }}
         onCancel={() => setShowDatePicker(false)}
-        confirmTextIOS="Confirmer"
-        cancelTextIOS="Annuler"
-        locale="fr_FR"
+        confirmTextIOS={t('personNew.confirm')}
+        cancelTextIOS={t('form.cancel')}
+        locale={language === 'fr' ? 'fr_FR' : 'en_US'}
       />
     </KeyboardAvoidingView>
   );

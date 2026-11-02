@@ -19,7 +19,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { Contact, requestPermissionsAsync } from 'expo-contacts';
 
@@ -31,32 +30,36 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { PersonTimeFields, PersonTimeValue } from '@/components/people/PersonTimeFields';
+import { MessageKey, useDateLocale, useLanguage, useT } from '@/i18n';
 
-const RELATIONSHIP_OPTIONS = [
-  'Ami·e',
-  'Famille',
-  'Collègue',
-  'Partenaire',
-  'Client·e',
-  'Autre',
+const RELATIONSHIP_OPTIONS: readonly MessageKey[] = [
+  'rel.friend',
+  'rel.family',
+  'rel.colleague',
+  'rel.partner',
+  'rel.client',
+  'rel.other',
 ];
 
-const THRESHOLD_OPTIONS = [
-  { days: 7, label: 'Tous les 7 jours' },
-  { days: 14, label: 'Tous les 14 jours' },
-  { days: 30, label: 'Tous les mois' },
-  { days: 60, label: 'Tous les 2 mois' },
-  { days: 90, label: 'Tous les 3 mois' },
+const THRESHOLD_OPTIONS: readonly { days: number; labelKey: MessageKey }[] = [
+  { days: 7, labelKey: 'freq.7' },
+  { days: 14, labelKey: 'freq.14' },
+  { days: 30, labelKey: 'freq.30' },
+  { days: 60, labelKey: 'freq.60' },
+  { days: 90, labelKey: 'freq.90' },
 ];
 
 export default function NewPersonScreen() {
+  const t = useT();
+  const language = useLanguage();
+  const dateLocale = useDateLocale();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeNewPersonStyles);
 
   const [displayName, setDisplayName] = useState('');
-  const [relationship, setRelationship] = useState('Ami·e');
+  const [relationship, setRelationship] = useState<MessageKey>('rel.friend');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [birthDate, setBirthDate] = useState<string | undefined>(undefined);
@@ -76,7 +79,7 @@ export default function NewPersonScreen() {
       if (Platform.OS === 'android') {
         const { status } = await requestPermissionsAsync();
         if (status !== 'granted') {
-          showSnackbar("Permission d'accès aux contacts requise");
+          showSnackbar(t('personNew.permissionNeeded'));
           setImporting(false);
           return;
         }
@@ -128,9 +131,9 @@ export default function NewPersonScreen() {
       }
 
       setImportedFromContacts(true);
-      showSnackbar(`Contact « ${fullName || 'sélectionné'} » importé.`);
+      showSnackbar(t('personNew.imported', { name: fullName || t('personNew.importedFallback') }));
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : "Impossible d'accéder au carnet d'adresses");
+      showSnackbar(e instanceof Error ? e.message : t('personNew.addressBookError'));
     } finally {
       setImporting(false);
     }
@@ -138,7 +141,7 @@ export default function NewPersonScreen() {
 
   function validate(): boolean {
     if (!displayName.trim()) {
-      setNameError('Le nom est requis');
+      setNameError(t('personNew.nameRequired'));
       return false;
     }
     setNameError('');
@@ -152,7 +155,7 @@ export default function NewPersonScreen() {
     try {
       await PersonUseCases.createPerson({
         displayName: displayName.trim(),
-        relationship,
+        relationship: t(relationship),
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
         birthDate,
@@ -163,10 +166,10 @@ export default function NewPersonScreen() {
         availability: timeInfo.availability,
       });
 
-      showSnackbar('Personne ajoutée avec succès');
+      showSnackbar(t('personNew.created'));
       router.back();
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
+      showSnackbar(e instanceof Error ? e.message : t('personNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -183,18 +186,18 @@ export default function NewPersonScreen() {
         <TouchableOpacity
           style={styles.closeBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Fermer"
+          accessibilityLabel={t('personNew.close')}
         >
           <Ionicons name="close" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvelle personne</Text>
+        <Text style={styles.headerTitle}>{t('personNew.title')}</Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={saving}
-          accessibilityLabel="Enregistrer"
+          accessibilityLabel={t('personNew.saveA11y')}
         >
           <Text style={[styles.saveBtnText, saving && styles.saveBtnDisabled]}>
-            {saving ? 'Ajout...' : 'Ajouter'}
+            {saving ? t('personNew.saving') : t('personNew.save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -211,7 +214,7 @@ export default function NewPersonScreen() {
           disabled={importing}
           activeOpacity={0.75}
           accessibilityRole="button"
-          accessibilityLabel="Importer depuis le carnet d'adresses"
+          accessibilityLabel={t('personNew.importA11y')}
         >
           <View style={[styles.importIconCircle, importedFromContacts && styles.importIconCircleActive]}>
             <Ionicons
@@ -222,14 +225,10 @@ export default function NewPersonScreen() {
           </View>
           <View style={styles.importTextCol}>
             <Text style={styles.importTitle}>
-              {importedFromContacts
-                ? 'Coordonnées issues du carnet d’adresses'
-                : 'Importer depuis le carnet d’adresses'}
+              {importedFromContacts ? t('personNew.importTitleDone') : t('personNew.importTitle')}
             </Text>
             <Text style={styles.importSubtitle}>
-              {importedFromContacts
-                ? 'Nom, téléphone et email chargés en local'
-                : 'Pré-remplir le nom, le numéro et l’email en 1 clic'}
+              {importedFromContacts ? t('personNew.importSubDone') : t('personNew.importSub')}
             </Text>
           </View>
           <Ionicons
@@ -241,7 +240,7 @@ export default function NewPersonScreen() {
 
         {/* Nom complet */}
         <View style={styles.field}>
-          <Text style={styles.label}>Nom complet *</Text>
+          <Text style={styles.label}>{t('personNew.nameLabel')}</Text>
           <TextInput
             style={[styles.input, !!nameError && styles.inputError]}
             value={displayName}
@@ -249,7 +248,7 @@ export default function NewPersonScreen() {
               setDisplayName(t);
               if (nameError) setNameError('');
             }}
-            placeholder="Ex: Alexandre Dupont"
+            placeholder={t('personNew.namePlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             autoFocus
           />
@@ -258,7 +257,7 @@ export default function NewPersonScreen() {
 
         {/* Relation */}
         <View style={styles.field}>
-          <Text style={styles.label}>Lien / Relation</Text>
+          <Text style={styles.label}>{t('personNew.relationLabel')}</Text>
           <View style={styles.chipRowWrap}>
             {RELATIONSHIP_OPTIONS.map(opt => {
               const isSelected = relationship === opt;
@@ -269,7 +268,7 @@ export default function NewPersonScreen() {
                   onPress={() => setRelationship(opt)}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
-                    {opt}
+                    {t(opt)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -280,7 +279,7 @@ export default function NewPersonScreen() {
         {/* Coordonnées (Téléphone & Email) */}
         <View style={styles.fieldRow}>
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={styles.label}>Téléphone</Text>
+            <Text style={styles.label}>{t('personNew.phone')}</Text>
             <TextInput
               style={styles.input}
               value={phone}
@@ -292,7 +291,7 @@ export default function NewPersonScreen() {
           </View>
 
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('personNew.email')}</Text>
             <TextInput
               style={styles.input}
               value={email}
@@ -307,7 +306,7 @@ export default function NewPersonScreen() {
 
         {/* Date d'anniversaire */}
         <View style={styles.field}>
-          <Text style={styles.label}>Date d&apos;anniversaire</Text>
+          <Text style={styles.label}>{t('personNew.birthdayLabel')}</Text>
           <TouchableOpacity
             style={styles.inputSelect}
             onPress={() => setShowDatePicker(true)}
@@ -315,8 +314,8 @@ export default function NewPersonScreen() {
             <Ionicons name="gift-outline" size={20} color={palette.tertiary.default} />
             <Text style={styles.inputSelectText}>
               {birthDate
-                ? format(new Date(birthDate + 'T12:00:00'), 'd MMMM yyyy', { locale: fr })
-                : 'Ajouter la date d’anniversaire...'}
+                ? format(new Date(birthDate + 'T12:00:00'), t('personNew.birthdayFormat'), { locale: dateLocale })
+                : t('personNew.birthdayPlaceholder')}
             </Text>
             {birthDate && (
               <TouchableOpacity onPress={() => setBirthDate(undefined)}>
@@ -333,7 +332,7 @@ export default function NewPersonScreen() {
 
         {/* Fréquence de contact souhaitée */}
         <View style={styles.field}>
-          <Text style={styles.label}>Fréquence de contact conseillée</Text>
+          <Text style={styles.label}>{t('personNew.frequencyLabel')}</Text>
           <View style={styles.chipRowWrap}>
             {THRESHOLD_OPTIONS.map(opt => {
               const isSelected = forgottenThresholdDays === opt.days;
@@ -344,7 +343,7 @@ export default function NewPersonScreen() {
                   onPress={() => setForgottenThresholdDays(opt.days)}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -354,12 +353,12 @@ export default function NewPersonScreen() {
 
         {/* Notes */}
         <View style={styles.field}>
-          <Text style={styles.label}>Notes & Mémos personnels</Text>
+          <Text style={styles.label}>{t('personNew.notesLabel')}</Text>
           <TextInput
             style={[styles.input, styles.multilineInput]}
             value={notes}
             onChangeText={setNotes}
-            placeholder="Goûts, sujets de discussion, contexte, adresses..."
+            placeholder={t('personNew.notesPlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             multiline
             numberOfLines={3}
@@ -368,7 +367,7 @@ export default function NewPersonScreen() {
         </View>
 
         <Button
-          label="Ajouter la personne"
+          label={t('personNew.submit')}
           onPress={handleSave}
           variant="primary"
           size="lg"
@@ -387,9 +386,9 @@ export default function NewPersonScreen() {
           setBirthDate(format(d, 'yyyy-MM-dd'));
         }}
         onCancel={() => setShowDatePicker(false)}
-        confirmTextIOS="Confirmer"
-        cancelTextIOS="Annuler"
-        locale="fr_FR"
+        confirmTextIOS={t('personNew.confirm')}
+        cancelTextIOS={t('common.cancel')}
+        locale={language === 'fr' ? 'fr_FR' : 'en_US'}
       />
     </KeyboardAvoidingView>
   );

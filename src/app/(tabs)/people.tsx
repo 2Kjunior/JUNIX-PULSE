@@ -34,11 +34,13 @@ import { PillTopBar } from '@/components/ui/PillTopBar';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { makePeopleStyles } from '@/styles/tabs/people-styles';
+import { useT } from '@/i18n';
 
 type FilterTab = 'all' | 'forgotten';
 type ScreenState = 'loading' | 'content' | 'error';
 
 export default function PeopleScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makePeopleStyles);
@@ -63,10 +65,10 @@ export default function PeopleScreen() {
       setPersons(activeTab === 'all' ? allPersons : forgotten);
       setScreenState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -88,14 +90,14 @@ export default function PeopleScreen() {
       {/* ─── En-tête R-09 ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Personnes</Text>
-          <Text style={styles.subtitle}>Cercle relationnel • Liens</Text>
+          <Text style={styles.title}>{t('people.title')}</Text>
+          <Text style={styles.subtitle}>{t('people.subtitle')}</Text>
         </View>
 
         <TouchableOpacity
           style={styles.settingsBtn}
           onPress={() => router.push('/settings')}
-          accessibilityLabel="Paramètres"
+          accessibilityLabel={t('common.settings')}
         >
           <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
         </TouchableOpacity>
@@ -104,8 +106,8 @@ export default function PeopleScreen() {
       {/* ─── Segmented Control R-09 ────────────────────────────────────────────── */}
       <PillTopBar
         tabs={[
-          { key: 'all', label: 'Toutes', count: totalCount, icon: 'people-outline' },
-          { key: 'forgotten', label: 'À recontacter', count: forgottenCount, icon: 'time-outline' },
+          { key: 'all', label: t('people.filter.all'), count: totalCount, icon: 'people-outline' },
+          { key: 'forgotten', label: t('people.filter.forgotten'), count: forgottenCount, icon: 'time-outline' },
         ]}
         activeTab={activeTab}
         onTabChange={(k) => setActiveTab(k as FilterTab)}
@@ -123,16 +125,12 @@ export default function PeopleScreen() {
           <EmptyState
             iconName="people-outline"
             title={
-              activeTab === 'all'
-                ? 'Aucun contact enregistré'
-                : 'Tous vos proches sont à jour'
+              activeTab === 'all' ? t('people.empty.allTitle') : t('people.empty.forgottenTitle')
             }
             description={
-              activeTab === 'all'
-                ? 'Ajoutez vos proches pour ne plus jamais perdre le fil de vos relations.'
-                : 'Aucune personne n’a dépassé son délai de contact conseillé.'
+              activeTab === 'all' ? t('people.empty.allDesc') : t('people.empty.forgottenDesc')
             }
-            actionLabel="+ Ajouter une personne"
+            actionLabel={t('people.empty.cta')}
             onAction={() => router.push('/people/new')}
           />
         ) : (
@@ -149,7 +147,7 @@ export default function PeopleScreen() {
 
       {/* ─── Bouton Flottant 3D (Unique CTA R-09) ─────────────────────────── */}
       <GlassFloatingActionButton
-        label="Nouveau contact"
+        label={t('people.new')}
         icon="person-add"
         onPress={() => router.push('/people/new')}
       />
@@ -168,6 +166,7 @@ function PersonCardR09({
   theme: ThemePalette;
   styles: ReturnType<typeof makePeopleStyles>;
 }) {
+  const t = useT();
   const daysSinceLast = daysSinceLastInteraction(person.lastInteractionAt);
   const isForgotten = isPersonForgotten(person);
 
@@ -193,7 +192,7 @@ function PersonCardR09({
       tone={isForgotten ? 'attention' : 'neutral'}
       intensity="soft"
       onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
-      accessibilityLabel={`${person.displayName}${isForgotten ? ', relance conseillée' : ''}`}
+      accessibilityLabel={`${person.displayName}${isForgotten ? t('people.followUpA11y') : ''}`}
     >
       <View style={styles.cardRow}>
         {/* Avatar / Initiales */}
@@ -214,16 +213,16 @@ function PersonCardR09({
 
           <Text style={styles.lastContactText}>
             {daysSinceLast === null
-              ? 'Jamais contacté'
+              ? t('people.neverContacted')
               : daysSinceLast === 0
-              ? 'Contact : aujourd’hui'
-              : `Contact : il y a ${daysSinceLast}j`}
+              ? t('people.contactedToday')
+              : t('people.contactedDaysAgo', { days: daysSinceLast })}
           </Text>
 
           {isForgotten && (
             <View style={styles.forgottenBadge}>
               <Ionicons name="alert-circle-outline" size={12} color={theme.priority.HIGH} />
-              <Text style={styles.forgottenText}>Relance conseillée</Text>
+              <Text style={styles.forgottenText}>{t('people.followUp')}</Text>
             </View>
           )}
         </View>
@@ -235,7 +234,7 @@ function PersonCardR09({
               <TouchableOpacity
                 style={styles.actionIconBtn}
                 onPress={handleCall}
-                accessibilityLabel="Appeler"
+                accessibilityLabel={t('people.call')}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Ionicons name="call-outline" size={16} color={theme.primary.default} />
@@ -244,7 +243,7 @@ function PersonCardR09({
               <TouchableOpacity
                 style={styles.actionIconBtn}
                 onPress={handleMessage}
-                accessibilityLabel="Envoyer un message"
+                accessibilityLabel={t('people.sendMessage')}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Ionicons name="chatbubble-outline" size={16} color={theme.tertiary.default} />

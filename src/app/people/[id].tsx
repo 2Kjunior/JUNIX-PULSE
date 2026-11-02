@@ -17,7 +17,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { PersonRepository } from '@/repositories/person-repository';
 import { PersonUseCases } from '@/use-cases/person-use-cases';
@@ -31,22 +30,23 @@ import { PersonTimeCard } from '@/components/people/PersonTimeCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makePersonDetailStyles } from '@/styles/people/person-detail-styles';
+import { MessageKey, useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
 interface InteractionTypeConfig {
   type: InteractionType;
-  label: string;
+  labelKey: MessageKey;
   icon: keyof typeof Ionicons.glyphMap;
 }
 
 const INTERACTION_TYPES: InteractionTypeConfig[] = [
-  { type: 'CALL', label: 'Appel', icon: 'call-outline' },
-  { type: 'SMS', label: 'SMS', icon: 'chatbubble-outline' },
-  { type: 'WHATSAPP', label: 'WhatsApp', icon: 'logo-whatsapp' },
-  { type: 'IN_PERSON', label: 'Rencontre', icon: 'people-outline' },
-  { type: 'EMAIL', label: 'Email', icon: 'mail-outline' },
-  { type: 'OTHER', label: 'Autre', icon: 'document-text-outline' },
+  { type: 'CALL', labelKey: 'interaction.CALL', icon: 'call-outline' },
+  { type: 'SMS', labelKey: 'interaction.SMS', icon: 'chatbubble-outline' },
+  { type: 'WHATSAPP', labelKey: 'interaction.WHATSAPP', icon: 'logo-whatsapp' },
+  { type: 'IN_PERSON', labelKey: 'interaction.IN_PERSON', icon: 'people-outline' },
+  { type: 'EMAIL', labelKey: 'interaction.EMAIL', icon: 'mail-outline' },
+  { type: 'OTHER', labelKey: 'interaction.OTHER', icon: 'document-text-outline' },
 ];
 
 function formatWhatsAppUrl(rawPhone?: string): string {
@@ -64,6 +64,8 @@ function formatWhatsAppUrl(rawPhone?: string): string {
 }
 
 export default function PersonDetailScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar, userTimezone } = useAppStore();
@@ -82,7 +84,7 @@ export default function PersonDetailScreen() {
 
   const load = useCallback(async () => {
     if (!id) {
-      setError('ID manquant');
+      setError(t('person.missingId'));
       setScreenState('error');
       return;
     }
@@ -92,7 +94,7 @@ export default function PersonDetailScreen() {
         PersonRepository.findInteractions(id),
       ]);
       if (!p) {
-        setError('Personne introuvable');
+        setError(t('person.notFound'));
         setScreenState('error');
         return;
       }
@@ -100,10 +102,10 @@ export default function PersonDetailScreen() {
       setInteractions(inters);
       setScreenState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     load();
@@ -122,10 +124,10 @@ export default function PersonDetailScreen() {
       });
 
       setLogNotes('');
-      showSnackbar('Interaction enregistrée');
+      showSnackbar(t('person.interactionSaved'));
       await load();
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur');
+      showSnackbar(e instanceof Error ? e.message : t('common.error'));
     } finally {
       setLogging(false);
     }
@@ -135,7 +137,7 @@ export default function PersonDetailScreen() {
 
   async function handleDeleteInteraction(interactionId: string) {
     await PersonUseCases.deleteInteraction(interactionId);
-    showSnackbar('Interaction supprimée');
+    showSnackbar(t('person.interactionDeleted'));
     await load();
   }
 
@@ -144,8 +146,8 @@ export default function PersonDetailScreen() {
   async function handleDeletePerson() {
     if (!person) return;
     await PersonUseCases.deletePerson(person.id);
-    showSnackbar('Contact supprimé', {
-      actionLabel: 'Annuler (30s)',
+    showSnackbar(t('person.deleted'), {
+      actionLabel: t('common.undo30'),
       onAction: async () => {
         await PersonUseCases.undoDelete(person.id);
         load();
@@ -184,7 +186,7 @@ export default function PersonDetailScreen() {
           style={styles.headerBtn}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
@@ -195,7 +197,7 @@ export default function PersonDetailScreen() {
           style={styles.headerBtn}
           onPress={handleDeletePerson}
           accessibilityRole="button"
-          accessibilityLabel="Supprimer le contact"
+          accessibilityLabel={t('person.deleteA11y')}
         >
           <Ionicons name="trash-outline" size={20} color={theme.error.default} />
         </TouchableOpacity>
@@ -210,7 +212,7 @@ export default function PersonDetailScreen() {
         <GlowCard
           tone={isForgotten ? 'attention' : 'neutral'}
           size="hero"
-          accessibilityLabel={`${person.displayName}${isForgotten ? ', relance conseillée' : ''}`}
+          accessibilityLabel={`${person.displayName}${isForgotten ? t('person.followUpA11y') : ''}`}
         >
         <View style={styles.profileCardInner}>
           <View style={styles.profileHeader}>
@@ -228,7 +230,7 @@ export default function PersonDetailScreen() {
                 {person.importedFromContacts && (
                   <View style={styles.importedBadge}>
                     <Ionicons name="book-outline" size={11} color={theme.tertiary.default} />
-                    <Text style={styles.importedText}>Répertoire</Text>
+                    <Text style={styles.importedText}>{t('person.fromContacts')}</Text>
                   </View>
                 )}
               </View>
@@ -254,10 +256,10 @@ export default function PersonDetailScreen() {
               ]}
             >
               {daysSinceLast === null
-                ? 'Aucun contact enregistré (Relance conseillée)'
+                ? t('person.noContactYet')
                 : isForgotten
-                ? `Dernier contact il y a ${daysSinceLast} jours (Relance conseillée)`
-                : `Dernier contact il y a ${daysSinceLast} jours (À jour)`}
+                ? t('person.lastContactDue', { days: daysSinceLast })
+                : t('person.lastContactOk', { days: daysSinceLast })}
             </Text>
           </View>
 
@@ -272,7 +274,7 @@ export default function PersonDetailScreen() {
                     activeOpacity={0.7}
                   >
                     <Ionicons name="call-outline" size={18} color={theme.primary.default} />
-                    <Text style={styles.quickActionText}>Appeler</Text>
+                    <Text style={styles.quickActionText}>{t('person.call')}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -313,15 +315,15 @@ export default function PersonDetailScreen() {
             <View style={styles.detailRow}>
               <Ionicons name="gift-outline" size={16} color={theme.tertiary.default} />
               <Text style={styles.detailText}>
-                Anniversaire :{' '}
-                {format(new Date(person.birthDate + 'T12:00:00'), 'd MMMM', { locale: fr })}
+                {t('person.birthday')}{' '}
+                {format(new Date(person.birthDate + 'T12:00:00'), 'd MMMM', { locale: dateLocale })}
               </Text>
             </View>
           )}
 
           {!!person.notes && (
             <View style={styles.notesBox}>
-              <Text style={styles.notesTitle}>Notes :</Text>
+              <Text style={styles.notesTitle}>{t('person.notes')}</Text>
               <Text style={styles.notesText}>{person.notes}</Text>
             </View>
           )}
@@ -340,7 +342,7 @@ export default function PersonDetailScreen() {
 
         {/* Section : Enregistrer une nouvelle interaction */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Enregistrer une interaction</Text>
+          <Text style={styles.sectionTitle}>{t('person.logTitle')}</Text>
           <GlowCard tone="neutral">
           <View style={styles.logCardInner}>
             {/* Choix du type */}
@@ -356,7 +358,7 @@ export default function PersonDetailScreen() {
                       activeOpacity={0.7}
                       accessibilityRole="radio"
                       accessibilityState={{ selected: isSelected }}
-                      accessibilityLabel={`${item.label}${isSelected ? ', sélectionné' : ''}`}
+                      accessibilityLabel={`${t(item.labelKey)}${isSelected ? ', ' + t('common.selected') : ''}`}
                     >
                       <Ionicons
                         name={item.icon}
@@ -366,7 +368,7 @@ export default function PersonDetailScreen() {
                       <Text
                         style={[styles.typeChipText, isSelected && styles.typeChipTextActive]}
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -379,7 +381,7 @@ export default function PersonDetailScreen() {
               style={styles.logInput}
               value={logNotes}
               onChangeText={setLogNotes}
-              placeholder="Notes sur l'échange (ex: nouvelles prises, café ensemble...)"
+              placeholder={t('person.logNotesPlaceholder')}
               placeholderTextColor={theme.onSurface.disabled}
               multiline
               numberOfLines={2}
@@ -387,7 +389,7 @@ export default function PersonDetailScreen() {
 
             {/* Bouton avec dégradé unique */}
             <Button
-              label="Enregistrer l'interaction"
+              label={t('person.logButton')}
               onPress={handleLogInteraction}
               variant="primary"
               size="md"
@@ -399,18 +401,14 @@ export default function PersonDetailScreen() {
 
         {/* Section : Historique / Timeline */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Historique ({interactions.length})
-          </Text>
+          <Text style={styles.sectionTitle}>{t('person.history', { count: interactions.length })}</Text>
 
           {interactions.length === 0 ? (
             <GlowCard tone="neutral">
               <View style={styles.emptyBoxInner}>
                 <Ionicons name="chatbubbles-outline" size={32} color={theme.onSurface.disabled} />
-                <Text style={styles.emptyTitle}>Aucune interaction</Text>
-                <Text style={styles.emptyText}>
-                  Enregistrez vos échanges pour maintenir le lien dans la durée.
-                </Text>
+                <Text style={styles.emptyTitle}>{t('person.noInteraction')}</Text>
+                <Text style={styles.emptyText}>{t('person.noInteractionHint')}</Text>
               </View>
             </GlowCard>
           ) : (
@@ -426,9 +424,9 @@ export default function PersonDetailScreen() {
                   </View>
                   <View style={styles.timelineBody}>
                     <View style={styles.timelineHeader}>
-                      <Text style={styles.timelineType}>{typeConfig.label}</Text>
+                      <Text style={styles.timelineType}>{t(typeConfig.labelKey)}</Text>
                       <Text style={styles.timelineDate}>
-                        {format(new Date(item.occurredAt), 'd MMM yyyy à HH:mm', { locale: fr })}
+                        {format(new Date(item.occurredAt), t('person.timelineDate'), { locale: dateLocale })}
                       </Text>
                     </View>
                     {!!item.notes && <Text style={styles.timelineNotes}>{item.notes}</Text>}
@@ -437,7 +435,10 @@ export default function PersonDetailScreen() {
                     onPress={() => handleDeleteInteraction(item.id)}
                     style={styles.timelineDelete}
                     accessibilityRole="button"
-                    accessibilityLabel={`Supprimer l'interaction ${typeConfig.label} du ${format(new Date(item.occurredAt), 'd MMMM yyyy', { locale: fr })}`}
+                    accessibilityLabel={t('person.deleteInteractionA11y', {
+                      type: t(typeConfig.labelKey),
+                      date: format(new Date(item.occurredAt), 'd MMMM yyyy', { locale: dateLocale }),
+                    })}
                   >
                     <Ionicons name="close" size={16} color={theme.onSurface.disabled} />
                   </TouchableOpacity>

@@ -25,7 +25,6 @@ import {
   isSameDay,
   isToday,
 } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { EventRepository } from '@/repositories/event-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
@@ -44,11 +43,14 @@ import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
 import { CalendarActionModal } from '@/components/calendar/CalendarActionModal';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
+import { useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type CalendarViewMode = 'agenda' | 'timetable' | 'week';
 
 export default function CalendarScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeCalendarStyles);
@@ -151,10 +153,10 @@ export default function CalendarScreen() {
       setAllWeeklyBlocks([...eventBlocks, ...reminderBlocks]);
       setScreenState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [dateYmd, theme, weekDays]);
+  }, [dateYmd, theme, weekDays, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -183,28 +185,31 @@ export default function CalendarScreen() {
   const handleDeleteWeeklyBlock = useCallback((blockId: string, label: string) => {
     Alert.alert(
       label,
-      'Cet élément est synchronisé avec vos événements réels ou rappels. Modifiez-le ou supprimez-le directement depuis sa fiche détaillée.',
-      [{ text: 'Compris' }]
+      t('calendar.syncedBody'),
+      [{ text: t('common.gotIt') }]
     );
-  }, []);
+  }, [t]);
 
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
   const hasItems = events.length > 0 || reminders.length > 0 || tasks.length > 0;
   const weekEnd = addDays(weekStart, 6);
-  const weekLabel = `Semaine du ${format(weekStart, 'd MMM', { locale: fr })} au ${format(weekEnd, 'd MMM yyyy', { locale: fr })}`;
+  const weekLabel = t('calendar.weekLabel', {
+    from: format(weekStart, 'd MMM', { locale: dateLocale }),
+    to: format(weekEnd, 'd MMM yyyy', { locale: dateLocale }),
+  });
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* En-tête avec navigation de date */}
       <View style={styles.header}>
         <View style={styles.headerTitleCol}>
-          <Text style={styles.title}>Planning</Text>
+          <Text style={styles.title}>{t('tab.calendar')}</Text>
           <Text style={styles.subtitle}>
             {viewMode === 'week'
               ? weekLabel
-              : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+              : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
           </Text>
         </View>
 
@@ -217,7 +222,7 @@ export default function CalendarScreen() {
             onPress={handleGoToday}
             disabled={isToday(selectedDate)}
             activeOpacity={0.7}
-            accessibilityLabel="Revenir à aujourd'hui"
+            accessibilityLabel={t('calendar.todayA11y')}
           >
             <Text
               style={[
@@ -225,7 +230,7 @@ export default function CalendarScreen() {
                 isToday(selectedDate) && styles.todayBtnTextDisabled,
               ]}
             >
-              Aujourd'hui
+              {t('common.today')}
             </Text>
           </TouchableOpacity>
 
@@ -233,7 +238,7 @@ export default function CalendarScreen() {
             style={styles.navArrowBtn}
             onPress={handlePrevWeek}
             accessibilityRole="button"
-            accessibilityLabel="Semaine précédente"
+            accessibilityLabel={t('calendar.prevWeekA11y')}
           >
             <Ionicons name="chevron-back" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
@@ -242,7 +247,7 @@ export default function CalendarScreen() {
             style={styles.navArrowBtn}
             onPress={handleNextWeek}
             accessibilityRole="button"
-            accessibilityLabel="Semaine suivante"
+            accessibilityLabel={t('calendar.nextWeekA11y')}
           >
             <Ionicons name="chevron-forward" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
@@ -251,7 +256,7 @@ export default function CalendarScreen() {
             style={styles.settingsBtn}
             onPress={() => router.push('/settings')}
             accessibilityRole="button"
-            accessibilityLabel="Paramètres"
+            accessibilityLabel={t('common.settings')}
           >
             <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
           </TouchableOpacity>
@@ -263,18 +268,18 @@ export default function CalendarScreen() {
         tabs={[
           {
             key: 'agenda',
-            label: 'Agenda',
+            label: t('calendar.view.agenda'),
             count: events.length + reminders.length + tasks.length,
             icon: 'list-outline',
           },
           {
             key: 'timetable',
-            label: 'Journée',
+            label: t('calendar.view.day'),
             icon: 'time-outline',
           },
           {
             key: 'week',
-            label: 'Semaine (7J)',
+            label: t('calendar.view.week'),
             icon: 'grid-outline',
           },
         ]}
@@ -307,7 +312,7 @@ export default function CalendarScreen() {
                     isCurrentDay && !isSelected && styles.dayTextToday,
                   ]}
                 >
-                  {format(d, 'EEE', { locale: fr }).toUpperCase()}
+                  {format(d, 'EEE', { locale: dateLocale }).toUpperCase()}
                 </Text>
                 <Text
                   style={[
@@ -389,10 +394,8 @@ export default function CalendarScreen() {
             <View style={styles.emptyIconCircle}>
               <Ionicons name="calendar-outline" size={32} color={theme.primary.default} />
             </View>
-            <Text style={styles.emptyTitle}>Journée libre</Text>
-            <Text style={styles.emptyDescription}>
-              Aucun événement, rappel ou tâche planifié pour cette date.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('calendar.empty.title')}</Text>
+            <Text style={styles.emptyDescription}>{t('calendar.empty.desc')}</Text>
           </View>
         ) : (
           <>
@@ -401,9 +404,7 @@ export default function CalendarScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="calendar-outline" size={16} color={theme.primary.default} />
-                  <Text style={styles.sectionTitle}>
-                    Événements ({events.length})
-                  </Text>
+                  <Text style={styles.sectionTitle}>{t('calendar.events', { count: events.length })}</Text>
                 </View>
                 {events.map((e, idx) => (
                   <GlowCard
@@ -438,7 +439,7 @@ export default function CalendarScreen() {
                         <View style={styles.metaRow}>
                           <Ionicons name="car-outline" size={13} color={theme.tertiary.default} />
                           <Text style={styles.eventBufferText}>
-                            Trajet : {e.travelBufferMinutes} min avant
+                            {t('calendar.travel', { minutes: e.travelBufferMinutes })}
                           </Text>
                         </View>
                       )}
@@ -451,7 +452,7 @@ export default function CalendarScreen() {
                       ]}
                     >
                       <Text style={styles.typeBadgeText}>
-                        {e.type === 'BUSY' ? 'Occupé' : 'Libre'}
+                        {e.type === 'BUSY' ? t('calendar.busy') : t('calendar.free')}
                       </Text>
                     </View>
                   </View>
@@ -465,9 +466,7 @@ export default function CalendarScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="notifications-outline" size={16} color={theme.priority.HIGH} />
-                  <Text style={styles.sectionTitle}>
-                    Rappels ({reminders.length})
-                  </Text>
+                  <Text style={styles.sectionTitle}>{t('calendar.reminders', { count: reminders.length })}</Text>
                 </View>
                 {reminders.map((r, idx) => (
                   <GlowCard
@@ -500,28 +499,26 @@ export default function CalendarScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="checkbox-outline" size={16} color={theme.tertiary.default} />
-                  <Text style={styles.sectionTitle}>
-                    Tâches planifiées ({tasks.length})
-                  </Text>
+                  <Text style={styles.sectionTitle}>{t('calendar.tasks', { count: tasks.length })}</Text>
                 </View>
-                {tasks.map((t, idx) => (
+                {tasks.map((task, idx) => (
                   <GlowCard
-                    key={`agenda-task-${t.id}-${idx}`}
+                    key={`agenda-task-${task.id}-${idx}`}
                     index={idx}
                     tone="neutral"
-                    onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: t.id } })}
-                    accessibilityLabel={t.title}
+                    onPress={() => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
+                    accessibilityLabel={task.title}
                   >
                   <View style={styles.itemRow}>
                     <View style={styles.taskIconCircle}>
                       <Ionicons name="checkbox-outline" size={16} color={theme.tertiary.default} />
                     </View>
                     <View style={styles.itemBody}>
-                      <Text style={styles.itemTitle}>{t.title}</Text>
-                      {t.estimatedMinutes && (
+                      <Text style={styles.itemTitle}>{task.title}</Text>
+                      {task.estimatedMinutes && (
                         <View style={styles.metaRow}>
                           <Ionicons name="time-outline" size={13} color={theme.onSurface.variant} />
-                          <Text style={styles.itemTime}>{t.estimatedMinutes} min</Text>
+                          <Text style={styles.itemTime}>{t('tasks.minutes', { minutes: task.estimatedMinutes })}</Text>
                         </View>
                       )}
                     </View>
@@ -538,7 +535,7 @@ export default function CalendarScreen() {
 
       {/* Bouton Flottant 3D (FAB) — Choix universel d'ajout */}
       <GlassFloatingActionButton
-        label="Ajouter"
+        label={t('calendar.add')}
         icon="add"
         onPress={() => {
           setSelectedSlotHour(null);
