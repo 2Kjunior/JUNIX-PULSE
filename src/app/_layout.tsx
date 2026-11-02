@@ -31,6 +31,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { Snackbar } from "@/components/feedback/Snackbar";
+import { t as tNow } from "@/i18n";
 import { AmbientBackground } from "@/components/ui/AmbientBackground";
 import type { ThemePalette } from "@/constants/palettes";
 import { getDatabase } from "@/database/sqlite";
@@ -158,7 +159,7 @@ export default function RootLayout() {
         setDbReady(true);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Erreur base de données";
+          error instanceof Error ? error.message : tNow("startup.dbError");
         setDbError(message);
       } finally {
         // Révéler le Splash animé Junix Pulse dès que les polices & runtime sont prêts
@@ -230,8 +231,8 @@ export default function RootLayout() {
       onReminderSyncProblem((report) => {
         showSnackbar(
           report.permissionDenied
-            ? "Notifications bloquées : autorisez-les dans les réglages du téléphone pour que vos rappels sonnent."
-            : "Certains rappels n’ont pas pu être programmés."
+            ? tNow("layout.notifBlocked")
+            : tNow("layout.remindersFailed")
         );
       }),
     [showSnackbar]
@@ -257,7 +258,7 @@ export default function RootLayout() {
       const data = notification.request.content.data;
       // Le récap apparaît aussi dans la bulle de l'accueil : pas de son en plus de la bannière
       if (data?.type === "DAILY_RECAP") return;
-      const title = notification.request.content.title ?? "Rappel Junix Pulse";
+      const title = notification.request.content.title ?? tNow("reminderNotif.default");
       const body = notification.request.content.body ?? "";
       const reminderId = data?.reminderId as string | undefined;
 
@@ -268,11 +269,11 @@ export default function RootLayout() {
         void announceReminderArrived(reminderId);
         Alert.alert(
           `🔔 ${title}`,
-          body || "Votre rappel est arrivé à échéance.",
+          body || tNow("layout.reminderDue"),
           [
-            { text: "Plus tard", style: "cancel" },
+            { text: tNow("layout.later"), style: "cancel" },
             {
-              text: "Ouvrir & Snooze",
+              text: tNow("layout.openSnooze"),
               onPress: () => router.push(`/reminders/${reminderId}`),
             },
           ]

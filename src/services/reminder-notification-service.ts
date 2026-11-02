@@ -12,6 +12,7 @@ import {
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { NotificationService } from '@/services/notification-service';
+import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 
 export interface ReminderSyncOptions {
@@ -55,7 +56,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
   try {
     const settings = await SettingsRepository.get();
     const planned = settings.notificationsEnabled
-      ? planReminderNotifications(await loadReminders(), new Date())
+      ? planReminderNotifications(await loadReminders(), new Date(), useAppStore.getState().language)
       : [];
 
     const held = (await NotificationService.getAllScheduled()).filter(request =>

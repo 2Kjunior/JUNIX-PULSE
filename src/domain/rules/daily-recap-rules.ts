@@ -6,6 +6,8 @@
  */
 
 import { Settings } from '../entities';
+import { translate } from '../../i18n/translate';
+import type { AppLanguage } from './language-rules';
 
 export type DailyRecapKind = 'MORNING_SUMMARY' | 'EVENING_REVIEW';
 
@@ -27,7 +29,10 @@ export type DailyRecapSettings = Pick<
   | 'endOfDayHour'
 >;
 
-export function plannedDailyRecaps(settings: DailyRecapSettings): DailyRecapNotification[] {
+export function plannedDailyRecaps(
+  settings: DailyRecapSettings,
+  language: AppLanguage = 'fr'
+): DailyRecapNotification[] {
   if (
     !settings.onboardingCompleted ||
     !settings.notificationsEnabled ||
@@ -37,19 +42,20 @@ export function plannedDailyRecaps(settings: DailyRecapSettings): DailyRecapNoti
     return [];
   }
 
-  const tu = settings.mascotAddress === 'tu';
+  // Tu and vous only exist in French: the English texts are the same for both
+  const form = settings.mascotAddress === 'tu' ? 'tu' : 'vous';
   return [
     {
       kind: 'MORNING_SUMMARY',
       hour: settings.morningBriefingHour,
-      title: tu ? 'Ton résumé du matin' : 'Votre résumé du matin',
-      body: tu ? 'Ta journée est prête, viens la découvrir.' : 'Votre journée est prête, venez la découvrir.',
+      title: translate(language, form === 'tu' ? 'recap.morningTitle.tu' : 'recap.morningTitle.vous'),
+      body: translate(language, form === 'tu' ? 'recap.morningBody.tu' : 'recap.morningBody.vous'),
     },
     {
       kind: 'EVENING_REVIEW',
       hour: settings.endOfDayHour,
-      title: tu ? 'Ton bilan du soir' : 'Votre bilan du soir',
-      body: tu ? "Viens voir où tu en es aujourd'hui." : "Venez voir où vous en êtes aujourd'hui.",
+      title: translate(language, form === 'tu' ? 'recap.eveningTitle.tu' : 'recap.eveningTitle.vous'),
+      body: translate(language, form === 'tu' ? 'recap.eveningBody.tu' : 'recap.eveningBody.vous'),
     },
   ];
 }

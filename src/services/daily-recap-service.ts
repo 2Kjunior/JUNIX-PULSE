@@ -7,13 +7,14 @@
 import { plannedDailyRecaps } from '@/domain/rules/daily-recap-rules';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { NotificationService } from '@/services/notification-service';
+import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 
 let queue: Promise<void> = Promise.resolve();
 
 async function sync(): Promise<void> {
   try {
-    const planned = plannedDailyRecaps(await SettingsRepository.get());
+    const planned = plannedDailyRecaps(await SettingsRepository.get(), useAppStore.getState().language);
     await NotificationService.cancelDailyRecaps();
     if (planned.length === 0 || !(await NotificationService.checkPermissions())) return;
     for (const recap of planned) {

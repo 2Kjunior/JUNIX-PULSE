@@ -5,13 +5,14 @@
  */
 
 import { RecurrenceRule, Reminder } from '../entities';
+import { translate } from '../../i18n/translate';
+import type { AppLanguage } from './language-rules';
 import { getNextOccurrence } from './reminder-rules';
 
 export const MAX_RECURRING_OCCURRENCES = 14;
 export const MAX_SCHEDULED_REMINDERS = 60;
 export const REMINDER_IDENTIFIER_PREFIX = 'reminder-';
 
-const DEFAULT_BODY = 'Rappel Junix Pulse';
 const ACTIVE_STATUSES: readonly Reminder['status'][] = ['UPCOMING', 'SNOOZED'];
 
 export interface PlannedReminderNotification {
@@ -41,12 +42,18 @@ function occurrencesOf({ reminder, rule }: ReminderToPlan, now: Date): string[] 
   return occurrences;
 }
 
-function bodyOf(reminder: Reminder): string {
-  if (reminder.status !== 'SNOOZED') return reminder.notes ?? DEFAULT_BODY;
-  return reminder.notes ? `Rappel reporté — ${reminder.notes}` : 'Rappel reporté';
+function bodyOf(reminder: Reminder, language: AppLanguage): string {
+  if (reminder.status !== 'SNOOZED') return reminder.notes ?? translate(language, 'reminderNotif.default');
+  return reminder.notes
+    ? translate(language, 'reminderNotif.snoozedNotes', { notes: reminder.notes })
+    : translate(language, 'reminderNotif.snoozed');
 }
 
-export function planReminderNotifications(items: ReminderToPlan[], now: Date): PlannedReminderNotification[] {
+export function planReminderNotifications(
+  items: ReminderToPlan[],
+  now: Date,
+  language: AppLanguage = 'fr'
+): PlannedReminderNotification[] {
   return items
     .filter(({ reminder }) => ACTIVE_STATUSES.includes(reminder.status) && !reminder.deletedAt)
     .flatMap(item =>
@@ -56,7 +63,7 @@ export function planReminderNotifications(items: ReminderToPlan[], now: Date): P
           identifier: `${REMINDER_IDENTIFIER_PREFIX}${item.reminder.id}-${scheduledAt.getTime()}`,
           reminderId: item.reminder.id,
           title: item.reminder.title,
-          body: bodyOf(item.reminder),
+          body: bodyOf(item.reminder, language),
           scheduledAt,
         };
       })

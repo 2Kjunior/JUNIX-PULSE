@@ -8,10 +8,11 @@
  */
 
 import type { DailyRecapKind, DailyRecapNotification } from "@/domain/rules/daily-recap-rules";
+import { t } from "@/i18n";
 import { logger } from "@/utils/logger";
 import { Platform } from "react-native";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
-import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NOTIFICATION_CHANNEL_DESCRIPTION, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
+import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
 
 type NotificationsType = typeof import("expo-notifications");
 
@@ -76,8 +77,8 @@ export const NotificationService = {
       if (Platform.OS === "android") {
         // Legacy channel — kept intact, no sound change (Android forbids it).
         await Notifications.setNotificationChannelAsync("reminders", {
-          name: "Rappels",
-          description: "Notifications pour vos rappels Junix Pulse",
+          name: t('notifChannel.legacyName'),
+          description: t('notifChannel.legacyDesc'),
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#D0BCFF",
@@ -88,8 +89,8 @@ export const NotificationService = {
         // New channel with the custom Junix Pulse sound.
         // A channel's sound is immutable after first creation — always a new ID.
         await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
-          name: NOTIFICATION_CHANNEL_NAME,
-          description: NOTIFICATION_CHANNEL_DESCRIPTION,
+          name: t('notifChannel.name'),
+          description: t('notifChannel.desc'),
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#8B3DF0",
@@ -99,8 +100,8 @@ export const NotificationService = {
         });
 
         await Notifications.setNotificationChannelAsync(DAILY_RECAP_CHANNEL_ID, {
-          name: "Résumé et bilan du jour",
-          description: "Votre résumé du matin et votre bilan du soir",
+          name: t('notifChannel.recapName'),
+          description: t('notifChannel.recapDesc'),
           importance: Notifications.AndroidImportance.DEFAULT,
           lightColor: "#8B3DF0",
           showBadge: false,
@@ -137,7 +138,7 @@ export const NotificationService = {
         identifier: params.identifier ?? `reminder-${params.id}`,
         content: {
           title: params.title,
-          body: params.body ?? "Rappel Junix Pulse",
+          body: params.body ?? t('reminderNotif.default'),
           data: {
             reminderId: params.id,
             type: "REMINDER",
@@ -169,7 +170,7 @@ export const NotificationService = {
       await Notifications.scheduleNotificationAsync({
         identifier: FOCUS_END_IDENTIFIER,
         content: {
-          title: "Temps écoulé !",
+          title: t('notifFocus.title'),
           body,
           data: { type: "FOCUS_END" },
           sound: NOTIFICATION_SOUND_WAV_FILENAME,
@@ -289,7 +290,7 @@ export const NotificationService = {
     if (!Notifications) {
       return {
         success: false,
-        message: "expo-notifications n'est pas disponible dans cet environnement.",
+        message: t('notifTest.unavailable'),
       };
     }
 
@@ -298,16 +299,16 @@ export const NotificationService = {
       if (!hasPermission) {
         return {
           success: false,
-          message: "Permissions refusées. Activez les notifications dans les réglages système.",
+          message: t('notifTest.denied'),
         };
       }
 
       const delaySeconds = options?.delaySeconds ?? 2;
       const effectiveDate = new Date(Date.now() + Math.max(1, delaySeconds) * 1000);
-      const title = options?.title ?? "⚡ Test Junix Pulse";
+      const title = options?.title ?? t('notifTest.title');
       const body =
         options?.body ??
-        "Votre système de notifications est opérationnel ! 🔔";
+        t('notifTest.body');
 
       const id = await Notifications.scheduleNotificationAsync({
         identifier: `test-${Date.now()}`,
@@ -330,13 +331,13 @@ export const NotificationService = {
       return {
         success: true,
         id,
-        message: `Notification programmée dans ${delaySeconds} seconde(s).`,
+        message: t('notifTest.scheduled', { seconds: delaySeconds }),
       };
     } catch (err) {
       logger.error("[NotificationService] Erreur lors de sendTestNotification", err);
       return {
         success: false,
-        message: err instanceof Error ? err.message : "Erreur inconnue lors du test",
+        message: err instanceof Error ? err.message : t('notifTest.unknown'),
       };
     }
   },
