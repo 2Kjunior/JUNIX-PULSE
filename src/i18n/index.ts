@@ -4,6 +4,7 @@
  * language read from the store.
  */
 
+import { useCallback } from 'react';
 import { enUS, fr } from 'date-fns/locale';
 import type { Locale } from 'date-fns';
 
@@ -17,7 +18,8 @@ export type TFunction = (key: MessageKey, params?: TranslateParams) => string;
 
 export function useT(): TFunction {
   const language = useAppStore(state => state.language);
-  return (key, params) => translate(language, key, params);
+  // Stable until the language changes, so a screen can list it among its hook dependencies
+  return useCallback<TFunction>((key, params) => translate(language, key, params), [language]);
 }
 
 /** The language being shown, for code that has to choose among its own texts. */

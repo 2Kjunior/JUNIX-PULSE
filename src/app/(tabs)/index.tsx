@@ -23,7 +23,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { format, isToday, isPast } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -47,6 +46,7 @@ import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
 import { CompanionAnchor } from '@/features/mascot/CompanionAnchor';
 import { TourTarget } from '@/features/mascot/TourTarget';
+import { MessageKey, useDateLocale, useT } from '@/i18n';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
 import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
 import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposal';
@@ -68,6 +68,8 @@ interface TimelineItem {
 }
 
 export default function TodayScreen() {
+  const t = useT();
+  const dateLocale = useDateLocale();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { palette } = useTheme();
@@ -94,7 +96,7 @@ export default function TodayScreen() {
   const mascotPresent = mascotSettings.presence !== 'off';
 
   const today = new Date();
-  const greeting = getGreeting(today.getHours());
+  const greeting = t(getGreetingKey(today.getHours()));
 
   const load = useCallback(async () => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -130,10 +132,10 @@ export default function TodayScreen() {
       setDisplayName(settings.displayName ?? '');
       setState('content');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur de chargement');
+      setError(e instanceof Error ? e.message : t('home.loadError'));
       setState('error');
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -152,35 +154,35 @@ export default function TodayScreen() {
       const isDone = await HabitUseCases.toggleHabitCompletion(habitItem.habit.id);
       showSnackbar(
         isDone
-          ? `Habitude "${habitItem.habit.title}" validée.`
-          : `Validation retirée pour "${habitItem.habit.title}".`
+          ? t('home.habits.checked', { title: habitItem.habit.title })
+          : t('home.habits.unchecked', { title: habitItem.habit.title })
       );
       load();
     } catch (err: unknown) {
-      showSnackbar(err instanceof Error ? err.message : 'Impossible de mettre à jour l’habitude.');
+      showSnackbar(err instanceof Error ? err.message : t('home.habits.error'));
     }
   };
 
   const handleCompleteTask = async (task: Task) => {
     try {
       await TaskUseCases.toggleComplete(task.id);
-      showSnackbar(`Tâche "${task.title}" mise à jour.`);
+      showSnackbar(t('home.task.updated', { title: task.title }));
       load();
     } catch (err: unknown) {
-      showSnackbar(err instanceof Error ? err.message : 'Impossible de mettre à jour la tâche.');
+      showSnackbar(err instanceof Error ? err.message : t('home.task.error'));
     }
   };
 
   const handleAcceptSuggestion = async (sugg: Suggestion) => {
     try {
       await SuggestionUseCases.acceptSuggestion(sugg.id);
-      showSnackbar(`Action appliquée : ${sugg.title}`);
+      showSnackbar(t('home.suggestion.applied', { title: sugg.title }));
       load();
       // Certaines propositions mènent à l'écran où l'utilisateur décide (planning, objectif, rappels)
       const destination = suggestionDestination(sugg);
       if (destination) router.push(destination as never);
     } catch (err: unknown) {
-      showSnackbar(err instanceof Error ? err.message : 'Impossible d’accepter la suggestion.');
+      showSnackbar(err instanceof Error ? err.message : t('home.suggestion.acceptError'));
     }
   };
 
@@ -188,20 +190,20 @@ export default function TodayScreen() {
     try {
       await SuggestionUseCases.refuseSuggestion(sugg.id);
       await noteRefusal(sugg);
-      showSnackbar('Suggestion ignorée.');
+      showSnackbar(t('home.suggestion.ignored'));
       load();
     } catch (err: unknown) {
-      showSnackbar(err instanceof Error ? err.message : 'Impossible d’ignorer la suggestion.');
+      showSnackbar(err instanceof Error ? err.message : t('home.suggestion.ignoreError'));
     }
   };
 
   const handleLoadDemo = async () => {
     try {
       await seedDatabase();
-      showSnackbar('Données de démo chargées avec succès !');
+      showSnackbar(t('home.demo.done'));
       await load();
     } catch (err: unknown) {
-      showSnackbar(err instanceof Error ? err.message : 'Impossible de charger les données de démonstration.');
+      showSnackbar(err instanceof Error ? err.message : t('home.demo.error'));
     }
   };
 
@@ -263,10 +265,10 @@ export default function TodayScreen() {
     });
   }, [events, dueTodayReminders, tasks]);
 
-  if (state === 'loading') return <LoadingState message="Préparation de votre journée..." />;
+  if (state === 'loading') return <LoadingState message={t('home.loading')} />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
 
-  const dateLabel = format(today, 'EEEE d MMMM', { locale: fr });
+  const dateLabel = format(today, 'EEEE d MMMM', { locale: dateLocale });
   const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
   const totalTasksCount = tasks.length;
   const urgentReminders = dueTodayReminders.filter(r => r.priority === 'URGENT' || r.status === 'MISSED');
@@ -311,7 +313,7 @@ export default function TodayScreen() {
             }
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel={urgentReminderId ? 'Ouvrir le rappel urgent' : 'Ouvrir Pulse'}
+            accessibilityLabel={urgentReminderId ? t('home.a11y.openUrgent') : t('home.a11y.openPulse')}
           >
             <CompanionAnchor screen="home" size={56} />
           </TouchableOpacity>
@@ -327,21 +329,21 @@ export default function TodayScreen() {
             <TouchableOpacity
               style={styles.headerBtn}
               onPress={() => router.push('/sanctum')}
-              accessibilityLabel="Sanctuaire coffre-fort"
+              accessibilityLabel={t('home.a11y.sanctum')}
             >
               <Ionicons name="lock-closed-outline" size={19} color={palette.onSurface.variant} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerBtn}
               onPress={() => router.push('/search')}
-              accessibilityLabel="Recherche"
+              accessibilityLabel={t('home.a11y.search')}
             >
               <Ionicons name="search-outline" size={20} color={palette.onSurface.variant} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerBtn}
               onPress={() => router.push('/settings')}
-              accessibilityLabel="Paramètres"
+              accessibilityLabel={t('home.a11y.settings')}
             >
               <Ionicons name="settings-outline" size={20} color={palette.onSurface.variant} />
             </TouchableOpacity>
@@ -357,7 +359,7 @@ export default function TodayScreen() {
             onPress={() => router.push('/(tabs)/reminders' as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
-            accessibilityLabel={`Rappels : ${dueTodayReminders.length} pour aujourd'hui`}
+            accessibilityLabel={t('home.remindersA11y', { count: dueTodayReminders.length })}
           >
             <View style={styles.waveCardHeader}>
               <View style={[styles.waveIconCircle, { backgroundColor: palette.primary.container }]}>
@@ -366,9 +368,11 @@ export default function TodayScreen() {
               <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
             </View>
             <Text style={styles.waveCardNumber}>{dueTodayReminders.length}</Text>
-            <Text style={styles.waveCardLabel}>Rappels</Text>
+            <Text style={styles.waveCardLabel}>{t('home.reminders')}</Text>
             <Text style={styles.waveCardSub}>
-              {urgentReminders.length > 0 ? `${urgentReminders.length} urgent(s)` : `${totalActiveReminders} au total`}
+              {urgentReminders.length > 0
+                ? t('home.remindersUrgent', { count: urgentReminders.length })
+                : t('home.remindersTotal', { count: totalActiveReminders })}
             </Text>
           </TouchableOpacity>
 
@@ -378,7 +382,7 @@ export default function TodayScreen() {
             onPress={() => router.push('/(tabs)/tasks' as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
-            accessibilityLabel={`Tâches : ${tasks.length} pour aujourd'hui`}
+            accessibilityLabel={t('home.tasksA11y', { count: tasks.length })}
           >
             <View style={styles.waveCardHeader}>
               <View style={[styles.waveIconCircle, { backgroundColor: palette.tertiary.container }]}>
@@ -387,9 +391,9 @@ export default function TodayScreen() {
               <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
             </View>
             <Text style={styles.waveCardNumber}>{tasks.length}</Text>
-            <Text style={styles.waveCardLabel}>Tâches</Text>
+            <Text style={styles.waveCardLabel}>{t('home.tasks')}</Text>
             <Text style={styles.waveCardSub}>
-              {completedTasksCount}/{totalTasksCount} faites
+              {t('home.tasksDone', { done: completedTasksCount, total: totalTasksCount })}
             </Text>
           </TouchableOpacity>
 
@@ -399,7 +403,7 @@ export default function TodayScreen() {
             onPress={() => router.push('/(tabs)/calendar' as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
-            accessibilityLabel={`Planning : ${events.length} événements`}
+            accessibilityLabel={t('home.calendarA11y', { count: events.length })}
           >
             <View style={styles.waveCardHeader}>
               <View style={[styles.waveIconCircle, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
@@ -408,9 +412,11 @@ export default function TodayScreen() {
               <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
             </View>
             <Text style={styles.waveCardNumber}>{events.length}</Text>
-            <Text style={styles.waveCardLabel}>Planning</Text>
+            <Text style={styles.waveCardLabel}>{t('home.calendar')}</Text>
             <Text style={styles.waveCardSub}>
-              {nextEvent ? `Prochain à ${format(new Date(nextEvent.startAt), 'HH:mm')}` : 'Journée libre'}
+              {nextEvent
+                ? t('home.calendarNext', { time: format(new Date(nextEvent.startAt), 'HH:mm') })
+                : t('home.calendarFree')}
             </Text>
           </TouchableOpacity>
 
@@ -420,7 +426,7 @@ export default function TodayScreen() {
             onPress={() => router.push('/(tabs)/people' as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
-            accessibilityLabel="Proches et sanctuaire relationnel"
+            accessibilityLabel={t('home.peopleA11y')}
           >
             <View style={styles.waveCardHeader}>
               <View style={[styles.waveIconCircle, { backgroundColor: palette.success.container }]}>
@@ -428,10 +434,14 @@ export default function TodayScreen() {
               </View>
               <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
             </View>
-            <Text style={[styles.waveCardNumber, { fontSize: 18, marginTop: Spacing.sm }]}>Proches</Text>
-            <Text style={styles.waveCardLabel}>Sanctuaire</Text>
+            <Text style={[styles.waveCardNumber, { fontSize: 18, marginTop: Spacing.sm }]}>
+              {t('home.people')}
+            </Text>
+            <Text style={styles.waveCardLabel}>{t('home.sanctuary')}</Text>
             <Text style={styles.waveCardSub}>
-              {topSuggestion && topSuggestion.type === 'FORGOTTEN_CONTACT' ? '1 à contacter' : 'Garder le lien'}
+              {topSuggestion && topSuggestion.type === 'FORGOTTEN_CONTACT'
+                ? t('home.peopleToContact')
+                : t('home.peopleKeepTouch')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -444,11 +454,11 @@ export default function TodayScreen() {
           onPress={() => router.push('/capture')}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Créer un rappel ou une tâche"
+          accessibilityLabel={t('home.quickAddA11y')}
         >
           <View style={styles.quickAddLeft}>
             <Ionicons name="add-circle" size={24} color={palette.primary.default} />
-            <Text style={styles.quickAddText}>+ Nouveau rappel, tâche ou note</Text>
+            <Text style={styles.quickAddText}>{t('home.quickAdd')}</Text>
           </View>
           <Ionicons name="arrow-forward" size={16} color={palette.primary.default} />
         </TouchableOpacity>
@@ -466,13 +476,11 @@ export default function TodayScreen() {
               <View style={styles.demoHeader}>
                 <View style={styles.demoBadge}>
                   <Ionicons name="sparkles" size={13} color={palette.primary.default} />
-                  <Text style={styles.demoBadgeText}>MODE DÉCOUVERTE</Text>
+                  <Text style={styles.demoBadgeText}>{t('home.demo.badge')}</Text>
                 </View>
               </View>
-              <Text style={styles.demoTitle}>Prêt à explorer Junix Pulse ?</Text>
-              <Text style={styles.demoSubtitle}>
-                Chargez un jeu de test complet (contacts, rappels, habitudes, objectifs) pour découvrir immédiatement la puissance du rythme quotidien.
-              </Text>
+              <Text style={styles.demoTitle}>{t('home.demo.title')}</Text>
+              <Text style={styles.demoSubtitle}>{t('home.demo.subtitle')}</Text>
               <TouchableOpacity
                 style={styles.demoBtn}
                 onPress={handleLoadDemo}
@@ -485,7 +493,7 @@ export default function TodayScreen() {
                   style={styles.demoBtnGradient}
                 >
                   <Ionicons name="cloud-download-outline" size={16} color="#FFFFFF" />
-                  <Text style={styles.demoBtnText}>Charger les données de démo</Text>
+                  <Text style={styles.demoBtnText}>{t('home.demo.button')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </LinearGradient>
@@ -500,7 +508,7 @@ export default function TodayScreen() {
               text={timeMessage.text}
               maxWidth={Math.min(windowWidth - Spacing.lg * 2, 560)}
               tailSide="top"
-              actions={[{ label: 'Fermer', onPress: dismissTimeMessage, primary: true }]}
+              actions={[{ label: t('common.close'), onPress: dismissTimeMessage, primary: true }]}
             />
           </View>
         )}
@@ -523,7 +531,7 @@ export default function TodayScreen() {
           <TourTarget id="timeline">
           <View style={styles.blockTitleRow}>
             <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
-            <Text style={styles.blockTitle}>Mon Fil d'Aujourd'hui ({timelineItems.length})</Text>
+            <Text style={styles.blockTitle}>{t('home.timeline.title', { count: timelineItems.length })}</Text>
           </View>
           </TourTarget>
 
@@ -568,10 +576,14 @@ export default function TodayScreen() {
                         },
                       ]}
                     >
-                      {item.time || 'Auj.'}
+                      {item.time || t('home.timeline.today')}
                     </Text>
                     <Text style={styles.timelineTypeTag}>
-                      {item.type === 'reminder' ? 'Rappel' : item.type === 'event' ? 'Agenda' : 'Tâche'}
+                      {item.type === 'reminder'
+                        ? t('home.timeline.reminder')
+                        : item.type === 'event'
+                        ? t('home.timeline.event')
+                        : t('home.timeline.task')}
                     </Text>
                   </View>
 
@@ -599,7 +611,7 @@ export default function TodayScreen() {
                     <TouchableOpacity
                       style={styles.timelineActionBtn}
                       onPress={() => handleCompleteTask(item.raw as Task)}
-                      accessibilityLabel="Terminer la tâche"
+                      accessibilityLabel={t('home.timeline.completeA11y')}
                     >
                       <Ionicons
                         name={item.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
@@ -619,9 +631,9 @@ export default function TodayScreen() {
           ) : (
             <GlowCard tone="neutral">
               <View style={styles.emptyContent}>
-                <Text style={styles.emptyText}>Aucun événement ni rappel prévu pour aujourd'hui</Text>
+                <Text style={styles.emptyText}>{t('home.timeline.empty')}</Text>
                 <TouchableOpacity onPress={() => router.push('/capture')}>
-                  <Text style={styles.emptyAction}>+ Planifier quelque chose</Text>
+                  <Text style={styles.emptyAction}>{t('home.timeline.plan')}</Text>
                 </TouchableOpacity>
               </View>
             </GlowCard>
@@ -632,9 +644,9 @@ export default function TodayScreen() {
         {habits.length > 0 && (
           <View style={styles.sectionBlock}>
             <View style={styles.subHeader}>
-              <Text style={styles.subTitle}>Mes Routines & Habitudes ({habits.length})</Text>
+              <Text style={styles.subTitle}>{t('home.habits.title', { count: habits.length })}</Text>
               <TouchableOpacity onPress={() => router.push('/habits')}>
-                <Text style={styles.subAction}>Voir tout</Text>
+                <Text style={styles.subAction}>{t('home.habits.seeAll')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -645,7 +657,7 @@ export default function TodayScreen() {
                 tone={item.completedToday ? 'success' : 'neutral'}
                 intensity="soft"
                 onPress={() => handleToggleHabit(item)}
-                accessibilityLabel={`${item.habit.title}${item.completedToday ? ', complétée' : ''}`}
+                accessibilityLabel={`${item.habit.title}${item.completedToday ? t('home.habits.doneA11y') : ''}`}
               >
                 <View style={styles.habitRow}>
                   <Ionicons
@@ -665,7 +677,9 @@ export default function TodayScreen() {
                     <View style={styles.streakRow}>
                       <Ionicons name="flame" size={13} color={palette.priority.HIGH} />
                       <Text style={styles.cardSubtitle}>
-                        {item.currentStreak} jour{item.currentStreak > 1 ? 's' : ''} consécutif{item.currentStreak > 1 ? 's' : ''}
+                        {t(item.currentStreak > 1 ? 'home.habits.streakMany' : 'home.habits.streakOne', {
+                          count: item.currentStreak,
+                        })}
                       </Text>
                     </View>
                   </View>
@@ -679,8 +693,8 @@ export default function TodayScreen() {
   );
 }
 
-function getGreeting(hour: number): string {
-  if (hour < 12) return 'Bonjour';
-  if (hour < 18) return 'Bon après-midi';
-  return 'Bonsoir';
+function getGreetingKey(hour: number): MessageKey {
+  if (hour < 12) return 'home.greeting.morning';
+  if (hour < 18) return 'home.greeting.afternoon';
+  return 'home.greeting.evening';
 }
