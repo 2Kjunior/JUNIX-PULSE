@@ -5,7 +5,8 @@
  * - Chiffrement symétrique authentifié XChaCha20-Poly1305 (@noble/ciphers).
  * - Nonce aléatoire de 24 octets (192 bits) par note chiffrée.
  * - Dérivation de clé par scrypt (@noble/hashes) avec N=32768, r=8, p=1 (32 Mo, comme les sauvegardes).
- *   Les clés créées avec N=16384 sont converties au déverrouillage suivant.
+ *   Une clé créée avec N=16384 le reste jusqu'au prochain changement de PIN : déverrouiller ne réécrit
+ *   jamais les notes, car une conversion interrompue ou lancée deux fois pourrait les rendre illisibles.
  * - Format de stockage versionné : `xcha:v1:<nonce_hex>:<ciphertext_hex>`.
  * - Tolérance rétrocompatible : détection transparente des notes non chiffrées (legacy).
  *

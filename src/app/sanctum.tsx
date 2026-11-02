@@ -119,6 +119,7 @@ export default function SanctumScreen() {
   const [newPinInput, setNewPinInput] = useState('');
   const [newPinConfirm, setNewPinConfirm] = useState('');
   const [changingPin, setChangingPin] = useState(false);
+  const [verifyingPin, setVerifyingPin] = useState(false);
   const [pinChangeError, setPinChangeError] = useState('');
 
   // ─── Liste carnets ─────────────────────────────────────────────────────
@@ -207,6 +208,8 @@ export default function SanctumScreen() {
       } else if (result.status === 'unavailable') {
         setHasBiometrics(false);
         setAuthError(t('sanctum.biometricChanged'));
+      } else {
+        setAuthError(t('sanctum.biometricRefused'));
       }
     } catch {
       setAuthError(t('sanctum.biometricError'));
@@ -336,6 +339,7 @@ export default function SanctumScreen() {
 
   // ─── Gestion PIN : vérification scrypt + Poly1305 avec Lockout ─────────
   const handlePinVerify = async () => {
+    if (verifyingPin) return;
     if (lockoutRemaining > 0) {
       setPinError(t('sanctum.lockedRetry', { seconds: lockoutRemaining }));
       return;
@@ -347,6 +351,9 @@ export default function SanctumScreen() {
       return;
     }
 
+    // La dérivation de la clé prend plusieurs secondes sur téléphone : elle doit se voir
+    setVerifyingPin(true);
+    setPinError('');
     try {
       const result = await SanctumAuthService.verifyAndUnlockWithPin(pinInput);
       if (result.success && result.key) {
@@ -366,6 +373,8 @@ export default function SanctumScreen() {
     } catch {
       setPinError(t('sanctum.verifyError'));
       setPinInput('');
+    } finally {
+      setVerifyingPin(false);
     }
   };
 
@@ -744,7 +753,7 @@ export default function SanctumScreen() {
             keyboardType="number-pad"
             secureTextEntry
             maxLength={8}
-            editable={lockoutRemaining === 0}
+            editable={lockoutRemaining === 0 && !verifyingPin}
             autoFocus={lockoutRemaining === 0}
           />
 
@@ -770,6 +779,7 @@ export default function SanctumScreen() {
             variant="primary"
             size="lg"
             disabled={lockoutRemaining > 0}
+            loading={verifyingPin}
             icon={
               <Ionicons
                 name={lockoutRemaining > 0 ? 'time-outline' : 'lock-open-outline'}

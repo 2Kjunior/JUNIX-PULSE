@@ -247,12 +247,6 @@ export const SanctumAuthService = {
           // Succès : réinitialiser le compteur d'échecs
           await this.resetLockout();
           await purgeLegacyBiometricKey();
-
-          // Une clé dérivée avec d'anciens paramètres est convertie maintenant que le PIN est connu
-          if (n < SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N) {
-            const upgraded = await this.changePinWithActiveKey(derivedKey, pin);
-            if (upgraded.success && upgraded.newKey) return { success: true, key: upgraded.newKey };
-          }
           return { success: true, key: derivedKey };
         }
       } catch {
