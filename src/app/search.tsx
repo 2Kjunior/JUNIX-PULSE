@@ -28,6 +28,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '@/utils/logger';
 
+import { MessageKey, useT } from '@/i18n';
 import { getDatabase } from '@/database/sqlite';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -47,16 +48,17 @@ interface SearchResultItem {
   typeLabel: string;
 }
 
-const FILTER_ITEMS: { key: SearchFilter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'ALL', label: 'Tous', icon: 'apps-outline' },
-  { key: 'REMINDERS', label: 'Rappels', icon: 'notifications-outline' },
-  { key: 'TASKS', label: 'Tâches', icon: 'checkmark-circle-outline' },
-  { key: 'PERSONS', label: 'Personnes', icon: 'person-outline' },
-  { key: 'EVENTS', label: 'Événements', icon: 'calendar-outline' },
-  { key: 'GOALS', label: 'Objectifs', icon: 'flag-outline' },
+const FILTER_ITEMS: { key: SearchFilter; labelKey: MessageKey; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'ALL', labelKey: 'search.filter.all', icon: 'apps-outline' },
+  { key: 'REMINDERS', labelKey: 'tab.reminders', icon: 'notifications-outline' },
+  { key: 'TASKS', labelKey: 'tab.tasks', icon: 'checkmark-circle-outline' },
+  { key: 'PERSONS', labelKey: 'people.title', icon: 'person-outline' },
+  { key: 'EVENTS', labelKey: 'search.filter.events', icon: 'calendar-outline' },
+  { key: 'GOALS', labelKey: 'search.filter.goals', icon: 'flag-outline' },
 ];
 
 export default function SearchScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInputInstance>(null);
   const { theme } = useTheme();
@@ -68,9 +70,9 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [_loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([
-    'Rendez-vous',
-    'Factures',
-    'Entraînement',
+    t('search.sample1'),
+    t('search.sample2'),
+    t('search.sample3'),
   ]);
 
   // Focus automatique du champ au montage
@@ -116,11 +118,11 @@ export default function SearchScreen() {
             id: r.id,
             type: 'REMINDER',
             title: r.title,
-            subtitle: `Échéance : ${r.scheduled_at.substring(0, 10)}`,
+            subtitle: t('search.due', { date: r.scheduled_at.substring(0, 10) }),
             route: `/reminders/${r.id}`,
             icon: 'notifications-outline',
             color: theme.primary.default,
-            typeLabel: 'Rappel',
+            typeLabel: t('search.type.reminder'),
           });
         });
 
@@ -137,16 +139,16 @@ export default function SearchScreen() {
            ORDER BY created_at DESC LIMIT 10`,
           [searchPattern, searchPattern]
         );
-        tasks.forEach((t) => {
+        tasks.forEach((task) => {
           found.push({
-            id: t.id,
+            id: task.id,
             type: 'TASK',
-            title: t.title,
-            subtitle: t.status === 'COMPLETED' ? 'Terminée' : 'À faire',
-            route: `/tasks/${t.id}`,
+            title: task.title,
+            subtitle: task.status === 'COMPLETED' ? t('taskDetail.status.COMPLETED') : t('search.todo'),
+            route: `/tasks/${task.id}`,
             icon: 'checkmark-circle-outline',
             color: theme.tertiary.default,
-            typeLabel: 'Tâche',
+            typeLabel: t('search.type.task'),
           });
         });
 
@@ -167,11 +169,11 @@ export default function SearchScreen() {
             id: p.id,
             type: 'PERSON',
             title: p.displayName,
-            subtitle: p.relationship ?? 'Contact',
+            subtitle: p.relationship ?? t('pulse.type.contact'),
             route: `/people/${p.id}`,
             icon: 'person-outline',
             color: isLight ? '#0284C7' : '#38BDF8',
-            typeLabel: 'Contact',
+            typeLabel: t('pulse.type.contact'),
           });
         });
 
@@ -197,7 +199,7 @@ export default function SearchScreen() {
             route: `/events/${e.id}`,
             icon: 'calendar-outline',
             color: theme.primary.default,
-            typeLabel: 'Événement',
+            typeLabel: t('search.type.event'),
           });
         });
 
@@ -221,14 +223,14 @@ export default function SearchScreen() {
             type: 'GOAL',
             title: g.title,
             subtitle: g.deadline
-              ? `Échéance : ${g.deadline.substring(0, 10)}`
+              ? t('search.due', { date: g.deadline.substring(0, 10) })
               : g.status === 'COMPLETED'
-                ? 'Objectif terminé'
-                : 'Objectif actif',
+                ? t('search.goalDone')
+                : t('search.goalActive'),
             route: `/goals/${g.id}`,
             icon: 'flag-outline',
             color: theme.success.default,
-            typeLabel: 'Objectif',
+            typeLabel: t('goals.fab'),
           });
         });
 
@@ -241,7 +243,7 @@ export default function SearchScreen() {
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [query, theme, isLight]);
+  }, [query, theme, isLight, t]);
 
   // Filtrage selon le filtre sélectionné
   const filteredResults = results.filter((item) => {
@@ -278,7 +280,7 @@ export default function SearchScreen() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="arrow-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
@@ -301,7 +303,7 @@ export default function SearchScreen() {
               style={styles.input}
               value={query}
               onChangeText={setQuery}
-              placeholder="Rechercher rappels, tâches, contacts..."
+              placeholder={t('search.placeholder')}
               placeholderTextColor={theme.onSurface.disabled}
               returnKeyType="search"
               autoCapitalize="none"
@@ -333,7 +335,7 @@ export default function SearchScreen() {
                   color={isSelected ? (isLight ? theme.primary.onContainer : theme.onSurface.primary) : theme.onSurface.variant}
                 />
                 <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
-                  {filter.label}
+                  {t(filter.labelKey)}
                 </Text>
               </TouchableOpacity>
             );
@@ -352,9 +354,9 @@ export default function SearchScreen() {
           {recentSearches.length > 0 ? (
             <View style={styles.recentSection}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Recherches récentes</Text>
+                <Text style={styles.sectionTitle}>{t('search.recent')}</Text>
                 <TouchableOpacity onPress={handleClearRecent}>
-                  <Text style={styles.clearText}>Effacer</Text>
+                  <Text style={styles.clearText}>{t('search.clear')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.recentChipsRow}>
@@ -376,9 +378,9 @@ export default function SearchScreen() {
           <GlowCard tone="neutral">
             <View style={styles.infoCardInner}>
               <Ionicons name="sparkles-outline" size={24} color={theme.primary.default} />
-              <Text style={styles.infoCardTitle}>Recherche unifiée locale</Text>
+              <Text style={styles.infoCardTitle}>{t('search.infoTitle')}</Text>
               <Text style={styles.infoCardText}>
-                Tapez un mot-clé pour chercher simultanément dans vos rappels, vos tâches quotidiennes, vos contacts de confiance, vos rendez-vous et vos objectifs.
+                {t('search.infoText')}
               </Text>
             </View>
           </GlowCard>
@@ -429,9 +431,9 @@ export default function SearchScreen() {
           <View style={styles.emptyIconCircle}>
             <Ionicons name="search-outline" size={36} color={theme.onSurface.disabled} />
           </View>
-          <Text style={styles.emptyTitle}>Aucun résultat trouvé</Text>
+          <Text style={styles.emptyTitle}>{t('search.noResult')}</Text>
           <Text style={styles.emptySubtitle}>
-            Aucun élément ne correspond à « {query.trim()} » pour le filtre sélectionné.
+            {t('search.noMatch', { query: query.trim() })}
           </Text>
         </View>
       )}

@@ -44,6 +44,7 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { PulseLogo } from '@/components/ui/PulseLogo';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
+import { useT, type TFunction } from '@/i18n';
 import { CompanionAnchor } from '@/features/mascot/CompanionAnchor';
 import { noteProposalRefused } from '@/services/mascot/mascot-budget-service';
 import {
@@ -64,14 +65,14 @@ type SuggMeta = {
   icon: 'person-outline' | 'alarm-outline' | 'repeat-outline' | 'bulb-outline';
 };
 
-function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
+function getSuggMeta(type: Suggestion['type'], theme: ThemePalette, t: TFunction): SuggMeta {
   const isLight = theme.mode === 'light';
 
   switch (type) {
     case 'FORGOTTEN_CONTACT':
       return {
         tone: 'info',
-        label: 'Contact',
+        label: t('pulse.type.contact'),
         bg: isLight ? 'rgba(2, 132, 199, 0.15)' : 'rgba(56, 189, 248, 0.15)',
         fg: isLight ? '#0284C7' : '#38BDF8',
         icon: 'person-outline',
@@ -79,7 +80,7 @@ function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
     case 'RESCHEDULE_REMINDER':
       return {
         tone: 'attention',
-        label: 'Rappel',
+        label: t('pulse.type.reminder'),
         bg: isLight ? 'rgba(217, 119, 6, 0.15)' : 'rgba(251, 191, 36, 0.15)',
         fg: isLight ? '#D97706' : '#FBBF24',
         icon: 'alarm-outline',
@@ -87,7 +88,7 @@ function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
     case 'HABIT_REMINDER':
       return {
         tone: 'success',
-        label: 'Habitude',
+        label: t('pulse.type.habit'),
         bg: isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(109, 213, 140, 0.15)',
         fg: isLight ? '#059669' : '#6DD58C',
         icon: 'repeat-outline',
@@ -95,7 +96,7 @@ function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
     default:
       return {
         tone: 'primary',
-        label: 'Suggestion',
+        label: t('pulse.type.suggestion'),
         bg: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.15)',
         fg: theme.primary.default,
         icon: 'bulb-outline',
@@ -106,6 +107,7 @@ function getSuggMeta(type: Suggestion['type'], theme: ThemePalette): SuggMeta {
 // ─── Composant principal ─────────────────────────────────────────────────────
 
 export default function PulseScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { showSnackbar, todayFocusMinutes } = useAppStore();
   const { theme } = useTheme();
@@ -146,13 +148,13 @@ export default function PulseScreen() {
   const handleAccept = async (suggestion: Suggestion) => {
     try {
       await SuggestionUseCases.acceptSuggestion(suggestion.id);
-      showSnackbar(`Suggestion acceptée.`);
+      showSnackbar(t('pulse.accepted'));
       loadData();
       // Certaines propositions mènent à l'écran où l'utilisateur décide (planning, objectif, rappels)
       const destination = suggestionDestination(suggestion);
       if (destination) router.push(destination as never);
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Erreur inattendue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('pulse.unexpected'));
     }
   };
 
@@ -160,45 +162,45 @@ export default function PulseScreen() {
     try {
       await SuggestionUseCases.refuseSuggestion(suggestion.id);
       await noteProposalRefused(suggestionProposalId(suggestion.type));
-      showSnackbar('Suggestion ignorée.');
+      showSnackbar(t('home.suggestion.ignored'));
       loadData();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Erreur inattendue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('pulse.unexpected'));
     }
   };
 
   // Métriques affichées dans la bande à 3 colonnes
   const stats = [
-    { value: habitCount ?? '-', label: 'Habitudes\nactives' },
-    { value: goalCount ?? '-', label: 'Objectifs\nen cours' },
-    { value: suggestions.length, label: 'Suggestions\nen attente' },
+    { value: habitCount ?? '-', label: t('pulse.statHabits') },
+    { value: goalCount ?? '-', label: t('pulse.statGoals') },
+    { value: suggestions.length, label: t('pulse.statSuggestions') },
   ];
 
   // Modules raccourcis vers les sous-écrans
   const MODULES = [
     {
       icon: 'timer-outline' as const,
-      label: 'Focus & Pomodoro',
+      label: t('pulse.focusTitle'),
       desc:
         todayFocusMinutes > 0
-          ? `${todayFocusMinutes} min de concentration aujourd’hui.`
-          : 'Minuteur immersif et sessions de travail.',
+          ? t('pulse.focusToday', { minutes: todayFocusMinutes })
+          : t('pulse.focusDesc'),
       color: theme.primary.default,
       bg: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.12)',
       route: '/focus',
     },
     {
       icon: 'repeat-outline' as const,
-      label: 'Habitudes & Streaks',
-      desc: habitCount !== null ? `${habitCount} habitudes actives` : 'Suivez vos pratiques quotidiennes.',
+      label: t('habits.title'),
+      desc: habitCount !== null ? t('pulse.habitsActive', { count: habitCount }) : t('pulse.habitsDesc'),
       color: theme.tertiary.default,
       bg: isLight ? theme.tertiary.container : 'rgba(123, 208, 255, 0.12)',
       route: '/habits',
     },
     {
       icon: 'flag-outline' as const,
-      label: 'Objectifs & Progression',
-      desc: goalCount !== null ? `${goalCount} objectifs en cours` : 'Progression liée à vos tâches.',
+      label: t('pulse.goalsTitle'),
+      desc: goalCount !== null ? t('pulse.goalsActive', { count: goalCount }) : t('pulse.goalsDesc'),
       color: theme.success.default,
       bg: isLight ? theme.success.container : 'rgba(109, 213, 140, 0.12)',
       route: '/goals',
@@ -213,14 +215,14 @@ export default function PulseScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Pulse</Text>
-          <Text style={styles.subtitle}>Intelligence locale • Suggestions</Text>
+          <Text style={styles.subtitle}>{t('pulse.subtitle')}</Text>
         </View>
 
         <TouchableOpacity
           style={styles.settingsBtn}
           onPress={() => router.push('/settings')}
           accessibilityRole="button"
-          accessibilityLabel="Paramètres"
+          accessibilityLabel={t('common.settings')}
         >
           <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
         </TouchableOpacity>
@@ -256,14 +258,14 @@ export default function PulseScreen() {
 
         <Text style={styles.heroTitle}>Pulse</Text>
         <Text style={styles.heroSubtitle}>
-          Votre centre d'intelligence locale — analyse, propose, ne décide jamais.
+          {t('pulse.heroSubtitle')}
         </Text>
 
         {/* Puce état système */}
         <View style={styles.statusPill}>
           <View style={styles.statusDot} />
           <Text style={styles.statusText}>
-            {hasNoSuggestions ? 'Tout est à jour' : `${suggestions.length} actions suggérées`}
+            {hasNoSuggestions ? t('pulse.allGood') : t('pulse.actionsSuggested', { count: suggestions.length })}
           </Text>
         </View>
       </View>
@@ -282,7 +284,7 @@ export default function PulseScreen() {
       <View style={styles.sectionRow}>
         <View style={styles.sectionTitleRow}>
           <Ionicons name="sparkles" size={16} color={theme.primary.default} />
-          <Text style={styles.sectionTitle}>Suggestions</Text>
+          <Text style={styles.sectionTitle}>{t('pulse.suggestions')}</Text>
           {suggestions.length > 0 && (
             <Text style={styles.suggCount}>{suggestions.length}</Text>
           )}
@@ -295,17 +297,16 @@ export default function PulseScreen() {
           <View style={styles.emptyIconCircle}>
             <Ionicons name="checkmark-circle-outline" size={26} color={theme.primary.default} />
           </View>
-          <Text style={styles.emptyTitle}>Tout est sous contrôle</Text>
+          <Text style={styles.emptyTitle}>{t('pulse.emptyTitle')}</Text>
           <Text style={styles.emptyDesc}>
-            Le moteur local analyse vos contacts, rappels et habitudes en
-            continu. Aucune action urgente pour le moment.
+            {t('pulse.emptyDesc')}
           </Text>
         </View>
       ) : (
         /* Cartes de suggestion */
         <View style={styles.suggestionsList}>
           {suggestions.map(s => {
-            const meta = getSuggMeta(s.type, theme);
+            const meta = getSuggMeta(s.type, theme, t);
             return (
               <GlowCard
                 key={s.id}
@@ -335,15 +336,15 @@ export default function PulseScreen() {
                     <TouchableOpacity
                       style={styles.refuseBtn}
                       onPress={() => handleRefuse(s)}
-                      accessibilityLabel="Ignorer cette suggestion"
+                      accessibilityLabel={t('pulse.ignoreA11y')}
                     >
-                      <Text style={styles.refuseText}>Ignorer</Text>
+                      <Text style={styles.refuseText}>{t('pulse.ignore')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={styles.acceptBtn}
                       onPress={() => handleAccept(s)}
-                      accessibilityLabel={`Accepter : ${s.title}`}
+                      accessibilityLabel={t('pulse.acceptA11y', { title: s.title })}
                     >
                       <Ionicons name="checkmark" size={14} color={isLight ? theme.primary.onContainer : theme.primary.default} />
                       <Text style={styles.acceptText}>{suggestionAcceptLabel(s.type)}</Text>
@@ -360,7 +361,7 @@ export default function PulseScreen() {
       <View style={styles.modulesSection}>
         <View style={[styles.sectionTitleRow, { marginBottom: Spacing.md }]}>
           <Ionicons name="grid-outline" size={16} color={theme.onSurface.variant} />
-          <Text style={[styles.sectionTitle, { color: theme.onSurface.variant }]}>Modules</Text>
+          <Text style={[styles.sectionTitle, { color: theme.onSurface.variant }]}>{t('pulse.modules')}</Text>
         </View>
 
         {MODULES.map(m => (

@@ -45,6 +45,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { NotificationService } from '@/services/notification-service';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { setMascotFocusState } from '@/services/mascot/mascot-runtime';
+import { useT } from '@/i18n';
 
 const CIRCLE_SIZE = 260;
 const STROKE_WIDTH = 12;
@@ -52,6 +53,7 @@ const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export default function FocusScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeFocusStyles);
@@ -78,8 +80,8 @@ export default function FocusScreen() {
       NotificationService.scheduleFocusEnd(
         new Date(endsAtRef.current),
         session.taskTitle
-          ? `Session de focus sur « ${session.taskTitle} » terminée.`
-          : 'Votre session de focus est terminée. Prenez une pause bien méritée !'
+          ? t('focus.endNotifTask', { title: session.taskTitle })
+          : t('focus.endNotif')
       );
       timerRef.current = setInterval(() => {
         setSession((prev) => {
@@ -87,7 +89,7 @@ export default function FocusScreen() {
           if (next.state === 'completed' && prev.state === 'running') {
             addFocusMinutes(prev.durationMinutes);
             emitMascotEvent({ type: 'FOCUS_COMPLETED', durationMinutes: prev.durationMinutes });
-            showSnackbar('Session de focus terminée avec succès !');
+            showSnackbar(t('focus.done'));
           }
           return next;
         });
@@ -160,19 +162,19 @@ export default function FocusScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="chevron-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Focus & Pomodoro</Text>
+        <Text style={styles.headerTitle}>{t('pulse.focusTitle')}</Text>
 
         <TouchableOpacity
           style={styles.headerRightButton}
           onPress={handleReset}
           disabled={session.state === 'idle'}
           accessibilityRole="button"
-          accessibilityLabel="Réinitialiser la session"
+          accessibilityLabel={t('focus.resetA11y')}
         >
           <Ionicons
             name="refresh-outline"
@@ -227,12 +229,12 @@ export default function FocusScreen() {
             <View style={styles.statusPill}>
               <Text style={styles.statusPillText}>
                 {isCompleted
-                  ? 'Terminé'
+                  ? t('focus.status.done')
                   : isRunning
-                  ? 'Concentration'
+                  ? t('focus.status.running')
                   : session.state === 'paused'
-                  ? 'En pause'
-                  : 'Prêt'}
+                  ? t('habitDetail.statusPaused')
+                  : t('focus.status.ready')}
               </Text>
             </View>
           </View>
@@ -242,8 +244,8 @@ export default function FocusScreen() {
         <View style={styles.modesSection}>
           <Text style={styles.sectionSubtitle}>
             {session.selectionMode === 'preset'
-              ? 'Mode Raccourci (Preset actif)'
-              : 'Mode Ajustement Libre (Custom actif)'}
+              ? t('focus.modePreset')
+              : t('focus.modeCustom')}
           </Text>
 
           {/* 1. Raccourcis Rapides (Presets) */}
@@ -262,7 +264,7 @@ export default function FocusScreen() {
                   onPress={() => handleSelectPreset(minutes)}
                   disabled={isRunning}
                   accessibilityRole="button"
-                  accessibilityLabel={`Preset de ${minutes} minutes`}
+                  accessibilityLabel={t('focus.presetA11y', { minutes })}
                   accessibilityState={{ selected: isSelected }}
                 >
                   <Text
@@ -271,7 +273,7 @@ export default function FocusScreen() {
                       isSelected && styles.presetButtonTextActive,
                     ]}
                   >
-                    {minutes} min
+                    {t('tasks.minutes', { minutes })}
                   </Text>
                 </TouchableOpacity>
               );
@@ -280,14 +282,14 @@ export default function FocusScreen() {
 
           {/* 2. Ajustement Libre (Désélectionne les presets au clic) */}
           <View style={styles.customAdjustmentCard}>
-            <Text style={styles.customLabel}>Ajustement précis :</Text>
+            <Text style={styles.customLabel}>{t('focus.fineTune')}</Text>
             <View style={styles.customButtonsRow}>
               <TouchableOpacity
                 style={[styles.adjustBtn, isRunning && styles.buttonDisabled]}
                 onPress={() => handleAdjustCustom(-5)}
                 disabled={isRunning}
                 accessibilityRole="button"
-                accessibilityLabel="Retirer 5 minutes"
+                accessibilityLabel={t('focus.minus5')}
               >
                 <Text style={styles.adjustBtnText}>-5m</Text>
               </TouchableOpacity>
@@ -297,13 +299,13 @@ export default function FocusScreen() {
                 onPress={() => handleAdjustCustom(-1)}
                 disabled={isRunning}
                 accessibilityRole="button"
-                accessibilityLabel="Retirer 1 minute"
+                accessibilityLabel={t('focus.minus1')}
               >
                 <Text style={styles.adjustBtnText}>-1m</Text>
               </TouchableOpacity>
 
               <View style={styles.customDurationValue}>
-                <Text style={styles.customDurationText}>{session.durationMinutes} min</Text>
+                <Text style={styles.customDurationText}>{t('tasks.minutes', { minutes: session.durationMinutes })}</Text>
               </View>
 
               <TouchableOpacity
@@ -311,7 +313,7 @@ export default function FocusScreen() {
                 onPress={() => handleAdjustCustom(1)}
                 disabled={isRunning}
                 accessibilityRole="button"
-                accessibilityLabel="Ajouter 1 minute"
+                accessibilityLabel={t('focus.plus1')}
               >
                 <Text style={styles.adjustBtnText}>+1m</Text>
               </TouchableOpacity>
@@ -321,7 +323,7 @@ export default function FocusScreen() {
                 onPress={() => handleAdjustCustom(5)}
                 disabled={isRunning}
                 accessibilityRole="button"
-                accessibilityLabel="Ajouter 5 minutes"
+                accessibilityLabel={t('focus.plus5')}
               >
                 <Text style={styles.adjustBtnText}>+5m</Text>
               </TouchableOpacity>
@@ -334,12 +336,12 @@ export default function FocusScreen() {
           <Button
             label={
               isCompleted
-                ? 'Nouvelle session'
+                ? t('focus.newSession')
                 : isRunning
-                ? 'Mettre en pause'
+                ? t('focus.pause')
                 : session.state === 'paused'
-                ? 'Reprendre'
-                : 'Démarrer'
+                ? t('habits.resume')
+                : t('focus.start')
             }
             onPress={handleTogglePlayPause}
             icon={
@@ -360,9 +362,9 @@ export default function FocusScreen() {
               style={styles.stopButton}
               onPress={handleReset}
               accessibilityRole="button"
-              accessibilityLabel="Arrêter et réinitialiser"
+              accessibilityLabel={t('focus.stopA11y')}
             >
-              <Text style={styles.stopButtonText}>Arrêter</Text>
+              <Text style={styles.stopButtonText}>{t('focus.stop')}</Text>
             </TouchableOpacity>
           )}
         </View>

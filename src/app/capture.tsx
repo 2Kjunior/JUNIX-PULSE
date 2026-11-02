@@ -20,7 +20,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { createReminder } from '@/use-cases/reminder-use-cases';
 import { PersonRepository } from '@/repositories/person-repository';
@@ -38,13 +37,14 @@ import { Button } from '@/components/ui/Button';
 
 import { parseQuickCapture } from '@/domain/rules/capture-rules';
 import { callAdvice } from '@/domain/rules/person-availability-rules';
-import { useT } from '@/i18n';
+import { useDateLocale, useT } from '@/i18n';
 import { WEEKDAY_KEYS } from '@/i18n/weekdays';
 
 export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();
   const { userTimezone, showSnackbar } = useAppStore();
   const t = useT();
+  const dateLocale = useDateLocale();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeQuickCaptureStyles);
 
@@ -111,7 +111,7 @@ export default function QuickCaptureScreen() {
   const handleCreate = async () => {
     if (!cleanTitle.trim()) return;
     if (computedDateTime <= new Date()) {
-      showSnackbar("L'échéance doit être dans le futur. Modifiez la date ou l'heure.");
+      showSnackbar(t('capture.mustBeFuture'));
       return;
     }
     setSaving(true);
@@ -125,10 +125,10 @@ export default function QuickCaptureScreen() {
         personId: targetPerson?.id,
       });
 
-      showSnackbar('Rappel créé via Quick Capture');
+      showSnackbar(t('capture.created'));
       router.back();
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : 'Erreur lors de la création');
+      showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -160,7 +160,7 @@ export default function QuickCaptureScreen() {
         <TouchableOpacity
           style={styles.closeBtn}
           onPress={() => router.back()}
-          accessibilityLabel="Fermer"
+          accessibilityLabel={t('personNew.close')}
         >
           <Ionicons name="close" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
@@ -173,7 +173,7 @@ export default function QuickCaptureScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.subtitle}>
-          Tapez librement ce que vous voulez faire ou retenir.
+          {t('capture.subtitle')}
         </Text>
 
         {/* Champ de saisie libre */}
@@ -182,7 +182,7 @@ export default function QuickCaptureScreen() {
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Ex : Appeler Thomas demain à 18h..."
+            placeholder={t('capture.placeholder')}
             placeholderTextColor={palette.onSurface.disabled}
             autoFocus
             multiline
@@ -195,7 +195,7 @@ export default function QuickCaptureScreen() {
           <View style={styles.interpretationSection}>
             <View style={styles.interpretationHeader}>
               <Ionicons name="sparkles-outline" size={16} color={palette.primary.default} />
-              <Text style={styles.interpretationTitle}>Voici ce que j'ai compris</Text>
+              <Text style={styles.interpretationTitle}>{t('capture.understood')}</Text>
             </View>
 
             <View style={styles.chipsWrap}>
@@ -224,16 +224,16 @@ export default function QuickCaptureScreen() {
                 />
                 <Text style={styles.chipText}>
                   {actionType === 'CALL'
-                    ? 'Appel'
+                    ? t('interaction.CALL')
                     : actionType === 'MESSAGE'
-                    ? 'SMS'
+                    ? t('interaction.SMS')
                     : actionType === 'EMAIL'
-                    ? 'Email'
+                    ? t('interaction.EMAIL')
                     : actionType === 'MEET'
-                    ? 'Rencontre'
+                    ? t('interaction.IN_PERSON')
                     : actionType === 'TASK'
-                    ? 'Tâche'
-                    : 'Action libre'}
+                    ? t('search.type.task')
+                    : t('capture.freeAction')}
                 </Text>
               </TouchableOpacity>
 
@@ -249,7 +249,7 @@ export default function QuickCaptureScreen() {
               <TouchableOpacity style={styles.chip} onPress={cycleDate} activeOpacity={0.7}>
                 <Ionicons name="calendar-outline" size={14} color={palette.tertiary.default} />
                 <Text style={styles.chipText}>
-                  {format(targetDate, 'EEEE d MMM', { locale: fr })}
+                  {format(targetDate, 'EEEE d MMM', { locale: dateLocale })}
                 </Text>
               </TouchableOpacity>
 
@@ -279,13 +279,13 @@ export default function QuickCaptureScreen() {
                     priority === 'URGENT' && { color: palette.error.default, fontWeight: '700' },
                   ]}
                 >
-                  {priority === 'URGENT' ? 'Urgent' : priority === 'LOW' ? 'Doux' : 'Normal'}
+                  {priority === 'URGENT' ? t('priority.urgent') : priority === 'LOW' ? t('capture.gentle') : t('remNew.priority.normal')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             <Text style={styles.hint}>
-              Astuce : Touchez un badge pour changer l'action ou la priorité.
+              {t('capture.tip')}
             </Text>
 
             {advice && targetPerson && (
@@ -324,7 +324,7 @@ export default function QuickCaptureScreen() {
 
             {isDateTimePast && (
               <Text style={[styles.hint, { color: palette.error.default, marginTop: 8 }]}>
-                ⚠️ Cette heure est déjà passée aujourd'hui. Touchez la date pour choisir demain ou un autre jour.
+                {t('capture.pastWarning')}
               </Text>
             )}
           </View>
@@ -333,7 +333,7 @@ export default function QuickCaptureScreen() {
         {/* Bouton de confirmation unique avec dégradé */}
         <View style={styles.actionBlock}>
           <Button
-            label="Confirmer et créer le rappel"
+            label={t('capture.confirm')}
             onPress={handleCreate}
             variant="primary"
             size="lg"
