@@ -27,6 +27,7 @@ import { resetBudget } from '@/services/mascot/mascot-budget-service';
 import { replayHomeTour } from '@/services/mascot/mascot-tips-service';
 import { saveMascotSettings } from '@/services/mascot/mascot-settings-service';
 import { useAppStore } from '@/store/app-store';
+import { useLanguage, useT, type MessageKey } from '@/i18n';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
 import { MascotBubble } from './MascotBubble';
@@ -35,36 +36,36 @@ import { useMascotPreferences } from './use-mascot-preferences';
 
 interface Choice<T extends string> {
   value: T;
-  label: string;
+  labelKey: MessageKey;
 }
 
 const PRESENCE_CHOICES: readonly Choice<MascotPresence>[] = [
-  { value: 'full', label: 'Complète' },
-  { value: 'discreet', label: 'Discrète' },
-  { value: 'off', label: 'Désactivée' },
+  { value: 'full', labelKey: 'mascotSettings.presence.full' },
+  { value: 'discreet', labelKey: 'mascotSettings.presence.discreet' },
+  { value: 'off', labelKey: 'mascotSettings.presence.off' },
 ];
 
 const ADDRESS_CHOICES: readonly Choice<MascotAddress>[] = [
-  { value: 'tu', label: 'Tutoiement' },
-  { value: 'vous', label: 'Vouvoiement' },
+  { value: 'tu', labelKey: 'mascotSettings.address.tu' },
+  { value: 'vous', labelKey: 'mascotSettings.address.vous' },
 ];
 
 const PROPOSALS_CHOICES: readonly Choice<MascotProposalsLevel>[] = [
-  { value: 'normal', label: 'Normales' },
-  { value: 'rare', label: 'Rares' },
-  { value: 'off', label: 'Aucune' },
+  { value: 'normal', labelKey: 'mascotSettings.proposals.normal' },
+  { value: 'rare', labelKey: 'mascotSettings.proposals.rare' },
+  { value: 'off', labelKey: 'mascotSettings.proposals.off' },
 ];
 
-const PRESENCE_HINT: Record<MascotPresence, string> = {
-  full: "Elle te suit d'un écran à l'autre, réagit à tes actions et te parle avec chaleur.",
-  discreet: "Elle te suit sur un ton sobre et ne réagit qu'aux moments marquants.",
-  off: 'Elle ne se montre plus et ne dit plus rien.',
+const PRESENCE_HINT: Record<MascotPresence, MessageKey> = {
+  full: 'mascotSettings.presenceHint.full',
+  discreet: 'mascotSettings.presenceHint.discreet',
+  off: 'mascotSettings.presenceHint.off',
 };
 
-const PROPOSALS_HINT: Record<MascotProposalsLevel, string> = {
-  normal: "Jusqu'à 3 propositions par jour.",
-  rare: 'Une proposition par jour au plus.',
-  off: "Elle ne propose rien d'elle-même.",
+const PROPOSALS_HINT: Record<MascotProposalsLevel, MessageKey> = {
+  normal: 'mascotSettings.proposalsHint.normal',
+  rare: 'mascotSettings.proposalsHint.rare',
+  off: 'mascotSettings.proposalsHint.off',
 };
 
 interface PillsProps<T extends string> {
@@ -75,6 +76,7 @@ interface PillsProps<T extends string> {
 }
 
 function Pills<T extends string>({ choices, value, onSelect, styles }: PillsProps<T>) {
+  const t = useT();
   return (
     <View style={styles.hoursRow}>
       {choices.map(choice => (
@@ -86,7 +88,7 @@ function Pills<T extends string>({ choices, value, onSelect, styles }: PillsProp
           accessibilityState={{ selected: value === choice.value }}
         >
           <Text style={[styles.hourPillText, value === choice.value && styles.hourPillTextActive]}>
-            {choice.label}
+            {t(choice.labelKey)}
           </Text>
         </TouchableOpacity>
       ))}
@@ -97,6 +99,8 @@ function Pills<T extends string>({ choices, value, onSelect, styles }: PillsProp
 export function MascotSettingsSection({ displayName }: { displayName?: string }) {
   const styles = useThemedStyles(makeSettingsStyles);
   const { palette } = useTheme();
+  const t = useT();
+  const language = useLanguage();
   const { showSnackbar } = useAppStore();
   const { settings } = useMascotPreferences();
 
@@ -105,7 +109,7 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
       await saveMascotSettings(next);
     } catch (e) {
       // Le Snackbar se voit partout, y compris sur le web où Alert n'affiche rien
-      showSnackbar(e instanceof Error ? `Réglage non enregistré : ${e.message}` : 'Réglage non enregistré.');
+      showSnackbar(e instanceof Error ? t('mascotSettings.notSavedWith', { message: e.message }) : t('mascotSettings.notSaved'));
     }
   };
 
@@ -115,7 +119,7 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
       // The tour starts by itself a moment after the home screen shows
       router.push('/(tabs)' as never);
     } catch (e) {
-      showSnackbar(e instanceof Error ? `Échec : ${e.message}` : 'Échec.');
+      showSnackbar(e instanceof Error ? t('mascotSettings.failedWith', { message: e.message }) : t('mascotSettings.failed'));
     }
   };
 
@@ -123,15 +127,15 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
     try {
       await MascotStateRepository.deleteByPrefix('tip:');
       await resetBudget();
-      showSnackbar('Pulse a oublié ce que tu as déjà vu.');
+      showSnackbar(t('mascotSettings.forgotten'));
     } catch (e) {
-      showSnackbar(e instanceof Error ? `Échec : ${e.message}` : 'Échec.');
+      showSnackbar(e instanceof Error ? t('mascotSettings.failedWith', { message: e.message }) : t('mascotSettings.failed'));
     }
   };
 
   const resetAll = async () => {
     await change(DEFAULT_MASCOT_SETTINGS);
-    showSnackbar('Réglages de Pulse remis par défaut.');
+    showSnackbar(t('mascotSettings.resetDone'));
   };
 
   const present = settings.presence !== 'off';
@@ -145,46 +149,49 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionLabel}>Pulse, ta mascotte</Text>
+      <Text style={styles.sectionLabel}>{t('mascotSettings.title')}</Text>
 
       <View style={styles.rowCol}>
-        <Text style={styles.rowLabel}>Présence</Text>
+        <Text style={styles.rowLabel}>{t('mascotSettings.presence')}</Text>
         <Pills
           choices={PRESENCE_CHOICES}
           value={settings.presence}
           onSelect={presence => change({ presence })}
           styles={styles}
         />
-        <Text style={styles.rowSub}>{PRESENCE_HINT[settings.presence]}</Text>
+        <Text style={styles.rowSub}>{t(PRESENCE_HINT[settings.presence])}</Text>
       </View>
 
       {present && (
         <>
-          <View style={styles.rowCol}>
-            <Text style={styles.rowLabel}>Forme de politesse</Text>
-            <Pills
-              choices={ADDRESS_CHOICES}
-              value={settings.address}
-              onSelect={address => change({ address })}
-              styles={styles}
-            />
-          </View>
+          {/* Tu and vous only exist in French: English has a single form */}
+          {language === 'fr' && (
+            <View style={styles.rowCol}>
+              <Text style={styles.rowLabel}>{t('mascotSettings.address')}</Text>
+              <Pills
+                choices={ADDRESS_CHOICES}
+                value={settings.address}
+                onSelect={address => change({ address })}
+                styles={styles}
+              />
+            </View>
+          )}
 
           <View style={styles.rowCol}>
-            <Text style={styles.rowLabel}>Propositions</Text>
+            <Text style={styles.rowLabel}>{t('mascotSettings.proposals')}</Text>
             <Pills
               choices={PROPOSALS_CHOICES}
               value={settings.proposals}
               onSelect={proposals => change({ proposals })}
               styles={styles}
             />
-            <Text style={styles.rowSub}>{PROPOSALS_HINT[settings.proposals]}</Text>
+            <Text style={styles.rowSub}>{t(PROPOSALS_HINT[settings.proposals])}</Text>
           </View>
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Résumé du matin et bilan du soir</Text>
-              <Text style={styles.rowSub}>Aux heures choisies plus haut</Text>
+              <Text style={styles.rowLabel}>{t('mascotSettings.briefings')}</Text>
+              <Text style={styles.rowSub}>{t('mascotSettings.briefingsHint')}</Text>
             </View>
             <Switch
               value={settings.briefings}
@@ -207,23 +214,23 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
       {present && (
         <TouchableOpacity style={styles.row} onPress={replayTour} accessibilityRole="button">
           <View>
-            <Text style={styles.rowLabel}>Revoir la présentation</Text>
-            <Text style={styles.rowSub}>Elle te refait le tour de l'Accueil</Text>
+            <Text style={styles.rowLabel}>{t('mascotSettings.replay')}</Text>
+            <Text style={styles.rowSub}>{t('mascotSettings.replayHint')}</Text>
           </View>
         </TouchableOpacity>
       )}
 
       <TouchableOpacity style={styles.row} onPress={forgetTips} accessibilityRole="button">
         <View>
-          <Text style={styles.rowLabel}>Oublier les astuces vues</Text>
-          <Text style={styles.rowSub}>Elle pourra de nouveau tout te présenter</Text>
+          <Text style={styles.rowLabel}>{t('mascotSettings.forget')}</Text>
+          <Text style={styles.rowSub}>{t('mascotSettings.forgetHint')}</Text>
         </View>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.row} onPress={resetAll} accessibilityRole="button">
         <View>
-          <Text style={styles.rowLabel}>Tout remettre par défaut</Text>
-          <Text style={styles.rowSub}>Ne supprime aucune de tes données</Text>
+          <Text style={styles.rowLabel}>{t('mascotSettings.reset')}</Text>
+          <Text style={styles.rowSub}>{t('mascotSettings.resetHint')}</Text>
         </View>
       </TouchableOpacity>
     </View>

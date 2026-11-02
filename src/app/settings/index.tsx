@@ -47,18 +47,18 @@ import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { detectDeviceTimezone } from '@/services/device-timezone';
 import { timezoneLabel } from '@/constants/timezones';
-import { useT } from '@/i18n';
+import { useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
 const APPEARANCE_OPTIONS: {
   value: AppearanceMode;
-  label: string;
+  labelKey: MessageKey;
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { value: 'light', label: 'Clair', icon: 'sunny-outline' },
-  { value: 'dark', label: 'Sombre', icon: 'moon-outline' },
-  { value: 'system', label: 'Automatique', icon: 'phone-portrait-outline' },
+  { value: 'light', labelKey: 'settingsScreen.light', icon: 'sunny-outline' },
+  { value: 'dark', labelKey: 'settingsScreen.dark', icon: 'moon-outline' },
+  { value: 'system', labelKey: 'settingsScreen.auto', icon: 'phone-portrait-outline' },
 ];
 
 export default function SettingsScreen() {
@@ -97,7 +97,7 @@ export default function SettingsScreen() {
     loadSettings();
   }, [loadSettings]);
 
-  if (!settings) return <LoadingState message="Chargement des paramètres..." />;
+  if (!settings) return <LoadingState message={t('settingsScreen.loading')} />;
 
   const handleSaveName = async () => {
     try {
@@ -106,11 +106,11 @@ export default function SettingsScreen() {
         displayName: displayNameInput.trim() || undefined,
         updatedAt: new Date().toISOString(),
       });
-      showSnackbar('Prénom mis à jour !');
+      showSnackbar(t('settingsScreen.nameUpdated'));
       setEditingName(false);
       loadSettings();
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     } finally {
       setSaving(false);
     }
@@ -126,9 +126,9 @@ export default function SettingsScreen() {
       if (val) await NotificationService.requestPermissions();
       await syncDailyRecapNotifications();
       await syncReminderNotifications();
-      showSnackbar(val ? 'Notifications activées' : 'Notifications désactivées');
+      showSnackbar(val ? t('settingsScreen.notifOn') : t('settingsScreen.notifOff'));
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -138,7 +138,7 @@ export default function SettingsScreen() {
     if (!granted) return;
     // Les notifications déjà programmées doivent l'être à nouveau pour en profiter
     await syncReminderNotifications({ force: true });
-    showSnackbar('Vos rappels sonneront à l’heure exacte');
+    showSnackbar(t('settingsScreen.exactDone'));
   };
 
   const handleToggleNotificationSound = async (val: boolean) => {
@@ -148,9 +148,9 @@ export default function SettingsScreen() {
         updatedAt: new Date().toISOString(),
       });
       setSettings(s => s ? { ...s, notificationSoundEnabled: val } : s);
-      showSnackbar(val ? 'Son des notifications activé' : 'Son des notifications désactivé');
+      showSnackbar(val ? t('settingsScreen.soundOn') : t('settingsScreen.soundOff'));
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -167,7 +167,7 @@ export default function SettingsScreen() {
     } catch {
       setThemeMode(previousMode);
       setSettings(s => s ? { ...s, appearanceMode: previousMode } : s);
-      showSnackbar('Échec de la sauvegarde de l’apparence');
+      showSnackbar(t('settingsScreen.appearanceFailed'));
     }
   };
 
@@ -180,9 +180,9 @@ export default function SettingsScreen() {
       });
       setSettings(s => s ? { ...s, morningBriefingHour: hour } : s);
       await syncDailyRecapNotifications();
-      showSnackbar(`Résumé matin réglé à ${hour}h00`);
+      showSnackbar(t('settingsScreen.morningSet', { hour }));
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -194,20 +194,20 @@ export default function SettingsScreen() {
       });
       setSettings(s => s ? { ...s, endOfDayHour: hour } : s);
       await syncDailyRecapNotifications();
-      showSnackbar(`Bilan fin de journée réglé à ${hour}h00`);
+      showSnackbar(t('settingsScreen.eveningSet', { hour }));
     } catch (e) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
   const handleExportData = async () => {
     Alert.alert(
-      'Créer une sauvegarde complète ?',
-      'Le fichier inclura toutes vos données, y compris les notes Sanctum. Il sera chiffré avec un mot de passe que vous seul connaissez.',
+      t('settingsScreen.backupTitle'),
+      t('settingsScreen.backupBody'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Continuer',
+          text: t('common.continue'),
           onPress: () => setBackupPasswordVisible(true),
         },
       ]
@@ -216,7 +216,7 @@ export default function SettingsScreen() {
 
   const handleCreateEncryptedBackup = async (password: string) => {
     if (Platform.OS === 'web') {
-      throw new Error('La création de sauvegarde est disponible dans l\'application mobile.');
+      throw new Error(t('settingsScreen.backupWeb'));
     }
 
     const contents = await createBackup(await getDatabase());
@@ -227,12 +227,12 @@ export default function SettingsScreen() {
     await file.write(encryptedContents);
 
     if (!(await Sharing.isAvailableAsync())) {
-      throw new Error('Le fichier chiffré a été créé, mais le partage n\'est pas disponible sur cet appareil.');
+      throw new Error(t('settingsScreen.shareUnavailable'));
     }
 
     await Sharing.shareAsync(file.uri, {
       mimeType: 'application/json',
-      dialogTitle: 'Partager la sauvegarde chiffrée Junix Pulse',
+      dialogTitle: t('settingsScreen.shareDialog'),
     });
     setBackupPasswordVisible(false);
     emitMascotEvent({ type: 'BACKUP_DONE' });
@@ -240,16 +240,16 @@ export default function SettingsScreen() {
 
   const handleResetApp = () => {
     Alert.alert(
-      "Recommencer l’onboarding\u00A0?",
-      "Cela va relancer la visite d’accueil de l’application. Toutes vos données existantes seront conservées.",
+      t('settingsScreen.resetTitle'),
+      t('settingsScreen.resetBody'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Recommencer',
+          text: t('settingsScreen.restart'),
           onPress: async () => {
             await SettingsRepository.resetOnboarding(new Date().toISOString());
             setOnboardingComplete(false);
-            showSnackbar("Visite d’accueil relancée");
+            showSnackbar(t('settingsScreen.resetDone'));
             router.replace('/(onboarding)');
           },
         },
@@ -259,19 +259,19 @@ export default function SettingsScreen() {
 
   const handleClearAllData = () => {
     Alert.alert(
-      'Effacer toutes les données',
-      'ATTENTION : Cette action efface TOUTES les données locales (rappels, tâches, personnes, habitudes, objectifs). Irréversible.',
+      t('settingsScreen.clearTitle'),
+      t('settingsScreen.clearBody'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Effacer',
+          text: t('settingsScreen.erase'),
           style: 'destructive',
           onPress: async () => {
             try {
               await clearAllData();
-              showSnackbar('Toutes les données effacées.');
+              showSnackbar(t('settingsScreen.cleared'));
             } catch (e) {
-              Alert.alert('Erreur', e instanceof Error ? e.message : 'Une erreur est survenue');
+              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
             }
           },
         },
@@ -290,24 +290,24 @@ export default function SettingsScreen() {
           style={styles.backBtn}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         >
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.title}>Paramètres</Text>
+        <Text style={styles.title}>{t('common.settings')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
       {/* Section Profil */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Profil & Identité</Text>
+        <Text style={styles.sectionLabel}>{t('settingsScreen.profile')}</Text>
         <TouchableOpacity style={styles.row} onPress={() => setEditingName(true)}>
           <View>
-            <Text style={styles.rowLabel}>Prénom</Text>
-            <Text style={styles.rowSub}>Utilisé dans les briefings quotidiens</Text>
+            <Text style={styles.rowLabel}>{t('settingsScreen.firstName')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.firstNameHint')}</Text>
           </View>
           <View style={styles.rowValCol}>
-            <Text style={styles.rowValue}>{settings.displayName ?? 'Non défini'}</Text>
+            <Text style={styles.rowValue}>{settings.displayName ?? t('settingsScreen.notDefined')}</Text>
             <Ionicons name="create-outline" size={16} color={palette.primary.default} />
           </View>
         </TouchableOpacity>
@@ -329,11 +329,11 @@ export default function SettingsScreen() {
       {/* Section Apparence (D-08: visible en mode DEV) */}
       {(__DEV__ || true) && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Apparence</Text>
+          <Text style={styles.sectionLabel}>{t('settingsScreen.appearance')}</Text>
           <View
             style={styles.segmentedControl}
             accessibilityRole="radiogroup"
-            accessibilityLabel="Sélection du mode d'apparence"
+            accessibilityLabel={t('settingsScreen.appearanceA11y')}
           >
             {APPEARANCE_OPTIONS.map((opt) => {
               const selected = (settings.appearanceMode ?? themeMode) === opt.value;
@@ -347,7 +347,7 @@ export default function SettingsScreen() {
                   onPress={() => handleSelectAppearance(opt.value)}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
-                  accessibilityLabel={`${opt.label}${selected ? ', sélectionné' : ''}`}
+                  accessibilityLabel={`${t(opt.labelKey)}${selected ? t('settingsScreen.selectedSuffix') : ''}`}
                 >
                   <Ionicons
                     name={opt.icon}
@@ -361,7 +361,7 @@ export default function SettingsScreen() {
                       selected && styles.segmentTextActive,
                     ]}
                   >
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -369,7 +369,7 @@ export default function SettingsScreen() {
           </View>
 
           <Text style={styles.appearanceHelp}>
-            Automatique suit le réglage de votre téléphone. Le mode sombre est le réglage par défaut.
+            {t('settingsScreen.appearanceHelp')}
           </Text>
 
           {/* Mini aperçu en direct avec GlowCard */}
@@ -380,11 +380,11 @@ export default function SettingsScreen() {
                 <View style={styles.previewHeader}>
                   <Ionicons name="sparkles" size={16} color={palette.primary.default} />
                   <Text style={styles.previewTitle}>
-                    Aperçu en direct
+                    {t('settingsScreen.preview')}
                   </Text>
                 </View>
                 <Text style={styles.previewDesc}>
-                  Thème {palette.mode === 'light' ? 'Clair' : 'Sombre'} actif
+                  {t('settingsScreen.themeActive', { mode: t(palette.mode === 'light' ? 'settingsScreen.light' : 'settingsScreen.dark') })}
                 </Text>
               </View>
             </GlowCard>
@@ -394,11 +394,11 @@ export default function SettingsScreen() {
 
       {/* Section Horaires des briefings */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Horaires des briefings</Text>
+        <Text style={styles.sectionLabel}>{t('settingsScreen.briefings')}</Text>
 
         {/* Heure Résumé Matin */}
         <View style={styles.rowCol}>
-          <Text style={styles.rowLabel}>Heure du briefing du matin</Text>
+          <Text style={styles.rowLabel}>{t('settingsScreen.morningHour')}</Text>
           <View style={styles.hoursRow}>
             {[6, 7, 8, 9].map(h => (
               <TouchableOpacity
@@ -415,7 +415,7 @@ export default function SettingsScreen() {
                     settings.morningBriefingHour === h && styles.hourPillTextActive,
                   ]}
                 >
-                  {h}h00
+                  {t('settingsScreen.hour', { hour: h })}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -424,7 +424,7 @@ export default function SettingsScreen() {
 
         {/* Heure Bilan Soir */}
         <View style={styles.rowCol}>
-          <Text style={styles.rowLabel}>Heure du bilan de fin de journée</Text>
+          <Text style={styles.rowLabel}>{t('settingsScreen.eveningHour')}</Text>
           <View style={styles.hoursRow}>
             {[18, 19, 20, 21].map(h => (
               <TouchableOpacity
@@ -441,7 +441,7 @@ export default function SettingsScreen() {
                     settings.endOfDayHour === h && styles.hourPillTextActive,
                   ]}
                 >
-                  {h}h00
+                  {t('settingsScreen.hour', { hour: h })}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -454,11 +454,11 @@ export default function SettingsScreen() {
 
       {/* Section Notifications */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Notifications</Text>
+        <Text style={styles.sectionLabel}>{t('settingsScreen.notifications')}</Text>
         <View style={styles.row}>
           <View>
-            <Text style={styles.rowLabel}>Rappels & Alertes</Text>
-            <Text style={styles.rowSub}>Notifications locales hors ligne</Text>
+            <Text style={styles.rowLabel}>{t('settingsScreen.remindersAlerts')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.offlineNotifs')}</Text>
           </View>
           <Switch
             value={settings.notificationsEnabled}
@@ -473,11 +473,11 @@ export default function SettingsScreen() {
             style={styles.row}
             onPress={handleEnableExactAlarms}
             accessibilityRole="button"
-            accessibilityLabel="Autoriser les rappels à l’heure exacte"
+            accessibilityLabel={t('settingsScreen.exactA11y')}
           >
             <View style={styles.rowTextFill}>
-              <Text style={styles.rowLabel}>Rappels à l’heure exacte</Text>
-              <Text style={styles.rowSub}>Sans cette autorisation, Android peut les retarder</Text>
+              <Text style={styles.rowLabel}>{t('settingsScreen.exactLabel')}</Text>
+              <Text style={styles.rowSub}>{t('settingsScreen.exactHint')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
           </TouchableOpacity>
@@ -487,8 +487,8 @@ export default function SettingsScreen() {
         {settings.notificationsEnabled && (
           <View style={styles.row}>
             <View>
-              <Text style={styles.rowLabel}>Son des notifications</Text>
-              <Text style={styles.rowSub}>Signature sonore Junix Pulse</Text>
+              <Text style={styles.rowLabel}>{t('settingsScreen.soundLabel')}</Text>
+              <Text style={styles.rowSub}>{t('settingsScreen.soundHint')}</Text>
             </View>
             <Switch
               value={settings.notificationSoundEnabled}
@@ -505,9 +505,9 @@ export default function SettingsScreen() {
         <TouchableOpacity style={styles.row} onPress={handleClearAllData}>
           <View>
             <Text style={[styles.rowLabel, { color: palette.error.default }]}>
-              Effacer toutes les données
+              {t('settingsScreen.clearTitle')}
             </Text>
-            <Text style={styles.rowSub}>Repart à zéro (irréversible)</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.clearHint')}</Text>
           </View>
           <Ionicons name="trash-outline" size={20} color={palette.error.default} />
         </TouchableOpacity>
@@ -515,14 +515,14 @@ export default function SettingsScreen() {
 
       {/* Section Données & Confidentialité */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Données & Confidentialité</Text>
+        <Text style={styles.sectionLabel}>{t('settingsScreen.dataPrivacy')}</Text>
         <TouchableOpacity
           style={styles.row}
           onPress={() => router.push('/sanctum')}
         >
           <View>
-            <Text style={styles.rowLabel}>Sanctuaire — Espace Privé</Text>
-            <Text style={styles.rowSub}>Notes chiffrées et protégées par biométrie</Text>
+            <Text style={styles.rowLabel}>{t('settingsScreen.sanctum')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.sanctumHint')}</Text>
           </View>
           <Ionicons name="lock-closed-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
@@ -538,11 +538,11 @@ export default function SettingsScreen() {
           }}
         >
           <View>
-            <Text style={styles.rowLabel}>Code PIN du Sanctuaire</Text>
+            <Text style={styles.rowLabel}>{t('settingsScreen.pin')}</Text>
             <Text style={styles.rowSub}>
               {isSanctumPinConfigured
-                ? 'Code configuré • Modifier le code PIN'
-                : 'Non configuré • Définir un code secret'}
+                ? t('settingsScreen.pinSet')
+                : t('settingsScreen.pinUnset')}
             </Text>
           </View>
           <Ionicons name="key-outline" size={20} color={palette.primary.default} />
@@ -550,8 +550,8 @@ export default function SettingsScreen() {
 
         <TouchableOpacity style={styles.row} onPress={handleExportData}>
           <View>
-            <Text style={styles.rowLabel}>Sauvegarder les données</Text>
-            <Text style={styles.rowSub}>Exporter la base SQLite en JSON</Text>
+            <Text style={styles.rowLabel}>{t('settingsScreen.backup')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.backupHint')}</Text>
           </View>
           <Ionicons name="download-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
@@ -559,9 +559,9 @@ export default function SettingsScreen() {
         <TouchableOpacity style={styles.row} onPress={handleResetApp}>
           <View>
             <Text style={[styles.rowLabel, { color: palette.primary.default }]}>
-              Recommencer l'onboarding
+              {t('settingsScreen.restartRow')}
             </Text>
-            <Text style={styles.rowSub}>Revoir la visite d'accueil sans perdre vos données</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.restartHint')}</Text>
           </View>
           <Ionicons name="refresh-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
@@ -569,7 +569,7 @@ export default function SettingsScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="shield-checkmark-outline" size={18} color={palette.primary.default} />
           <Text style={styles.infoText}>
-            Junix Pulse fonctionne en mode Local-First / Offline-First. Aucune donnée n'est envoyée à des serveurs tiers.
+            {t('settingsScreen.localFirst')}
           </Text>
         </View>
       </View>
@@ -581,24 +581,24 @@ export default function SettingsScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Modifier votre prénom</Text>
+            <Text style={styles.modalTitle}>{t('settingsScreen.editName')}</Text>
             <TextInput
               style={styles.input}
               value={displayNameInput}
               onChangeText={setDisplayNameInput}
-              placeholder="Saisissez votre prénom..."
+              placeholder={t('settingsScreen.namePlaceholder')}
               placeholderTextColor={palette.onSurface.disabled}
               autoFocus
             />
             <View style={styles.modalActions}>
               <Button
-                label="Annuler"
+                label={t('common.cancel')}
                 onPress={() => setEditingName(false)}
                 variant="ghost"
                 size="sm"
               />
               <Button
-                label={saving ? 'Sauvegarde...' : 'Enregistrer'}
+                label={saving ? t('settingsScreen.saving') : t('settingsScreen.save')}
                 onPress={handleSaveName}
                 disabled={saving}
                 size="sm"
@@ -611,8 +611,8 @@ export default function SettingsScreen() {
       <Text style={styles.version}>Junix Pulse v1.0.0 — Offline-First SQLite</Text>
       <BackupPasswordModal
         visible={backupPasswordVisible}
-        title="Protéger la sauvegarde"
-        confirmLabel="Chiffrer et partager"
+        title={t('settingsScreen.protect')}
+        confirmLabel={t('settingsScreen.encryptShare')}
         confirmPassword
         onCancel={() => setBackupPasswordVisible(false)}
         onSubmit={handleCreateEncryptedBackup}

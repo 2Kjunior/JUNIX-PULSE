@@ -35,6 +35,8 @@ import * as ScreenCapture from 'expo-screen-capture';
 import { SanctumRepository, type SanctumNote } from '@/repositories/sanctum-repository';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { useAppStore } from '@/store/app-store';
+import { useLanguage, useT, type TFunction } from '@/i18n';
+import { sanctumFolderLabel, translateSanctumError } from '@/i18n/sanctum-text';
 import {
   filterSanctumNotes,
   extractUniqueFolders,
@@ -65,6 +67,8 @@ export default function SanctumScreen() {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeSanctumStyles);
   const formStyles = useThemedStyles(makeFormStyles);
+  const t = useT();
+  const language = useLanguage();
 
   // ─── Clé cryptographique active en mémoire volatile (jamais persistée en clair) ───
   const activeKeyRef = useRef<Uint8Array | null>(null);
@@ -104,11 +108,11 @@ export default function SanctumScreen() {
       SanctumAuthService.getLockoutStatus().then((status) => {
         if (status.isLocked) {
           setLockoutRemaining(status.remainingSeconds);
-          setPinError(`Coffre-fort verrouillé. Réessayez dans ${status.remainingSeconds}s.`);
+          setPinError(t('sanctum.lockedRetry', { seconds: status.remainingSeconds }));
         }
       });
     }
-  }, [currentView]);
+  }, [currentView, t]);
 
   // ─── PIN Change state (Modification depuis le Sanctuaire) ──────────────
   const [oldPinInput, setOldPinInput] = useState('');
@@ -202,10 +206,10 @@ export default function SanctumScreen() {
         await onAuthSuccess(result.key);
       } else if (result.status === 'unavailable') {
         setHasBiometrics(false);
-        setAuthError('La biométrie du téléphone a changé. Utilisez votre code PIN.');
+        setAuthError(t('sanctum.biometricChanged'));
       }
     } catch {
-      setAuthError('Erreur d’authentification biométrique');
+      setAuthError(t('sanctum.biometricError'));
     } finally {
       setAuthenticating(false);
     }
@@ -215,16 +219,16 @@ export default function SanctumScreen() {
   const offerBiometricUnlock = async (key: Uint8Array) => {
     if (!(await SanctumAuthService.shouldOfferBiometricUnlock())) return;
     Alert.alert(
-      'Déverrouiller par biométrie ?',
-      'Vous pourrez ouvrir le Sanctuaire avec votre empreinte ou votre visage. Le code PIN reste nécessaire si la biométrie du téléphone change.',
+      t('sanctum.offerTitle'),
+      t('sanctum.offerBody'),
       [
-        { text: 'Non merci', style: 'cancel', onPress: () => void SanctumAuthService.declineBiometricUnlock() },
+        { text: t('sanctum.noThanks'), style: 'cancel', onPress: () => void SanctumAuthService.declineBiometricUnlock() },
         {
-          text: 'Activer',
+          text: t('sanctum.enable'),
           onPress: async () => {
             const enabled = await SanctumAuthService.enableBiometricUnlock(key);
             setHasBiometrics(enabled);
-            if (!enabled) showSnackbar('Biométrie non activée');
+            if (!enabled) showSnackbar(t('sanctum.biometricOff'));
           },
         },
       ]
@@ -244,7 +248,7 @@ export default function SanctumScreen() {
       }
       setAuthError('');
     } catch {
-      showSnackbar('Erreur lors du déchiffrement des notes');
+      showSnackbar(t('sanctum.decryptError'));
     }
   };
 
@@ -253,7 +257,7 @@ export default function SanctumScreen() {
     if (pinStep === 'enter') {
       const validation = validateNewSanctumPin(pinInput);
       if (!validation.valid) {
-        setPinError(validation.error ?? '');
+        setPinError(translateSanctumError(validation.error ?? '', t));
         return;
       }
       setPinStep('confirm');
@@ -263,7 +267,7 @@ export default function SanctumScreen() {
     }
 
     if (pinInput !== pinConfirm) {
-      setPinError('Les codes ne correspondent pas');
+      setPinError(t('sanctum.pinMismatch'));
       setPinConfirm('');
       return;
     }
@@ -276,11 +280,11 @@ export default function SanctumScreen() {
       setPinConfirm('');
       setPinStep('enter');
       setPinError('');
-      showSnackbar('Code PIN initial configuré avec succès');
+      showSnackbar(t('sanctum.pinCreated'));
       await onAuthSuccess(masterKey);
       void offerBiometricUnlock(masterKey);
     } catch {
-      setPinError('Erreur lors de la configuration du code PIN');
+      setPinError(t('sanctum.pinSetupError'));
     }
   };
 
@@ -288,20 +292,20 @@ export default function SanctumScreen() {
   const handleChangePin = async () => {
     setPinChangeError('');
     if (!oldPinInput) {
-      setPinChangeError('Veuillez entrer votre code PIN actuel');
+      setPinChangeError(t('sanctum.enterCurrent'));
       return;
     }
     const validation = validateNewSanctumPin(newPinInput);
     if (!validation.valid) {
-      setPinChangeError(validation.error ?? 'Nouveau code PIN invalide (6 à 8 chiffres)');
+      setPinChangeError(validation.error ? translateSanctumError(validation.error, t) : t('sanctum.newPinInvalid'));
       return;
     }
     if (newPinInput !== newPinConfirm) {
-      setPinChangeError('Les nouveaux codes ne correspondent pas');
+      setPinChangeError(t('sanctum.newMismatch'));
       return;
     }
     if (oldPinInput === newPinInput) {
-      setPinChangeError('Le nouveau code doit être différent de l’ancien');
+      setPinChangeError(t('sanctum.mustDiffer'));
       return;
     }
 
@@ -314,17 +318,17 @@ export default function SanctumScreen() {
         setNewPinInput('');
         setNewPinConfirm('');
         setPinChangeError('');
-        showSnackbar('Code PIN modifié & carnets re-chiffrés');
+        showSnackbar(t('sanctum.pinChanged'));
         const allNotes = await SanctumRepository.getAllNotes(result.newKey);
         setNotes(allNotes);
         setHasBiometrics(false);
         setCurrentView('list');
         void offerBiometricUnlock(result.newKey);
       } else {
-        setPinChangeError(result.error ?? 'Échec lors du changement de code PIN');
+        setPinChangeError(translateSanctumError(result.error ?? 'Échec lors du changement de code PIN', t));
       }
     } catch {
-      setPinChangeError('Erreur inattendue lors du changement de code PIN');
+      setPinChangeError(t('sanctum.changeUnexpected'));
     } finally {
       setChangingPin(false);
     }
@@ -333,13 +337,13 @@ export default function SanctumScreen() {
   // ─── Gestion PIN : vérification scrypt + Poly1305 avec Lockout ─────────
   const handlePinVerify = async () => {
     if (lockoutRemaining > 0) {
-      setPinError(`Coffre-fort verrouillé. Réessayez dans ${lockoutRemaining}s.`);
+      setPinError(t('sanctum.lockedRetry', { seconds: lockoutRemaining }));
       return;
     }
 
     const validation = validateSanctumPin(pinInput);
     if (!validation.valid) {
-      setPinError(validation.error ?? '');
+      setPinError(translateSanctumError(validation.error ?? '', t));
       return;
     }
 
@@ -356,11 +360,11 @@ export default function SanctumScreen() {
         if (result.isLocked && result.remainingSeconds) {
           setLockoutRemaining(result.remainingSeconds);
         }
-        setPinError(result.error ?? 'Code PIN incorrect');
+        setPinError(translateSanctumError(result.error ?? 'Code PIN incorrect', t));
         setPinInput('');
       }
     } catch {
-      setPinError('Erreur lors de la vérification du code PIN');
+      setPinError(t('sanctum.verifyError'));
       setPinInput('');
     }
   };
@@ -370,14 +374,14 @@ export default function SanctumScreen() {
     setEditingNote(null);
     setEditorTitle('');
     setEditorContent('');
-    setEditorFolder('Général');
+    setEditorFolder(DEFAULT_SANCTUM_FOLDERS[0]);
     setCurrentView('editor');
   };
 
   const handleEditNote = (note: SanctumNote) => {
     // L'enregistrer écraserait définitivement le contenu d'origine
     if (note.unreadable) {
-      showSnackbar('Cette note ne peut pas être déchiffrée');
+      showSnackbar(t('sanctum.unreadable'));
       return;
     }
     setEditingNote(note);
@@ -390,7 +394,7 @@ export default function SanctumScreen() {
   const handleSaveNote = async () => {
     const validation = validateSanctumNoteInput(editorTitle, editorContent);
     if (!validation.valid) {
-      showSnackbar(validation.error ?? 'Erreur de validation');
+      showSnackbar(validation.error ? translateSanctumError(validation.error, t) : t('sanctum.validationError'));
       return;
     }
 
@@ -405,7 +409,7 @@ export default function SanctumScreen() {
       await SanctumRepository.saveNote(
         {
           id: editingNote?.id,
-          title: editorTitle.trim() || 'Sans titre',
+          title: editorTitle.trim() || t('sanctum.untitled'),
           content: editorContent,
           folder: editorFolder,
         },
@@ -413,10 +417,10 @@ export default function SanctumScreen() {
       );
       const allNotes = await SanctumRepository.getAllNotes(key);
       setNotes(allNotes);
-      showSnackbar(editingNote ? 'Carnet mis à jour' : 'Nouveau carnet chiffré créé');
+      showSnackbar(editingNote ? t('sanctum.noteUpdated') : t('sanctum.noteCreated'));
       setCurrentView('list');
     } catch {
-      showSnackbar('Erreur lors de l’enregistrement');
+      showSnackbar(t('sanctum.saveError'));
     } finally {
       setSaving(false);
     }
@@ -424,17 +428,17 @@ export default function SanctumScreen() {
 
   const handleDeleteNote = (note: SanctumNote) => {
     Alert.alert(
-      'Supprimer le carnet',
-      `Êtes-vous sûr de vouloir supprimer définitivement « ${note.title || 'ce carnet'} » ?`,
+      t('sanctum.deleteTitle'),
+      t('sanctum.deleteBody', { title: note.title || t('sanctum.thisNote') }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             await SanctumRepository.deleteNote(note.id);
             setNotes(current => current.filter(item => item.id !== note.id));
-            showSnackbar('Carnet supprimé');
+            showSnackbar(t('sanctum.noteDeleted'));
             if (currentView === 'editor') {
               setCurrentView('list');
             }
@@ -451,7 +455,7 @@ export default function SanctumScreen() {
     setNotes([]);
     setEditingNote(null);
     setSearchQuery('');
-    showSnackbar('Sanctuaire verrouillé');
+    showSnackbar(t('sanctum.locked'));
   };
 
   // ─── Dérivations ──────────────────────────────────────────────────────
@@ -466,9 +470,9 @@ export default function SanctumScreen() {
       <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
         <View style={styles.glassLockCard}>
           <PulseLogo size={76} mode="idle" />
-          <Text style={styles.lockTitle}>Sanctuaire</Text>
+          <Text style={styles.lockTitle}>{t('sanctum.title')}</Text>
           <Text style={styles.lockSubtitle}>
-            Cet espace privé est protégé par l'authentification sécurisée de votre appareil.
+            {t('sanctum.lockSubtitle')}
           </Text>
 
           {!!authError && (
@@ -481,7 +485,7 @@ export default function SanctumScreen() {
           {/* Premier accès : configuration obligatoire du code PIN */}
           {!hasPinConfigured && (
             <Button
-              label="Configurer le code PIN"
+              label={t('sanctum.setupPin')}
               onPress={() => {
                 setPinInput('');
                 setPinConfirm('');
@@ -499,7 +503,7 @@ export default function SanctumScreen() {
           {/* Biométrie disponible avec PIN déjà configuré : accès direct en 1 touche */}
           {hasPinConfigured && hasBiometrics && (
             <Button
-              label={authenticating ? 'Vérification...' : 'Déverrouiller avec l’empreinte'}
+              label={authenticating ? t('sanctum.verifying') : t('sanctum.unlockBiometric')}
               onPress={authenticateBiometric}
               variant="primary"
               size="lg"
@@ -512,7 +516,7 @@ export default function SanctumScreen() {
           {/* Appareil sans biométrie : saisie directe du code PIN */}
           {hasPinConfigured && !hasBiometrics && (
             <Button
-              label="Entrer le code PIN"
+              label={t('sanctum.enterPin')}
               onPress={() => {
                 setPinInput('');
                 setPinError('');
@@ -535,10 +539,10 @@ export default function SanctumScreen() {
                 setCurrentView('pin_verify');
               }}
               accessibilityRole="button"
-              accessibilityLabel="Utiliser le code PIN de secours"
+              accessibilityLabel={t('sanctum.usePinBackup')}
             >
               <Ionicons name="keypad-outline" size={16} color={theme.onSurface.variant} />
-              <Text style={styles.altAuthText}>Utiliser le code PIN de secours</Text>
+              <Text style={styles.altAuthText}>{t('sanctum.usePinBackup')}</Text>
             </TouchableOpacity>
           )}
 
@@ -546,9 +550,9 @@ export default function SanctumScreen() {
             style={styles.backLink}
             onPress={() => router.back()}
             accessibilityRole="button"
-            accessibilityLabel="Retourner à l'application"
+            accessibilityLabel={t('sanctum.backToApp')}
           >
-            <Text style={styles.backLinkText}>Retourner à l'application</Text>
+            <Text style={styles.backLinkText}>{t('sanctum.backToApp')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -566,12 +570,12 @@ export default function SanctumScreen() {
             <Ionicons name="key-outline" size={32} color={theme.primary.default} />
           </View>
           <Text style={styles.lockTitle}>
-            {pinStep === 'enter' ? 'Initialiser votre PIN' : 'Confirmer le PIN'}
+            {pinStep === 'enter' ? t('sanctum.initPin') : t('sanctum.confirmPin')}
           </Text>
           <Text style={styles.lockSubtitle}>
             {pinStep === 'enter'
-              ? 'Choisissez un code de 6 à 8 chiffres pour chiffrer et protéger votre Sanctuaire.'
-              : 'Entrez à nouveau votre code confidentiel pour valider la configuration.'}
+              ? t('sanctum.chooseCode')
+              : t('sanctum.reenterCode')}
           </Text>
 
           <TextInput
@@ -594,7 +598,7 @@ export default function SanctumScreen() {
           )}
 
           <Button
-            label={pinStep === 'enter' ? 'Suivant' : 'Confirmer et chiffrer'}
+            label={pinStep === 'enter' ? t('common.next') : t('sanctum.confirmEncrypt')}
             onPress={handlePinSetup}
             variant="primary"
             size="lg"
@@ -615,9 +619,9 @@ export default function SanctumScreen() {
               }
             }}
             accessibilityRole="button"
-            accessibilityLabel="Annuler la configuration du code PIN"
+            accessibilityLabel={t('sanctum.cancelSetupA11y')}
           >
-            <Text style={styles.backLinkText}>Annuler</Text>
+            <Text style={styles.backLinkText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -634,13 +638,13 @@ export default function SanctumScreen() {
           <View style={styles.pinIconBadge}>
             <Ionicons name="key-outline" size={32} color={theme.primary.default} />
           </View>
-          <Text style={styles.lockTitle}>Modifier le code PIN</Text>
+          <Text style={styles.lockTitle}>{t('sanctum.changePin')}</Text>
           <Text style={styles.lockSubtitle}>
-            Entrez votre code actuel puis définissez votre nouveau code secret (6 à 8 chiffres).
+            {t('sanctum.changeSubtitle')}
           </Text>
 
           <View style={styles.pinFormGroup}>
-            <Text style={styles.pinFieldLabel}>Code PIN actuel</Text>
+            <Text style={styles.pinFieldLabel}>{t('sanctum.currentPin')}</Text>
             <TextInput
               style={styles.pinFieldInput}
               value={oldPinInput}
@@ -654,7 +658,7 @@ export default function SanctumScreen() {
           </View>
 
           <View style={styles.pinFormGroup}>
-            <Text style={styles.pinFieldLabel}>Nouveau code PIN</Text>
+            <Text style={styles.pinFieldLabel}>{t('sanctum.newPin')}</Text>
             <TextInput
               style={styles.pinFieldInput}
               value={newPinInput}
@@ -668,7 +672,7 @@ export default function SanctumScreen() {
           </View>
 
           <View style={styles.pinFormGroup}>
-            <Text style={styles.pinFieldLabel}>Confirmer le nouveau code</Text>
+            <Text style={styles.pinFieldLabel}>{t('sanctum.confirmNew')}</Text>
             <TextInput
               style={styles.pinFieldInput}
               value={newPinConfirm}
@@ -707,9 +711,9 @@ export default function SanctumScreen() {
               setCurrentView('list');
             }}
             accessibilityRole="button"
-            accessibilityLabel="Annuler la modification du code PIN"
+            accessibilityLabel={t('sanctum.cancelChangeA11y')}
           >
-            <Text style={styles.backLinkText}>Annuler</Text>
+            <Text style={styles.backLinkText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -726,16 +730,16 @@ export default function SanctumScreen() {
           <View style={styles.pinIconBadge}>
             <Ionicons name="keypad-outline" size={32} color={theme.primary.default} />
           </View>
-          <Text style={styles.lockTitle}>Code PIN</Text>
+          <Text style={styles.lockTitle}>{t('sanctum.pinTitle')}</Text>
           <Text style={styles.lockSubtitle}>
-            Entrez votre code confidentiel pour déverrouiller le Sanctuaire.
+            {t('sanctum.pinSubtitle')}
           </Text>
 
           <TextInput
             style={[styles.pinInput, lockoutRemaining > 0 && { opacity: 0.5 }]}
             value={pinInput}
             onChangeText={setPinInput}
-            placeholder={lockoutRemaining > 0 ? 'Verrouillé...' : 'Code PIN'}
+            placeholder={lockoutRemaining > 0 ? t('sanctum.lockedShort') : t('sanctum.pinTitle')}
             placeholderTextColor={theme.onSurface.disabled}
             keyboardType="number-pad"
             secureTextEntry
@@ -748,7 +752,7 @@ export default function SanctumScreen() {
             <View style={[styles.errorBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
               <Ionicons name="time-outline" size={16} color={theme.error.default} />
               <Text style={styles.errorText}>
-                Coffre verrouillé : réessayez dans {lockoutRemaining}s
+                {t('sanctum.lockedRetryShort', { seconds: lockoutRemaining })}
               </Text>
             </View>
           ) : (
@@ -761,7 +765,7 @@ export default function SanctumScreen() {
           )}
 
           <Button
-            label={lockoutRemaining > 0 ? `Verrouillé (${lockoutRemaining}s)` : 'Déverrouiller'}
+            label={lockoutRemaining > 0 ? t('sanctum.lockedBtn', { seconds: lockoutRemaining }) : t('sanctum.unlock')}
             onPress={handlePinVerify}
             variant="primary"
             size="lg"
@@ -784,9 +788,9 @@ export default function SanctumScreen() {
               setCurrentView('locked');
             }}
             accessibilityRole="button"
-            accessibilityLabel="Retour à l'écran de verrouillage"
+            accessibilityLabel={t('sanctum.backToLockA11y')}
           >
-            <Text style={styles.backLinkText}>Retour</Text>
+            <Text style={styles.backLinkText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -805,13 +809,13 @@ export default function SanctumScreen() {
             style={formStyles.toolbarBtn}
             onPress={() => router.back()}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
           >
             <Ionicons name="arrow-back" size={24} color={theme.onSurface.primary} />
           </TouchableOpacity>
           <View style={formStyles.toolbarCenter}>
-            <Text style={formStyles.toolbarTitle}>Sanctuaire</Text>
-            <Text style={formStyles.toolbarSubtitle}>Espace Privé Sécurisé</Text>
+            <Text style={formStyles.toolbarTitle}>{t('sanctum.title')}</Text>
+            <Text style={formStyles.toolbarSubtitle}>{t('sanctum.secureSpace')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
             <TouchableOpacity
@@ -824,7 +828,7 @@ export default function SanctumScreen() {
                 setCurrentView('pin_change');
               }}
               accessibilityRole="button"
-              accessibilityLabel="Modifier le code PIN"
+              accessibilityLabel={t('sanctum.changePin')}
             >
               <View style={styles.lockIconBadge}>
                 <Ionicons name="key-outline" size={16} color={theme.primary.default} />
@@ -834,7 +838,7 @@ export default function SanctumScreen() {
               style={formStyles.toolbarBtn}
               onPress={handleLock}
               accessibilityRole="button"
-              accessibilityLabel="Verrouiller le Sanctuaire"
+              accessibilityLabel={t('sanctum.lockA11y')}
             >
               <View style={styles.lockIconBadge}>
                 <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
@@ -847,7 +851,7 @@ export default function SanctumScreen() {
         <View style={styles.secureBadgeCentered}>
           <Ionicons name="shield-checkmark" size={14} color={theme.success.default} />
           <Text style={styles.secureBadgeText}>
-            Espace chiffré & déverrouillé
+            {t('sanctum.unlockedBadge')}
           </Text>
         </View>
 
@@ -858,14 +862,14 @@ export default function SanctumScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Rechercher dans vos carnets..."
+            placeholder={t('sanctum.search')}
             placeholderTextColor={theme.onSurface.disabled}
           />
           {!!searchQuery && (
             <TouchableOpacity
               onPress={() => setSearchQuery('')}
               accessibilityRole="button"
-              accessibilityLabel="Effacer la recherche"
+              accessibilityLabel={t('sanctum.clearSearch')}
             >
               <Ionicons name="close-circle" size={18} color={theme.onSurface.disabled} />
             </TouchableOpacity>
@@ -883,15 +887,15 @@ export default function SanctumScreen() {
             const isActive = folder === activeFolder;
             return (
               <TouchableOpacity
-                key={folder}
+                key={sanctumFolderLabel(folder, t)}
                 style={[formStyles.chip, isActive && formStyles.chipActive]}
                 onPress={() => setActiveFolder(folder)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isActive }}
-                accessibilityLabel={`Dossier ${folder}${isActive ? ', sélectionné' : ''}`}
+                accessibilityLabel={t('sanctum.folderA11y', { folder: sanctumFolderLabel(folder, t), selected: isActive ? t('settingsScreen.selectedSuffix') : '' })}
               >
                 <Text style={[formStyles.chipText, isActive && formStyles.chipTextActive]}>
-                  {folder}
+                  {sanctumFolderLabel(folder, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -913,12 +917,12 @@ export default function SanctumScreen() {
                 <Ionicons name="document-text-outline" size={40} color={theme.onSurface.disabled} />
               </View>
               <Text style={styles.emptyTitle}>
-                {searchQuery ? 'Aucun résultat trouvé' : 'Aucun carnet secret'}
+                {searchQuery ? t('search.noResult') : t('sanctum.emptyTitle')}
               </Text>
               <Text style={styles.emptySubtitle}>
                 {searchQuery
-                  ? 'Essayez un autre mot-clé ou changez de dossier.'
-                  : 'Créez votre premier carnet privé protégé.'}
+                  ? t('sanctum.emptySearch')
+                  : t('sanctum.emptyHint')}
               </Text>
             </View>
           }
@@ -929,13 +933,13 @@ export default function SanctumScreen() {
               onLongPress={() => handleDeleteNote(item)}
               activeOpacity={0.75}
               accessibilityRole="button"
-              accessibilityLabel={`Carnet ${item.title || 'Sans titre'}, dossier ${item.folder}`}
+              accessibilityLabel={t('sanctum.noteA11y', { title: item.title || t('sanctum.untitled'), folder: sanctumFolderLabel(item.folder, t) })}
             >
               <View style={styles.noteCardHeader}>
                 <View style={styles.noteCardTitleRow}>
                   <Ionicons name="lock-closed" size={16} color={theme.primary.default} />
                   <Text style={styles.noteCardTitle} numberOfLines={1}>
-                    {item.title || 'Sans titre'}
+                    {item.title || t('sanctum.untitled')}
                   </Text>
                 </View>
                 <View style={styles.folderTag}>
@@ -949,7 +953,7 @@ export default function SanctumScreen() {
                 </Text>
               )}
               <Text style={styles.noteCardDate}>
-                Modifié {formatRelativeDate(item.updated_at)}
+                {t('sanctum.modified', { when: formatRelativeDate(item.updated_at, t, language) })}
               </Text>
             </TouchableOpacity>
           )}
@@ -957,7 +961,7 @@ export default function SanctumScreen() {
 
         {/* Bouton Nouveau carnet 3D Glassmorphism */}
         <GlassFloatingActionButton
-          label="Nouveau carnet"
+          label={t('sanctum.newNote')}
           icon="add"
           bottomOffset={insets.bottom + 20}
           onPress={handleNewNote}
@@ -980,22 +984,22 @@ export default function SanctumScreen() {
           style={formStyles.toolbarBtn}
           onPress={() => setCurrentView('list')}
           accessibilityRole="button"
-          accessibilityLabel="Annuler et retourner à la liste"
+          accessibilityLabel={t('sanctum.cancelBackA11y')}
         >
-          <Text style={formStyles.toolbarCancel}>Annuler</Text>
+          <Text style={formStyles.toolbarCancel}>{t('common.cancel')}</Text>
         </TouchableOpacity>
         <View style={formStyles.toolbarCenter}>
           <Text style={formStyles.toolbarTitle}>
-            {editingNote ? 'Modifier' : 'Nouveau carnet'}
+            {editingNote ? t('sanctum.edit') : t('sanctum.newNote')}
           </Text>
-          <Text style={formStyles.toolbarSubtitle}>Sanctuaire Privé</Text>
+          <Text style={formStyles.toolbarSubtitle}>{t('sanctum.privateTitle')}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
           {editingNote && (
             <TouchableOpacity
               onPress={() => handleDeleteNote(editingNote)}
               accessibilityRole="button"
-              accessibilityLabel="Supprimer ce carnet secret"
+              accessibilityLabel={t('sanctum.deleteA11y')}
               style={{ padding: 4 }}
             >
               <Ionicons name="trash-outline" size={20} color={theme.error.default} />
@@ -1006,10 +1010,10 @@ export default function SanctumScreen() {
             onPress={handleSaveNote}
             disabled={saving}
             accessibilityRole="button"
-            accessibilityLabel="Enregistrer le carnet secret"
+            accessibilityLabel={t('sanctum.saveA11y')}
           >
             <Text style={[formStyles.toolbarSave, saving && formStyles.toolbarSaveDisabled]}>
-              {saving ? 'Enregistrement...' : 'Créer'}
+              {saving ? t('sanctum.saving') : t('taskNew.create')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1027,7 +1031,7 @@ export default function SanctumScreen() {
             style={formStyles.titleInput}
             value={editorTitle}
             onChangeText={setEditorTitle}
-            placeholder="Titre du carnet secret..."
+            placeholder={t('sanctum.titlePlaceholder')}
             placeholderTextColor={theme.onSurface.disabled}
             maxLength={100}
             autoFocus
@@ -1038,14 +1042,14 @@ export default function SanctumScreen() {
             style={styles.folderSelector}
             onPress={() => setShowFolderPicker(!showFolderPicker)}
             accessibilityRole="button"
-            accessibilityLabel={`Dossier sélectionné : ${editorFolder}. Appuyer pour changer de dossier.`}
+            accessibilityLabel={t('sanctum.folderPickA11y', { folder: sanctumFolderLabel(editorFolder, t) })}
           >
             <View style={styles.folderBadgeSmall}>
               <Ionicons name="folder-outline" size={16} color={theme.primary.default} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.folderLabelSmall}>DOSSIER</Text>
-              <Text style={styles.folderSelectorText}>{editorFolder}</Text>
+              <Text style={styles.folderLabelSmall}>{t('sanctum.folderLabel')}</Text>
+              <Text style={styles.folderSelectorText}>{sanctumFolderLabel(editorFolder, t)}</Text>
             </View>
             <Ionicons
               name={showFolderPicker ? 'chevron-up' : 'chevron-down'}
@@ -1058,7 +1062,7 @@ export default function SanctumScreen() {
             <View style={styles.folderPickerList}>
               {DEFAULT_SANCTUM_FOLDERS.map((folder) => (
                 <TouchableOpacity
-                  key={folder}
+                  key={sanctumFolderLabel(folder, t)}
                   style={[
                     styles.folderPickerItem,
                     editorFolder === folder && styles.folderPickerItemActive,
@@ -1069,7 +1073,7 @@ export default function SanctumScreen() {
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: editorFolder === folder }}
-                  accessibilityLabel={`Dossier ${folder}${editorFolder === folder ? ', sélectionné' : ''}`}
+                  accessibilityLabel={t('sanctum.folderA11y', { folder: sanctumFolderLabel(folder, t), selected: editorFolder === folder ? t('settingsScreen.selectedSuffix') : '' })}
                 >
                   <Text
                     style={[
@@ -1077,7 +1081,7 @@ export default function SanctumScreen() {
                       editorFolder === folder && styles.folderPickerItemTextActive,
                     ]}
                   >
-                    {folder}
+                    {sanctumFolderLabel(folder, t)}
                   </Text>
                   {editorFolder === folder && (
                     <Ionicons name="checkmark" size={16} color={theme.primary.default} />
@@ -1096,7 +1100,7 @@ export default function SanctumScreen() {
               style={styles.editorTextInput}
               value={editorContent}
               onChangeText={setEditorContent}
-              placeholder="Écrivez vos pensées, idées secrètes, réflexions ou informations strictement confidentielles..."
+              placeholder={t('sanctum.contentPlaceholder')}
               placeholderTextColor={theme.onSurface.disabled}
               multiline
               numberOfLines={12}
@@ -1107,7 +1111,7 @@ export default function SanctumScreen() {
 
         {/* Bouton de sauvegarde */}
         <Button
-          label={editingNote ? 'Mettre à jour le carnet' : 'Créer le carnet secret'}
+          label={editingNote ? t('sanctum.update') : t('sanctum.create')}
           onPress={handleSaveNote}
           variant="primary"
           size="lg"
@@ -1120,7 +1124,7 @@ export default function SanctumScreen() {
 }
 
 // ─── Helper date relative ────────────────────────────────────────────────────
-function formatRelativeDate(iso: string): string {
+function formatRelativeDate(iso: string, t: TFunction, localeCode: string): string {
   if (!iso) return '';
   const date = new Date(iso);
   const now = new Date();
@@ -1129,9 +1133,9 @@ function formatRelativeDate(iso: string): string {
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
 
-  if (diffMin < 1) return 'À l\'instant';
-  if (diffMin < 60) return `Il y a ${diffMin} min`;
-  if (diffH < 24) return `Il y a ${diffH}h`;
-  if (diffD < 7) return `Il y a ${diffD}j`;
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (diffMin < 1) return t('sanctum.justNow');
+  if (diffMin < 60) return t('sanctum.minAgo', { count: diffMin });
+  if (diffH < 24) return t('sanctum.hoursAgo', { count: diffH });
+  if (diffD < 7) return t('sanctum.daysAgo', { count: diffD });
+  return date.toLocaleDateString(localeCode === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' });
 }
