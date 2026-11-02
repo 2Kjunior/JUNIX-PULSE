@@ -16,11 +16,13 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
+import { useT } from '@/i18n';
 
 const END_OF_DAY_OPTIONS = [17, 18, 19, 20, 21, 22];
 const MORNING_OPTIONS = [6, 7, 8, 9, 10];
 
 export default function OnboardingSchedule() {
+  const t = useT();
   const styles = useThemedStyles(makeOnboardingScheduleStyles);
   const [endOfDayHour, setEndOfDayHour] = useState(20);
   const [morningHour, setMorningHour] = useState(8);
@@ -51,24 +53,20 @@ export default function OnboardingSchedule() {
         <TouchableOpacity
           onPress={() => router.push('/(onboarding)/permissions')}
           style={styles.skipBtn}
-          accessibilityLabel="Passer à la dernière étape"
+          accessibilityLabel={t('schedule.skipA11y')}
           accessibilityRole="button"
         >
-          <Text style={styles.skipText}>Passer</Text>
+          <Text style={styles.skipText}>{t('common.skip')}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>Votre rythme</Text>
-      <Text style={styles.subtitle}>
-        Ces préférences aident Junix Pulse à proposer les bons moments.
-      </Text>
+      <Text style={styles.title}>{t('schedule.title')}</Text>
+      <Text style={styles.subtitle}>{t('schedule.subtitle')}</Text>
 
       {/* Fin de journée */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Fin de journée</Text>
-        <Text style={styles.sectionHint}>
-          À cette heure, Junix vous envoie votre bilan et peut vous proposer de gérer les tâches non terminées.
-        </Text>
+        <Text style={styles.sectionLabel}>{t('schedule.endOfDay')}</Text>
+        <Text style={styles.sectionHint}>{t('schedule.endOfDayHint')}</Text>
         <View style={styles.chipRow}>
           {END_OF_DAY_OPTIONS.map(h => (
             <TouchableOpacity
@@ -77,7 +75,7 @@ export default function OnboardingSchedule() {
               onPress={() => setEndOfDayHour(h)}
             >
               <Text style={[styles.chipLabel, endOfDayHour === h && styles.chipLabelSelected]}>
-                {h}h
+                {t('common.hourShort', { hour: h })}
               </Text>
             </TouchableOpacity>
           ))}
@@ -86,10 +84,8 @@ export default function OnboardingSchedule() {
 
       {/* Résumé matin */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Résumé du matin</Text>
-        <Text style={styles.sectionHint}>
-          Une notification vous prévient à cette heure, et votre journée vous attend sur l’écran Aujourd’hui.
-        </Text>
+        <Text style={styles.sectionLabel}>{t('schedule.morning')}</Text>
+        <Text style={styles.sectionHint}>{t('schedule.morningHint')}</Text>
         <View style={styles.chipRow}>
           {MORNING_OPTIONS.map(h => (
             <TouchableOpacity
@@ -98,7 +94,7 @@ export default function OnboardingSchedule() {
               onPress={() => setMorningHour(h)}
             >
               <Text style={[styles.chipLabel, morningHour === h && styles.chipLabelSelected]}>
-                {h}h
+                {t('common.hourShort', { hour: h })}
               </Text>
             </TouchableOpacity>
           ))}
@@ -106,14 +102,12 @@ export default function OnboardingSchedule() {
       </View>
 
       <View style={styles.note}>
-        <Text style={styles.noteText}>
-          Ces préférences sont modifiables à tout moment dans Paramètres.
-        </Text>
+        <Text style={styles.noteText}>{t('schedule.note')}</Text>
       </View>
 
       <View style={styles.actions}>
         <Button
-          label="Continuer"
+          label={t('common.continue')}
           onPress={handleNext}
           variant="primary"
           size="lg"
@@ -121,7 +115,7 @@ export default function OnboardingSchedule() {
           style={styles.btnPrimary}
           testID="onboarding-schedule-next"
         />
-        <Button label="Retour" onPress={() => router.back()} variant="ghost" size="md" />
+        <Button label={t('common.back')} onPress={() => router.back()} variant="ghost" size="md" />
       </View>
     </ScrollView>
   );

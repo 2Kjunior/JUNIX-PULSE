@@ -29,13 +29,16 @@ import { StepIndicator } from '@/components/ui/StepIndicator';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
 import { saveMascotSettings } from '@/services/mascot/mascot-settings-service';
+import { MessageKey, useLanguage, useT } from '@/i18n';
 
-const ADDRESS_CHOICES: readonly { value: 'tu' | 'vous'; label: string }[] = [
-  { value: 'tu', label: 'Tutoiement' },
-  { value: 'vous', label: 'Vouvoiement' },
+const ADDRESS_CHOICES: readonly { value: 'tu' | 'vous'; labelKey: MessageKey }[] = [
+  { value: 'tu', labelKey: 'personalize.addressTu' },
+  { value: 'vous', labelKey: 'personalize.addressVous' },
 ];
 
 export default function OnboardingPersonalize() {
+  const t = useT();
+  const language = useLanguage();
   const { settings: mascotSettings } = useMascotPreferences();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingPersonalizeStyles);
@@ -73,27 +76,25 @@ export default function OnboardingPersonalize() {
           <TouchableOpacity
             onPress={() => router.push('/(onboarding)/permissions')}
             style={styles.skipBtn}
-            accessibilityLabel="Passer les étapes restantes"
+            accessibilityLabel={t('discover.skipA11y')}
             accessibilityRole="button"
           >
-            <Text style={styles.skipText}>Passer</Text>
+            <Text style={styles.skipText}>{t('common.skip')}</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Quelques préférences</Text>
-        <Text style={styles.subtitle}>
-          Pour vous identifier et adapter Junix Pulse à votre fuseau horaire.
-        </Text>
+        <Text style={styles.title}>{t('personalize.title')}</Text>
+        <Text style={styles.subtitle}>{t('personalize.subtitle')}</Text>
 
         {/* Prénom (optionnel) */}
         <View style={styles.field}>
-          <Text style={styles.label}>Votre prénom</Text>
-          <Text style={styles.hint}>Optionnel — pour personnaliser les messages</Text>
+          <Text style={styles.label}>{t('personalize.nameLabel')}</Text>
+          <Text style={styles.hint}>{t('personalize.nameHint')}</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Ex&nbsp;: Camille"
+            placeholder={t('personalize.namePlaceholder')}
             placeholderTextColor={palette.onSurface.disabled}
             maxLength={50}
             autoCorrect={false}
@@ -101,10 +102,12 @@ export default function OnboardingPersonalize() {
           />
         </View>
 
-        {/* Façon dont la mascotte s'adresse à l'utilisateur (sans réponse : tutoiement) */}
+        {/* Façon dont la mascotte s'adresse à l'utilisateur (sans réponse : tutoiement).
+            L'anglais n'a pas de tu ni de vous : le choix n'a de sens qu'en français. */}
+        {language === 'fr' && (
         <View style={styles.field}>
-          <Text style={styles.label}>Façon de vous parler</Text>
-          <Text style={styles.hint}>Pulse peut tutoyer ou vouvoyer — modifiable dans Paramètres</Text>
+          <Text style={styles.label}>{t('personalize.addressLabel')}</Text>
+          <Text style={styles.hint}>{t('personalize.addressHint')}</Text>
           <View style={styles.choiceRow}>
             {ADDRESS_CHOICES.map(choice => {
               const selected = mascotSettings.address === choice.value;
@@ -117,16 +120,17 @@ export default function OnboardingPersonalize() {
                   accessibilityState={{ selected }}
                   testID={`onboarding-address-${choice.value}`}
                 >
-                  <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{choice.label}</Text>
+                  <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{t(choice.labelKey)}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
         </View>
+        )}
 
         <View style={styles.actions}>
           <Button
-            label="Continuer"
+            label={t('common.continue')}
             onPress={handleNext}
             variant="primary"
             size="lg"
@@ -135,7 +139,7 @@ export default function OnboardingPersonalize() {
             testID="onboarding-personalize-next"
           />
           <Button
-            label="Retour"
+            label={t('common.back')}
             onPress={() => router.back()}
             variant="ghost"
             size="md"

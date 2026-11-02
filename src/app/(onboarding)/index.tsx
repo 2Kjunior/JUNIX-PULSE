@@ -30,6 +30,7 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { decryptBackup, importBackup, parseBackup } from '@/services/backup-service';
 import { reconcileOverdueRecurringReminders } from '@/use-cases/reminder-use-cases';
+import { useT } from '@/i18n';
 
 const { height } = Dimensions.get('window');
 
@@ -39,6 +40,7 @@ const MASCOT_ROOM_HEIGHT = 210;
 const MASCOT_ROOM_ANCHOR_OFFSET = 56;
 
 export default function OnboardingWelcome() {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingWelcomeStyles);
   const setOnboardingComplete = useAppStore(state => state.setOnboardingComplete);
@@ -62,7 +64,7 @@ export default function OnboardingWelcome() {
   const handleRestoreBackup = async () => {
     try {
       if (Platform.OS === 'web') {
-        Alert.alert('Indisponible', 'La restauration de sauvegarde est disponible dans l’application mobile.');
+        Alert.alert(t('welcome.restore.unavailableTitle'), t('welcome.restore.unavailableBody'));
         return;
       }
 
@@ -76,15 +78,15 @@ export default function OnboardingWelcome() {
       setBackupPasswordVisible(true);
     } catch (error) {
       Alert.alert(
-        'Fichier invalide',
-        error instanceof Error ? error.message : 'Impossible de lire la sauvegarde sélectionnée.'
+        t('welcome.restore.invalidTitle'),
+        error instanceof Error ? error.message : t('welcome.restore.invalidBody')
       );
     }
   };
 
   const handleDecryptBackup = async (password: string) => {
     if (!pendingBackupContents) {
-      throw new Error('Sélectionnez à nouveau le fichier de sauvegarde.');
+      throw new Error(t('welcome.restore.pickAgain'));
     }
 
     const plaintext = await decryptBackup(pendingBackupContents, password);
@@ -94,22 +96,22 @@ export default function OnboardingWelcome() {
     setPendingBackupContents(null);
 
     Alert.alert(
-      'Fusionner cette sauvegarde ?',
-      `${rowCount} enregistrements validés seront examinés. Les éléments dont l’identifiant existe déjà seront conservés sans être remplacés.`,
+      t('welcome.restore.mergeTitle'),
+      t('welcome.restore.mergeBody', { count: rowCount }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Importer',
+          text: t('welcome.restore.import'),
           onPress: async () => {
             try {
               const result = await importBackup(await getDatabase(), backupData);
               // Les notifications suivent à la fin de l'onboarding, une fois les dates recalées
               await reconcileOverdueRecurringReminders();
               Alert.alert(
-                'Restauration terminée',
-                `${result.inserted} enregistrements ajoutés, ${result.skipped} ignorés car ils existaient déjà.`,
+                t('welcome.restore.doneTitle'),
+                t('welcome.restore.doneBody', { inserted: result.inserted, skipped: result.skipped }),
                 [{
-                  text: 'Continuer',
+                  text: t('common.continue'),
                   onPress: async () => {
                     await SettingsRepository.markOnboardingComplete(new Date().toISOString());
                     setOnboardingComplete(true);
@@ -119,8 +121,8 @@ export default function OnboardingWelcome() {
               );
             } catch (error) {
               Alert.alert(
-                'Échec de la restauration',
-                error instanceof Error ? error.message : 'Aucune donnée n’a été importée.'
+                t('welcome.restore.failTitle'),
+                error instanceof Error ? error.message : t('welcome.restore.failBody')
               );
             }
           },
@@ -133,8 +135,8 @@ export default function OnboardingWelcome() {
     <View style={styles.container}>
       <BackupPasswordModal
         visible={backupPasswordVisible}
-        title="Déverrouiller la sauvegarde"
-        confirmLabel="Déchiffrer"
+        title={t('welcome.restore.unlockTitle')}
+        confirmLabel={t('welcome.restore.decrypt')}
         onCancel={() => {
           setBackupPasswordVisible(false);
           setPendingBackupContents(null);
@@ -147,10 +149,10 @@ export default function OnboardingWelcome() {
         <TouchableOpacity
           onPress={() => router.push('/(onboarding)/permissions')}
           style={styles.skipBtn}
-          accessibilityLabel="Passer l'onboarding"
+          accessibilityLabel={t('welcome.skipA11y')}
           accessibilityRole="button"
         >
-          <Text style={styles.skipText}>Passer</Text>
+          <Text style={styles.skipText}>{t('common.skip')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -171,16 +173,14 @@ export default function OnboardingWelcome() {
         )}
 
         <Text style={styles.headline}>
-          Retrouvez votre{'\n'}
-          <Text style={styles.headlineAccent}>rythme naturel</Text>
+          {t('welcome.headline')}{'\n'}
+          <Text style={styles.headlineAccent}>{t('welcome.headlineAccent')}</Text>
         </Text>
 
-        <Text style={styles.subheadline}>
-          Se souvenir. Planifier. Vivre.
-        </Text>
+        <Text style={styles.subheadline}>{t('welcome.tagline')}</Text>
         <Text style={styles.description}>
-          Une gestion sereine de vos journées,{'\n'}
-          pensée pour apaiser votre charge mentale.
+          {t('welcome.description1')}{'\n'}
+          {t('welcome.description2')}
         </Text>
       </View>
 
@@ -188,20 +188,20 @@ export default function OnboardingWelcome() {
       <View style={styles.badges}>
         <ValueBadge
           icon="moon-outline"
-          title="Serein"
-          subtitle="Zéro surcharge"
+          title={t('welcome.badge.calm.title')}
+          subtitle={t('welcome.badge.calm.subtitle')}
           accentColor={palette.primary.default}
         />
         <ValueBadge
           icon="shield-checkmark-outline"
-          title="Privé"
-          subtitle="100 % Hors-ligne"
+          title={t('welcome.badge.private.title')}
+          subtitle={t('welcome.badge.private.subtitle')}
           accentColor={palette.tertiary.default}
         />
         <ValueBadge
           icon="pulse-outline"
-          title="Rhythm"
-          subtitle="IA au repos"
+          title={t('welcome.badge.rhythm.title')}
+          subtitle={t('welcome.badge.rhythm.subtitle')}
           accentColor={palette.primary.default}
         />
       </View>
@@ -209,7 +209,7 @@ export default function OnboardingWelcome() {
       {/* Actions */}
       <View style={styles.actions}>
         <Button
-          label="Commencer l’expérience"
+          label={t('welcome.start')}
           onPress={() => router.push('/(onboarding)/discover')}
           variant="primary"
           size="lg"
@@ -220,12 +220,12 @@ export default function OnboardingWelcome() {
         <TouchableOpacity
           onPress={handleRestoreBackup}
           accessibilityRole="button"
-          accessibilityLabel="Restaurer une sauvegarde"
+          accessibilityLabel={t('welcome.restoreA11y')}
           style={styles.restoreBtn}
         >
           <Text style={styles.restoreText}>
-            Vous utilisez déjà Junix Pulse&nbsp;?{' '}
-            <Text style={styles.restoreLink}>Restaurer une sauvegarde</Text>
+            {t('welcome.restoreQuestion')}{' '}
+            <Text style={styles.restoreLink}>{t('welcome.restoreLink')}</Text>
           </Text>
         </TouchableOpacity>
       </View>

@@ -23,6 +23,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
+import { useT } from '@/i18n';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -36,6 +37,7 @@ interface Concept {
 }
 
 export default function OnboardingDiscover() {
+  const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingDiscoverStyles);
 
@@ -47,7 +49,8 @@ export default function OnboardingDiscover() {
       const centres: number[] = [];
       cardRefs.current.forEach((card, index) => {
         card?.measureInWindow((_x, y, _w, h) => {
-          centres[index] = y + h / 2;          if (centres.filter(value => value !== undefined).length === cardRefs.current.length) setDiscoverCardsY(centres);
+          centres[index] = y + h / 2;
+          if (centres.filter(value => value !== undefined).length === cardRefs.current.length) setDiscoverCardsY(centres);
         });
       });
     }, 600);
@@ -62,25 +65,25 @@ export default function OnboardingDiscover() {
       icon: 'alarm-outline',
       accentColor: palette.primary.default,
       bgColor: palette.primary.container + '33',
-      title: 'Rappels',
-      desc: 'Une chose à ne pas oublier à un moment précis. Peut être ponctuel ou récurrent, lié à une personne, avec un snooze si besoin.',
-      example: 'Ex\u00A0: Appeler maman vendredi 18h',
+      title: t('discover.reminders.title'),
+      desc: t('discover.reminders.desc'),
+      example: t('discover.reminders.example'),
     },
     {
       icon: 'checkmark-circle-outline',
       accentColor: palette.tertiary.default,
       bgColor: palette.tertiary.container + '33',
-      title: 'Tâches',
-      desc: 'Une intention d’agir, avec ou sans date. Les tâches sans date vivent dans votre Inbox jusqu’à ce que vous les planifiiez.',
-      example: 'Ex\u00A0: Préparer la réunion de lundi',
+      title: t('discover.tasks.title'),
+      desc: t('discover.tasks.desc'),
+      example: t('discover.tasks.example'),
     },
     {
       icon: 'calendar-outline',
       accentColor: palette.success.default,
       bgColor: palette.success.container + '33',
-      title: 'Événements',
-      desc: 'Un rendez-vous ou une occupation avec une durée. Peut inclure un lieu, des personnes et un temps de trajet.',
-      example: 'Ex\u00A0: Réunion d’équipe 14h–15h30',
+      title: t('discover.events.title'),
+      desc: t('discover.events.desc'),
+      example: t('discover.events.example'),
     },
   ];
 
@@ -93,14 +96,14 @@ export default function OnboardingDiscover() {
           <TouchableOpacity
             onPress={() => router.push('/(onboarding)/permissions')}
             style={styles.skipBtn}
-            accessibilityLabel="Passer les étapes restantes"
+            accessibilityLabel={t('discover.skipA11y')}
             accessibilityRole="button"
           >
-            <Text style={styles.skipText}>Passer</Text>
+            <Text style={styles.skipText}>{t('common.skip')}</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Comment ça fonctionne</Text>
-        <Text style={styles.subtitle}>Trois concepts, une cohérence.</Text>
+        <Text style={styles.title}>{t('discover.title')}</Text>
+        <Text style={styles.subtitle}>{t('discover.subtitle')}</Text>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -130,19 +133,19 @@ export default function OnboardingDiscover() {
         <View style={styles.distinction}>
           <View style={styles.distinctionIconRow}>
             <Ionicons name="information-circle-outline" size={16} color={palette.primary.default} />
-            <Text style={styles.distinctionLabel}>À retenir</Text>
+            <Text style={styles.distinctionLabel}>{t('discover.remember')}</Text>
           </View>
           <Text style={styles.distinctionText}>
-            Un rappel déclenche une attention.{'\n'}
-            Une tâche attend d’être accomplie.{'\n'}
-            Un événement occupe une période dans le temps.
+            {t('discover.rememberReminder')}{'\n'}
+            {t('discover.rememberTask')}{'\n'}
+            {t('discover.rememberEvent')}
           </Text>
         </View>
       </ScrollView>
 
       <View style={styles.actions}>
         <Button
-          label="Suivant"
+          label={t('common.next')}
           onPress={() => router.push('/(onboarding)/personalize')}
           variant="primary"
           size="lg"
@@ -150,7 +153,7 @@ export default function OnboardingDiscover() {
           testID="onboarding-discover-next"
         />
         <Button
-          label="Retour"
+          label={t('common.back')}
           onPress={() => router.back()}
           variant="ghost"
           size="md"

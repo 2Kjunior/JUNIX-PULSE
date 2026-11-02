@@ -96,6 +96,91 @@ const fr = {
   'capture.callInside': 'Il sera {time} chez {name} : un bon moment pour appeler.',
   'capture.callOutside': 'Il sera {time} chez {name}, en dehors de ses heures d’appel.',
   'capture.callSuggestion': 'Plutôt {here} ({there} chez elle)',
+
+  // ─── Mots communs ───
+  'common.skip': 'Passer',
+  'common.next': 'Suivant',
+  'common.back': 'Retour',
+  'common.continue': 'Continuer',
+  'common.cancel': 'Annuler',
+  'common.hourShort': '{hour}h',
+
+  // ─── Onboarding : bienvenue ───
+  'welcome.skipA11y': 'Passer l’onboarding',
+  'welcome.headline': 'Retrouvez votre',
+  'welcome.headlineAccent': 'rythme naturel',
+  'welcome.tagline': 'Se souvenir. Planifier. Vivre.',
+  'welcome.description1': 'Une gestion sereine de vos journées,',
+  'welcome.description2': 'pensée pour apaiser votre charge mentale.',
+  'welcome.badge.calm.title': 'Serein',
+  'welcome.badge.calm.subtitle': 'Zéro surcharge',
+  'welcome.badge.private.title': 'Privé',
+  'welcome.badge.private.subtitle': '100\u00A0% Hors-ligne',
+  'welcome.badge.rhythm.title': 'Rhythm',
+  'welcome.badge.rhythm.subtitle': 'IA au repos',
+  'welcome.start': 'Commencer l’expérience',
+  'welcome.restoreQuestion': 'Vous utilisez déjà Junix Pulse\u00A0?',
+  'welcome.restoreLink': 'Restaurer une sauvegarde',
+  'welcome.restoreA11y': 'Restaurer une sauvegarde',
+  'welcome.restore.unavailableTitle': 'Indisponible',
+  'welcome.restore.unavailableBody': 'La restauration de sauvegarde est disponible dans l’application mobile.',
+  'welcome.restore.invalidTitle': 'Fichier invalide',
+  'welcome.restore.invalidBody': 'Impossible de lire la sauvegarde sélectionnée.',
+  'welcome.restore.pickAgain': 'Sélectionnez à nouveau le fichier de sauvegarde.',
+  'welcome.restore.mergeTitle': 'Fusionner cette sauvegarde ?',
+  'welcome.restore.mergeBody':
+    '{count} enregistrements validés seront examinés. Les éléments dont l’identifiant existe déjà seront conservés sans être remplacés.',
+  'welcome.restore.import': 'Importer',
+  'welcome.restore.doneTitle': 'Restauration terminée',
+  'welcome.restore.doneBody': '{inserted} enregistrements ajoutés, {skipped} ignorés car ils existaient déjà.',
+  'welcome.restore.failTitle': 'Échec de la restauration',
+  'welcome.restore.failBody': 'Aucune donnée n’a été importée.',
+  'welcome.restore.unlockTitle': 'Déverrouiller la sauvegarde',
+  'welcome.restore.decrypt': 'Déchiffrer',
+
+  // ─── Onboarding : comment ça fonctionne ───
+  'discover.skipA11y': 'Passer les étapes restantes',
+  'discover.title': 'Comment ça fonctionne',
+  'discover.subtitle': 'Trois concepts, une cohérence.',
+  'discover.reminders.title': 'Rappels',
+  'discover.reminders.desc':
+    'Une chose à ne pas oublier à un moment précis. Peut être ponctuel ou récurrent, lié à une personne, avec un snooze si besoin.',
+  'discover.reminders.example': 'Ex\u00A0: Appeler maman vendredi 18h',
+  'discover.tasks.title': 'Tâches',
+  'discover.tasks.desc':
+    'Une intention d’agir, avec ou sans date. Les tâches sans date vivent dans votre Inbox jusqu’à ce que vous les planifiiez.',
+  'discover.tasks.example': 'Ex\u00A0: Préparer la réunion de lundi',
+  'discover.events.title': 'Événements',
+  'discover.events.desc':
+    'Un rendez-vous ou une occupation avec une durée. Peut inclure un lieu, des personnes et un temps de trajet.',
+  'discover.events.example': 'Ex\u00A0: Réunion d’équipe 14h–15h30',
+  'discover.remember': 'À retenir',
+  'discover.rememberReminder': 'Un rappel déclenche une attention.',
+  'discover.rememberTask': 'Une tâche attend d’être accomplie.',
+  'discover.rememberEvent': 'Un événement occupe une période dans le temps.',
+
+  // ─── Onboarding : préférences ───
+  'personalize.title': 'Quelques préférences',
+  'personalize.subtitle': 'Pour que Junix Pulse vous connaisse un peu mieux.',
+  'personalize.nameLabel': 'Votre prénom',
+  'personalize.nameHint': 'Optionnel — pour personnaliser les messages',
+  'personalize.namePlaceholder': 'Ex\u00A0: Camille',
+  'personalize.addressLabel': 'Façon de vous parler',
+  'personalize.addressHint': 'Pulse peut tutoyer ou vouvoyer — modifiable dans Paramètres',
+  'personalize.addressTu': 'Tutoiement',
+  'personalize.addressVous': 'Vouvoiement',
+
+  // ─── Onboarding : rythme ───
+  'schedule.skipA11y': 'Passer à la dernière étape',
+  'schedule.title': 'Votre rythme',
+  'schedule.subtitle': 'Ces préférences aident Junix Pulse à proposer les bons moments.',
+  'schedule.endOfDay': 'Fin de journée',
+  'schedule.endOfDayHint':
+    'À cette heure, Junix vous envoie votre bilan et peut vous proposer de gérer les tâches non terminées.',
+  'schedule.morning': 'Résumé du matin',
+  'schedule.morningHint':
+    'Une notification vous prévient à cette heure, et votre journée vous attend sur l’écran Aujourd’hui.',
+  'schedule.note': 'Ces préférences sont modifiables à tout moment dans Paramètres.',
 } as const;
 
 export type MessageKey = keyof typeof fr;
@@ -181,6 +266,86 @@ const en: Record<MessageKey, string> = {
   'capture.callInside': 'It will be {time} for {name}: a good time to call.',
   'capture.callOutside': 'It will be {time} for {name}, outside their calling hours.',
   'capture.callSuggestion': 'Better {here} ({there} their time)',
+
+  'common.skip': 'Skip',
+  'common.next': 'Next',
+  'common.back': 'Back',
+  'common.continue': 'Continue',
+  'common.cancel': 'Cancel',
+  'common.hourShort': '{hour}:00',
+
+  'welcome.skipA11y': 'Skip the onboarding',
+  'welcome.headline': 'Find your',
+  'welcome.headlineAccent': 'natural rhythm',
+  'welcome.tagline': 'Remember. Plan. Live.',
+  'welcome.description1': 'A calm way to manage your days,',
+  'welcome.description2': 'made to ease your mental load.',
+  'welcome.badge.calm.title': 'Calm',
+  'welcome.badge.calm.subtitle': 'No overload',
+  'welcome.badge.private.title': 'Private',
+  'welcome.badge.private.subtitle': '100% offline',
+  'welcome.badge.rhythm.title': 'Rhythm',
+  'welcome.badge.rhythm.subtitle': 'AI at rest',
+  'welcome.start': 'Start the experience',
+  'welcome.restoreQuestion': 'Already use Junix Pulse?',
+  'welcome.restoreLink': 'Restore a backup',
+  'welcome.restoreA11y': 'Restore a backup',
+  'welcome.restore.unavailableTitle': 'Not available',
+  'welcome.restore.unavailableBody': 'Restoring a backup is available in the mobile app.',
+  'welcome.restore.invalidTitle': 'Invalid file',
+  'welcome.restore.invalidBody': 'The selected backup could not be read.',
+  'welcome.restore.pickAgain': 'Select the backup file again.',
+  'welcome.restore.mergeTitle': 'Merge this backup?',
+  'welcome.restore.mergeBody':
+    '{count} checked records will be reviewed. Items whose identifier already exists are kept, not replaced.',
+  'welcome.restore.import': 'Import',
+  'welcome.restore.doneTitle': 'Restore complete',
+  'welcome.restore.doneBody': '{inserted} records added, {skipped} skipped because they already existed.',
+  'welcome.restore.failTitle': 'Restore failed',
+  'welcome.restore.failBody': 'No data was imported.',
+  'welcome.restore.unlockTitle': 'Unlock the backup',
+  'welcome.restore.decrypt': 'Decrypt',
+
+  'discover.skipA11y': 'Skip the remaining steps',
+  'discover.title': 'How it works',
+  'discover.subtitle': 'Three ideas, one logic.',
+  'discover.reminders.title': 'Reminders',
+  'discover.reminders.desc':
+    'Something not to forget at a precise moment. One-off or recurring, tied to a person, with a snooze if needed.',
+  'discover.reminders.example': 'E.g. Call mom on Friday at 6 PM',
+  'discover.tasks.title': 'Tasks',
+  'discover.tasks.desc':
+    'An intention to act, with or without a date. Tasks without a date stay in your Inbox until you plan them.',
+  'discover.tasks.example': 'E.g. Prepare Monday’s meeting',
+  'discover.events.title': 'Events',
+  'discover.events.desc':
+    'An appointment or an activity with a length. It can include a place, people and travel time.',
+  'discover.events.example': 'E.g. Team meeting 2–3:30 PM',
+  'discover.remember': 'Remember',
+  'discover.rememberReminder': 'A reminder calls for your attention.',
+  'discover.rememberTask': 'A task waits to be done.',
+  'discover.rememberEvent': 'An event takes up a stretch of time.',
+
+  'personalize.title': 'A few preferences',
+  'personalize.subtitle': 'So Junix Pulse knows you a little better.',
+  'personalize.nameLabel': 'Your first name',
+  'personalize.nameHint': 'Optional — to personalize the messages',
+  'personalize.namePlaceholder': 'E.g. Camille',
+  'personalize.addressLabel': 'How to address you',
+  'personalize.addressHint': 'Pulse can use the informal or the formal form — you can change it in Settings',
+  'personalize.addressTu': 'Informal',
+  'personalize.addressVous': 'Formal',
+
+  'schedule.skipA11y': 'Skip to the last step',
+  'schedule.title': 'Your rhythm',
+  'schedule.subtitle': 'These preferences help Junix Pulse suggest the right moments.',
+  'schedule.endOfDay': 'End of day',
+  'schedule.endOfDayHint':
+    'At this time, Junix sends your review and can offer to deal with the tasks left undone.',
+  'schedule.morning': 'Morning summary',
+  'schedule.morningHint':
+    'A notification tells you at this time, and your day is waiting on the Today screen.',
+  'schedule.note': 'You can change these preferences at any time in Settings.',
 };
 
 export const MESSAGES: Readonly<Record<'fr' | 'en', Readonly<Record<MessageKey, string>>>> = { fr, en };
