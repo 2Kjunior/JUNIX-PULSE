@@ -8,6 +8,7 @@
  * BR-017 : la fin doit être strictement après le début.
  */
 
+import { t } from '../i18n';
 import { PersonalScheduleRepository } from '../repositories/personal-schedule-repository';
 import { PersonalSchedule, PlanningBlock, PlanningBlockType } from '../domain/entities';
 
@@ -66,7 +67,7 @@ export const ScheduleUseCases = {
 
     // BR-017 : fin > début
     if (endMin <= startMin) {
-      throw new Error('L\'heure de fin doit être après l\'heure de début.');
+      throw new Error(t('useCase.endAfterStart'));
     }
 
     const schedule = await ScheduleUseCases.getOrCreateActiveSchedule();
@@ -89,7 +90,7 @@ export const ScheduleUseCases = {
 
     if (conflict) {
       throw new Error(
-        `Conflit de planning : ce créneau chevauche "${conflict.label}" (${conflict.startTime} – ${conflict.endTime}).`
+        t('useCase.blockConflict', { label: conflict.label, start: conflict.startTime, end: conflict.endTime })
       );
     }
 

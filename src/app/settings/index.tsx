@@ -47,7 +47,7 @@ import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { detectDeviceTimezone } from '@/services/device-timezone';
 import { timezoneLabel } from '@/constants/timezones';
-import { useT, type MessageKey } from '@/i18n';
+import { useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
@@ -67,6 +67,7 @@ export default function SettingsScreen() {
   const { palette } = useTheme();
   const deviceTimezone = detectDeviceTimezone();
   const t = useT();
+  const language = useLanguage();
   const styles = useThemedStyles(makeSettingsStyles);
 
 
@@ -317,7 +318,7 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>{t('settings.timezone')}</Text>
             <Text style={styles.rowSub}>{t('settings.timezoneHint')}</Text>
           </View>
-          <Text style={styles.rowValue}>{timezoneLabel(deviceTimezone)}</Text>
+          <Text style={styles.rowValue}>{timezoneLabel(deviceTimezone, language)}</Text>
         </View>
 
         <View style={styles.rowCol}>

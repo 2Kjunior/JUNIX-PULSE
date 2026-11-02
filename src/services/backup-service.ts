@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { z } from 'zod';
+import { t } from '../i18n';
 import { decryptBackupContents, encryptBackupContents } from './backup-crypto';
 import { isSanctumNoteEncrypted, SANCTUM_CRYPTO_CONSTANTS } from './sanctum-crypto';
 import { SanctumAuthService, type SanctumBackupKeys } from './sanctum-auth-service';
@@ -199,33 +200,33 @@ function validateRows(data: BackupData): void {
     for (const [rowIndex, row] of data[table].entries()) {
       const rowKeys = Object.keys(row);
       if (rowKeys.some(key => !expected.has(key))) {
-        throw new Error(`Format de sauvegarde invalide : colonnes incorrectes dans ${table}.`);
+        throw new Error(t('backup.badColumns', { table }));
       }
 
       for (const column of required) {
         if (row[column] === null || row[column] === undefined) {
-          throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} est requis.`);
+          throw new Error(t('backup.required', { path: `${table}[${rowIndex}].${column}` }));
         }
       }
 
       for (const column of integerColumns) {
         const value = row[column];
         if (value !== null && value !== undefined && (typeof value !== 'number' || !Number.isInteger(value))) {
-          throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} doit être un entier.`);
+          throw new Error(t('backup.integer', { path: `${table}[${rowIndex}].${column}` }));
         }
       }
 
       for (const column of columns) {
         const value = row[column];
         if (value !== null && value !== undefined && !integerColumns.has(column) && typeof value !== 'string') {
-          throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} doit être du texte.`);
+          throw new Error(t('backup.text', { path: `${table}[${rowIndex}].${column}` }));
         }
       }
 
       for (const [column, allowedValues] of Object.entries(ENUM_COLUMNS[table] ?? {})) {
         const value = row[column];
         if (value !== null && value !== undefined && (typeof value !== 'string' || !allowedValues.includes(value))) {
-          throw new Error(`Format de sauvegarde invalide : ${table}[${rowIndex}].${column} contient une valeur inconnue.`);
+          throw new Error(t('backup.unknownValue', { path: `${table}[${rowIndex}].${column}` }));
         }
       }
     }
@@ -260,12 +261,12 @@ export function parseBackup(contents: string): BackupData {
   try {
     value = JSON.parse(contents);
   } catch {
-    throw new Error('Le fichier sélectionné ne contient pas un JSON valide.');
+    throw new Error(t('backup.notJson'));
   }
 
   const parsed = BackupSchema.safeParse(value);
   if (!parsed.success) {
-    throw new Error('Ce fichier n’est pas une sauvegarde Junix Pulse compatible ou il est incomplet.');
+    throw new Error(t('backup.incompatible'));
   }
 
   validateRows(parsed.data.data);

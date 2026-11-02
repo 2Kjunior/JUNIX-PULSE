@@ -360,7 +360,7 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                               style={styles.reminderSnoozeBtn}
                               onPress={() => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
                               accessibilityRole="button"
-                              accessibilityLabel={`Options et report pour le rappel ${r.title}`}
+                              accessibilityLabel={t('timetable.snoozeA11y', { title: r.title })}
                             >
                               <Ionicons name="timer-outline" size={12} color={theme.primary.default} />
                               <Text style={styles.reminderSnoozeText}>Options & Snooze</Text>

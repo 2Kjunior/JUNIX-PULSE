@@ -9,6 +9,7 @@
  */
 
 import { addDays, format, startOfDay } from 'date-fns';
+import { t } from '../i18n';
 import { SuggestionRepository } from '../repositories/suggestion-repository';
 import { PersonRepository } from '../repositories/person-repository';
 import { ReminderRepository } from '../repositories/reminder-repository';
@@ -177,7 +178,7 @@ export const SuggestionUseCases = {
         await PersonUseCases.logInteraction({
           personId: sugg.targetId,
           type: 'SMS',
-          notes: 'Interaction initiée suite à suggestion',
+          notes: t('useCase.fromSuggestion'),
         });
       } else if (sugg.type === 'HABIT_REMINDER' && sugg.targetId) {
         await HabitUseCases.toggleHabitCompletion(sugg.targetId);

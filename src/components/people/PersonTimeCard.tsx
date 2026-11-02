@@ -18,7 +18,7 @@ import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import type { Person } from '@/domain/entities';
 import { MomentLabel, personTimeState } from '@/domain/rules/person-availability-rules';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 import type { TFunction } from '@/i18n';
 import { WEEKDAY_KEYS } from '@/i18n/weekdays';
 import { useTheme } from '@/hooks/use-theme';
@@ -46,6 +46,7 @@ function describeMoment(t: TFunction, moment: MomentLabel): string {
 
 export function PersonTimeCard({ person, userTimezone, onSaved, onError }: PersonTimeCardProps) {
   const t = useT();
+  const language = useLanguage();
   const { palette } = useTheme();
   const styles = useThemedStyles(makePersonTimeCardStyles);
   const [now, setNow] = useState(() => new Date());
@@ -126,7 +127,7 @@ export function PersonTimeCard({ person, userTimezone, onSaved, onError }: Perso
         <View style={styles.topRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.place}>
-              {t('personTime.at', { name: person.displayName.split(' ')[0], city: timezoneLabel(person.timezone) })}
+              {t('personTime.at', { name: person.displayName.split(' ')[0], city: timezoneLabel(person.timezone, language) })}
             </Text>
             <Text style={styles.clock}>{state.localTime}</Text>
             <Text style={styles.day}>{weekdayName(t, state.weekday)}</Text>

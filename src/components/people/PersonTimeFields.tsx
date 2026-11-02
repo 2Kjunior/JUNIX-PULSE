@@ -10,12 +10,12 @@ import { useState } from 'react';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { COMMON_TIMEZONES, timezoneLabel } from '@/constants/timezones';
+import { COMMON_TIMEZONES, timezoneCity, timezoneLabel } from '@/constants/timezones';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import type { PersonAvailability } from '@/domain/entities';
 import { DEFAULT_AVAILABILITY, formatMinutes } from '@/domain/rules/person-availability-rules';
-import { useT } from '@/i18n';
+import { useLanguage, useT } from '@/i18n';
 import { WEEKDAY_KEYS, WEEKDAY_SHORT_KEYS } from '@/i18n/weekdays';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -38,6 +38,7 @@ const MIN_WINDOW_MINUTES = STEP_MINUTES;
 
 export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
   const t = useT();
+  const language = useLanguage();
   const { palette } = useTheme();
   const styles = useThemedStyles(makePersonTimeStyles);
   const [listOpen, setListOpen] = useState(false);
@@ -85,7 +86,7 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
       >
         <Ionicons name="earth-outline" size={20} color={palette.primary.default} />
         <Text style={[styles.selectText, !timezone && styles.selectPlaceholder]}>
-          {timezone ? timezoneLabel(timezone) : t('personTime.pick')}
+          {timezone ? timezoneLabel(timezone, language) : t('personTime.pick')}
         </Text>
         <Ionicons name={listOpen ? 'chevron-up' : 'chevron-down'} size={16} color={palette.onSurface.variant} />
       </TouchableOpacity>
@@ -102,7 +103,7 @@ export function PersonTimeFields({ value, onChange }: PersonTimeFieldsProps) {
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
               >
-                <Text style={[styles.chipText, selected && styles.chipTextActive]}>{option.city}</Text>
+                <Text style={[styles.chipText, selected && styles.chipTextActive]}>{timezoneCity(option, language)}</Text>
               </TouchableOpacity>
             );
           })}

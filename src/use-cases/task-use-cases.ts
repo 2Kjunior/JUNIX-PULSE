@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { TaskRepository } from '../repositories/task-repository';
 import { Subtask, Task, TaskStatus, ReminderPriority } from '../domain/entities';
 import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
+import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 // ─── Interfaces d'entrée ──────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ export const TaskUseCases = {
    */
   async toggleComplete(id: string): Promise<TaskStatus> {
     const task = await TaskRepository.findById(id);
-    if (!task) throw new Error('Tâche introuvable');
+    if (!task) throw new Error(t('taskDetail.notFound'));
 
     const now = new Date().toISOString();
     const isNowCompleted = task.status !== 'COMPLETED';

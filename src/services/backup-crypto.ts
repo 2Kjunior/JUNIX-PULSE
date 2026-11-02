@@ -1,6 +1,7 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { z } from 'zod';
+import { t } from '../i18n';
 
 const EncryptedBackupSchema = z.object({
   format: z.literal('junix-pulse-encrypted-backup'),
@@ -35,7 +36,7 @@ function hexToBytes(value: string): Uint8Array {
 
 function validatePassphrase(passphrase: string): void {
   if (passphrase.length < 16 || passphrase.length > 256) {
-    throw new Error('Le mot de passe doit contenir entre 16 et 256 caractères.');
+    throw new Error(t('backup.passphraseLength'));
   }
 }
 
@@ -47,7 +48,7 @@ export async function encryptBackupContents(
 ): Promise<string> {
   validatePassphrase(passphrase);
   if (salt.length !== 16 || nonce.length !== 24) {
-    throw new Error('Paramètres cryptographiques invalides.');
+    throw new Error(t('backup.badCrypto'));
   }
 
   const key = await scryptAsync(new TextEncoder().encode(passphrase), salt, DEFAULT_SCRYPT_PARAMETERS);
@@ -72,12 +73,12 @@ export async function decryptBackupContents(contents: string, passphrase: string
   try {
     value = JSON.parse(contents);
   } catch {
-    throw new Error('Le fichier sélectionné n’est pas une sauvegarde chiffrée valide.');
+    throw new Error(t('backup.notEncrypted'));
   }
 
   const parsed = EncryptedBackupSchema.safeParse(value);
   if (!parsed.success) {
-    throw new Error('Le fichier sélectionné n’est pas une sauvegarde Junix Pulse chiffrée compatible.');
+    throw new Error(t('backup.encryptedIncompatible'));
   }
 
   try {
@@ -92,6 +93,6 @@ export async function decryptBackupContents(contents: string, passphrase: string
     ).decrypt(hexToBytes(parsed.data.ciphertext));
     return new TextDecoder().decode(plaintext);
   } catch {
-    throw new Error('Mot de passe incorrect ou fichier de sauvegarde altéré.');
+    throw new Error(t('backup.wrongPassword'));
   }
 }

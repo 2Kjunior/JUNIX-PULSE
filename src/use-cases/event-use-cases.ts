@@ -5,6 +5,7 @@
 import { randomUUID } from 'expo-crypto';
 import { EventRepository } from '../repositories/event-repository';
 import { EventType } from '../domain/entities';
+import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 
 export interface CreateEventInput {
@@ -37,7 +38,7 @@ export const EventUseCases = {
    */
   async createEvent(input: CreateEventInput): Promise<string> {
     if (input.endAt <= input.startAt) {
-      throw new Error("L'heure de fin doit être postérieure à l'heure de début.");
+      throw new Error(t('useCase.endAfterStart'));
     }
 
     const eventId = randomUUID();
@@ -69,7 +70,7 @@ export const EventUseCases = {
    */
   async updateEvent(input: UpdateEventInput): Promise<void> {
     if (input.startAt && input.endAt && input.endAt <= input.startAt) {
-      throw new Error("L'heure de fin doit être postérieure à l'heure de début.");
+      throw new Error(t('useCase.endAfterStart'));
     }
 
     const now = new Date().toISOString();
