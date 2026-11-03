@@ -34,8 +34,12 @@ function hexToBytes(value: string): Uint8Array {
   return bytes;
 }
 
+/** The file is protected by scrypt N=32768: ten characters stay costly to guess. */
+export const BACKUP_PASSPHRASE_MIN_LENGTH = 10;
+export const BACKUP_PASSPHRASE_MAX_LENGTH = 256;
+
 function validatePassphrase(passphrase: string): void {
-  if (passphrase.length < 16 || passphrase.length > 256) {
+  if (passphrase.length < BACKUP_PASSPHRASE_MIN_LENGTH || passphrase.length > BACKUP_PASSPHRASE_MAX_LENGTH) {
     throw new Error(t('backup.passphraseLength'));
   }
 }

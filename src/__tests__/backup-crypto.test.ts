@@ -4,7 +4,7 @@
  * Couverture :
  * - Chiffrement et déchiffrement bout-en-bout avec N=32768 (coût scrypt allégé mobile)
  * - Compatibilité descendante : déchiffrement d'une sauvegarde existante avec N=65536
- * - Validation de la longueur de la phrase secrète (<16 caractères ou >256 caractères)
+ * - Validation de la longueur de la phrase secrète (<10 caractères ou >256 caractères)
  * - Rejet d'un mot de passe incorrect
  * - Rejet d'une sauvegarde au format altéré ou JSON corrompu
  */
@@ -43,14 +43,19 @@ describe('Lot 13 — Cryptographie des sauvegardes (backup-crypto)', () => {
       expect(decrypted).toBe(testPayload);
     }, 20000);
 
-    it('rejette une phrase secrète trop courte (< 16 caractères)', async () => {
+    it('accepte une phrase secrète de 10 caractères', async () => {
+      const encryptedJson = await encryptBackupContents(testPayload, 'dix-chars!', validSalt, validNonce);
+      expect(await decryptBackupContents(encryptedJson, 'dix-chars!')).toBe(testPayload);
+    }, 20000);
+
+    it('rejette une phrase secrète trop courte (< 10 caractères)', async () => {
       await expect(
         encryptBackupContents(testPayload, 'court', validSalt, validNonce)
-      ).rejects.toThrow('Le mot de passe doit contenir entre 16 et 256 caractères.');
+      ).rejects.toThrow('Le mot de passe doit contenir entre 10 et 256 caractères.');
 
       await expect(
         decryptBackupContents('{}', 'court')
-      ).rejects.toThrow('Le mot de passe doit contenir entre 16 et 256 caractères.');
+      ).rejects.toThrow('Le mot de passe doit contenir entre 10 et 256 caractères.');
     });
 
     it('rejette un mot de passe erroné lors du déchiffrement', async () => {
