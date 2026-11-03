@@ -199,14 +199,14 @@ function makeActionModalStyles(theme: ThemePalette) {
       justifyContent: 'flex-end',
     },
     sheet: {
-      backgroundColor: isLight ? theme.surface.base : 'rgba(20, 24, 38, 0.96)',
+      backgroundColor: theme.glass.nav.backgroundColor,
       borderTopLeftRadius: Radius.xl,
       borderTopRightRadius: Radius.xl,
       paddingHorizontal: Spacing.lg,
       paddingTop: Spacing.sm,
       paddingBottom: Spacing.xxl + 10,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.20)',
+      borderColor: theme.glass.nav.borderColor,
       gap: Spacing.md,
     },
     handle: {
@@ -255,7 +255,7 @@ function makeActionModalStyles(theme: ThemePalette) {
     optionCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: isLight ? theme.surface.container : 'rgba(26, 30, 48, 0.85)',
+      backgroundColor: theme.glass.control.backgroundColor,
       borderRadius: Radius.lg,
       padding: Spacing.md,
       borderWidth: 1,

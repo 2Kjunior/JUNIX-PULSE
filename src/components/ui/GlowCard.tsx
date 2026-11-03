@@ -33,6 +33,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Glow, GlowCardTokens, type GlowTone } from '@/constants/theme';
+import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility';
 import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
 import { hexToRgba } from '@/utils/color';
@@ -92,6 +93,7 @@ function GlowCardInner({
 }: GlowCardProps) {
   const { isDark } = useTheme();
   const reduceTransparency = useReduceTransparency();
+  const swipeAccessibility = useSwipeAccessibilityProps();
   const reducedMotion = useReducedMotion();
   const isReduced = !!reducedMotion || !!disableEntranceAnimation;
 
@@ -311,7 +313,13 @@ function GlowCardInner({
 
   if (!onPress) {
     return (
-      <Animated.View style={[style, animatedStyle]} testID={testID} accessibilityLabel={accessibilityLabel}>
+      <Animated.View
+        style={[style, animatedStyle]}
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        accessible={swipeAccessibility.accessibilityActions ? true : undefined}
+        {...swipeAccessibility}
+      >
         {content}
       </Animated.View>
     );
@@ -332,6 +340,7 @@ function GlowCardInner({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
+      {...swipeAccessibility}
       hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
     >
       <Animated.View style={reducedMotion ? undefined : animatedStyle}>{content}</Animated.View>

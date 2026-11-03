@@ -33,6 +33,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 
 import { SanctumRepository, type SanctumNote } from '@/repositories/sanctum-repository';
+import { playHaptic } from '@/services/haptic-service';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { useAppStore } from '@/store/app-store';
 import { useLanguage, useT, type TFunction } from '@/i18n';
@@ -364,6 +365,7 @@ export default function SanctumScreen() {
         await onAuthSuccess(result.key);
         void offerBiometricUnlock(result.key);
       } else {
+        playHaptic('error');
         if (result.isLocked && result.remainingSeconds) {
           setLockoutRemaining(result.remainingSeconds);
         }

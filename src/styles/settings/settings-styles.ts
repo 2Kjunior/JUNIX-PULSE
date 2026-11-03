@@ -30,9 +30,7 @@ export const makeSettingsStyles = (t: ThemePalette) => {
   const backBtnBg = t.glass.control.backgroundColor;
 
   // Fond des pilules d'heure (inactive)
-  const hourPillBg = isDark
-    ? 'rgba(15, 18, 28, 0.85)'
-    : hexToRgba(t.surface.high, 0.90);
+  const hourPillBg = t.glass.control.backgroundColor;
 
   // Bordure des pilules d'heure (inactive)
   const hourPillBorder = isDark
@@ -40,9 +38,7 @@ export const makeSettingsStyles = (t: ThemePalette) => {
     : hexToRgba(t.outline.variant, 0.40);
 
   // Fond du segmented control
-  const segmentBg = isDark
-    ? 'rgba(15, 18, 28, 0.85)'
-    : hexToRgba(t.surface.high, 0.90);
+  const segmentBg = t.glass.control.backgroundColor;
 
   // Bordure du segmented control
   const segmentBorder = isDark
@@ -50,9 +46,7 @@ export const makeSettingsStyles = (t: ThemePalette) => {
     : hexToRgba(t.outline.variant, 0.40);
 
   // Fond modal
-  const modalBg = isDark
-    ? 'rgba(24, 28, 42, 0.98)'
-    : hexToRgba(t.surface.low, 0.98);
+  const modalBg = t.glass.nav.backgroundColor;
 
   // Bordure modal
   const modalBorder = isDark
@@ -60,9 +54,7 @@ export const makeSettingsStyles = (t: ThemePalette) => {
     : hexToRgba(t.outline.variant, 0.50);
 
   // Fond input
-  const inputBg = isDark
-    ? 'rgba(15, 18, 28, 0.90)'
-    : hexToRgba(t.surface.container, 0.90);
+  const inputBg = t.glass.control.backgroundColor;
 
   // Bordure input
   const inputBorder = isDark
@@ -99,8 +91,8 @@ export const makeSettingsStyles = (t: ThemePalette) => {
     },
     backBtn: {
       padding: Spacing.xs,
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       borderRadius: Radius.full,
       backgroundColor: backBtnBg,
       alignItems: 'center',

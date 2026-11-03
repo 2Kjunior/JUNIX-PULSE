@@ -283,7 +283,7 @@ const makeHabitDetailStyles = (theme: ThemePalette) =>
       textAlign: 'center',
       marginHorizontal: Spacing.sm,
     },
-    deleteBtn: { padding: Spacing.xs },
+    deleteBtn: { padding: Spacing.xs, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
     content: { padding: Spacing.lg, paddingBottom: 60 },
     topCardSpacing: {
       marginBottom: Spacing.lg,

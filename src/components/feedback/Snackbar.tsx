@@ -116,24 +116,23 @@ const makeSnackbarStyles = (theme: ThemePalette) =>
       position: 'absolute',
       left: Spacing.lg,
       right: Spacing.lg,
-      backgroundColor: theme.surface.highest,
-      borderRadius: Radius.md,
+      backgroundColor: theme.glass.nav.backgroundColor,
+      borderWidth: 1,
+      borderColor: theme.glass.nav.borderColor,
+      borderRadius: Radius.lg,
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: Spacing.md,
       paddingHorizontal: Spacing.lg,
       minHeight: 48,
       zIndex: 1000,
-      // Ombre légère sur iOS
+      // Ombre légère sur iOS ; pas d'elevation Android, elle se verrait à travers le verre
       ...Platform.select({
         ios: {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 8,
-        },
-        android: {
-          elevation: 6,
         },
       }),
     },

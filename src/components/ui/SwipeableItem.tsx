@@ -21,7 +21,7 @@
  * Accessibilité : WCAG 2.2 AA — rôles et labels explicites.
  */
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -39,6 +39,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassActionButton } from '@/components/ui/GlassActionButton';
+import { SwipeAccessibilityContext } from '@/components/ui/swipe-accessibility';
 import { Spacing } from '@/constants/theme';
 
 // ─── Types publics ────────────────────────────────────────────────────────────
@@ -235,6 +236,11 @@ export function SwipeableItem({
     [leftActions]
   );
 
+  const accessibilityActions = useMemo(
+    () => [...(leftActions ?? []), ...(rightActions ?? [])],
+    [leftActions, rightActions]
+  );
+
   if (!enabled || !hasActions) {
     return <View style={containerStyle}>{children}</View>;
   }
@@ -251,7 +257,9 @@ export function SwipeableItem({
       renderLeftActions={leftActions?.length ? renderLeftActions : undefined}
       containerStyle={containerStyle}
     >
-      {children}
+      <SwipeAccessibilityContext.Provider value={accessibilityActions}>
+        {children}
+      </SwipeAccessibilityContext.Provider>
     </ReanimatedSwipeable>
   );
 }

@@ -73,8 +73,8 @@ export function makeCalendarStyles(theme: ThemePalette) {
       color: theme.onSurface.disabled,
     },
     navArrowBtn: {
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       borderRadius: Radius.full,
       backgroundColor: theme.glass.control.backgroundColor,
       borderWidth: 1,

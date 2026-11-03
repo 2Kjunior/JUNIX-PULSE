@@ -18,7 +18,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,8 +25,10 @@ import { format, isToday } from 'date-fns';
 import { useDateLocale, useT } from '@/i18n';
 
 import { PlanningBlock, PlanningBlockType } from '@/domain/entities';
+import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography } from '@/constants/theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { Spacing, Radius } from '@/constants/theme';
 
 export interface WeeklyTimetableGridProps {
   blocks: PlanningBlock[];
@@ -183,6 +184,7 @@ export function WeeklyTimetableGrid({
   onPressTasksDay,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
+  const styles = useThemedStyles(makeTimetableStyles);
   const t = useT();
   const dateLocale = useDateLocale();
 
@@ -374,7 +376,7 @@ export function WeeklyTimetableGrid({
   return (
     <View style={styles.wrapper}>
       {/* ─── Conteneur principal de la Grille Matricielle 7J ────────────────────── */}
-      <View style={[styles.gridCard, isDark && { backgroundColor: palette.glass.card.backgroundColor, borderColor: palette.glass.card.borderColor, shadowOpacity: 0 }]}>
+      <View style={styles.gridCard}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -382,7 +384,7 @@ export function WeeklyTimetableGrid({
         >
           <View style={{ width: gridContentWidth }}>
             {/* Ligne d'en-tête collante des 7 jours */}
-            <View style={[styles.dayHeaderRow, isDark && { backgroundColor: palette.glass.nav.backgroundColor }]}>
+            <View style={styles.dayHeaderRow}>
               {/* Coin haut-gauche icône horloge */}
               <View style={[styles.cornerCell, { width: TIME_COL_WIDTH }]}>
                 <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
@@ -452,7 +454,7 @@ export function WeeklyTimetableGrid({
             {/* Corps de la Grille : Colonne Heures + Colonnes Journées */}
             <View style={styles.gridBody}>
               {/* Colonne latérale gauche : Marqueurs startHour à endHour */}
-              <View style={[styles.timeGutter, { width: TIME_COL_WIDTH }, isDark && { backgroundColor: palette.glass.nav.backgroundColor }]}>
+              <View style={[styles.timeGutter, { width: TIME_COL_WIDTH }]}>
                 {Array.from({ length: totalHours }, (_, i) => {
                   const hour = startHour + i;
                   const isHighlight = hour === 9 || hour === 14 || hour === 17;
@@ -537,7 +539,7 @@ export function WeeklyTimetableGrid({
                                 {
                                   top: clampedTop + 1,
                                   height: clampedHeight,
-                                  backgroundColor: isDark ? config.bg : 'rgba(240, 238, 248, 0.45)',
+                                  backgroundColor: config.bg,
                                   borderColor: config.border + '55',
                                 },
                               ]}
@@ -683,562 +685,259 @@ export function WeeklyTimetableGrid({
 
 // ─── STYLES DU COMPOSANT STITCH ───────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  wrapper: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: 40,
-  },
-  summaryBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    marginTop: Spacing.sm,
-    borderRadius: Radius.md,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  summaryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  summaryText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  summaryTotalText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  topHeader: {
-    paddingVertical: Spacing.sm,
-    gap: 8,
-  },
-  subHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  matrixBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#7CD0FF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#7CD0FF',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.9,
-        shadowRadius: 5,
-      },
-      android: { elevation: 3 },
-    }),
-  },
-  matrixBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#7CD0FF',
-    letterSpacing: 0.8,
-  },
-  scoreBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  scoreBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#CAC4D0',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  mainTitle: {
-    ...Typography.titleLarge,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#E6E1E7',
-    letterSpacing: -0.3,
-  },
-  weekPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  weekPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#CAC4D0',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#948F9A',
-    lineHeight: 18,
-  },
-  segmentContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(15, 14, 17, 0.8)',
-    padding: 3,
-    borderRadius: Radius.md,
-    marginTop: Spacing.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  segmentBtn: {
-    flex: 1,
-    paddingVertical: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.sm,
-  },
-  segmentBtnActive: {
-    backgroundColor: '#D0BCFF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#D0BCFF',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-      },
-      android: { elevation: 2 },
-    }),
-  },
-  segmentText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#CAC4D0',
-  },
-  segmentTextActive: {
-    color: '#210F48',
-    fontWeight: '700',
-  },
-  gridSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  gridTitleWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  gridSectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#E6E1E7',
-    letterSpacing: 0.3,
-  },
-  swipeHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  swipeHintText: {
-    fontSize: 11,
-    color: '#7CD0FF',
-    fontWeight: '500',
-  },
-  gridCard: {
-    borderRadius: Radius.lg,
-    backgroundColor: '#1C1B1F',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-      },
-    }),
-  },
-  dayHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#2B292D',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  cornerCell: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 8,
-  },
-  dayHeaderCell: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  dayHeaderCellActive: {
-    backgroundColor: 'rgba(208, 188, 255, 0.12)',
-  },
-  dayHeaderName: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#CAC4D0',
-    letterSpacing: 0.5,
-  },
-  dayHeaderDate: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#E6E1E7',
-    marginTop: 1,
-  },
-  allDayRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
-    paddingVertical: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.20)',
-  },
-  allDayGutter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-  },
-  allDayGutterText: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#948F9A',
-  },
-  allDayCell: {
-    paddingHorizontal: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  allDayTaskPill: {
-    backgroundColor: 'rgba(14, 116, 144, 0.22)',
-    borderWidth: 1,
-    borderColor: '#00BCD4',
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    width: '92%',
-    alignItems: 'center',
-  },
-  allDayTaskPillText: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    color: '#80DEEA',
-  },
-  gridBody: {
-    flexDirection: 'row',
-  },
-  timeGutter: {
-    backgroundColor: '#0F0E11',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  timeCell: {
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  timeLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#948F9A',
-    fontVariant: ['tabular-nums'] as any,
-  },
-  daysContainer: {
-    position: 'relative',
-  },
-  hourHorizontalLine: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  columnsRow: {
-    flexDirection: 'row',
-  },
-  dayColumn: {
-    position: 'relative',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  backgroundBlockCard: {
-    position: 'absolute',
-    left: 2,
-    right: 2,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    padding: 3,
-    zIndex: 1,
-    opacity: 0.70,
-  },
-  backgroundBlockHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  backgroundBlockTitle: {
-    fontSize: 9,
-    fontWeight: '600',
-    opacity: 0.9,
-    flex: 1,
-  },
-  blockCard: {
-    position: 'absolute',
-    borderRadius: Radius.sm + 2,
-    padding: 3,
-    borderWidth: 1.5,
-    justifyContent: 'space-between',
-    overflow: 'hidden',
-    zIndex: 3,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-      },
-    }),
-  },
-  conflictDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#F59E0B',
-  },
-  reminderPillMarker: {
-    position: 'absolute',
-    left: 2,
-    right: 2,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1,
-    paddingHorizontal: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    zIndex: 6,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.25,
-        shadowRadius: 2,
-      },
-      android: { elevation: 3 },
-    }),
-  },
-  reminderPillText: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    color: '#D97706',
-    flex: 1,
-  },
-  cardCornerGlow: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-  },
-  topSpecularHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 2,
-    right: 2,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
-  },
-  blockCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  workPulseDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#D0BCFF',
-  },
-  blockTitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    flex: 1,
-    lineHeight: 12,
-  },
-  timeBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-    marginTop: 2,
-  },
-  timeBadgeText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'] as any,
-  },
-  legendCard: {
-    marginTop: Spacing.md,
-    borderRadius: Radius.lg,
-    backgroundColor: '#1C1B1F',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  legendHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  legendHeaderTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#E6E1E7',
-    letterSpacing: 0.5,
-  },
-  legendHeaderSub: {
-    fontSize: 11,
-    color: '#948F9A',
-    fontWeight: '600',
-  },
-  legendGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  legendPill: {
-    width: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#211F23',
-    padding: 8,
-    borderRadius: Radius.md,
-  },
-  legendColorBox: {
-    width: 10,
-    height: 10,
-    borderRadius: 3,
-  },
-  legendPillTextCol: {
-    flex: 1,
-  },
-  legendPillLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#E6E1E7',
-  },
-  legendPillMeta: {
-    fontSize: 9,
-    color: '#948F9A',
-    marginTop: 1,
-  },
-  aiInsightCard: {
-    marginTop: Spacing.sm,
-    borderRadius: Radius.lg,
-    backgroundColor: '#211F23',
-    borderWidth: 1,
-    borderColor: 'rgba(123, 208, 255, 0.2)',
-    padding: Spacing.md,
-    gap: 6,
-  },
-  aiHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  aiTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  aiIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    backgroundColor: '#D0BCFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aiTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#D0BCFF',
-  },
-  aiStatusBadge: {
-    backgroundColor: 'rgba(15, 14, 17, 0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  aiStatusText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#7CD0FF',
-  },
-  aiDescription: {
-    fontSize: 12,
-    color: '#CAC4D0',
-    lineHeight: 16,
-  },
-  actionsSection: {
-    marginTop: Spacing.md,
-  },
-  heroGlowBtn: {
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#D0BCFF',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 10,
-      },
-      android: { elevation: 4 },
-    }),
-  },
-  heroGlowGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.lg,
-  },
-  heroGlowText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-});
+const makeTimetableStyles = (theme: ThemePalette) => {
+  const isDark = theme.mode === 'dark';
+  const line = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(76, 52, 120, 0.12)';
+  const faintLine = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(76, 52, 120, 0.07)';
+
+  return StyleSheet.create({
+    wrapper: {
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.sm,
+      paddingBottom: 40,
+    },
+    summaryBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.sm,
+      marginTop: Spacing.sm,
+      borderRadius: Radius.md,
+    },
+    summaryItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    summaryDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    summaryText: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    summaryTotalText: {
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    gridCard: {
+      borderRadius: Radius.lg,
+      backgroundColor: theme.glass.card.backgroundColor,
+      borderWidth: 1,
+      borderColor: theme.glass.card.borderColor,
+      overflow: 'hidden',
+    },
+    dayHeaderRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.glass.nav.backgroundColor,
+      borderBottomWidth: 1,
+      borderBottomColor: line,
+    },
+    cornerCell: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRightWidth: 1,
+      borderRightColor: line,
+      paddingVertical: 8,
+    },
+    dayHeaderCell: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 7,
+      borderRightWidth: 1,
+      borderRightColor: line,
+    },
+    dayHeaderCellActive: {
+      backgroundColor: theme.glass.controlActive,
+    },
+    dayHeaderName: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: theme.onSurface.variant,
+      letterSpacing: 0.5,
+    },
+    dayHeaderDate: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.onSurface.primary,
+      marginTop: 1,
+    },
+    allDayRow: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: line,
+      paddingVertical: 4,
+      backgroundColor: theme.glass.control.backgroundColor,
+    },
+    allDayGutter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 3,
+    },
+    allDayGutterText: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: theme.onSurface.variant,
+    },
+    allDayCell: {
+      paddingHorizontal: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    allDayTaskPill: {
+      backgroundColor: theme.tertiary.default + '29',
+      borderWidth: 1,
+      borderColor: theme.tertiary.default,
+      borderRadius: 8,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      width: '92%',
+      alignItems: 'center',
+    },
+    allDayTaskPillText: {
+      fontSize: 8.5,
+      fontWeight: '700',
+      color: isDark ? theme.tertiary.default : theme.tertiary.onContainer,
+    },
+    gridBody: {
+      flexDirection: 'row',
+    },
+    timeGutter: {
+      backgroundColor: theme.glass.nav.backgroundColor,
+      borderRightWidth: 1,
+      borderRightColor: line,
+    },
+    timeCell: {
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingTop: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: faintLine,
+    },
+    timeLabel: {
+      fontSize: 10,
+      fontWeight: '500',
+      color: theme.onSurface.variant,
+      fontVariant: ['tabular-nums'],
+    },
+    daysContainer: {
+      position: 'relative',
+    },
+    hourHorizontalLine: {
+      borderBottomWidth: 1,
+      borderBottomColor: faintLine,
+    },
+    columnsRow: {
+      flexDirection: 'row',
+    },
+    dayColumn: {
+      position: 'relative',
+      borderRightWidth: 1,
+      borderRightColor: line,
+    },
+    backgroundBlockCard: {
+      position: 'absolute',
+      left: 2,
+      right: 2,
+      borderRadius: Radius.sm,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      padding: 3,
+      zIndex: 1,
+      opacity: 0.7,
+    },
+    backgroundBlockHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+    },
+    backgroundBlockTitle: {
+      fontSize: 9,
+      fontWeight: '600',
+      opacity: 0.9,
+      flex: 1,
+    },
+    blockCard: {
+      position: 'absolute',
+      borderRadius: Radius.sm + 2,
+      padding: 3,
+      borderWidth: 1.5,
+      justifyContent: 'space-between',
+      overflow: 'hidden',
+      zIndex: 3,
+    },
+    conflictDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: '#F59E0B',
+    },
+    reminderPillMarker: {
+      position: 'absolute',
+      left: 2,
+      right: 2,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 1,
+      paddingHorizontal: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      zIndex: 6,
+    },
+    reminderPillText: {
+      fontSize: 8.5,
+      fontWeight: '700',
+      color: isDark ? '#FBBF24' : '#B45309',
+      flex: 1,
+    },
+    cardCornerGlow: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 28,
+      height: 28,
+      borderRadius: Radius.sm,
+    },
+    topSpecularHighlight: {
+      position: 'absolute',
+      top: 0,
+      left: 2,
+      right: 2,
+      height: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    },
+    blockCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+    },
+    workPulseDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 2.5,
+    },
+    blockTitle: {
+      fontSize: 10,
+      fontWeight: '700',
+      flex: 1,
+      lineHeight: 12,
+    },
+    timeBadge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+      borderRadius: 4,
+      marginTop: 2,
+    },
+    timeBadgeText: {
+      fontSize: 8,
+      fontWeight: '700',
+      fontVariant: ['tabular-nums'],
+    },
+  });
+};

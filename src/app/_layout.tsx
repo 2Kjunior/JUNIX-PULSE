@@ -47,6 +47,7 @@ import { applyLanguage } from "@/services/language-service";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
 import { notificationRoute } from "@/domain/rules/reminder-notification-rules";
+import { startActionHaptics } from "@/services/haptic-service";
 import { NotificationService } from "@/services/notification-service";
 import { onReminderSyncProblem, syncReminderNotifications } from "@/services/reminder-notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
@@ -240,6 +241,9 @@ export default function RootLayout() {
       router.replace("/(tabs)");
     }
   }, [splashFinished, appReady, dbReady, dbError, onboardingComplete, segments]);
+
+  // Une vibration répond aux actions, quel que soit l'écran qui les déclenche
+  useEffect(() => startActionHaptics(), []);
 
   // Récaps et rappels : au lancement, et dès la fin de l'onboarding
   useEffect(() => {
