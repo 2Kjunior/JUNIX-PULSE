@@ -68,7 +68,7 @@ Elle est conçue selon le principe **Local-First / Offline-First** : 100% de vos
 | **Routing** | Expo Router (`~58.0.27`, File-based navigation) |
 | **Language** | TypeScript (Strict mode) |
 | **Base de données** | SQLite via `expo-sqlite` (WAL Mode, Migrations versionnées 001-020) |
-| **Sécurité** | Sanctuaire et sauvegardes : XChaCha20-Poly1305 + scrypt ($N=32768$) + `expo-secure-store` |
+| **Sécurité** | XChaCha20-Poly1305 + scrypt (Sanctuaire $N=8192$, sauvegardes $N=32768$) + `expo-secure-store` |
 | **State Management** | Zustand (Store UI & Snackbar) |
 | **Design System** | Tokens Midnight Glassmorphism (`src/constants/theme.ts`) |
 | **Tests Automatisés** | Jest + React Test Renderer |

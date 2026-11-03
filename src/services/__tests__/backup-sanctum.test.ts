@@ -68,6 +68,14 @@ describe('Sanctuary in a backup', () => {
     expect((await SanctumAuthService.verifyAndUnlockWithPin('246801')).success).toBe(true);
   });
 
+  it('accepts a backup made with an earlier PIN cost', async () => {
+    const key = await SanctumAuthService.setupPin(PIN);
+    const backup = JSON.parse(await createBackup(databaseWithNote(await encryptSanctumNote('x', key))));
+    backup.sanctumKeys.kdfN = 32768;
+
+    expect(() => parseBackup(JSON.stringify(backup))).not.toThrow();
+  });
+
   it('recognizes a backup of this same phone', async () => {
     const key = await SanctumAuthService.setupPin(PIN);
     const backup = await createBackup(databaseWithNote(await encryptSanctumNote('x', key)));

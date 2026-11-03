@@ -4,8 +4,10 @@
  * Spécification (DEF-01 / I-02, P1) :
  * - Chiffrement symétrique authentifié XChaCha20-Poly1305 (@noble/ciphers).
  * - Nonce aléatoire de 24 octets (192 bits) par note chiffrée.
- * - Dérivation de clé par scrypt (@noble/hashes) avec N=32768, r=8, p=1 (32 Mo, comme les sauvegardes).
- *   Une clé créée avec N=16384 le reste jusqu'au prochain changement de PIN : déverrouiller ne réécrit
+ * - Dérivation de clé par scrypt (@noble/hashes) avec N=8192, r=8, p=1 (8 Mo). Elle tourne en JavaScript
+ *   sur le téléphone : un coût plus élevé rend chaque saisie du PIN trop lente. Le sel et le vérificateur
+ *   restent dans le trousseau sécurisé, hors de portée d'une simple copie de la base.
+ *   Une clé créée avec un autre coût le garde jusqu'au prochain changement de PIN : déverrouiller ne réécrit
  *   jamais les notes, car une conversion interrompue ou lancée deux fois pourrait les rendre illisibles.
  * - Format de stockage versionné : `xcha:v1:<nonce_hex>:<ciphertext_hex>`.
  * - Tolérance rétrocompatible : détection transparente des notes non chiffrées (legacy).
@@ -19,8 +21,9 @@ import * as Crypto from 'expo-crypto';
 
 export const SANCTUM_CRYPTO_CONSTANTS = {
   FORMAT_PREFIX: 'xcha:v1:',
-  SCRYPT_PARAMS: { N: 32768, r: 8, p: 1, dkLen: 32 } as const,
+  SCRYPT_PARAMS: { N: 8192, r: 8, p: 1, dkLen: 32 } as const,
   LEGACY_SCRYPT_N: 16384,
+  STRONGER_SCRYPT_N: 32768,
   KEY_LENGTH: 32,
   NONCE_LENGTH: 24,
   SALT_LENGTH: 16,

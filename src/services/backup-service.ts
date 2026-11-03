@@ -164,6 +164,7 @@ const SanctumKeysSchema = z.object({
   verifier: z.string().startsWith(SANCTUM_CRYPTO_CONSTANTS.FORMAT_PREFIX),
   kdfN: z.union([
     z.literal(SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N),
+    z.literal(SANCTUM_CRYPTO_CONSTANTS.STRONGER_SCRYPT_N),
     z.literal(SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N),
   ]),
 }).strict();

@@ -88,6 +88,31 @@ describe('Sanctuary biometric unlock', () => {
     expect(await SecureStore.getItemAsync('jp_sanctum_biometric_key_v1')).toBeNull();
   });
 
+  it.each([
+    SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N,
+    SANCTUM_CRYPTO_CONSTANTS.STRONGER_SCRYPT_N,
+  ])('still opens a key made with N=%i', async n => {
+    const salt = new Uint8Array(16).fill(4);
+    const key = await deriveSanctumKey('123456', salt, n);
+    await store.setItemAsync('jp_sanctum_salt_v1', bytesToHex(salt));
+    await store.setItemAsync('jp_sanctum_kdf_n_v1', String(n));
+    await store.setItemAsync(
+      'jp_sanctum_verifier_v1',
+      await encryptSanctumNote('__SANCTUM_PIN_VERIFIER_TOKEN__', key)
+    );
+
+    const unlock = await SanctumAuthService.verifyAndUnlockWithPin('123456');
+
+    expect(unlock.key).toEqual(key);
+  });
+
+  it('gives a new PIN the faster key', async () => {
+    await SanctumAuthService.setupPin('123456');
+
+    expect(SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N).toBe(8192);
+    expect(await SecureStore.getItemAsync('jp_sanctum_kdf_n_v1')).toBe('8192');
+  });
+
   it('unlocks a key with the old parameters without rewriting anything, until the PIN changes', async () => {
     const salt = new Uint8Array(16).fill(3);
     const oldKey = await deriveSanctumKey('123456', salt, SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N);
