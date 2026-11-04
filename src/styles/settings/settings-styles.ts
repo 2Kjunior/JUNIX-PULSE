@@ -136,6 +136,14 @@ export const makeSettingsStyles = (t: ThemePalette) => {
         default: {},
       }),
     },
+    hapticRow: {
+      flexDirection: 'row',
+      gap: Spacing.xs,
+      marginTop: Spacing.sm,
+    },
+    hapticButton: {
+      minHeight: 64,
+    },
     rowTextFill: {
       flex: 1,
       paddingRight: Spacing.sm,

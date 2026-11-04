@@ -9,35 +9,22 @@
  * - Badges pill avec icônes vectorielles (pas d'emojis)
  * - Navigation 5 destinations inchangée
  */
-import { Alert, Platform, View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { setGuidePermission, setWelcomeAnchorY } from '@/features/mascot/onboarding-guide-state';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
-import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
 import { Spacing, Radius, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
-import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { PulseLogo } from '@/components/ui/PulseLogo';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { ValueBadge } from '@/components/ui/ValueBadge';
-import { getDatabase } from '@/database/sqlite';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
-import {
-  decryptBackup,
-  importBackup,
-  parseBackup,
-  parseBackupSanctumKeys,
-  restoreBackupSanctum,
-  type BackupSanctumRestore,
-} from '@/services/backup-service';
-import type { MessageKey } from '@/i18n/messages';
-import { reconcileOverdueRecurringReminders } from '@/use-cases/reminder-use-cases';
+import { useBackupRestore } from '@/features/backup/use-backup-restore';
 import { useT } from '@/i18n';
 
 const { height } = Dimensions.get('window');
@@ -47,21 +34,16 @@ const MASCOT_ROOM_HEIGHT = 210;
 /** Centre de l'orbe, mesuré depuis le haut de cette place. */
 const MASCOT_ROOM_ANCHOR_OFFSET = 56;
 
-const SANCTUM_RESTORE_NOTICE: Record<BackupSanctumRestore, MessageKey | null> = {
-  none: null,
-  restored: 'welcome.restore.sanctumRestored',
-  same: null,
-  conflict: 'welcome.restore.sanctumConflict',
-  missing: 'welcome.restore.sanctumMissing',
-};
-
 export default function OnboardingWelcome() {
   const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingWelcomeStyles);
   const setOnboardingComplete = useAppStore(state => state.setOnboardingComplete);
-  const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
-  const [pendingBackupContents, setPendingBackupContents] = useState<string | null>(null);
+  const { startRestore, restoreModal } = useBackupRestore(async () => {
+    await SettingsRepository.markOnboardingComplete(new Date().toISOString());
+    setOnboardingComplete(true);
+    router.replace('/(tabs)');
+  });
 
   // La mascotte guide prend la place du logo, avec sa bulle juste dessous. Elle se pose à
   // l'endroit mesuré ici ; si l'utilisateur l'a désactivée, le logo reste.
@@ -77,92 +59,9 @@ export default function OnboardingWelcome() {
     setGuidePermission('ask');
   }, []);
 
-  const handleRestoreBackup = async () => {
-    try {
-      if (Platform.OS === 'web') {
-        Alert.alert(t('welcome.restore.unavailableTitle'), t('welcome.restore.unavailableBody'));
-        return;
-      }
-
-      const selection = await DocumentPicker.getDocumentAsync({
-        type: 'application/json',
-        copyToCacheDirectory: true,
-      });
-      if (selection.canceled) return;
-
-      setPendingBackupContents(await new File(selection.assets[0].uri).text());
-      setBackupPasswordVisible(true);
-    } catch (error) {
-      Alert.alert(
-        t('welcome.restore.invalidTitle'),
-        error instanceof Error ? error.message : t('welcome.restore.invalidBody')
-      );
-    }
-  };
-
-  const handleDecryptBackup = async (password: string) => {
-    if (!pendingBackupContents) {
-      throw new Error(t('welcome.restore.pickAgain'));
-    }
-
-    const plaintext = await decryptBackup(pendingBackupContents, password);
-    const backupData = parseBackup(plaintext);
-    const sanctumKeys = parseBackupSanctumKeys(plaintext);
-    const rowCount = Object.values(backupData).reduce((total, rows) => total + rows.length, 0);
-    setBackupPasswordVisible(false);
-    setPendingBackupContents(null);
-
-    Alert.alert(
-      t('welcome.restore.mergeTitle'),
-      t('welcome.restore.mergeBody', { count: rowCount }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('welcome.restore.import'),
-          onPress: async () => {
-            try {
-              const result = await importBackup(await getDatabase(), backupData);
-              const sanctum = await restoreBackupSanctum(backupData, sanctumKeys);
-              const sanctumNotice = SANCTUM_RESTORE_NOTICE[sanctum];
-              // Les notifications suivent à la fin de l'onboarding, une fois les dates recalées
-              await reconcileOverdueRecurringReminders();
-              Alert.alert(
-                t('welcome.restore.doneTitle'),
-                t('welcome.restore.doneBody', { inserted: result.inserted, skipped: result.skipped }) +
-                  (sanctumNotice ? `\n\n${t(sanctumNotice)}` : ''),
-                [{
-                  text: t('common.continue'),
-                  onPress: async () => {
-                    await SettingsRepository.markOnboardingComplete(new Date().toISOString());
-                    setOnboardingComplete(true);
-                    router.replace('/(tabs)');
-                  },
-                }]
-              );
-            } catch (error) {
-              Alert.alert(
-                t('welcome.restore.failTitle'),
-                error instanceof Error ? error.message : t('welcome.restore.failBody')
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <View style={styles.container}>
-      <BackupPasswordModal
-        visible={backupPasswordVisible}
-        title={t('welcome.restore.unlockTitle')}
-        confirmLabel={t('welcome.restore.decrypt')}
-        onCancel={() => {
-          setBackupPasswordVisible(false);
-          setPendingBackupContents(null);
-        }}
-        onSubmit={handleDecryptBackup}
-      />
+      {restoreModal}
       {/* En-tête : étape + bouton passer */}
       <View style={styles.topRow}>
         <StepIndicator total={5} current={1} showLabel={true} />
@@ -238,7 +137,7 @@ export default function OnboardingWelcome() {
           icon={undefined}
         />
         <TouchableOpacity
-          onPress={handleRestoreBackup}
+          onPress={startRestore}
           accessibilityRole="button"
           accessibilityLabel={t('welcome.restoreA11y')}
           style={styles.restoreBtn}

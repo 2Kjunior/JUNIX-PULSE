@@ -43,6 +43,10 @@ import { syncDailyRecapNotifications } from '@/services/daily-recap-service';
 import { syncReminderNotifications } from '@/services/reminder-notification-service';
 import { NotificationService } from '@/services/notification-service';
 import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
+import { useBackupRestore } from '@/features/backup/use-backup-restore';
+import { GlassActionButton } from '@/components/ui/GlassActionButton';
+import { playHaptic } from '@/services/haptic-service';
+import type { HapticKind } from '@/domain/rules/haptic-rules';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { detectDeviceTimezone } from '@/services/device-timezone';
@@ -61,6 +65,18 @@ const APPEARANCE_OPTIONS: {
   { value: 'system', labelKey: 'settingsScreen.auto', icon: 'phone-portrait-outline' },
 ];
 
+const HAPTIC_TESTS: readonly {
+  kind: HapticKind;
+  label: MessageKey;
+  icon: 'checkmark-circle-outline' | 'radio-button-on-outline' | 'warning-outline' | 'close-circle-outline';
+  color: 'success' | 'primary' | 'tertiary' | 'error';
+}[] = [
+  { kind: 'success', label: 'haptic.success', icon: 'checkmark-circle-outline', color: 'success' },
+  { kind: 'light', label: 'haptic.light', icon: 'radio-button-on-outline', color: 'primary' },
+  { kind: 'warning', label: 'haptic.warning', icon: 'warning-outline', color: 'tertiary' },
+  { kind: 'error', label: 'haptic.error', icon: 'close-circle-outline', color: 'error' },
+];
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode } = useAppStore();
@@ -72,6 +88,12 @@ export default function SettingsScreen() {
 
 
   const [settings, setSettings] = useState<Settings | null>(null);
+  const { startRestore, restoreModal } = useBackupRestore(async () => {
+    await syncReminderNotifications();
+    await syncDailyRecapNotifications();
+    await loadSettings();
+    showSnackbar(t('settingsScreen.restoreDone'));
+  });
   const [editingName, setEditingName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState('');
   const [saving, setSaving] = useState(false);
@@ -149,6 +171,8 @@ export default function SettingsScreen() {
         updatedAt: new Date().toISOString(),
       });
       setSettings(s => s ? { ...s, notificationSoundEnabled: val } : s);
+      // Already scheduled reminders move to the channel with or without sound
+      await syncReminderNotifications({ force: true });
       showSnackbar(val ? t('settingsScreen.soundOn') : t('settingsScreen.soundOff'));
     } catch (e) {
       Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
@@ -555,6 +579,32 @@ export default function SettingsScreen() {
           <Ionicons name="download-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.row} onPress={startRestore} accessibilityRole="button">
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('settingsScreen.restore')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.restoreHint')}</Text>
+          </View>
+          <Ionicons name="cloud-upload-outline" size={20} color={palette.primary.default} />
+        </TouchableOpacity>
+
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.haptics')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.hapticsHint')}</Text>
+          <View style={styles.hapticRow}>
+            {HAPTIC_TESTS.map(test => (
+              <GlassActionButton
+                key={test.kind}
+                icon={test.icon}
+                label={t(test.label)}
+                color={palette[test.color].default}
+                onPress={() => playHaptic(test.kind)}
+                layout="stacked"
+                style={styles.hapticButton}
+              />
+            ))}
+          </View>
+        </View>
+
         <TouchableOpacity style={styles.row} onPress={handleResetApp}>
           <View>
             <Text style={[styles.rowLabel, { color: palette.primary.default }]}>
@@ -608,6 +658,7 @@ export default function SettingsScreen() {
       </Modal>
 
       <Text style={styles.version}>Junix Pulse v1.0.0 — Offline-First SQLite</Text>
+      {restoreModal}
       <BackupPasswordModal
         visible={backupPasswordVisible}
         title={t('settingsScreen.protect')}

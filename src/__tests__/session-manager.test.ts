@@ -1,77 +1,76 @@
 /**
- * Tests unitaires pour SessionManager.
- *
- * Couvre :
- * 1. Premier démarrage (cold start) -> joue le splash (true)
- * 2. Second appel dans le même processus JS -> ne joue pas (false)
- * 3. Reprise après inactivité < 15 minutes -> ne joue pas (false)
- * 4. Reprise après inactivité >= 15 minutes -> joue le splash (true)
- * 5. Résilience en cas d'erreur de stockage persistant
+ * Tests du cycle de vie de l'animation de lancement (SessionManager et splash-rules).
+ * Les tests T1 à T10 de la demande sont couverts ici par leur logique ; leur comportement réel
+ * (processus Android, applications récentes) reste à vérifier sur un téléphone.
  */
 
 import * as SecureStore from 'expo-secure-store';
-import { SessionManager, SESSION_INACTIVITY_TIMEOUT_MS } from '@/services/session/SessionManager';
+
+import { shouldReplaySplashOnResume, SPLASH_REPLAY_AFTER_MS } from '@/domain/rules/splash-rules';
+import { SessionManager } from '@/services/session/SessionManager';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
 }));
 
+const T0 = Date.UTC(2026, 10, 4, 10, 0, 0);
+const minutes = (count: number) => count * 60 * 1000;
+
 describe('SessionManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     SessionManager._resetForTesting();
-  });
-
-  it('joue le splash au premier lancement si aucun stockage', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
-
-    const shouldPlay = await SessionManager.shouldPlayLaunchSplash();
-    expect(shouldPlay).toBe(true);
-    expect(SecureStore.setItemAsync).toHaveBeenCalled();
   });
 
-  it('ne joue pas le splash si déjà joué dans le même processus', async () => {
-    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+  it('T1/T7/T9: plays the animation once for each new process, whatever the last activity', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(String(Date.now() - minutes(2)));
 
-    // Premier appel
-    await SessionManager.shouldPlayLaunchSplash();
-
-    // Deuxième appel immédiat
-    const shouldPlaySecond = await SessionManager.shouldPlayLaunchSplash();
-    expect(shouldPlaySecond).toBe(false);
+    expect(await SessionManager.shouldPlayLaunchSplash()).toBe(true);
+    expect(await SessionManager.shouldPlayLaunchSplash()).toBe(false);
   });
 
-  it('ne joue pas le splash si la dernière activité date de moins de 15 minutes', async () => {
-    const recentTime = Date.now() - 5 * 60 * 1000; // Il y a 5 minutes
-    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(String(recentTime));
+  it.each([
+    ['T2', minutes(2), false],
+    ['T3', minutes(10), false],
+    ['T4', minutes(15) - 1000, false],
+    ['T5', minutes(15), true],
+    ['T6', minutes(20), true],
+  ])('%s: back after the given time in the background', async (_test, away, expected) => {
+    await SessionManager.recordBackground(T0);
 
-    const shouldPlay = await SessionManager.shouldPlayLaunchSplash();
-    expect(shouldPlay).toBe(false);
+    expect(SessionManager.consumeResumeSplash(T0 + away)).toBe(expected);
   });
 
-  it('joue le splash si l inactivité dépasse 15 minutes', async () => {
-    const oldTime = Date.now() - (SESSION_INACTIVITY_TIMEOUT_MS + 1000); // 15 min + 1s
-    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(String(oldTime));
+  it('T10: counts from the first move to the background, and triggers only once', async () => {
+    await SessionManager.recordBackground(T0);
+    await SessionManager.recordBackground(T0 + minutes(10));
 
-    const shouldPlay = await SessionManager.shouldPlayLaunchSplash();
-    expect(shouldPlay).toBe(true);
+    expect(SessionManager.consumeResumeSplash(T0 + minutes(16))).toBe(true);
+    expect(SessionManager.consumeResumeSplash(T0 + minutes(16))).toBe(false);
   });
 
-  it('gère silencieusement les erreurs de SecureStore sans crash', async () => {
+  it('T10: never triggers on a return without a stay in the background', () => {
+    expect(SessionManager.consumeResumeSplash(T0)).toBe(false);
+  });
+
+  it('keeps working when the secure store fails', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockRejectedValue(new Error('Storage error'));
+    (SecureStore.setItemAsync as jest.Mock).mockRejectedValue(new Error('Storage error'));
 
-    const shouldPlay = await SessionManager.shouldPlayLaunchSplash();
-    // Par défaut, doit jouer sans faire crasher l'app
-    expect(shouldPlay).toBe(true);
-  });
-
-  it('enregistre l horodatage lors de recordBackground et recordActive', async () => {
-    await SessionManager.recordActive();
-    expect(SecureStore.setItemAsync).toHaveBeenCalledTimes(1);
-
-    await SessionManager.recordBackground();
-    expect(SecureStore.setItemAsync).toHaveBeenCalledTimes(2);
+    expect(await SessionManager.shouldPlayLaunchSplash()).toBe(true);
+    await SessionManager.recordBackground(T0);
+    expect(SessionManager.consumeResumeSplash(T0 + minutes(20))).toBe(true);
   });
 });
 
+describe('shouldReplaySplashOnResume', () => {
+  it('treats a clock set back as a long absence', () => {
+    expect(shouldReplaySplashOnResume(T0, T0 - minutes(1))).toBe(true);
+  });
+
+  it('uses 15 minutes', () => {
+    expect(SPLASH_REPLAY_AFTER_MS).toBe(minutes(15));
+  });
+});

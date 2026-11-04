@@ -25,7 +25,7 @@ import type { NotificationResponse } from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Alert, Appearance, AppState, LogBox, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -141,6 +141,11 @@ export default function RootLayout() {
   // Le splash animé n'est monté qu'après la décision (jamais de clignotement à la reprise de session)
   const [splashPlaying, setSplashPlaying] = useState(false);
   const [startAttempt, setStartAttempt] = useState(0);
+  // Each run of the animation gets its own key, so a replay starts from the beginning
+  const [splashRun, setSplashRun] = useState(0);
+  // Read by long-lived listeners, which would otherwise keep the value of the first render
+  const splashFinishedRef = useRef(false);
+  splashFinishedRef.current = splashFinished;
 
   useEffect(() => {
     // Option A : Masquer le splash natif une fois que les polices ET la base sont prêtes (DEF-06)
@@ -215,13 +220,16 @@ export default function RootLayout() {
     SystemUI.setBackgroundColorAsync(surface.base).catch(() => {});
   }, [themeMode, mode, surface.base]);
 
-  // Suivi du cycle de vie de l'application (AppState active/background) pour la session et l'inactivité
+  // Cycle de vie : après 15 minutes ou plus en arrière-plan, l'animation se rejoue par-dessus l'écran
+  // en cours, qui reste monté. L'état « inactive » (volet, sélecteur d'applications) ne compte pas.
   useEffect(() => {
     const sub = AppState.addEventListener("change", (nextAppState) => {
-      if (nextAppState === "active") {
-        SessionManager.recordActive();
-      } else if (nextAppState === "background") {
-        SessionManager.recordBackground();
+      if (nextAppState === "background") {
+        void SessionManager.recordBackground();
+      } else if (nextAppState === "active" && SessionManager.consumeResumeSplash()) {
+        setSplashRun((run) => run + 1);
+        setSplashFinished(false);
+        setSplashPlaying(true);
       }
     });
     return () => sub.remove();
@@ -302,7 +310,7 @@ export default function RootLayout() {
       const reminderId = data?.reminderId as string | undefined;
 
       // Jouer le son Junix Pulse en foreground (le système ne joue pas de son car shouldPlaySound: false)
-      NotificationSoundService.play(!splashFinished);
+      NotificationSoundService.play(!splashFinishedRef.current);
 
       if (reminderId) {
         void announceReminderArrived(reminderId);
@@ -330,7 +338,7 @@ export default function RootLayout() {
   // Toujours au même emplacement (2e enfant) pour ne pas être remontée quand la base devient prête.
   const splashOverlay =
     splashPlaying && !splashFinished ? (
-      <SplashAnimation onFinish={() => setSplashFinished(true)} />
+      <SplashAnimation key={splashRun} onFinish={() => setSplashFinished(true)} />
     ) : null;
 
   // Fonts pas encore prêtes ou DB en cours d'initialisation : splash natif ou animation seuls

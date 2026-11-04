@@ -1,32 +1,27 @@
 /**
- * SessionManager — Gestion du cycle de vie et de l'inactivité de session Junix Pulse.
+ * SessionManager — Cycle de vie de l'application et animation de lancement.
  *
- * Responsabilités :
- * 1. Mémoriser l'heure de dernière activité de l'utilisateur (mémoire vive + SecureStore).
- * 2. Déterminer si un démarrage nécessite le Splash complet (4 secondes) ou un accès direct.
- *    - Cold start (> 15 min d'inactivité ou première ouverture) : Splash complet.
- *    - Reprise de session (< 15 min d'inactivité) : Démarrage instantané sans splash ni son.
- * 3. Enregistrer les transitions d'état de l'application (AppState : active / background).
+ * Règles :
+ * 1. Nouveau processus (premier lancement, application fermée depuis les récentes ou arrêtée par
+ *    Android) : l'animation se joue. La navigation repart alors de zéro, l'animation reste cohérente.
+ * 2. Retour d'arrière-plan avant 15 minutes : aucune animation, l'écran en cours est conservé.
+ * 3. Retour d'arrière-plan après 15 minutes ou plus : l'animation se rejoue par-dessus l'écran en
+ *    cours, sans rien démonter.
+ * Le délai part du passage en arrière-plan (« background »), jamais de l'état « inactive » (volet de
+ * notifications, sélecteur d'applications).
  */
 
 import * as SecureStore from 'expo-secure-store';
-import { logger } from '@/utils/logger';
 
-/** Durée maximale d'inactivité avant de considérer qu'il s'agit d'une nouvelle session (15 minutes) */
-export const SESSION_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
+import { shouldReplaySplashOnResume, SPLASH_REPLAY_AFTER_MS } from '@/domain/rules/splash-rules';
+
+/** Durée d'absence en arrière-plan à partir de laquelle l'animation se rejoue (15 minutes). */
+export const SESSION_INACTIVITY_TIMEOUT_MS = SPLASH_REPLAY_AFTER_MS;
 
 const STORAGE_KEY_LAST_ACTIVE = 'junix_pulse_last_active_at';
 
-/**
- * Réglage de test : en développement (__DEV__), force le splash à chaque lancement de l'app
- * (nouveau process JS), sans tenir compte de la règle des 15 minutes.
- * Sans effet en production et dans les tests unitaires. Mettre à false pour le désactiver.
- */
-export const FORCE_SPLASH_IN_DEV = true;
-
-// Cache mémoire vive (survit pendant toute la durée où le runtime JS est en vie)
-let memoryLastActiveAt: number | null = null;
 let hasPlayedSplashInProcess = false;
+let backgroundAt: number | null = null;
 
 // Dernière activité connue AU DÉMARRAGE du process, lue avant que recordActive() ne l'écrase.
 // Sert à savoir depuis combien de jours l'utilisateur n'avait pas ouvert l'application.
@@ -45,65 +40,25 @@ async function loadPreviousLastActive(): Promise<void> {
   }
 }
 
+async function persistActivity(at: number): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(STORAGE_KEY_LAST_ACTIVE, String(at));
+  } catch {
+    // Silencieux si SecureStore indisponible : seul le décompte en jours en dépend
+  }
+}
+
 export const SessionManager = {
   /**
-   * Indique si l'animation de splash (4s avec son) doit être jouée.
-   * Retourne true pour un premier démarrage à froid ou après > 15 minutes d'inactivité.
-   * Retourne false si l'utilisateur a utilisé l'application récemment (< 15 min).
+   * Au démarrage d'un processus : l'animation se joue, une seule fois par processus.
    */
   async shouldPlayLaunchSplash(): Promise<boolean> {
     // À lire avant tout : recordActive() écrase la valeur persistée
     await loadPreviousLastActive();
-
-    // Si le splash a déjà été joué dans ce process JS en cours, ne jamais le rejouer
-    if (hasPlayedSplashInProcess) {
-      return false;
-    }
-
-    // Test en développement : toujours jouer le splash au lancement de l'app
-    if (__DEV__ && FORCE_SPLASH_IN_DEV && process.env.NODE_ENV !== 'test') {
-      hasPlayedSplashInProcess = true;
-      await this.recordActive();
-      return true;
-    }
-
-    try {
-      const now = Date.now();
-
-      // 1. Vérifier le cache mémoire
-      if (memoryLastActiveAt !== null) {
-        const elapsed = now - memoryLastActiveAt;
-        if (elapsed < SESSION_INACTIVITY_TIMEOUT_MS) {
-          logger.info(`[SessionManager] Reprise mémoire (${Math.round(elapsed / 1000)}s) — Splash ignoré`);
-          hasPlayedSplashInProcess = true;
-          return false;
-        }
-      }
-
-      // 2. Vérifier le stockage persistant (au cas où l'OS a tué le process en arrière-plan)
-      const stored = await SecureStore.getItemAsync(STORAGE_KEY_LAST_ACTIVE);
-      if (stored) {
-        const lastActiveTime = parseInt(stored, 10);
-        if (!isNaN(lastActiveTime)) {
-          const elapsed = now - lastActiveTime;
-          if (elapsed < SESSION_INACTIVITY_TIMEOUT_MS) {
-            logger.info(`[SessionManager] Reprise session persistée (${Math.round(elapsed / 1000)}s) — Splash ignoré`);
-            memoryLastActiveAt = now;
-            hasPlayedSplashInProcess = true;
-            return false;
-          }
-        }
-      }
-
-      // Première ouverture ou inactivité dépassée
-      hasPlayedSplashInProcess = true;
-      await this.recordActive();
-      return true;
-    } catch {
-      // Tolérance : en cas d'erreur de lecture, jouer le splash par défaut
-      hasPlayedSplashInProcess = true;
-      return true;
-    }
+    if (hasPlayedSplashInProcess) return false;
+    hasPlayedSplashInProcess = true;
+    await this.recordActive();
+    return true;
   },
 
   /**
@@ -116,33 +71,39 @@ export const SessionManager = {
   },
 
   /**
-   * Enregistre l'horodatage actuel comme étant le dernier moment actif.
+   * Enregistre l'horodatage actuel comme dernier moment actif.
    */
-  async recordActive(): Promise<void> {
-    const now = Date.now();
-    memoryLastActiveAt = now;
-    try {
-      await SecureStore.setItemAsync(STORAGE_KEY_LAST_ACTIVE, String(now));
-    } catch {
-      // Silencieux si SecureStore indisponible
-    }
+  async recordActive(now: number = Date.now()): Promise<void> {
+    await persistActivity(now);
   },
 
   /**
-   * Enregistre le moment où l'application passe en arrière-plan.
+   * L'application passe en arrière-plan : le délai de 15 minutes part de maintenant.
+   * Un second passage sans retour au premier plan ne le repousse pas.
    */
-  async recordBackground(): Promise<void> {
-    await this.recordActive();
+  async recordBackground(now: number = Date.now()): Promise<void> {
+    if (backgroundAt === null) backgroundAt = now;
+    await persistActivity(now);
   },
 
   /**
-   * Réinitialise les états de session (utilisé principalement pour les tests unitaires).
+   * Retour au premier plan : indique si l'animation doit se rejouer, puis remet le délai à zéro.
+   * Un retour sans passage préalable en arrière-plan ne déclenche jamais rien.
+   */
+  consumeResumeSplash(now: number = Date.now()): boolean {
+    const replay = shouldReplaySplashOnResume(backgroundAt, now);
+    backgroundAt = null;
+    void persistActivity(now);
+    return replay;
+  },
+
+  /**
+   * Réinitialise les états de session (tests unitaires uniquement).
    */
   _resetForTesting(): void {
-    memoryLastActiveAt = null;
     hasPlayedSplashInProcess = false;
+    backgroundAt = null;
     previousLastActiveAt = null;
     previousLastActiveLoaded = false;
   },
 };
-

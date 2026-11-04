@@ -92,6 +92,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         title: item.title,
         body: item.body,
         scheduledAt: item.scheduledAt,
+        silent: !settings.notificationSoundEnabled,
       });
       if (scheduled) report.scheduled += 1;
       else report.failed += 1;

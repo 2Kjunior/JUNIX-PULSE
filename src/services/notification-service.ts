@@ -28,6 +28,7 @@ try {
 
 // Canal distinct des rappels : importance normale, désactivable séparément dans Android
 const DAILY_RECAP_CHANNEL_ID = "junix-pulse-daily-recap";
+const NOTIFICATION_SILENT_CHANNEL_ID = "junix-pulse-reminders-silent-v1";
 const DAILY_RECAP_KINDS: readonly DailyRecapKind[] = ["MORNING_SUMMARY", "EVENING_REVIEW"];
 
 const dailyRecapIdentifier = (kind: DailyRecapKind) => `daily-recap-${kind}`;
@@ -37,6 +38,8 @@ const FOCUS_END_IDENTIFIER = "focus-end";
 
 export interface ScheduleReminderParams {
   id: string; // ID du rappel Junix Pulse
+  /** Le son des notifications est coupé dans les réglages : canal silencieux. */
+  silent?: boolean;
   /** Identifiant de la notification : un rappel récurrent en planifie plusieurs. */
   identifier?: string;
   title: string;
@@ -99,6 +102,19 @@ export const NotificationService = {
           sound: NOTIFICATION_SOUND_WAV_FILENAME,
         });
 
+        // The sound of a channel cannot change after it is created: switching the sound off moves
+        // the reminders to this second channel instead
+        await Notifications.setNotificationChannelAsync(NOTIFICATION_SILENT_CHANNEL_ID, {
+          name: t('notifChannel.silentName'),
+          description: t('notifChannel.silentDesc'),
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#8B3DF0",
+          enableVibrate: true,
+          showBadge: false,
+          sound: null,
+        });
+
         await Notifications.setNotificationChannelAsync(DAILY_RECAP_CHANNEL_ID, {
           name: t('notifChannel.recapName'),
           description: t('notifChannel.recapDesc'),
@@ -145,13 +161,16 @@ export const NotificationService = {
             ...params.data,
           },
           // iOS uses the filename; Android uses the channel's configured sound.
-          sound: NOTIFICATION_SOUND_WAV_FILENAME,
+          sound: params.silent ? false : NOTIFICATION_SOUND_WAV_FILENAME,
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: triggerDate,
-          channelId: Platform.OS === "android" ? NOTIFICATION_CHANNEL_ID : undefined,
+          channelId:
+            Platform.OS === "android"
+              ? params.silent ? NOTIFICATION_SILENT_CHANNEL_ID : NOTIFICATION_CHANNEL_ID
+              : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
     } catch {

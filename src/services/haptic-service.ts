@@ -4,12 +4,19 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { Platform, Vibration } from 'react-native';
 
-import { hapticForEvent, HapticKind } from '@/domain/rules/haptic-rules';
+import { ANDROID_HAPTIC_PATTERNS, hapticForEvent, HapticKind } from '@/domain/rules/haptic-rules';
 import { subscribeMascotEvents } from '@/services/mascot/mascot-event-bus';
 import { logger } from '@/utils/logger';
 
 export function playHaptic(kind: HapticKind): void {
+  if (Platform.OS === 'android') {
+    // The vibrator of React Native itself, at full strength: see ANDROID_HAPTIC_PATTERNS
+    Vibration.vibrate([...ANDROID_HAPTIC_PATTERNS[kind]]);
+    return;
+  }
+
   const played =
     kind === 'light'
       ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)

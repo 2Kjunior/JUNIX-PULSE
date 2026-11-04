@@ -24,6 +24,18 @@ const EVENT_HAPTICS: Partial<Record<MascotEventType, HapticKind>> = {
   ITEM_DELETED: 'warning',
 };
 
+/**
+ * Android patterns (wait, vibrate, wait, vibrate... in ms), played at the device's full strength.
+ * The defaults of expo-haptics stay at 12 to 27 % of the motor: too faint on many phones.
+ * Each kind keeps its own shape, so they can be told apart without looking.
+ */
+export const ANDROID_HAPTIC_PATTERNS: Readonly<Record<HapticKind, readonly number[]>> = {
+  light: [0, 30],
+  success: [0, 40, 70, 60],
+  warning: [0, 140],
+  error: [0, 60, 60, 60, 60, 60],
+};
+
 export function hapticForEvent(type: MascotEventType): HapticKind | null {
   return EVENT_HAPTICS[type] ?? null;
 }
