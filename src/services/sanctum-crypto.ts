@@ -4,9 +4,8 @@
  * Spécification (DEF-01 / I-02, P1) :
  * - Chiffrement symétrique authentifié XChaCha20-Poly1305 (@noble/ciphers).
  * - Nonce aléatoire de 24 octets (192 bits) par note chiffrée.
- * - Dérivation de clé par scrypt (@noble/hashes) avec N=8192, r=8, p=1 (8 Mo). Elle tourne en JavaScript
- *   sur le téléphone : un coût plus élevé rend chaque saisie du PIN trop lente. Le sel et le vérificateur
- *   restent dans le trousseau sécurisé, hors de portée d'une simple copie de la base.
+ * - Dérivation de clé par scrypt N=32768, r=8, p=1 (32 Mo), calculée en natif (voir kdf.ts) : en JavaScript,
+ *   elle prenait des dizaines de secondes sur téléphone.
  *   Une clé créée avec un autre coût le garde jusqu'au prochain changement de PIN : déverrouiller ne réécrit
  *   jamais les notes, car une conversion interrompue ou lancée deux fois pourrait les rendre illisibles.
  * - Format de stockage versionné : `xcha:v1:<nonce_hex>:<ciphertext_hex>`.
@@ -16,14 +15,15 @@
  */
 
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { scryptAsync } from '@noble/hashes/scrypt.js';
+import { deriveScryptKey } from './kdf';
 import * as Crypto from 'expo-crypto';
 
 export const SANCTUM_CRYPTO_CONSTANTS = {
   FORMAT_PREFIX: 'xcha:v1:',
-  SCRYPT_PARAMS: { N: 8192, r: 8, p: 1, dkLen: 32 } as const,
+  SCRYPT_PARAMS: { N: 32768, r: 8, p: 1, dkLen: 32 } as const,
   LEGACY_SCRYPT_N: 16384,
-  STRONGER_SCRYPT_N: 32768,
+  /** Coût utilisé quelques jours pour accélérer le PIN en JavaScript : ces clés restent valides. */
+  FAST_SCRYPT_N: 8192,
   KEY_LENGTH: 32,
   NONCE_LENGTH: 24,
   SALT_LENGTH: 16,
@@ -109,7 +109,7 @@ export async function deriveSanctumKey(
   }
 
   const pinBytes = new TextEncoder().encode(trimmedPin);
-  return scryptAsync(pinBytes, salt, { ...SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS, N: n });
+  return deriveScryptKey(pinBytes, salt, { ...SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS, N: n });
 }
 
 /**

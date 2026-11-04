@@ -1,5 +1,5 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { scryptAsync } from '@noble/hashes/scrypt.js';
+import { deriveScryptKey } from './kdf';
 import { z } from 'zod';
 import { t } from '../i18n';
 
@@ -22,14 +22,19 @@ const EncryptedBackupSchema = z.object({
 // N=32768 (32 Mo de RAM max au lieu de 64 Mo, prévient les OOM sur Android tout en assurant une haute résistance cryptographique).
 const DEFAULT_SCRYPT_PARAMETERS = { N: 32768, r: 8, p: 1, dkLen: 32 } as const;
 
+const HEX = Array.from({ length: 256 }, (_, byte) => byte.toString(16).padStart(2, '0'));
+
+// A table and plain loops: a backup holds megabytes, and per-byte formatting was slow on the phone
 function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  let hex = '';
+  for (let index = 0; index < bytes.length; index += 1) hex += HEX[bytes[index]];
+  return hex;
 }
 
 function hexToBytes(value: string): Uint8Array {
   const bytes = new Uint8Array(value.length / 2);
   for (let index = 0; index < bytes.length; index += 1) {
-    bytes[index] = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16);
+    bytes[index] = (hexDigit(value.charCodeAt(index * 2)) << 4) | hexDigit(value.charCodeAt(index * 2 + 1));
   }
   return bytes;
 }
@@ -37,6 +42,11 @@ function hexToBytes(value: string): Uint8Array {
 /** The file is protected by scrypt N=32768: ten characters stay costly to guess. */
 export const BACKUP_PASSPHRASE_MIN_LENGTH = 10;
 export const BACKUP_PASSPHRASE_MAX_LENGTH = 256;
+
+function hexDigit(code: number): number {
+  // 0-9, then a-f: the format only uses lowercase hexadecimal
+  return code <= 57 ? code - 48 : code - 87;
+}
 
 function validatePassphrase(passphrase: string): void {
   if (passphrase.length < BACKUP_PASSPHRASE_MIN_LENGTH || passphrase.length > BACKUP_PASSPHRASE_MAX_LENGTH) {
@@ -55,7 +65,7 @@ export async function encryptBackupContents(
     throw new Error(t('backup.badCrypto'));
   }
 
-  const key = await scryptAsync(new TextEncoder().encode(passphrase), salt, DEFAULT_SCRYPT_PARAMETERS);
+  const key = await deriveScryptKey(new TextEncoder().encode(passphrase), salt, DEFAULT_SCRYPT_PARAMETERS);
   const ciphertext = xchacha20poly1305(key, nonce).encrypt(new TextEncoder().encode(contents));
 
   return JSON.stringify({
@@ -67,7 +77,7 @@ export async function encryptBackupContents(
     salt: bytesToHex(salt),
     nonce: bytesToHex(nonce),
     ciphertext: bytesToHex(ciphertext),
-  }, null, 2);
+  });
 }
 
 export async function decryptBackupContents(contents: string, passphrase: string): Promise<string> {
@@ -86,7 +96,7 @@ export async function decryptBackupContents(contents: string, passphrase: string
   }
 
   try {
-    const key = await scryptAsync(
+    const key = await deriveScryptKey(
       new TextEncoder().encode(passphrase),
       hexToBytes(parsed.data.salt),
       { N: parsed.data.scrypt.n, r: parsed.data.scrypt.r, p: parsed.data.scrypt.p, dkLen: 32 }

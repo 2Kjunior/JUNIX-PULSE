@@ -164,7 +164,7 @@ const SanctumKeysSchema = z.object({
   verifier: z.string().startsWith(SANCTUM_CRYPTO_CONSTANTS.FORMAT_PREFIX),
   kdfN: z.union([
     z.literal(SANCTUM_CRYPTO_CONSTANTS.LEGACY_SCRYPT_N),
-    z.literal(SANCTUM_CRYPTO_CONSTANTS.STRONGER_SCRYPT_N),
+    z.literal(SANCTUM_CRYPTO_CONSTANTS.FAST_SCRYPT_N),
     z.literal(SANCTUM_CRYPTO_CONSTANTS.SCRYPT_PARAMS.N),
   ]),
 }).strict();
@@ -254,7 +254,7 @@ export async function createBackup(db: SQLiteDatabase): Promise<string> {
     exportedAt: new Date().toISOString(),
     data,
     ...(sanctumKeys ? { sanctumKeys } : {}),
-  }, null, 2);
+  });
 }
 
 export function parseBackup(contents: string): BackupData {
@@ -272,6 +272,28 @@ export function parseBackup(contents: string): BackupData {
 
   validateRows(parsed.data.data);
   return parsed.data.data;
+}
+
+export interface BackupSummary {
+  exportedAt: string;
+  version: number;
+  counts: { tasks: number; reminders: number; persons: number; habits: number; sanctumNotes: number };
+}
+
+/** What a validated backup holds, to show before restoring it. */
+export function summarizeBackup(contents: string): BackupSummary {
+  const backup = BackupSchema.parse(JSON.parse(contents));
+  return {
+    exportedAt: backup.exportedAt,
+    version: backup.version,
+    counts: {
+      tasks: backup.data.tasks.length,
+      reminders: backup.data.reminders.length,
+      persons: backup.data.persons.length,
+      habits: backup.data.habits.length,
+      sanctumNotes: backup.data.sanctum_notes.length,
+    },
+  };
 }
 
 /** The Sanctuary keys of an already validated backup, if it carries them. */

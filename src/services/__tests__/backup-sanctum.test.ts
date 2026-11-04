@@ -71,7 +71,7 @@ describe('Sanctuary in a backup', () => {
   it('accepts a backup made with an earlier PIN cost', async () => {
     const key = await SanctumAuthService.setupPin(PIN);
     const backup = JSON.parse(await createBackup(databaseWithNote(await encryptSanctumNote('x', key))));
-    backup.sanctumKeys.kdfN = 32768;
+    backup.sanctumKeys.kdfN = 8192;
 
     expect(() => parseBackup(JSON.stringify(backup))).not.toThrow();
   });

@@ -90,7 +90,8 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "react-native-quick-crypto"
     ],
     "experiments": {
       "typedRoutes": true,
