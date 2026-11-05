@@ -21,8 +21,8 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -156,7 +156,7 @@ export default function PulseScreen() {
       const destination = suggestionDestination(suggestion);
       if (destination) router.push(destination as never);
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('pulse.unexpected'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('pulse.unexpected'));
     }
   };
 
@@ -167,7 +167,7 @@ export default function PulseScreen() {
       showSnackbar(t('home.suggestion.ignored'));
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('pulse.unexpected'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('pulse.unexpected'));
     }
   };
 

@@ -484,5 +484,13 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'auto';
     `,
   },
+  {
+    version: 27,
+    name: 'add_haptics_setting',
+    sql: `
+      -- Vibrations en reponse aux actions : 1 = actives (par defaut), 0 = coupees.
+      ALTER TABLE settings ADD COLUMN haptics_enabled INTEGER NOT NULL DEFAULT 1;
+    `,
+  },
 ];
 

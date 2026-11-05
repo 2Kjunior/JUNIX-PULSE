@@ -26,7 +26,7 @@ jest.mock('../database/sqlite', () => {
         return null;
       }),
       getAllAsync: jest.fn(async () => []),
-      withExclusiveTransactionAsync: jest.fn(async (callback: (tx: unknown) => Promise<void>) => callback({})),
+      withTransactionAsync: jest.fn(async (callback: () => Promise<void>) => callback()),
       runAsync: jest.fn(async (query: string, ...params: any[]) => {
         if (query.includes("DELETE FROM sanctum_notes WHERE id = '__pin_hash__'")) {
           mockRows.delete('__pin_hash__');

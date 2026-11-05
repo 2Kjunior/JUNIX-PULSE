@@ -165,9 +165,10 @@ export const SanctumRepository = {
       });
     }
 
-    await db.withExclusiveTransactionAsync(async transaction => {
+    // Same connection as the SQLCipher key: an exclusive transaction would open one without it
+    await db.withTransactionAsync(async () => {
       for (const update of updates) {
-        await transaction.runAsync(
+        await db.runAsync(
           `UPDATE sanctum_notes SET title = ?, content = ?, folder = ? WHERE id = ?`,
           update.title,
           update.content,

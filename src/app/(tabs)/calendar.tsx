@@ -11,8 +11,8 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -183,7 +183,7 @@ export default function CalendarScreen() {
   };
 
   const handleDeleteWeeklyBlock = useCallback((blockId: string, label: string) => {
-    Alert.alert(
+    GlassAlert.alert(
       label,
       t('calendar.syncedBody'),
       [{ text: t('common.gotIt') }]

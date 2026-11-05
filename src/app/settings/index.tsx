@@ -14,11 +14,11 @@ import {
   Switch,
   TouchableOpacity,
   TextInput,
-  Alert,
   Modal,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +35,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { getDatabase } from '@/database/sqlite';
 import { clearAllData } from '@/database/seed';
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
 import { purgeBackupExports } from '@/services/backup-export-cleanup';
@@ -45,13 +45,21 @@ import { NotificationService } from '@/services/notification-service';
 import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
 import { useBackupRestore } from '@/features/backup/use-backup-restore';
 import { GlassActionButton } from '@/components/ui/GlassActionButton';
-import { playHaptic } from '@/services/haptic-service';
+import { playHaptic, setHapticsEnabled } from '@/services/haptic-service';
+import {
+  AutoBackupConfig,
+  disableAutoBackup,
+  enableAutoBackup,
+  getAutoBackupConfig,
+  runAutoBackup,
+} from '@/services/auto-backup-service';
+import { format } from 'date-fns';
 import type { HapticKind } from '@/domain/rules/haptic-rules';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { detectDeviceTimezone } from '@/services/device-timezone';
 import { timezoneLabel } from '@/constants/timezones';
-import { useLanguage, useT, type MessageKey } from '@/i18n';
+import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
@@ -88,6 +96,9 @@ export default function SettingsScreen() {
 
 
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [autoBackup, setAutoBackup] = useState<AutoBackupConfig | null>(null);
+  const [autoBackupDirectory, setAutoBackupDirectory] = useState<string | null>(null);
+  const dateLocale = useDateLocale();
   const { startRestore, restoreModal } = useBackupRestore(async () => {
     await syncReminderNotifications();
     await syncDailyRecapNotifications();
@@ -102,6 +113,7 @@ export default function SettingsScreen() {
   const [canEnableExactAlarms, setCanEnableExactAlarms] = useState(false);
 
   const loadSettings = useCallback(async () => {
+    setAutoBackup(await getAutoBackupConfig());
     purgeBackupExports();
     const s = await SettingsRepository.get();
     setSettings(s);
@@ -133,7 +145,7 @@ export default function SettingsScreen() {
       setEditingName(false);
       loadSettings();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     } finally {
       setSaving(false);
     }
@@ -151,7 +163,7 @@ export default function SettingsScreen() {
       await syncReminderNotifications();
       showSnackbar(val ? t('settingsScreen.notifOn') : t('settingsScreen.notifOff'));
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -175,8 +187,74 @@ export default function SettingsScreen() {
       await syncReminderNotifications({ force: true });
       showSnackbar(val ? t('settingsScreen.soundOn') : t('settingsScreen.soundOff'));
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
+  };
+
+  const autoBackupStatus = !autoBackup
+    ? t('autoBackup.statusOff')
+    : (autoBackup.lastSuccessAt
+        ? t('autoBackup.statusOn', { date: format(new Date(autoBackup.lastSuccessAt), 'PPp', { locale: dateLocale }) })
+        : t('autoBackup.statusPending')) +
+      (autoBackup.lastFailedAt && (autoBackup.lastSuccessAt ?? 0) < autoBackup.lastFailedAt
+        ? ` · ${t('autoBackup.statusFailed')}`
+        : '');
+
+  const handleToggleHaptics = async (val: boolean) => {
+    try {
+      await SettingsRepository.update({ hapticsEnabled: val, updatedAt: new Date().toISOString() });
+      setHapticsEnabled(val);
+      setSettings(s => (s ? { ...s, hapticsEnabled: val } : s));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+
+  const refreshAutoBackup = async () => setAutoBackup(await getAutoBackupConfig());
+
+  const runAutoBackupNow = async () => {
+    const result = await runAutoBackup({ force: true });
+    await refreshAutoBackup();
+    showSnackbar(result === 'done' ? t('autoBackup.done') : t('autoBackup.failed'));
+  };
+
+  const handleAutoBackup = () => {
+    if (!autoBackup) {
+      GlassAlert.alert(t('autoBackup.setupTitle'), t('autoBackup.setupBody'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('autoBackup.pickFolder'),
+          onPress: async () => {
+            try {
+              const directory = await Directory.pickDirectoryAsync();
+              if (directory?.uri) setAutoBackupDirectory(directory.uri);
+            } catch {
+              // Picker closed without a folder
+            }
+          },
+        },
+      ]);
+      return;
+    }
+    GlassAlert.alert(t('autoBackup.title'), autoBackupStatus, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('autoBackup.disable'),
+        style: 'destructive',
+        onPress: async () => {
+          await disableAutoBackup();
+          await refreshAutoBackup();
+        },
+      },
+      { text: t('autoBackup.now'), onPress: runAutoBackupNow },
+    ]);
+  };
+
+  const handleEnableAutoBackup = async (password: string) => {
+    if (!autoBackupDirectory) return;
+    await enableAutoBackup(autoBackupDirectory, password);
+    setAutoBackupDirectory(null);
+    await runAutoBackupNow();
   };
 
   const handleSelectAppearance = async (newMode: AppearanceMode) => {
@@ -207,7 +285,7 @@ export default function SettingsScreen() {
       await syncDailyRecapNotifications();
       showSnackbar(t('settingsScreen.morningSet', { hour }));
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -221,12 +299,12 @@ export default function SettingsScreen() {
       await syncDailyRecapNotifications();
       showSnackbar(t('settingsScreen.eveningSet', { hour }));
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
   const handleExportData = async () => {
-    Alert.alert(
+    GlassAlert.alert(
       t('settingsScreen.backupTitle'),
       t('settingsScreen.backupBody'),
       [
@@ -264,7 +342,7 @@ export default function SettingsScreen() {
   };
 
   const handleResetApp = () => {
-    Alert.alert(
+    GlassAlert.alert(
       t('settingsScreen.resetTitle'),
       t('settingsScreen.resetBody'),
       [
@@ -283,7 +361,7 @@ export default function SettingsScreen() {
   };
 
   const handleClearAllData = () => {
-    Alert.alert(
+    GlassAlert.alert(
       t('settingsScreen.clearTitle'),
       t('settingsScreen.clearBody'),
       [
@@ -296,7 +374,7 @@ export default function SettingsScreen() {
               await clearAllData();
               showSnackbar(t('settingsScreen.cleared'));
             } catch (e) {
-              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+              GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
             }
           },
         },
@@ -587,9 +665,28 @@ export default function SettingsScreen() {
           <Ionicons name="cloud-upload-outline" size={20} color={palette.primary.default} />
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.row} onPress={handleAutoBackup} accessibilityRole="button">
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('autoBackup.title')}</Text>
+            <Text style={styles.rowSub}>{autoBackupStatus}</Text>
+          </View>
+          <Ionicons name="sync-outline" size={20} color={palette.primary.default} />
+        </TouchableOpacity>
+
         <View style={styles.rowCol}>
-          <Text style={styles.rowLabel}>{t('settingsScreen.haptics')}</Text>
-          <Text style={styles.rowSub}>{t('settingsScreen.hapticsHint')}</Text>
+          <View style={styles.hapticHeader}>
+            <View style={styles.rowTextFill}>
+              <Text style={styles.rowLabel}>{t('settingsScreen.haptics')}</Text>
+              <Text style={styles.rowSub}>{t('settingsScreen.hapticsHint')}</Text>
+            </View>
+            <Switch
+              value={settings.hapticsEnabled}
+              onValueChange={handleToggleHaptics}
+              trackColor={{ false: palette.outline.variant, true: palette.primary.container }}
+              thumbColor={settings.hapticsEnabled ? palette.primary.default : palette.onSurface.disabled}
+              accessibilityLabel={t('settingsScreen.hapticsSwitch')}
+            />
+          </View>
           <View style={styles.hapticRow}>
             {HAPTIC_TESTS.map(test => (
               <GlassActionButton
@@ -659,6 +756,14 @@ export default function SettingsScreen() {
 
       <Text style={styles.version}>Junix Pulse v1.0.0 — Offline-First SQLite</Text>
       {restoreModal}
+      <BackupPasswordModal
+        visible={autoBackupDirectory !== null}
+        title={t('autoBackup.passwordTitle')}
+        confirmLabel={t('autoBackup.enable')}
+        confirmPassword
+        onCancel={() => setAutoBackupDirectory(null)}
+        onSubmit={handleEnableAutoBackup}
+      />
       <BackupPasswordModal
         visible={backupPasswordVisible}
         title={t('settingsScreen.protect')}

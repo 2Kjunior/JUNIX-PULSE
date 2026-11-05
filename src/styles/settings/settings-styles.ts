@@ -136,6 +136,11 @@ export const makeSettingsStyles = (t: ThemePalette) => {
         default: {},
       }),
     },
+    hapticHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
     hapticRow: {
       flexDirection: 'row',
       gap: Spacing.xs,

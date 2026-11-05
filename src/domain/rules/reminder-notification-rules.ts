@@ -72,6 +72,21 @@ export function planReminderNotifications(
     .slice(0, MAX_SCHEDULED_REMINDERS);
 }
 
+/** Category of the reminder notifications and its buttons. Neither ":" nor "-" in the category. */
+export const REMINDER_CATEGORY_ID = 'reminder_actions';
+export const REMINDER_ACTION_COMPLETE = 'complete';
+export const REMINDER_ACTION_SNOOZE = 'snooze_1h';
+export const REMINDER_ACTION_SNOOZE_MINUTES = 60;
+
+export type ReminderNotificationAction = 'complete' | 'snooze' | 'open';
+
+/** What a response asks: a button of the notification, or a plain tap that opens the app. */
+export function notificationActionFor(actionIdentifier: string): ReminderNotificationAction {
+  if (actionIdentifier === REMINDER_ACTION_COMPLETE) return 'complete';
+  if (actionIdentifier === REMINDER_ACTION_SNOOZE) return 'snooze';
+  return 'open';
+}
+
 /** Where a tapped notification leads, or null when opening the app is enough. */
 export function notificationRoute(data: Record<string, unknown> | null | undefined): string | null {
   if (typeof data?.reminderId === 'string') return `/reminders/${data.reminderId}`;

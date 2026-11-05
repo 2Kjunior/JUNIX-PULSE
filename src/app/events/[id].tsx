@@ -9,9 +9,9 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Linking,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,7 +76,7 @@ export default function EventDetailScreen() {
 
   async function handleDelete() {
     if (!event) return;
-    Alert.alert(
+    GlassAlert.alert(
       t('eventDetail.deleteTitle'),
       t('eventDetail.deleteBody'),
       [

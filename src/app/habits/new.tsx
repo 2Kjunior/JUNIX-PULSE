@@ -10,10 +10,10 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -74,7 +74,7 @@ export default function NewHabitScreen() {
       showSnackbar(t('habitNew.created', { title: title.trim() }));
       router.back();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('habitNew.createError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('habitNew.createError'));
     } finally {
       setSaving(false);
     }

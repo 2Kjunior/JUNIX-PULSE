@@ -32,7 +32,7 @@ const REMINDER = {
 
 const held = (identifier: string, title = 'Appeler', body = 'Rappel Junix Pulse') => ({
   identifier,
-  content: { title, body },
+  content: { title, body, categoryIdentifier: 'reminder_actions' },
 });
 
 const scheduled = NotificationService.scheduleReminder as jest.Mock;

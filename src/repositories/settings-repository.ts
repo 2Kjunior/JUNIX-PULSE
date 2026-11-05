@@ -39,6 +39,7 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     onboardingCompleted: (row.onboarding_completed as number) === 1,
     notificationsEnabled: row.notifications_enabled !== undefined ? (row.notifications_enabled as number) === 1 : true,
     notificationSoundEnabled: row.notification_sound_enabled !== undefined ? (row.notification_sound_enabled as number) === 1 : true,
+    hapticsEnabled: row.haptics_enabled !== undefined ? (row.haptics_enabled as number) === 1 : true,
     forgottenContactThresholdDays: (row.forgotten_contact_threshold_days as number) ?? 30,
     endOfDayHour: (row.end_of_day_hour as number) ?? 20,
     morningBriefingHour: (row.morning_briefing_hour as number) ?? 8,
@@ -100,6 +101,10 @@ export const SettingsRepository = {
     if (params.notificationSoundEnabled !== undefined) {
       setClauses.push('notification_sound_enabled = ?');
       values.push(params.notificationSoundEnabled ? 1 : 0);
+    }
+    if (params.hapticsEnabled !== undefined) {
+      setClauses.push('haptics_enabled = ?');
+      values.push(params.hapticsEnabled ? 1 : 0);
     }
     if (params.forgottenContactThresholdDays !== undefined) {
       setClauses.push('forgotten_contact_threshold_days = ?');

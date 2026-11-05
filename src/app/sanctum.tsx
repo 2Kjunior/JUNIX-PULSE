@@ -23,10 +23,10 @@ import {
   Platform,
   ScrollView,
   FlatList,
-  Alert,
   AppState,
   type AppStateStatus,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -222,7 +222,7 @@ export default function SanctumScreen() {
   // ─── Biométrie : proposée après un code PIN correct, jamais activée sans accord ──
   const offerBiometricUnlock = async (key: Uint8Array) => {
     if (!(await SanctumAuthService.shouldOfferBiometricUnlock())) return;
-    Alert.alert(
+    GlassAlert.alert(
       t('sanctum.offerTitle'),
       t('sanctum.offerBody'),
       [
@@ -438,7 +438,7 @@ export default function SanctumScreen() {
   };
 
   const handleDeleteNote = (note: SanctumNote) => {
-    Alert.alert(
+    GlassAlert.alert(
       t('sanctum.deleteTitle'),
       t('sanctum.deleteBody', { title: note.title || t('sanctum.thisNote') }),
       [

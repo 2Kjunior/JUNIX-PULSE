@@ -6,6 +6,7 @@
 import { RecurrenceRule } from '@/domain/entities';
 import {
   planReminderNotifications,
+  REMINDER_CATEGORY_ID,
   REMINDER_IDENTIFIER_PREFIX,
   ReminderToPlan,
 } from '@/domain/rules/reminder-notification-rules';
@@ -67,7 +68,14 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
 
     for (const request of held) {
       const item = plannedById.get(request.identifier);
-      if (!force && item && item.title === request.content.title && item.body === request.content.body) {
+      if (
+        !force &&
+        item &&
+        item.title === request.content.title &&
+        item.body === request.content.body &&
+        // Notifications planned before the buttons existed are planned again with them
+        request.content.categoryIdentifier === REMINDER_CATEGORY_ID
+      ) {
         upToDate.add(request.identifier);
       } else {
         await NotificationService.cancelReminder(request.identifier);

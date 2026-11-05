@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -131,7 +131,7 @@ export default function EditReminderScreen() {
       showSnackbar(t('remEdit.updated'));
       router.back();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('remEdit.updateError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('remEdit.updateError'));
     } finally {
       setSaving(false);
     }

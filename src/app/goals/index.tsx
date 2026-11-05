@@ -14,8 +14,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,7 +68,7 @@ export default function GoalsListScreen() {
   );
 
   const handleDelete = (goalId: string, title: string) => {
-    Alert.alert(
+    GlassAlert.alert(
       t('goals.deleteTitle'),
       t('goals.deleteBody', { title }),
       [
@@ -89,7 +89,7 @@ export default function GoalsListScreen() {
                 durationMs: 5_000,
               });
             } catch (e) {
-              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('habits.deleteError'));
+              GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('habits.deleteError'));
             }
           },
         },

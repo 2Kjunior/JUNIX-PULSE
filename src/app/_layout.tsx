@@ -26,7 +26,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useEffect, useState, useRef } from "react";
-import { Alert, Appearance, AppState, LogBox, StyleSheet } from "react-native";
+import { Appearance, AppState, LogBox, StyleSheet } from "react-native";
+import { GlassAlert, GlassAlertHost } from "@/components/feedback/GlassAlert";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -46,14 +47,24 @@ import { detectDeviceTimezone } from "@/services/device-timezone";
 import { applyLanguage } from "@/services/language-service";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
-import { notificationRoute } from "@/domain/rules/reminder-notification-rules";
-import { startActionHaptics } from "@/services/haptic-service";
+import {
+  notificationActionFor,
+  notificationRoute,
+  REMINDER_ACTION_SNOOZE_MINUTES,
+} from "@/domain/rules/reminder-notification-rules";
+import { ReminderRepository } from "@/repositories/reminder-repository";
+import { runAutoBackup } from "@/services/auto-backup-service";
+import { setHapticsEnabled, startActionHaptics } from "@/services/haptic-service";
 import { NotificationService } from "@/services/notification-service";
 import { onReminderSyncProblem, syncReminderNotifications } from "@/services/reminder-notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { SessionManager } from "@/services/session/SessionManager";
 import { useAppStore } from "@/store/app-store";
-import { reconcileOverdueRecurringReminders } from "@/use-cases/reminder-use-cases";
+import {
+  completeReminder,
+  reconcileOverdueRecurringReminders,
+  snoozeReminder,
+} from "@/use-cases/reminder-use-cases";
 
 // Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
 LogBox.ignoreLogs([
@@ -104,8 +115,27 @@ function StartupError({ detail, onRetry }: { detail: string; onRetry: () => void
   );
 }
 
-function openNotification(response: NotificationResponse) {
-  const route = notificationRoute(response.notification.request.content.data);
+async function openNotification(response: NotificationResponse) {
+  const data = response.notification.request.content.data;
+  const action = notificationActionFor(response.actionIdentifier);
+
+  // A button of the notification: complete or snooze, without going through the reminder screen
+  if (action !== "open" && typeof data?.reminderId === "string") {
+    void NotificationService.dismiss(response.notification.request.identifier);
+    const reminder = await ReminderRepository.findById(data.reminderId);
+    // Already done or removed, from a second tap or another screen: nothing left to do
+    if (!reminder || reminder.status === "COMPLETED" || reminder.status === "DELETED") return;
+    if (action === "complete") {
+      await completeReminder(reminder);
+      useAppStore.getState().showSnackbar(tNow("notifAction.completed"));
+    } else {
+      await snoozeReminder(reminder, { kind: "quick", minutes: REMINDER_ACTION_SNOOZE_MINUTES });
+      useAppStore.getState().showSnackbar(tNow("notifAction.snoozed"));
+    }
+    return;
+  }
+
+  const route = notificationRoute(data);
   if (route) router.push(route as Href);
 }
 
@@ -172,6 +202,7 @@ export default function RootLayout() {
         setOnboardingComplete(settings.onboardingCompleted);
         // La langue choisie, ou celle du téléphone sur « auto »
         applyLanguage(settings.language);
+        setHapticsEnabled(settings.hapticsEnabled);
         // Le fuseau de l'utilisateur est celui du téléphone : il suit ses déplacements
         const deviceTimezone = detectDeviceTimezone();
         setUserTimezone(deviceTimezone);
@@ -258,6 +289,8 @@ export default function RootLayout() {
     if (!dbReady || !onboardingComplete) return;
     void syncDailyRecapNotifications();
     void syncReminderNotifications();
+    // La sauvegarde automatique de la semaine, si elle est activée
+    void runAutoBackup();
   }, [dbReady, onboardingComplete]);
 
   // Au retour dans l'application, les récurrences déjà passées repartent de la bonne date
@@ -265,6 +298,7 @@ export default function RootLayout() {
     if (!dbReady || !onboardingComplete) return;
     const sub = AppState.addEventListener("change", (nextAppState) => {
       if (nextAppState !== "active") return;
+      void runAutoBackup();
       reconcileOverdueRecurringReminders()
         .catch(() => 0)
         .then(() => syncReminderNotifications());
@@ -314,7 +348,7 @@ export default function RootLayout() {
 
       if (reminderId) {
         void announceReminderArrived(reminderId);
-        Alert.alert(
+        GlassAlert.alert(
           `🔔 ${title}`,
           body || tNow("layout.reminderDue"),
           [
@@ -440,6 +474,8 @@ export default function RootLayout() {
           </ThemeProvider>
           {/* Snackbar global (au-dessus de tout le contenu) */}
           <Snackbar />
+          {/* Fenêtres d'alerte en verre, à la place des alertes natives */}
+          <GlassAlertHost />
           {/* Compagne Pulse : une seule instance, qui suit l'utilisateur d'un écran à l'autre, au-dessus du Snackbar */}
           <MascotCompanion />
         </SafeAreaProvider>

@@ -6,7 +6,8 @@
  */
 
 import { useState } from 'react';
-import { Alert, View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationService } from '@/services/notification-service';
 import { setGuidePermission } from '@/features/mascot/onboarding-guide-state';
@@ -53,7 +54,7 @@ export default function OnboardingPermissions() {
   async function offerExactAlarms() {
     const { granted, canAsk } = await NotificationService.getExactAlarmStatus();
     if (granted || !canAsk) return;
-    Alert.alert(
+    GlassAlert.alert(
       t('permissions.exactAlarms.title'),
       t('permissions.exactAlarms.body'),
       [

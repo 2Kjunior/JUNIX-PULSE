@@ -268,6 +268,8 @@ export interface Settings {
    * foreground. True by default.
    */
   notificationSoundEnabled: boolean;
+  /** Vibrations in answer to the actions of the user. True by default. */
+  hapticsEnabled: boolean;
   forgottenContactThresholdDays: number;
   endOfDayHour: number;        // Heure à laquelle Junix propose de gérer les tâches restantes (ex: 20)
   morningBriefingHour: number; // Heure du résumé matin (ex: 8)

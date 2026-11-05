@@ -9,7 +9,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 
 import { BackupPasswordModal } from '@/components/ui/BackupPasswordModal';
 import { getDatabase } from '@/database/sqlite';
@@ -47,7 +48,7 @@ export function useBackupRestore(onRestored: (outcome: BackupRestoreOutcome) => 
   const startRestore = async () => {
     try {
       if (Platform.OS === 'web') {
-        Alert.alert(t('welcome.restore.unavailableTitle'), t('welcome.restore.unavailableBody'));
+        GlassAlert.alert(t('welcome.restore.unavailableTitle'), t('welcome.restore.unavailableBody'));
         return;
       }
       const selection = await DocumentPicker.getDocumentAsync({
@@ -57,7 +58,7 @@ export function useBackupRestore(onRestored: (outcome: BackupRestoreOutcome) => 
       if (selection.canceled) return;
       setContents(await new File(selection.assets[0].uri).text());
     } catch (error) {
-      Alert.alert(
+      GlassAlert.alert(
         t('welcome.restore.invalidTitle'),
         error instanceof Error ? error.message : t('welcome.restore.invalidBody')
       );
@@ -70,14 +71,14 @@ export function useBackupRestore(onRestored: (outcome: BackupRestoreOutcome) => 
       const sanctum = await restoreBackupSanctum(data, keys);
       await reconcileOverdueRecurringReminders();
       const notice = SANCTUM_RESTORE_NOTICE[sanctum];
-      Alert.alert(
+      GlassAlert.alert(
         t('welcome.restore.doneTitle'),
         t('welcome.restore.doneBody', { inserted: result.inserted, skipped: result.skipped }) +
           (notice ? `\n\n${t(notice)}` : ''),
         [{ text: t('common.continue'), onPress: () => void onRestored({ result, sanctum }) }]
       );
     } catch (error) {
-      Alert.alert(
+      GlassAlert.alert(
         t('welcome.restore.failTitle'),
         error instanceof Error ? error.message : t('welcome.restore.failBody')
       );
@@ -94,7 +95,7 @@ export function useBackupRestore(onRestored: (outcome: BackupRestoreOutcome) => 
     const summary = summarizeBackup(plaintext);
     setContents(null);
 
-    Alert.alert(
+    GlassAlert.alert(
       t('welcome.restore.mergeTitle'),
       t('backupRestore.summary', {
         date: format(new Date(summary.exportedAt), 'PPPp', { locale: dateLocale }),

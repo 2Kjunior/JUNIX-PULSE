@@ -10,8 +10,8 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -83,7 +83,7 @@ export default function GoalDetailScreen() {
       setShowTaskPicker(false);
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -94,7 +94,7 @@ export default function GoalDetailScreen() {
       showSnackbar(t('goalDetail.unlinked', { title }));
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -104,7 +104,7 @@ export default function GoalDetailScreen() {
       showSnackbar(newStatus === 'COMPLETED' ? t('goalDetail.taskDone') : t('tasks.reopened'));
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 

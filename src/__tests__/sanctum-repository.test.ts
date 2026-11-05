@@ -32,16 +32,11 @@ jest.mock('../database/sqlite', () => {
         }
         return null;
       }),
-      withExclusiveTransactionAsync: jest.fn(async (callback: (tx: any) => Promise<void>) => {
+      withTransactionAsync: jest.fn(async (callback: () => Promise<void>) => {
         // Comme une transaction : tout est annulé si le travail échoue
         const snapshot = new Map(notesTable);
-        const transaction = {
-          runAsync: async (_query: string, title: string, content: string, folder: string, id: string) => {
-            notesTable.set(id, { ...notesTable.get(id), title, content, folder });
-          },
-        };
         try {
-          await callback(transaction);
+          await callback();
         } catch (error) {
           notesTable.clear();
           snapshot.forEach((row, id) => notesTable.set(id, row));

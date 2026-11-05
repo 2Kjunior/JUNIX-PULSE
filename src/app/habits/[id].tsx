@@ -10,8 +10,8 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,7 +71,7 @@ export default function HabitDetailScreen() {
       await HabitUseCases.toggleHabitCompletion(id, dateStr);
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 
@@ -79,7 +79,7 @@ export default function HabitDetailScreen() {
     if (!id || !stats) return;
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-    Alert.alert(
+    GlassAlert.alert(
       t('habitDetail.pause'),
       t('habitDetail.pauseBody'),
       [
@@ -104,7 +104,7 @@ export default function HabitDetailScreen() {
       showSnackbar(t('habitDetail.resumed'));
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 

@@ -10,6 +10,13 @@ import { ANDROID_HAPTIC_PATTERNS, hapticForEvent, HapticKind } from '@/domain/ru
 import { subscribeMascotEvents } from '@/services/mascot/mascot-event-bus';
 import { logger } from '@/utils/logger';
 
+let actionHapticsEnabled = true;
+
+/** The user's choice in the settings; the test panel plays regardless. */
+export function setHapticsEnabled(enabled: boolean): void {
+  actionHapticsEnabled = enabled;
+}
+
 export function playHaptic(kind: HapticKind): void {
   if (Platform.OS === 'android') {
     // The vibrator of React Native itself, at full strength: see ANDROID_HAPTIC_PATTERNS
@@ -35,6 +42,6 @@ export function playHaptic(kind: HapticKind): void {
 export function startActionHaptics(): () => void {
   return subscribeMascotEvents(event => {
     const kind = hapticForEvent(event.type);
-    if (kind) playHaptic(kind);
+    if (kind && actionHapticsEnabled) playHaptic(kind);
   });
 }

@@ -11,6 +11,7 @@
 
 import * as SQLite from 'expo-sqlite';
 import { logger } from '../utils/logger';
+import { openAppDatabase } from './database-encryption';
 import { MIGRATIONS } from './migrations';
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -22,7 +23,8 @@ let dbInstance: SQLite.SQLiteDatabase | null = null;
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (dbInstance) return dbInstance;
 
-  const db = await SQLite.openDatabaseAsync('junixpulse.db');
+  // Chiffrée avec SQLCipher quand l'application l'embarque ; l'ancienne base en clair y est copiée
+  const db = await openAppDatabase();
 
   // Activer les clés étrangères (SQLite les désactive par défaut)
   await db.execAsync('PRAGMA foreign_keys = ON;');

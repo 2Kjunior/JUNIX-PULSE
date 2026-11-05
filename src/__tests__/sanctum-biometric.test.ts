@@ -8,7 +8,7 @@ jest.mock('../database/sqlite', () => ({
     getFirstAsync: jest.fn(async () => null),
     getAllAsync: jest.fn(async () => []),
     runAsync: jest.fn(async () => undefined),
-    withExclusiveTransactionAsync: jest.fn(async (callback: (tx: unknown) => Promise<void>) => callback({})),
+    withTransactionAsync: jest.fn(async (callback: () => Promise<void>) => callback()),
   })),
 }));
 

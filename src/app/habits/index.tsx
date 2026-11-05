@@ -15,8 +15,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -92,12 +92,12 @@ export default function HabitsListScreen() {
       );
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('home.habits.error'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('home.habits.error'));
     }
   };
 
   const handleDelete = (habitId: string, title: string) => {
-    Alert.alert(
+    GlassAlert.alert(
       t('habits.deleteTitle'),
       t('habits.deleteBody', { title }),
       [
@@ -118,7 +118,7 @@ export default function HabitsListScreen() {
                 durationMs: 5_000,
               });
             } catch (e) {
-              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('habits.deleteError'));
+              GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('habits.deleteError'));
             }
           },
         },
@@ -132,7 +132,7 @@ export default function HabitsListScreen() {
       showSnackbar(t('habits.resumedNamed', { title }));
       loadData();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
     }
   };
 

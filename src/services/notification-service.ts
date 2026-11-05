@@ -10,6 +10,11 @@
 import type { DailyRecapKind, DailyRecapNotification } from "@/domain/rules/daily-recap-rules";
 import { t } from "@/i18n";
 import { logger } from "@/utils/logger";
+import {
+  REMINDER_ACTION_COMPLETE,
+  REMINDER_ACTION_SNOOZE,
+  REMINDER_CATEGORY_ID,
+} from "@/domain/rules/reminder-notification-rules";
 import { Platform } from "react-native";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
@@ -123,6 +128,20 @@ export const NotificationService = {
           showBadge: false,
         });
       }
+      // The buttons open the app, which completes or snoozes the reminder: reliable even when it was closed.
+      // No buttons on web, where notifications are not shown by the app
+      if (Platform.OS !== "web") await Notifications.setNotificationCategoryAsync(REMINDER_CATEGORY_ID, [
+        {
+          identifier: REMINDER_ACTION_COMPLETE,
+          buttonTitle: t('notifAction.complete'),
+          options: { opensAppToForeground: true },
+        },
+        {
+          identifier: REMINDER_ACTION_SNOOZE,
+          buttonTitle: t('notifAction.snooze'),
+          options: { opensAppToForeground: true },
+        },
+      ]);
     } catch {
       logger.error(
         "[NotificationService] Initialisation des notifications ignorée",
@@ -162,6 +181,7 @@ export const NotificationService = {
           },
           // iOS uses the filename; Android uses the channel's configured sound.
           sound: params.silent ? false : NOTIFICATION_SOUND_WAV_FILENAME,
+          categoryIdentifier: REMINDER_CATEGORY_ID,
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
@@ -393,6 +413,18 @@ export const NotificationService = {
   /**
    * Retourne toutes les notifications planifiées.
    */
+  /**
+   * Retire une notification affichée, une fois son action traitée.
+   */
+  async dismiss(identifier: string): Promise<void> {
+    if (!Notifications) return;
+    try {
+      await Notifications.dismissNotificationAsync(identifier);
+    } catch {
+      logger.warn("[NotificationService] Notification non retirée");
+    }
+  },
+
   async getAllScheduled(): Promise<
     import("expo-notifications").NotificationRequest[]
   > {
