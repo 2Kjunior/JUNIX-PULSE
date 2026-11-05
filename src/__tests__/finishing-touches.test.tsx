@@ -26,6 +26,8 @@ describe('action vibrations', () => {
     expect(hapticForEvent('ITEM_DELETED')).toBe('warning');
     expect(hapticForEvent('REMINDER_SNOOZED')).toBe('light');
     expect(hapticForEvent('REMINDER_ARRIVED')).toBeNull();
+    // The last task of the day is announced as a cleared day, still a completed task
+    expect(hapticForEvent('DAY_CLEARED')).toBe('success');
   });
 
   it('answers announced events until it is stopped', () => {

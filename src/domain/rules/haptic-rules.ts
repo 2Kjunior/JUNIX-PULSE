@@ -10,6 +10,8 @@ export type HapticKind = 'success' | 'light' | 'warning' | 'error';
 
 const EVENT_HAPTICS: Partial<Record<MascotEventType, HapticKind>> = {
   TASK_COMPLETED: 'success',
+  // Sent in place of TASK_COMPLETED for the last task of the day: the same gesture
+  DAY_CLEARED: 'success',
   REMINDER_COMPLETED: 'success',
   HABIT_COMPLETED: 'success',
   GOAL_COMPLETED: 'success',
