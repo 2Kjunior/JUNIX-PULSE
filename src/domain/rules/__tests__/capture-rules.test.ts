@@ -175,4 +175,38 @@ describe('parseQuickCapture (DEF-10)', () => {
       expect(parseQuickCapture('Faire les courses').priority).toBe('NORMAL');
     });
   });
+
+  // ─── 6. Accents et heures passées ──────────────────────────────────────────
+  describe('Mots accentués et heure deja passee', () => {
+    const accented: Person[] = [
+      { ...SAMPLE_PERSONS[0], id: 'p-3', displayName: 'André Leroy' },
+      { ...SAMPLE_PERSONS[0], id: 'p-4', displayName: 'Zoé' },
+    ];
+    // Mardi 17 juin 2025, 15:00 heure locale
+    const afternoon = new Date(2025, 5, 17, 15, 0, 0);
+
+    it('reconnait les mots qui commencent ou finissent par un accent', () => {
+      expect(parseQuickCapture('Café avec Julie', [], afternoon).actionType).toBe('MEET');
+      expect(parseQuickCapture('Écrire un message', [], afternoon).actionType).toBe('MESSAGE');
+      expect(parseQuickCapture('Appeler André demain', accented, afternoon).targetPerson?.id).toBe('p-3');
+      expect(parseQuickCapture('Voir Zoé', accented, afternoon).targetPerson?.id).toBe('p-4');
+      expect(parseQuickCapture('Voir Zoélie', accented, afternoon).targetPerson).toBeUndefined();
+    });
+
+    it('distingue "après-midi" de "midi"', () => {
+      expect(parseQuickCapture('Courses demain après-midi', [], afternoon).targetTime).toBe('15:00');
+      expect(parseQuickCapture('Déjeuner demain midi', [], afternoon).targetTime).toBe('12:00');
+    });
+
+    it('passe au lendemain quand aucun jour n est donne et que l heure est passee', () => {
+      const result = parseQuickCapture('Acheter du pain', [], afternoon);
+      expect(result.targetTime).toBe('09:00');
+      expect(result.targetDate.getDate()).toBe(18);
+      expect(parseQuickCapture('Appeler Marie à 18h', [], afternoon).targetDate.getDate()).toBe(17);
+    });
+
+    it('garde le jour donne explicitement, meme passe', () => {
+      expect(parseQuickCapture("Aujourd'hui à 9h", [], afternoon).targetDate.getDate()).toBe(17);
+    });
+  });
 });

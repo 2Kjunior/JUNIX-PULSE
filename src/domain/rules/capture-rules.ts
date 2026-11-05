@@ -37,6 +37,15 @@ function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Letters of French words, accents included: \b of JavaScript sees "é" as a separator, so
+// "café" or "André" never matched with it
+const WORD_CHARS = 'A-Za-z0-9_À-ÖØ-öø-ÿŒœ';
+
+/** The pattern as whole words: neither preceded nor followed by a letter, accented or not. */
+function hasWords(text: string, pattern: string): boolean {
+  return new RegExp(`(?:^|[^${WORD_CHARS}])(?:${pattern})(?![${WORD_CHARS}])`, 'i').test(text);
+}
+
 /**
  * Analyse une saisie textuelle libre et extrait les intentions structurées.
  */
@@ -60,15 +69,15 @@ export function parseQuickCapture(
 
   // ─── 1. Détecter l'action ────────────────────────────────────────────────────
   let detectedAction: ActionType = 'NONE';
-  if (/\b(appeler|t[ée]l[ée]phoner|coup de fil)\b/i.test(lower)) {
+  if (hasWords(lower, 'appeler|t[ée]l[ée]phoner|coup de fil')) {
     detectedAction = 'CALL';
-  } else if (/\b(sms|message|[ée]crire un message|whatsapp)\b/i.test(lower)) {
+  } else if (hasWords(lower, 'sms|message|[ée]crire un message|whatsapp')) {
     detectedAction = 'MESSAGE';
-  } else if (/\b(mail|email|courriel|envoyer un mail)\b/i.test(lower)) {
+  } else if (hasWords(lower, 'mail|e-?mail|courriel|envoyer un mail')) {
     detectedAction = 'EMAIL';
-  } else if (/\b(caf[ée]|d[ée]jeuner|d[îi]ner|voir|rencontrer|rdv)\b/i.test(lower)) {
+  } else if (hasWords(lower, 'caf[ée]|d[ée]jeuner|d[îi]ner|voir|rencontrer|rdv')) {
     detectedAction = 'MEET';
-  } else if (/\b(faire|acheter|pr[ée]parer|payer|ranger)\b/i.test(lower)) {
+  } else if (hasWords(lower, 'faire|acheter|pr[ée]parer|payer|ranger')) {
     detectedAction = 'TASK';
   }
 
@@ -78,16 +87,14 @@ export function parseQuickCapture(
     const fullName = p.displayName.trim();
     if (!fullName) continue;
 
-    const regexFull = new RegExp(`\\b${escapeRegex(fullName)}\\b`, 'i');
-    if (regexFull.test(raw)) {
+    if (hasWords(raw, escapeRegex(fullName))) {
       matchedPerson = p;
       break;
     }
 
     const firstName = fullName.split(/\s+/)[0];
     if (firstName && firstName.length >= 3) {
-      const regexFirst = new RegExp(`\\b${escapeRegex(firstName)}\\b`, 'i');
-      if (regexFirst.test(raw)) {
+      if (hasWords(raw, escapeRegex(firstName))) {
         matchedPerson = p;
         break;
       }
@@ -96,20 +103,22 @@ export function parseQuickCapture(
 
   // ─── 3. Détecter la date (ordre strict : après-demain AVANT demain) ───────────
   let targetDate = startOfDay(now);
+  let explicitDateFound = true;
 
-  if (/\bapr[èe]s[- ]demain\b/i.test(lower)) {
+  if (hasWords(lower, 'apr[èe]s[- ]demain')) {
     // Règle 1 : après-demain en premier absolu car "après-demain" contient "demain"
     targetDate = addDays(startOfDay(now), 2);
-  } else if (/\bdemain\b/i.test(lower)) {
+  } else if (hasWords(lower, 'demain')) {
     targetDate = addDays(startOfDay(now), 1);
-  } else if (/\b(aujourd'?hui|ce soir|ce matin)\b/i.test(lower)) {
+  } else if (hasWords(lower, "aujourd'?hui|ce soir|ce matin")) {
     targetDate = startOfDay(now);
   } else {
+    explicitDateFound = false;
     // Recherche des jours de la semaine avec frontières de mots
     for (const [dayName, dayIndex] of Object.entries(DAY_MAP)) {
-      const dayRegex = new RegExp(`\\b${dayName}\\b`, 'i');
-      if (dayRegex.test(lower)) {
+      if (hasWords(lower, dayName)) {
         targetDate = nextDay(startOfDay(now), dayIndex);
+        explicitDateFound = true;
         break;
       }
     }
@@ -140,19 +149,30 @@ export function parseQuickCapture(
 
   // Raccourcis flous appliqués UNIQUEMENT si aucune heure explicite n'a été saisie
   if (!explicitTimeFound) {
-    if (/\b(ce soir|soir)\b/i.test(lower)) {
+    if (hasWords(lower, 'ce soir|soir')) {
       targetTime = '20:30';
-    } else if (/\bmidi\b/i.test(lower)) {
+    } else if (hasWords(lower, 'apr[èe]s[- ]midi|aprem')) {
+      // Before "midi", which "après-midi" contains
+      targetTime = '15:00';
+    } else if (hasWords(lower, 'midi')) {
       targetTime = '12:00';
-    } else if (/\b(ce matin|matin)\b/i.test(lower)) {
+    } else if (hasWords(lower, 'ce matin|matin')) {
       targetTime = '08:30';
     }
   }
 
   // ─── 5. Priorité ─────────────────────────────────────────────────────────────
   let priority: ReminderPriority = 'NORMAL';
-  if (/\b(urgent|importante?|critique|asap)\b/i.test(lower)) {
+  if (hasWords(lower, 'urgente?|importante?|critique|asap')) {
     priority = 'URGENT';
+  }
+
+  // No day given and the hour already passed today: the next one, rather than a time in the past
+  if (!explicitDateFound) {
+    const [hours, minutes] = targetTime.split(':').map(Number);
+    const at = new Date(targetDate);
+    at.setHours(hours, minutes, 0, 0);
+    if (at <= now) targetDate = addDays(targetDate, 1);
   }
 
   return {
