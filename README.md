@@ -105,4 +105,4 @@ npx jest --no-coverage
 ---
 
 ## 📄 Licence
-Développé dans le cadre du projet **Junix Pulse V1.0**.
+Logiciel propriétaire, tous droits réservés : voir `LICENSE`. Le code est publié pour consultation uniquement.

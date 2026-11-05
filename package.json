@@ -101,5 +101,6 @@
       "./jest.setup.js"
     ]
   },
+  "license": "UNLICENSED",
   "private": true
 }
