@@ -17,6 +17,7 @@ import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
 
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
 import { DeadlineField } from '@/components/tasks/DeadlineField';
 import { useAppStore } from '@/store/app-store';
 import { ReminderPriority } from '@/domain/entities';
@@ -62,6 +63,7 @@ export default function NewTaskScreen() {
   const [subtaskInput, setSubtaskInput] = useState('');
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [personIds, setPersonIds] = useState<string[]>(() => (params.personId ? [params.personId] : []));
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState<string | undefined>(undefined);
 
   // Modal DatePicker
@@ -117,6 +119,7 @@ export default function NewTaskScreen() {
         estimatedMinutes,
         subtasks,
         personIds,
+        tagIds,
       });
 
       showSnackbar(t('taskNew.created'));
@@ -352,6 +355,9 @@ export default function NewTaskScreen() {
 
         {/* Avec qui ? Une ou plusieurs personnes */}
         <PersonField selectedIds={personIds} onChange={setPersonIds} multiple />
+
+        {/* Étiquettes de couleur */}
+        <TagField selectedIds={tagIds} onChange={setTagIds} />
 
         {/* Carte 5 : Sous-tâches */}
         <View style={formStyles.sectionHeaderRow}>

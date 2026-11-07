@@ -132,6 +132,25 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
       expect(recent.task_persons).toEqual([{ task_id: 't1', person_id: 'p2' }]);
     });
 
+    it('accepte une ancienne sauvegarde sans étiquettes, garde celles d’une récente et refuse une couleur inconnue', () => {
+      const old = parseBackup(JSON.stringify(baseValidBackup));
+      expect([old.tags, old.task_tags, old.reminder_tags, old.event_tags]).toEqual([[], [], [], []]);
+
+      const tag = { id: 'maths', name: 'Maths', color: 'green', created_at: 'x', updated_at: 'x' };
+      const recent = parseBackup(
+        JSON.stringify({
+          ...baseValidBackup,
+          data: { ...baseValidBackup.data, tags: [tag], task_tags: [{ task_id: 't1', tag_id: 'maths' }] },
+        })
+      );
+      expect(recent.tags).toEqual([tag]);
+      expect(recent.task_tags).toEqual([{ task_id: 't1', tag_id: 'maths' }]);
+
+      expect(() =>
+        parseBackup(JSON.stringify({ ...baseValidBackup, data: { ...baseValidBackup.data, tags: [{ ...tag, color: 'neon' }] } }))
+      ).toThrow();
+    });
+
     it('valide et parse une sauvegarde contenant appearance_mode ("dark")', () => {
       const json = JSON.stringify(baseValidBackup);
       const parsed = parseBackup(json);
@@ -320,12 +339,16 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
         'goals',
         'reminder_checklist_items',
         'reminder_persons',
+        'reminder_tags',
         'reminders',
         'recurrence_rules',
         'subtasks',
         'task_persons',
+        'task_tags',
         'tasks',
         'event_persons',
+        'event_tags',
+        'tags',
         'events',
         'interactions',
         'persons',

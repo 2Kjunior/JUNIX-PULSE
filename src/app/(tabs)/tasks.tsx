@@ -19,12 +19,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { DeadlineBadge } from '@/components/tasks/DeadlineBadge';
+import { TagSummary } from '@/components/tags/TagChip';
+import { TagFilterRow } from '@/components/tags/TagFilterRow';
+import { TagRepository } from '@/repositories/tag-repository';
+import { tagsOf, withTag } from '@/domain/rules/tag-rules';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 
 import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
-import { Task, Subtask } from '@/domain/entities';
+import { Task, Subtask, type Tag } from '@/domain/entities';
 import { isTaskOverdue, calculateTaskProgress } from '@/domain/rules/task-rules';
 import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
@@ -64,16 +68,27 @@ export default function TasksScreen() {
   const [counts, setCounts] = useState({ inbox: 0, today: 0, all: 0 });
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  // Coloured tags: the list of them, those of each task, and the one the list is filtered by
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [tagLinks, setTagLinks] = useState<Record<string, string[]>>({});
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const load = useCallback(async () => {
     try {
-      const [inboxTasks, todayTasks, allTasks] = await Promise.all([
+      const [inboxTasks, todayTasks, allTasks, allTags, links] = await Promise.all([
         TaskRepository.findInbox(),
         TaskRepository.findForDate(todayStr),
         TaskRepository.findAll(),
+        // The tags never keep the list from showing
+        TagRepository.findAll().catch(() => []),
+        TagRepository.findLinks('task').catch(() => ({})),
       ]);
+      setTags(allTags);
+      setTagLinks(links);
+      // A tag deleted meanwhile no longer filters anything
+      setTagFilter(current => (current && allTags.some(tag => tag.id === current) ? current : null));
 
       setCounts({
         inbox: inboxTasks.filter(t => t.status !== 'COMPLETED').length,
@@ -180,6 +195,12 @@ export default function TasksScreen() {
     }
   }
 
+  const shownItems = withTag(
+    items.map(item => ({ ...item, id: item.task.id })),
+    tagLinks,
+    tagFilter
+  );
+
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
@@ -224,6 +245,9 @@ export default function TasksScreen() {
         onTabChange={(k) => setActiveTab(k as FilterTab)}
       />
 
+      {/* ─── Étiquettes : la rangée n'apparaît qu'une fois une étiquette créée ─── */}
+      <TagFilterRow tags={tags} selectedId={tagFilter} onSelect={setTagFilter} />
+
       {/* ─── Liste principale ─────────────────────────────────────────────────── */}
       <ScrollView
         contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }]}
@@ -232,7 +256,9 @@ export default function TasksScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {items.length === 0 ? (
+        {items.length > 0 && shownItems.length === 0 ? (
+          <EmptyState iconName="pricetag-outline" title={t('tags.filterEmpty')} />
+        ) : items.length === 0 ? (
           <EmptyState
             iconName="checkmark-circle-outline"
             title={
@@ -249,7 +275,7 @@ export default function TasksScreen() {
             onAction={() => router.push('/tasks/new')}
           />
         ) : (
-          items.map(({ task, subtasks }) => (
+          shownItems.map(({ task, subtasks }) => (
             <SwipeableItem
               key={task.id}
               rightActions={makeStandardRightActions({
@@ -272,6 +298,7 @@ export default function TasksScreen() {
               <TaskCardR08
                 task={task}
                 subtasks={subtasks}
+                tags={tagsOf(tagLinks[task.id], tags)}
                 theme={theme}
                 styles={styles}
                 onToggleComplete={() => handleToggleComplete(task)}
@@ -296,12 +323,14 @@ export default function TasksScreen() {
 function TaskCardR08({
   task,
   subtasks,
+  tags,
   theme,
   styles,
   onToggleComplete,
 }: {
   task: Task;
   subtasks: Subtask[];
+  tags: Tag[];
   theme: ThemePalette;
   styles: ReturnType<typeof makeTasksStyles>;
   onToggleComplete: () => void;
@@ -400,6 +429,9 @@ function TaskCardR08({
 
             {/* Échéance : J-3, Demain, Aujourd'hui, En retard */}
             {!!task.dueDate && task.status !== 'COMPLETED' && <DeadlineBadge dueDate={task.dueDate} />}
+
+            {/* Étiquettes : la première, puis +2 */}
+            <TagSummary tags={tags} />
 
             {/* Sous-tâches */}
             {totalSubs > 0 && (

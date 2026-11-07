@@ -27,6 +27,8 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { PersonPicker } from '@/components/people/PersonPicker';
+import { TagField } from '@/components/tags/TagField';
+import { TagRepository } from '@/repositories/tag-repository';
 import { PersonRepository } from '@/repositories/person-repository';
 import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
@@ -48,6 +50,7 @@ export default function EventDetailScreen() {
   // Events have no edit screen: their people change here, saved at once
   const [allPersons, setAllPersons] = useState<Person[]>([]);
   const [pickingPersons, setPickingPersons] = useState(false);
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -57,9 +60,10 @@ export default function EventDetailScreen() {
       return;
     }
     try {
-      const [e, persons] = await Promise.all([
+      const [e, persons, tags] = await Promise.all([
         EventRepository.findById(id),
         EventRepository.findEventPersons(id),
+        TagRepository.findIdsFor('event', id),
       ]);
       if (!e) {
         setError(t('eventDetail.notFound'));
@@ -68,6 +72,7 @@ export default function EventDetailScreen() {
       }
       setEvent(e);
       setAssociatedPersons(persons);
+      setTagIds(tags);
       setScreenState('content');
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.loadError'));
@@ -85,6 +90,17 @@ export default function EventDetailScreen() {
     setAssociatedPersons(ids.map(personId => allPersons.find(person => person.id === personId)).filter((person): person is Person => !!person));
     try {
       await EventUseCases.updateEvent({ id: event.id, personIds: ids });
+    } catch {
+      showSnackbar(t('common.genericError'));
+      void load();
+    }
+  };
+
+  const changeTags = async (ids: string[]) => {
+    if (!event) return;
+    setTagIds(ids);
+    try {
+      await EventUseCases.updateEvent({ id: event.id, tagIds: ids });
     } catch {
       showSnackbar(t('common.genericError'));
       void load();
@@ -297,6 +313,14 @@ export default function EventDetailScreen() {
             })}
           </>
           )}
+        </View>
+
+        {/* Étiquettes, modifiables ici */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('tagField.header')}</Text>
+          </View>
+          <TagField selectedIds={tagIds} onChange={changeTags} look="bare" />
         </View>
       </ScrollView>
       <PersonPicker

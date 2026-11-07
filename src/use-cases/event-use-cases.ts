@@ -3,6 +3,7 @@
  */
 
 import { randomUUID } from 'expo-crypto';
+import { TagRepository } from '../repositories/tag-repository';
 import { EventRepository } from '../repositories/event-repository';
 import { EventType } from '../domain/entities';
 import { t } from '../i18n';
@@ -20,6 +21,8 @@ export interface CreateEventInput {
   type?: EventType;
   travelBufferMinutes?: number;
   personIds?: string[];
+  /** Its coloured tags. */
+  tagIds?: string[];
 }
 
 export interface UpdateEventInput {
@@ -32,6 +35,8 @@ export interface UpdateEventInput {
   type?: EventType;
   travelBufferMinutes?: number;
   personIds?: string[];
+  /** Its coloured tags: replaces the ones it had. */
+  tagIds?: string[];
 }
 
 export const EventUseCases = {
@@ -62,6 +67,7 @@ export const EventUseCases = {
       },
       input.personIds
     );
+    if (input.tagIds?.length) await TagRepository.setFor('event', eventId, input.tagIds);
 
     emitMascotEvent({ type: 'ITEM_CREATED' });
     return eventId;
@@ -90,6 +96,7 @@ export const EventUseCases = {
       },
       input.personIds
     );
+    if (input.tagIds !== undefined) await TagRepository.setFor('event', input.id, input.tagIds);
   },
 
   /**

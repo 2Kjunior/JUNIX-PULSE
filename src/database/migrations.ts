@@ -568,5 +568,45 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN reduce_transparency INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    version: 33,
+    name: 'add_coloured_tags',
+    sql: `
+      -- Etiquettes de couleur, communes aux taches, rappels et evenements. La couleur est un
+      -- nom (green, pink...), chaque theme lui donne sa teinte. La vieille colonne tasks.tags,
+      -- jamais remplie par un ecran, reste en place sans servir.
+      CREATE TABLE IF NOT EXISTS tags (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        color TEXT NOT NULL DEFAULT 'violet',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS task_tags (
+        task_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL,
+        PRIMARY KEY (task_id, tag_id),
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_task_tags_tag ON task_tags(tag_id);
+      CREATE TABLE IF NOT EXISTS reminder_tags (
+        reminder_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL,
+        PRIMARY KEY (reminder_id, tag_id),
+        FOREIGN KEY (reminder_id) REFERENCES reminders(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_reminder_tags_tag ON reminder_tags(tag_id);
+      CREATE TABLE IF NOT EXISTS event_tags (
+        event_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL,
+        PRIMARY KEY (event_id, tag_id),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_event_tags_tag ON event_tags(tag_id);
+    `,
+  },
 ];
 

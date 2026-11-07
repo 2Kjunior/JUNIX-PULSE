@@ -166,6 +166,13 @@ export const makeSettingsStyles = (t: ThemePalette) => {
       color: t.onSurface.primary,
       fontWeight: '700',
     },
+    profileLanguage: {
+      gap: Spacing.sm,
+      marginTop: Spacing.md,
+      paddingTop: Spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: rowBorder,
+    },
     hubGroup: {
       marginTop: Spacing.lg,
       marginBottom: Spacing.lg,

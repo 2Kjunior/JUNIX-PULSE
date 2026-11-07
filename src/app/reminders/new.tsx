@@ -28,6 +28,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { createReminder } from '@/use-cases/reminder-use-cases';
 import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
 import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
@@ -92,6 +93,7 @@ export default function NewReminderScreen() {
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');
   const [actionType, setActionType] = useState<ActionType>('NONE');
   const [personIds, setPersonIds] = useState<string[]>(() => (defaultPersonId ? [defaultPersonId] : []));
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [hasRecurrence, setHasRecurrence] = useState(false);
   const [requiresConfirmation, setRequiresConfirmation] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
@@ -146,6 +148,7 @@ export default function NewReminderScreen() {
         priority,
         actionType,
         personIds,
+        tagIds,
         requiresConfirmation,
         recurrenceRule: hasRecurrence
           ? {
@@ -324,6 +327,9 @@ export default function NewReminderScreen() {
 
           {/* ─── Avec qui ? Une ou plusieurs personnes, la première est la principale ─── */}
           <PersonField selectedIds={personIds} onChange={setPersonIds} look="reminder" multiple />
+
+          {/* ─── Étiquettes de couleur ─────────────────────────────────────────────── */}
+          <TagField selectedIds={tagIds} onChange={setTagIds} look="reminder" />
 
           {/* ─── Priorité (Groupe 4 - R-05) ───────────────────────────────────────── */}
           <View style={styles.sectionHeaderRow}>

@@ -29,7 +29,10 @@ import { format, isToday, isTomorrow, isPast, addHours } from 'date-fns';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { deleteReminder, completeReminder, snoozeReminder } from '@/use-cases/reminder-use-cases';
-import { Reminder } from '@/domain/entities';
+import { Reminder, type Tag } from '@/domain/entities';
+import { TagSummary } from '@/components/tags/TagChip';
+import { TagRepository } from '@/repositories/tag-repository';
+import { tagsOf } from '@/domain/rules/tag-rules';
 import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -73,10 +76,19 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('ALL');
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [tagLinks, setTagLinks] = useState<Record<string, string[]>>({});
 
   const load = useCallback(async () => {
     try {
-      const rems = await ReminderRepository.findAll();
+      const [rems, allTags, links] = await Promise.all([
+        ReminderRepository.findAll(),
+        // The tags never keep the list from showing
+        TagRepository.findAll().catch(() => []),
+        TagRepository.findLinks('reminder').catch(() => ({})),
+      ]);
+      setTags(allTags);
+      setTagLinks(links);
       setReminders(rems.filter(r => r.status !== 'DELETED' && r.status !== 'COMPLETED'));
       setState('content');
     } catch (e) {
@@ -339,6 +351,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
               >
                 <ReminderCardR04
                   reminder={item}
+                  tags={tagsOf(tagLinks[item.id], tags)}
                   onComplete={() => handleComplete(item)}
                   onQuickSnooze={() => handleQuickSnooze(item)}
                 />
@@ -409,10 +422,12 @@ function FilterChip({
 
 function ReminderCardR04({
   reminder,
+  tags,
   onComplete,
   onQuickSnooze,
 }: {
   reminder: Reminder;
+  tags: Tag[];
   onComplete: () => void;
   onQuickSnooze: () => void;
 }) {
@@ -482,6 +497,9 @@ function ReminderCardR04({
                 <Ionicons name="repeat-outline" size={12} color={palette.tertiary.default} />
               </View>
             ) : null}
+
+            {/* Étiquettes : la première, puis +2 */}
+            <TagSummary tags={tags} />
           </View>
         </View>
 

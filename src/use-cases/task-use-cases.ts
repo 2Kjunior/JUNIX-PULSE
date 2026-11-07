@@ -5,6 +5,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { format } from 'date-fns';
+import { TagRepository } from '../repositories/tag-repository';
 import { TaskRepository } from '../repositories/task-repository';
 import { Subtask, Task, TaskStatus, ReminderPriority } from '../domain/entities';
 import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
@@ -25,6 +26,8 @@ export interface CreateTaskInput {
   personId?: string;
   /** All the people of the task, the main one first. */
   personIds?: string[];
+  /** Its coloured tags. */
+  tagIds?: string[];
   tags?: string[];
   subtasks?: string[];         // Titres des sous-tâches initiales
 }
@@ -44,6 +47,8 @@ export interface UpdateTaskInput {
   personId?: string | null;
   /** All its people, the main one first: replaces the ones it had. */
   personIds?: string[];
+  /** Its coloured tags: replaces the ones it had. */
+  tagIds?: string[];
   tags?: string[];
 }
 
@@ -103,6 +108,7 @@ export const TaskUseCases = {
     // Every person of the task, the main one first
     const people = input.personIds ?? (input.personId ? [input.personId] : []);
     if (people.length > 0) await TaskRepository.setPersons(taskId, people);
+    if (input.tagIds?.length) await TagRepository.setFor('task', taskId, input.tagIds);
 
     // Création des sous-tâches initiales
     if (input.subtasks && input.subtasks.length > 0) {
@@ -130,12 +136,13 @@ export const TaskUseCases = {
    */
   async updateTask(input: UpdateTaskInput): Promise<void> {
     const now = new Date().toISOString();
-    const { personIds, ...columns } = input;
+    const { personIds, tagIds, ...columns } = input;
     await TaskRepository.update({
       ...columns,
       updatedAt: now,
     });
     if (personIds !== undefined) await TaskRepository.setPersons(input.id, personIds);
+    if (tagIds !== undefined) await TagRepository.setFor('task', input.id, tagIds);
   },
 
   /**

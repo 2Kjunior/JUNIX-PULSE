@@ -25,6 +25,7 @@ import {
   MascotProposalsLevel,
 } from '../enums';
 import type { LanguageSetting } from '../rules/language-rules';
+import type { TagColor } from '../rules/tag-rules';
 
 export * from '../enums';
 
@@ -88,6 +89,18 @@ export interface Task {
   completedAt?: string;
   deletedAt?: string;
 }
+
+// ─── Étiquette de couleur, commune aux tâches, rappels et événements ────────
+export interface Tag {
+  id: string;
+  name: string;
+  color: TagColor;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** What a tag can be put on. */
+export type TagItemType = 'task' | 'reminder' | 'event';
 
 // ─── Sous-tâche (niveau 1 uniquement) ───────────────────────────────────────
 export interface Subtask {

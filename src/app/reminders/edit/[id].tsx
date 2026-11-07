@@ -23,6 +23,8 @@ import { format } from 'date-fns';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { updateReminder } from '@/use-cases/reminder-use-cases';
 import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
+import { TagRepository } from '@/repositories/tag-repository';
 import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
@@ -74,6 +76,7 @@ export default function EditReminderScreen() {
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');
   const [actionType, setActionType] = useState<ActionType>('NONE');
   const [personIds, setPersonIds] = useState<string[]>([]);
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [requiresConfirmation, setRequiresConfirmation] = useState(false);
 
   // UI state
@@ -101,6 +104,7 @@ export default function EditReminderScreen() {
       setPriority(rem.priority);
       setActionType(rem.actionType);
       setPersonIds(await ReminderRepository.findPersonIds(rem.id));
+      setTagIds(await TagRepository.findIdsFor('reminder', rem.id));
       setRequiresConfirmation(!!rem.requiresConfirmation);
       setLoading(false);
     } catch (e) {
@@ -134,6 +138,7 @@ export default function EditReminderScreen() {
         priority,
         actionType,
         personIds,
+        tagIds,
         requiresConfirmation,
       });
 
@@ -294,6 +299,12 @@ export default function EditReminderScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>{t('personField.header')}</Text>
             <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" multiple />
+          </View>
+
+          {/* Étiquettes de couleur */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>{t('tagField.header')}</Text>
+            <TagField selectedIds={tagIds} onChange={setTagIds} look="bare" />
           </View>
 
           {/* Note / Description */}

@@ -2,21 +2,26 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { z } from 'zod';
 import { t } from '../i18n';
+import { TAG_COLORS } from '../domain/rules/tag-rules';
 import { decryptBackupContents, encryptBackupContents } from './backup-crypto';
 import { isSanctumNoteEncrypted, SANCTUM_CRYPTO_CONSTANTS } from './sanctum-crypto';
 import { SanctumAuthService, type SanctumBackupKeys } from './sanctum-auth-service';
 
 const BACKUP_TABLES = [
   'persons',
+  'tags',
   'recurrence_rules',
   'reminders',
   'reminder_checklist_items',
   'reminder_persons',
+  'reminder_tags',
   'tasks',
   'subtasks',
   'task_persons',
+  'task_tags',
   'events',
   'event_persons',
+  'event_tags',
   'habits',
   'habit_completions',
   'habit_pauses',
@@ -45,6 +50,10 @@ const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   event_persons: ['event_id', 'person_id'],
   reminder_persons: ['reminder_id', 'person_id'],
   task_persons: ['task_id', 'person_id'],
+  tags: ['id', 'name', 'color', 'created_at', 'updated_at'],
+  task_tags: ['task_id', 'tag_id'],
+  reminder_tags: ['reminder_id', 'tag_id'],
+  event_tags: ['event_id', 'tag_id'],
   habits: ['id', 'title', 'description', 'frequency', 'target_days_per_week', 'status', 'color', 'created_at', 'updated_at', 'deleted_at'],
   habit_completions: ['id', 'habit_id', 'completed_date', 'created_at'],
   habit_pauses: ['id', 'habit_id', 'start_date', 'end_date', 'reason', 'created_at'],
@@ -69,6 +78,10 @@ const REQUIRED_COLUMNS: Partial<Record<BackupTable, readonly string[]>> = {
   event_persons: ['event_id', 'person_id'],
   reminder_persons: ['reminder_id', 'person_id'],
   task_persons: ['task_id', 'person_id'],
+  tags: ['id', 'name', 'color', 'created_at', 'updated_at'],
+  task_tags: ['task_id', 'tag_id'],
+  reminder_tags: ['reminder_id', 'tag_id'],
+  event_tags: ['event_id', 'tag_id'],
   habits: ['id', 'title', 'frequency', 'status', 'created_at', 'updated_at'],
   habit_completions: ['id', 'habit_id', 'completed_date', 'created_at'],
   habit_pauses: ['id', 'habit_id', 'start_date', 'created_at'],
@@ -111,6 +124,7 @@ const ENUM_COLUMNS: Partial<Record<BackupTable, Record<string, readonly string[]
     priority: ['URGENT', 'HIGH', 'NORMAL', 'LOW'],
   },
   events: { type: ['FREE', 'BUSY'] },
+  tags: { color: TAG_COLORS },
   habits: {
     frequency: ['DAILY', 'WEEKLY'],
     status: ['ACTIVE', 'PAUSED', 'ARCHIVED'],
@@ -155,6 +169,11 @@ const BackupDataSchema = z.object({
   // Not in the backups made before several people per reminder and task
   reminder_persons: z.array(BackupRowSchema).default([]),
   task_persons: z.array(BackupRowSchema).default([]),
+  // Not in the backups made before the coloured tags
+  tags: z.array(BackupRowSchema).default([]),
+  task_tags: z.array(BackupRowSchema).default([]),
+  reminder_tags: z.array(BackupRowSchema).default([]),
+  event_tags: z.array(BackupRowSchema).default([]),
   habits: z.array(BackupRowSchema),
   habit_completions: z.array(BackupRowSchema),
   habit_pauses: z.array(BackupRowSchema),

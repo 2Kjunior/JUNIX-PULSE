@@ -122,6 +122,12 @@ export function makeReminderDetailStyles(theme: ThemePalette) {
     peopleList: {
       gap: Spacing.md,
     },
+    tagsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.xs,
+      marginTop: Spacing.sm,
+    },
     actionCardRow: {
       flexDirection: 'row',
       alignItems: 'center',

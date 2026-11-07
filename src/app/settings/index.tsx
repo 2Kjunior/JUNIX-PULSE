@@ -79,7 +79,7 @@ const APPEARANCE_OPTIONS: {
 
 /** The pages of the settings: the summary lists them, each opens on its own. */
 type SettingsSection = 'notifications' | 'mascot' | 'security' | 'data';
-type SettingsPage = SettingsSection | 'profile';
+type SettingsPage = SettingsSection;
 
 const HUB_SECTIONS: readonly {
   id: SettingsSection;
@@ -93,7 +93,7 @@ const HUB_SECTIONS: readonly {
   { id: 'data', titleKey: 'settingsHub.data', icon: 'cloud-outline', color: 'tertiary' },
 ];
 
-const PAGE_IDS: readonly string[] = ['profile', ...HUB_SECTIONS.map(item => item.id)];
+const PAGE_IDS: readonly string[] = HUB_SECTIONS.map(item => item.id);
 
 function pageOf(value: unknown): SettingsPage | null {
   return typeof value === 'string' && PAGE_IDS.includes(value) ? (value as SettingsPage) : null;
@@ -453,7 +453,6 @@ export default function SettingsScreen() {
     thumbColor: value ? palette.primary.default : palette.onSurface.disabled,
   });
 
-  const languageLabel = t(settings.language === 'auto' ? 'language.auto' : settings.language === 'en' ? 'language.en' : 'language.fr');
 
   const summaries: Record<SettingsSection, string> = {
     notifications: settings.notificationsEnabled
@@ -476,29 +475,36 @@ export default function SettingsScreen() {
 
   const renderHub = () => (
     <>
-      {/* Profil : prénom et langue, touchés ensemble */}
-      <TouchableOpacity
-        onPress={() => openSection('profile')}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel={t('settingsScreen.profile')}
-        testID="settings-open-profile"
-      >
-        <GlowCard tone="primary" intensity="soft" size="list">
-          <View style={styles.profileCard}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{(settings.displayName?.trim()[0] ?? 'J').toUpperCase()}</Text>
-            </View>
-            <View style={styles.rowTextFill}>
-              <Text style={styles.profileName}>{settings.displayName?.trim() || t('settingsHub.profileEmpty')}</Text>
-              <Text style={styles.rowSub}>
-                {t('settingsHub.profileSub', { language: languageLabel, timezone: timezoneLabel(deviceTimezone, language) })}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+      {/* Profil : le prénom et la langue, réglés ici même */}
+      <GlowCard tone="primary" intensity="soft" size="list">
+        <TouchableOpacity
+          style={styles.profileCard}
+          onPress={() => setEditingName(true)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('settingsScreen.firstName')}, ${settings.displayName?.trim() || t('settingsScreen.notDefined')}`}
+          accessibilityHint={t('settingsScreen.editName')}
+          testID="settings-edit-name"
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{(settings.displayName?.trim()[0] ?? 'J').toUpperCase()}</Text>
           </View>
-        </GlowCard>
-      </TouchableOpacity>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.profileName}>{settings.displayName?.trim() || t('settingsHub.profileEmpty')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.firstNameHint')}</Text>
+          </View>
+          <Ionicons name="create-outline" size={18} color={palette.primary.default} />
+        </TouchableOpacity>
+
+        <View style={styles.profileLanguage}>
+          <Text style={styles.rowLabel}>{t('language.label')}</Text>
+          <LanguagePicker onError={showSnackbar} />
+          {/* Le fuseau suit le téléphone : une information, pas un réglage */}
+          <Text style={styles.footnote}>
+            {t('settingsHub.timezoneNote', { timezone: timezoneLabel(deviceTimezone, language) })}
+          </Text>
+        </View>
+      </GlowCard>
 
       {/* Apparence : choisie ici même, sans page à ouvrir */}
       {renderAppearance()}
@@ -532,31 +538,6 @@ export default function SettingsScreen() {
         <Text style={styles.infoText}>{t('settingsScreen.localFirst')}</Text>
       </View>
     </>
-  );
-
-  const renderProfile = () => (
-    <View style={styles.section}>
-      <TouchableOpacity style={styles.row} onPress={() => setEditingName(true)} accessibilityRole="button">
-        <View style={styles.rowTextFill}>
-          <Text style={styles.rowLabel}>{t('settingsScreen.firstName')}</Text>
-          <Text style={styles.rowSub}>{t('settingsScreen.firstNameHint')}</Text>
-        </View>
-        <View style={styles.rowValCol}>
-          <Text style={styles.rowValue}>{settings.displayName ?? t('settingsScreen.notDefined')}</Text>
-          <Ionicons name="create-outline" size={16} color={palette.primary.default} />
-        </View>
-      </TouchableOpacity>
-
-      <View style={styles.rowCol}>
-        <Text style={styles.rowLabel}>{t('language.label')}</Text>
-        <LanguagePicker onError={showSnackbar} />
-      </View>
-
-      {/* Le fuseau suit le téléphone : une information, pas un réglage */}
-      <Text style={styles.footnote}>
-        {t('settingsHub.timezoneNote', { timezone: timezoneLabel(deviceTimezone, language) })}
-      </Text>
-    </View>
   );
 
   const renderAppearance = () => (
@@ -863,7 +844,6 @@ export default function SettingsScreen() {
   );
 
   const PAGES: Record<SettingsPage, () => ReactElement> = {
-    profile: renderProfile,
     notifications: renderNotifications,
     mascot: renderMascot,
     security: renderSecurity,
@@ -871,11 +851,7 @@ export default function SettingsScreen() {
   };
 
   const pageTitle =
-    section === null
-      ? t('common.settings')
-      : section === 'profile'
-        ? t('settingsScreen.profile')
-        : t(HUB_SECTIONS.find(item => item.id === section)!.titleKey);
+    section === null ? t('common.settings') : t(HUB_SECTIONS.find(item => item.id === section)!.titleKey);
 
   return (
     <ScrollView

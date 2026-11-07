@@ -6,6 +6,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
+import { TagRepository } from '@/repositories/tag-repository';
 import { DeadlineField } from '@/components/tasks/DeadlineField';
 import {
   View,
@@ -60,6 +62,7 @@ export default function TaskDetailScreen() {
   const [scheduledDateStr, setScheduledDateStr] = useState<string | undefined>(undefined);
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>(undefined);
   const [personIds, setPersonIds] = useState<string[]>([]);
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [newSubtaskInput, setNewSubtaskInput] = useState('');
 
@@ -110,6 +113,7 @@ export default function TaskDetailScreen() {
       setScheduledDateStr(loaded.scheduledDate);
       setEstimatedMinutes(loaded.estimatedMinutes);
       setPersonIds(await TaskRepository.findPersonIds(loaded.id));
+      setTagIds(await TagRepository.findIdsFor('task', loaded.id));
       setDueDate(loaded.dueDate);
 
       setScreenState('content');
@@ -186,6 +190,7 @@ export default function TaskDetailScreen() {
         scheduledDate: scheduledDateStr,
         estimatedMinutes: estimatedMinutes,
         personIds,
+        tagIds,
         dueDate: dueDate ?? null,
         status:
           task.status === 'INBOX' && scheduledDateStr
@@ -454,6 +459,12 @@ export default function TaskDetailScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>{t('personField.header')}</Text>
           <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" multiple />
+        </View>
+
+        {/* Étiquettes de couleur */}
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('tagField.header')}</Text>
+          <TagField selectedIds={tagIds} onChange={setTagIds} look="bare" />
         </View>
 
         {/* Sous-tâches */}

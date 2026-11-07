@@ -8,6 +8,7 @@
  */
 
 import { randomUUID } from 'expo-crypto';
+import { TagRepository } from '../repositories/tag-repository';
 import { ReminderRepository } from '../repositories/reminder-repository';
 import { syncReminderNotifications } from '../services/reminder-notification-service';
 import { NotificationService } from '../services/notification-service';
@@ -29,6 +30,8 @@ export interface CreateReminderInput {
   personId?: string;
   /** All the people of the reminder, the main one first; personId alone means just that one. */
   personIds?: string[];
+  /** Its coloured tags. */
+  tagIds?: string[];
   /** Rings again every few minutes until completed or snoozed. */
   requiresConfirmation?: boolean;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
@@ -69,6 +72,7 @@ export async function createReminder(input: CreateReminderInput): Promise<string
   // Every person of the reminder, the main one first
   const people = input.personIds ?? (input.personId ? [input.personId] : []);
   if (people.length > 0) await ReminderRepository.setPersons(reminderId, people);
+  if (input.tagIds?.length) await TagRepository.setFor('reminder', reminderId, input.tagIds);
 
   // 3. Créer les éléments de checklist si fournis
   if (input.checklistItems?.length) {
@@ -102,12 +106,15 @@ export interface UpdateReminderInput {
   personId?: string | null;
   /** All its people, the main one first: replaces the ones it had. */
   personIds?: string[];
+  /** Its coloured tags: replaces the ones it had. */
+  tagIds?: string[];
   requiresConfirmation?: boolean;
 }
 
 export async function updateReminder(input: UpdateReminderInput): Promise<void> {
   const now = new Date().toISOString();
   if (input.personIds !== undefined) await ReminderRepository.setPersons(input.id, input.personIds);
+  if (input.tagIds !== undefined) await TagRepository.setFor('reminder', input.id, input.tagIds);
 
   // Mettre à jour en base
   await ReminderRepository.update({
@@ -151,6 +158,7 @@ export async function completeReminder(reminder: Reminder): Promise<void> {
           priority: reminder.priority,
           actionType: reminder.actionType,
           personIds: await ReminderRepository.findPersonIds(reminder.id),
+          tagIds: await TagRepository.findIdsFor('reminder', reminder.id),
           requiresConfirmation: reminder.requiresConfirmation,
           recurrenceRule: {
             type: rule.type,

@@ -28,7 +28,10 @@ import {
   deleteReminder,
   SnoozeInput,
 } from '@/use-cases/reminder-use-cases';
-import { Reminder, ReminderChecklistItem, Person } from '@/domain/entities';
+import { Reminder, ReminderChecklistItem, Person, type Tag } from '@/domain/entities';
+import { TagChip } from '@/components/tags/TagChip';
+import { TagRepository } from '@/repositories/tag-repository';
+import { tagsOf } from '@/domain/rules/tag-rules';
 import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -76,6 +79,7 @@ export default function ReminderDetailScreen() {
   // Every person of the reminder; the first one is the main one, the one the action calls
   const [persons, setPersons] = useState<Person[]>([]);
   const person = persons[0] ?? null;
+  const [tags, setTags] = useState<Tag[]>([]);
   const [checklist, setChecklist] = useState<ReminderChecklistItem[]>([]);
   const [error, setError] = useState('');
   const [showSnoozeSheet, setShowSnoozeSheet] = useState(false);
@@ -104,6 +108,11 @@ export default function ReminderDetailScreen() {
       const ids = await ReminderRepository.findPersonIds(rem.id);
       const found = await Promise.all(ids.map(personId => PersonRepository.findById(personId)));
       setPersons(found.filter((item): item is Person => item !== null));
+      const [tagIds, allTags] = await Promise.all([
+        TagRepository.findIdsFor('reminder', rem.id).catch(() => []),
+        TagRepository.findAll().catch(() => []),
+      ]);
+      setTags(tagsOf(tagIds, allTags));
 
       setState('content');
     } catch (e) {
@@ -248,6 +257,18 @@ export default function ReminderDetailScreen() {
             <View style={styles.timeRow}>
               <Ionicons name="repeat-outline" size={16} color={theme.primary.default} />
               <Text style={styles.timeText}>{t('confirmReminder.badge')}</Text>
+            </View>
+          )}
+          {/* Ses étiquettes, toutes */}
+          {tags.length > 0 && (
+            <View
+              style={styles.tagsRow}
+              accessible
+              accessibilityLabel={t('tags.cardA11y', { names: tags.map(tag => tag.name).join(', ') })}
+            >
+              {tags.map(tag => (
+                <TagChip key={tag.id} tag={tag} />
+              ))}
             </View>
           )}
         </View>

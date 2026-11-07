@@ -17,6 +17,7 @@ import { format, addHours } from 'date-fns';
 
 import { EventUseCases } from '@/use-cases/event-use-cases';
 import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
 import { EventType } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { Spacing, Radius, Typography } from '@/constants/theme';
@@ -89,6 +90,7 @@ export default function NewEventScreen() {
 
   // Personnes associées : le sélecteur partagé les charge lui-même
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(() => (defaultPersonId ? [defaultPersonId] : []));
+  const [tagIds, setTagIds] = useState<string[]>([]);
 
   // Picker states
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
@@ -123,6 +125,7 @@ export default function NewEventScreen() {
         type: eventType,
         travelBufferMinutes,
         personIds: selectedPersonIds,
+        tagIds,
       });
 
       showSnackbar(t('eventNew.created'));
@@ -331,6 +334,9 @@ export default function NewEventScreen() {
 
         {/* Carte 5 : Avec qui ? Plusieurs personnes possibles */}
         <PersonField selectedIds={selectedPersonIds} onChange={setSelectedPersonIds} multiple />
+
+        {/* Étiquettes de couleur */}
+        <TagField selectedIds={tagIds} onChange={setTagIds} />
 
         {/* Bouton Créer */}
         <Button
