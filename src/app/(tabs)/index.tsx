@@ -52,6 +52,9 @@ import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger'
 import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposal';
 import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
+import { NowCard } from '@/components/today/NowCard';
+import { isDayOverloaded, nowQueue, tasksToLighten } from '@/domain/rules/now-rules';
+import { useNowActions } from '@/features/now/use-now-actions';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -264,6 +267,21 @@ export default function TodayScreen() {
       return 0;
     });
   }, [events, dueTodayReminders, tasks]);
+
+  // "Maintenant": the first thing to do, put forward at the top of the feed
+  const now = useMemo(() => {
+    const at = new Date();
+    return {
+      queue: nowQueue(reminders, tasks, at),
+      overloaded: isDayOverloaded(reminders, tasks, at),
+      lightenCount: tasksToLighten(tasks, at).length,
+    };
+  }, [reminders, tasks]);
+  const nowItem = now.queue[0] ?? null;
+  const nowFeedId = nowItem ? `${nowItem.kind === 'reminder' ? 'rem' : 'task'}-${nowItem.id}` : null;
+  // The rest of the feed, without the one already shown above it
+  const feedItems = timelineItems.filter(item => item.id !== nowFeedId);
+  const nowActions = useNowActions(load);
 
   if (state === 'loading') return <LoadingState message={t('home.loading')} />;
   if (state === 'error') return <ErrorState message={error} onRetry={load} />;
@@ -536,8 +554,26 @@ export default function TodayScreen() {
           </View>
           </TourTarget>
 
-          {timelineItems.length > 0 ? (
-            timelineItems.map((item, idx) => (
+          {nowItem && (
+            <NowCard
+              item={nowItem}
+              total={now.queue.length}
+              overloaded={now.overloaded}
+              lightenCount={now.lightenCount}
+              onDone={() => nowActions.done(nowItem)}
+              onLater={() => nowActions.later(nowItem)}
+              onLighten={() => nowActions.lighten(now.lightenCount)}
+              onOpenNow={() => router.push('/now')}
+              onOpenItem={() =>
+                nowItem.kind === 'reminder'
+                  ? router.push({ pathname: '/reminders/[id]', params: { id: nowItem.id } })
+                  : router.push(`/tasks/${nowItem.id}`)
+              }
+            />
+          )}
+
+          {feedItems.length > 0 ? (
+            feedItems.map((item, idx) => (
               <GlowCard
                 key={item.id}
                 index={idx}
@@ -629,7 +665,7 @@ export default function TodayScreen() {
                 </View>
               </GlowCard>
             ))
-          ) : (
+          ) : nowItem ? null : (
             <GlowCard tone="neutral">
               <View style={styles.emptyContent}>
                 <Text style={styles.emptyText}>{t('home.timeline.empty')}</Text>

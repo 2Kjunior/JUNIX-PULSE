@@ -526,6 +526,8 @@ export default function RootLayout() {
               <Stack.Screen name="search" options={{ presentation: "card" }} />
               {/* Bilan du jour et de la semaine, ouvert aussi par la notification du récap */}
               <Stack.Screen name="review" options={{ presentation: "card" }} />
+              {/* Maintenant : une seule chose à la fois, en plein écran */}
+              <Stack.Screen name="now" options={{ presentation: "card" }} />
             </Stack>
           </ThemeProvider>
           {/* Snackbar global (au-dessus de tout le contenu) */}

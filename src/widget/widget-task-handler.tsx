@@ -66,6 +66,8 @@ export async function loadTodayWidget(now = new Date()): Promise<WidgetContent> 
   const data = buildTodayWidgetData(reminders, tasks, now);
   const mood = todayWidgetMood(data, now.getHours());
   const next = data.nextReminder;
+  // App locked: the home screen of the phone never shows what the reminders say
+  const hidden = settings.appLockEnabled;
   // "Aujourd'hui", "Demain", or the day of the week of the next reminder
   const nextDay = !next
     ? say('widget.remindersLabel')
@@ -84,8 +86,8 @@ export async function loadTodayWidget(now = new Date()): Promise<WidgetContent> 
       date: format(now, 'EEE d MMM', { locale }),
       message: say(messageKey(data, mood), { count: data.tasksLeft + data.remindersLeftToday, tasks: data.tasksLeft }),
       nextLabel: nextDay.toUpperCase(),
-      nextTitle: next ? next.title : say('widget.noReminder'),
-      nextTime: next ? next.time : '',
+      nextTitle: next ? (hidden ? say('widget.locked') : next.title) : say('widget.noReminder'),
+      nextTime: next && !hidden ? next.time : '',
       progress:
         data.tasksTotal === 0
           ? say('widget.noTask')

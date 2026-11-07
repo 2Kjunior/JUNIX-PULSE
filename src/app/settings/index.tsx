@@ -55,6 +55,7 @@ import {
 } from '@/services/auto-backup-service';
 import { useAutoBackupSetup } from '@/features/backup/use-auto-backup-setup';
 import { canUseAppLock, expectAppLockReturn, setAppLockConfig } from '@/services/app-lock-service';
+import { refreshTodayWidget } from '@/widget/widget-task-handler';
 import { APP_LOCK_DELAYS_MINUTES } from '@/domain/rules/app-lock-rules';
 import { requestDeviceCalendarAccess } from '@/services/device-calendar-service';
 import { format } from 'date-fns';
@@ -242,6 +243,8 @@ export default function SettingsScreen() {
     });
     setAppLockConfig({ enabled, delayMinutes });
     setSettings(s => (s ? { ...s, appLockEnabled: enabled, appLockDelayMinutes: delayMinutes } : s));
+    // The widget hides or shows the reminder titles at once
+    void refreshTodayWidget();
   };
 
   const handleToggleAppLock = async (val: boolean) => {
