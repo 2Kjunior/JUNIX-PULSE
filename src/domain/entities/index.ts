@@ -289,6 +289,8 @@ export interface Settings {
    * Valeur par défaut : 'dark'.
    */
   appearanceMode: AppearanceMode;
+  /** Cards and bars on a plain background instead of glass. False by default. */
+  reduceTransparency: boolean;
   /**
    * @deprecated Conservé pour la rétro-compatibilité des sauvegardes. Utiliser `appearanceMode`.
    */

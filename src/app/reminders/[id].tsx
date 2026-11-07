@@ -73,7 +73,9 @@ export default function ReminderDetailScreen() {
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminder, setReminder] = useState<Reminder | null>(null);
-  const [person, setPerson] = useState<Person | null>(null);
+  // Every person of the reminder; the first one is the main one, the one the action calls
+  const [persons, setPersons] = useState<Person[]>([]);
+  const person = persons[0] ?? null;
   const [checklist, setChecklist] = useState<ReminderChecklistItem[]>([]);
   const [error, setError] = useState('');
   const [showSnoozeSheet, setShowSnoozeSheet] = useState(false);
@@ -99,10 +101,9 @@ export default function ReminderDetailScreen() {
       setReminder(rem);
       setChecklist(items);
 
-      if (rem.personId) {
-        const p = await PersonRepository.findById(rem.personId);
-        setPerson(p);
-      }
+      const ids = await ReminderRepository.findPersonIds(rem.id);
+      const found = await Promise.all(ids.map(personId => PersonRepository.findById(personId)));
+      setPersons(found.filter((item): item is Person => item !== null));
 
       setState('content');
     } catch (e) {
@@ -242,6 +243,13 @@ export default function ReminderDetailScreen() {
             <Ionicons name="time-outline" size={16} color={theme.primary.default} />
             <Text style={styles.timeText}>{dateStr}</Text>
           </View>
+          {/* Rappel à confirmer : visible, pour savoir qu'il sonnera de nouveau */}
+          {reminder.requiresConfirmation && (
+            <View style={styles.timeRow}>
+              <Ionicons name="repeat-outline" size={16} color={theme.primary.default} />
+              <Text style={styles.timeText}>{t('confirmReminder.badge')}</Text>
+            </View>
+          )}
         </View>
         </GlowCard>
 
@@ -262,7 +270,7 @@ export default function ReminderDetailScreen() {
                       onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
                       accessibilityRole="link"
                     >
-                      {t('remDetail.with', { name: person.displayName })}
+                      {t('remDetail.with', { name: persons.map(item => item.displayName).join(', ') })}
                     </Text>
                   ) : null}
                 </View>
@@ -282,20 +290,26 @@ export default function ReminderDetailScreen() {
           </View>
         )}
 
-        {/* ─── La personne du rappel, quand aucune action ne la montre déjà ───── */}
-        {person && !actionInfo?.label && (
+        {/* ─── Les personnes du rappel : chacune ouvre sa fiche (sauf la seule déjà dans l'action) ── */}
+        {persons.length > 0 && (!actionInfo?.label || persons.length > 1) && (
           <View style={styles.actionSection}>
-            <GlowCard
-              tone="neutral"
-              onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
-              accessibilityLabel={t('remDetail.with', { name: person.displayName })}
-            >
-              <View style={styles.actionCardRow}>
-                <View style={styles.actionCardLeft}>
-                  <PersonAvatar name={person.displayName} size={36} />
-                  <Text style={styles.actionCardLabel}>{t('remDetail.with', { name: person.displayName })}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
+            <GlowCard tone="neutral">
+              <View style={styles.peopleList}>
+                {persons.map(item => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.actionCardRow}
+                    onPress={() => router.push({ pathname: '/people/[id]', params: { id: item.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('remDetail.with', { name: item.displayName })}
+                  >
+                    <View style={styles.actionCardLeft}>
+                      <PersonAvatar name={item.displayName} size={36} />
+                      <Text style={styles.actionCardLabel}>{item.displayName}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
+                  </TouchableOpacity>
+                ))}
               </View>
             </GlowCard>
           </View>

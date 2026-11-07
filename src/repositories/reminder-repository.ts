@@ -210,15 +210,47 @@ export const ReminderRepository = {
   /**
    * Récupère tous les rappels actifs (non supprimés), triés par date.
    */
-  /** The reminders linked to a person, oldest first. */
+  /** The reminders linked to a person, as main person or among others, oldest first. */
   async findByPerson(personId: string): Promise<Reminder[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(
-      `SELECT * FROM reminders WHERE person_id = ? AND deleted_at IS NULL ORDER BY scheduled_at ASC`,
+      `SELECT * FROM reminders
+       WHERE deleted_at IS NULL
+         AND (person_id = ? OR id IN (SELECT reminder_id FROM reminder_persons WHERE person_id = ?))
+       ORDER BY scheduled_at ASC`,
+      personId,
       personId
     );
     return rows.map(rowToReminder);
   },
+
+  /**
+   * Every person of it, the main one first. Falls back on the main person alone for a row
+   * restored from a backup made before the people table existed.
+   */
+  async findPersonIds(id: string): Promise<string[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{ person_id: string }>(
+      `SELECT person_id FROM reminders WHERE id = ? AND person_id IS NOT NULL
+       UNION ALL
+       SELECT person_id FROM reminder_persons WHERE reminder_id = ?`,
+      id,
+      id
+    );
+    return [...new Set(rows.map(row => row.person_id))];
+  },
+
+  /** Replaces its people; the first one becomes the main person. */
+  async setPersons(id: string, personIds: readonly string[]): Promise<void> {
+    const db = await getDatabase();
+    const unique = [...new Set(personIds)];
+    await db.runAsync(`DELETE FROM reminder_persons WHERE reminder_id = ?`, id);
+    for (const personId of unique) {
+      await db.runAsync(`INSERT OR IGNORE INTO reminder_persons (reminder_id, person_id) VALUES (?, ?)`, id, personId);
+    }
+    await db.runAsync(`UPDATE reminders SET person_id = ? WHERE id = ?`, unique[0] ?? null, id);
+  },
+
 
   async findAll(): Promise<Reminder[]> {
     const db = await getDatabase();

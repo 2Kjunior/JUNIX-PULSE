@@ -207,15 +207,47 @@ export const TaskRepository = {
     return rows.map(rowToTask);
   },
 
-  /** The tasks linked to a person. */
+  /** The tasks linked to a person, as main person or among others. */
   async findByPerson(personId: string): Promise<Task[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(
-      `SELECT * FROM tasks WHERE person_id = ? AND deleted_at IS NULL ORDER BY created_at DESC`,
+      `SELECT * FROM tasks
+       WHERE deleted_at IS NULL
+         AND (person_id = ? OR id IN (SELECT task_id FROM task_persons WHERE person_id = ?))
+       ORDER BY created_at DESC`,
+      personId,
       personId
     );
     return rows.map(rowToTask);
   },
+
+  /**
+   * Every person of it, the main one first. Falls back on the main person alone for a row
+   * restored from a backup made before the people table existed.
+   */
+  async findPersonIds(id: string): Promise<string[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{ person_id: string }>(
+      `SELECT person_id FROM tasks WHERE id = ? AND person_id IS NOT NULL
+       UNION ALL
+       SELECT person_id FROM task_persons WHERE task_id = ?`,
+      id,
+      id
+    );
+    return [...new Set(rows.map(row => row.person_id))];
+  },
+
+  /** Replaces its people; the first one becomes the main person. */
+  async setPersons(id: string, personIds: readonly string[]): Promise<void> {
+    const db = await getDatabase();
+    const unique = [...new Set(personIds)];
+    await db.runAsync(`DELETE FROM task_persons WHERE task_id = ?`, id);
+    for (const personId of unique) {
+      await db.runAsync(`INSERT OR IGNORE INTO task_persons (task_id, person_id) VALUES (?, ?)`, id, personId);
+    }
+    await db.runAsync(`UPDATE tasks SET person_id = ? WHERE id = ?`, unique[0] ?? null, id);
+  },
+
 
   async findAll(): Promise<Task[]> {
     const db = await getDatabase();

@@ -116,7 +116,7 @@ export default function NewTaskScreen() {
         dueDate,
         estimatedMinutes,
         subtasks,
-        personId: personIds[0],
+        personIds,
       });
 
       showSnackbar(t('taskNew.created'));
@@ -350,8 +350,8 @@ export default function NewTaskScreen() {
           </View>
         </View>
 
-        {/* Avec qui ? La personne de la tâche, une seule */}
-        <PersonField selectedIds={personIds} onChange={setPersonIds} />
+        {/* Avec qui ? Une ou plusieurs personnes */}
+        <PersonField selectedIds={personIds} onChange={setPersonIds} multiple />
 
         {/* Carte 5 : Sous-tâches */}
         <View style={formStyles.sectionHeaderRow}>

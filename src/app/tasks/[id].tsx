@@ -109,7 +109,7 @@ export default function TaskDetailScreen() {
       setPriority(loaded.priority);
       setScheduledDateStr(loaded.scheduledDate);
       setEstimatedMinutes(loaded.estimatedMinutes);
-      setPersonIds(loaded.personId ? [loaded.personId] : []);
+      setPersonIds(await TaskRepository.findPersonIds(loaded.id));
       setDueDate(loaded.dueDate);
 
       setScreenState('content');
@@ -185,7 +185,7 @@ export default function TaskDetailScreen() {
         priority,
         scheduledDate: scheduledDateStr,
         estimatedMinutes: estimatedMinutes,
-        personId: personIds[0] ?? null,
+        personIds,
         dueDate: dueDate ?? null,
         status:
           task.status === 'INBOX' && scheduledDateStr
@@ -453,7 +453,7 @@ export default function TaskDetailScreen() {
         {/* Avec qui ? */}
         <View style={styles.field}>
           <Text style={styles.label}>{t('personField.header')}</Text>
-          <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" />
+          <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" multiple />
         </View>
 
         {/* Sous-tâches */}

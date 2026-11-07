@@ -27,6 +27,8 @@ export interface CreateReminderInput {
   priority?: Reminder['priority'];
   actionType?: Reminder['actionType'];
   personId?: string;
+  /** All the people of the reminder, the main one first; personId alone means just that one. */
+  personIds?: string[];
   /** Rings again every few minutes until completed or snoozed. */
   requiresConfirmation?: boolean;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
@@ -57,12 +59,16 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     timezone: input.timezone,
     priority: input.priority ?? 'NORMAL',
     actionType: input.actionType ?? 'NONE',
-    personId: input.personId,
+    personId: input.personIds?.[0] ?? input.personId,
     requiresConfirmation: input.requiresConfirmation,
     recurrenceRuleId,
     createdAt: now,
     updatedAt: now,
   });
+
+  // Every person of the reminder, the main one first
+  const people = input.personIds ?? (input.personId ? [input.personId] : []);
+  if (people.length > 0) await ReminderRepository.setPersons(reminderId, people);
 
   // 3. Créer les éléments de checklist si fournis
   if (input.checklistItems?.length) {
@@ -94,11 +100,14 @@ export interface UpdateReminderInput {
   actionType?: Reminder['actionType'];
   /** null takes the person off the reminder. */
   personId?: string | null;
+  /** All its people, the main one first: replaces the ones it had. */
+  personIds?: string[];
   requiresConfirmation?: boolean;
 }
 
 export async function updateReminder(input: UpdateReminderInput): Promise<void> {
   const now = new Date().toISOString();
+  if (input.personIds !== undefined) await ReminderRepository.setPersons(input.id, input.personIds);
 
   // Mettre à jour en base
   await ReminderRepository.update({
@@ -141,7 +150,7 @@ export async function completeReminder(reminder: Reminder): Promise<void> {
           timezone: reminder.timezone,
           priority: reminder.priority,
           actionType: reminder.actionType,
-          personId: reminder.personId,
+          personIds: await ReminderRepository.findPersonIds(reminder.id),
           requiresConfirmation: reminder.requiresConfirmation,
           recurrenceRule: {
             type: rule.type,
@@ -160,10 +169,12 @@ export async function completeReminder(reminder: Reminder): Promise<void> {
   // The reminder and its repeats leave the notification shade
   void NotificationService.dismissForReminder(reminder.id);
 
-  // Calling, writing to or meeting the person of the reminder is an exchange with them
+  // Calling, writing to or meeting the people of the reminder is an exchange with each of them
   const exchange = interactionTypeForAction(reminder.actionType);
-  if (reminder.personId && exchange) {
-    await recordLinkedInteraction({ personId: reminder.personId, type: exchange, reminderId: reminder.id });
+  if (exchange) {
+    for (const personId of await ReminderRepository.findPersonIds(reminder.id)) {
+      await recordLinkedInteraction({ personId, type: exchange, reminderId: reminder.id });
+    }
   }
 
   emitMascotEvent({ type: 'REMINDER_COMPLETED', priority: reminder.priority });

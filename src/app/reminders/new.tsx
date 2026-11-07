@@ -28,6 +28,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { createReminder } from '@/use-cases/reminder-use-cases';
 import { PersonField } from '@/components/people/PersonField';
+import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { Reminder } from '@/domain/entities';
@@ -144,7 +145,7 @@ export default function NewReminderScreen() {
         timezone: settings.timezone,
         priority,
         actionType,
-        personId: personIds[0],
+        personIds,
         requiresConfirmation,
         recurrenceRule: hasRecurrence
           ? {
@@ -321,8 +322,8 @@ export default function NewReminderScreen() {
             })}
           </View>
 
-          {/* ─── Avec qui ? La personne du rappel, une seule ─────────────────────── */}
-          <PersonField selectedIds={personIds} onChange={setPersonIds} look="reminder" />
+          {/* ─── Avec qui ? Une ou plusieurs personnes, la première est la principale ─── */}
+          <PersonField selectedIds={personIds} onChange={setPersonIds} look="reminder" multiple />
 
           {/* ─── Priorité (Groupe 4 - R-05) ───────────────────────────────────────── */}
           <View style={styles.sectionHeaderRow}>
@@ -409,7 +410,10 @@ export default function NewReminderScreen() {
               </View>
               <Switch
                 value={requiresConfirmation}
-                onValueChange={setRequiresConfirmation}
+                onValueChange={(value: boolean) => {
+                  setRequiresConfirmation(value);
+                  if (value) void offerExactAlarmsForConfirmation();
+                }}
                 trackColor={{ false: palette.outline.variant, true: palette.primary.default }}
                 thumbColor={requiresConfirmation ? '#FFFFFF' : palette.onSurface.disabled}
                 accessibilityLabel={t('confirmReminder.label')}

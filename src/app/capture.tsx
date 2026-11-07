@@ -125,7 +125,7 @@ export default function QuickCaptureScreen() {
           title: cleanTitle.trim(),
           scheduledDate: format(targetDate, 'yyyy-MM-dd'),
           priority,
-          personId: targetPerson?.id,
+          personIds: targetPerson ? [targetPerson.id] : undefined,
         });
         showSnackbar(t('capture.createdTask'));
         closeScreen();
@@ -148,7 +148,7 @@ export default function QuickCaptureScreen() {
         timezone: userTimezone,
         priority,
         actionType,
-        personId: targetPerson?.id,
+        personIds: targetPerson ? [targetPerson.id] : undefined,
         recurrenceRule: recurrence,
       });
 

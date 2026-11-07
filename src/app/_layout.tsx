@@ -222,6 +222,7 @@ export default function RootLayout() {
           await SettingsRepository.update({ timezone: deviceTimezone, updatedAt: new Date().toISOString() }).catch(() => {});
         }
         setThemeMode(settings.appearanceMode);
+        useAppStore.getState().setReduceTransparency(settings.reduceTransparency);
 
         // 3. Initialiser les notifications (handler + canal Android)
         //    Isolé pour ne jamais bloquer le démarrage si expo-notifications est limité dans Expo Go

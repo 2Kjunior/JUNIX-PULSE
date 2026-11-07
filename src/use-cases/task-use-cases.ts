@@ -23,6 +23,8 @@ export interface CreateTaskInput {
   priority?: ReminderPriority;
   goalId?: string;
   personId?: string;
+  /** All the people of the task, the main one first. */
+  personIds?: string[];
   tags?: string[];
   subtasks?: string[];         // Titres des sous-tâches initiales
 }
@@ -40,6 +42,8 @@ export interface UpdateTaskInput {
   goalId?: string;
   /** null takes the person off the task. */
   personId?: string | null;
+  /** All its people, the main one first: replaces the ones it had. */
+  personIds?: string[];
   tags?: string[];
 }
 
@@ -90,11 +94,15 @@ export const TaskUseCases = {
       estimatedMinutes: input.estimatedMinutes,
       priority: input.priority ?? 'NORMAL',
       goalId: input.goalId,
-      personId: input.personId,
+      personId: input.personIds?.[0] ?? input.personId,
       tags: input.tags,
       createdAt: now,
       updatedAt: now,
     });
+
+    // Every person of the task, the main one first
+    const people = input.personIds ?? (input.personId ? [input.personId] : []);
+    if (people.length > 0) await TaskRepository.setPersons(taskId, people);
 
     // Création des sous-tâches initiales
     if (input.subtasks && input.subtasks.length > 0) {
@@ -122,10 +130,12 @@ export const TaskUseCases = {
    */
   async updateTask(input: UpdateTaskInput): Promise<void> {
     const now = new Date().toISOString();
+    const { personIds, ...columns } = input;
     await TaskRepository.update({
-      ...input,
+      ...columns,
       updatedAt: now,
     });
+    if (personIds !== undefined) await TaskRepository.setPersons(input.id, personIds);
   },
 
   /**

@@ -378,26 +378,17 @@ export const makeSettingsStyles = (t: ThemePalette) => {
       marginBottom: Spacing.md,
       lineHeight: 18,
     },
-    previewContainer: {
-      marginTop: Spacing.xs,
+    appearanceGroup: {
+      marginBottom: 0,
+      padding: Spacing.md,
     },
-    previewCardInner: {
-      padding: Spacing.sm,
-    },
-    previewHeader: {
+    glassRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: Spacing.xs,
-      marginBottom: 4,
-    },
-    previewTitle: {
-      ...Typography.titleMedium,
-      color: t.onSurface.primary,
-      fontWeight: '600',
-    },
-    previewDesc: {
-      ...Typography.bodySmall,
-      color: t.onSurface.variant,
+      gap: Spacing.md,
+      paddingTop: Spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: rowBorder,
     },
     version: {
       ...Typography.labelSmall,

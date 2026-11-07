@@ -19,6 +19,8 @@ import { EventUseCases } from '@/use-cases/event-use-cases';
 const mockInteractions: { personId: string; type: string; reminderId?: string; eventId?: string }[] = [];
 const mockPersons = new Set(['paul', 'lea']);
 const mockEnded: { event: { id: string; startAt: string }; personIds: string[] }[] = [];
+// The people of each reminder, as the link table holds them
+const mockReminderPeople: Record<string, string[]> = { r1: ['paul'], r2: ['lea'], r3: [] };
 
 jest.mock('@/repositories/person-repository', () => ({
   PersonRepository: {
@@ -36,7 +38,11 @@ jest.mock('@/repositories/person-repository', () => ({
   },
 }));
 jest.mock('@/repositories/reminder-repository', () => ({
-  ReminderRepository: { update: jest.fn(async () => {}), findRecurrenceRule: jest.fn(async () => null) },
+  ReminderRepository: {
+    update: jest.fn(async () => {}),
+    findRecurrenceRule: jest.fn(async () => null),
+    findPersonIds: jest.fn(async (id: string) => mockReminderPeople[id] ?? []),
+  },
 }));
 jest.mock('@/repositories/event-repository', () => ({
   EventRepository: { findEndedWithPersons: jest.fn(async () => mockEnded) },
@@ -79,6 +85,15 @@ describe('what counts as an exchange', () => {
     await completeReminder(reminder('NONE', 'lea', 'r2'));
     await completeReminder(reminder('CALL', undefined, 'r3'));
     expect(mockInteractions).toEqual([expect.objectContaining({ personId: 'paul', type: 'CALL', reminderId: 'r1' })]);
+  });
+
+  it('a call with several people counts as an exchange with each of them', async () => {
+    mockReminderPeople.r4 = ['paul', 'lea'];
+    await completeReminder(reminder('CALL', 'paul', 'r4'));
+    expect(mockInteractions.map(item => [item.personId, item.type, item.reminderId])).toEqual([
+      ['paul', 'CALL', 'r4'],
+      ['lea', 'CALL', 'r4'],
+    ]);
   });
 
   it('never counts for a person that no longer exists', async () => {

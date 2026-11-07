@@ -34,6 +34,9 @@ interface AppStore {
   // Thème & Apparence
   themeMode: AppearanceMode;
   setThemeMode: (mode: AppearanceMode) => void;
+  /** Glass turned off in the settings: cards and bars on a plain background. */
+  reduceTransparency: boolean;
+  setReduceTransparency: (reduce: boolean) => void;
 
   // Langue : le choix de la personne, et la langue qui en résulte (celle du téléphone sur « auto »)
   languageSetting: LanguageSetting;
@@ -72,6 +75,8 @@ export const useAppStore = create<AppStore>((set) => ({
   // Thème & Apparence (valeur par défaut : sombre)
   themeMode: 'dark',
   setThemeMode: (mode) => set({ themeMode: mode }),
+  reduceTransparency: false,
+  setReduceTransparency: (reduce) => set({ reduceTransparency: reduce }),
 
   // Langue
   languageSetting: 'auto',

@@ -48,6 +48,7 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     endOfDayHour: (row.end_of_day_hour as number) ?? 20,
     morningBriefingHour: (row.morning_briefing_hour as number) ?? 8,
     appearanceMode,
+    reduceTransparency: (row.reduce_transparency as number) === 1,
     appearanceDark: row.appearance_dark !== undefined ? (row.appearance_dark as number) === 1 : true,
     mascotPresence: validOr(row.mascot_presence, VALID_MASCOT_PRESENCE, DEFAULT_MASCOT_SETTINGS.presence),
     mascotAddress: validOr(row.mascot_address, VALID_MASCOT_ADDRESS, DEFAULT_MASCOT_SETTINGS.address),
@@ -117,6 +118,10 @@ export const SettingsRepository = {
     if (params.appLockDelayMinutes !== undefined) {
       setClauses.push('app_lock_delay_minutes = ?');
       values.push(params.appLockDelayMinutes);
+    }
+    if (params.reduceTransparency !== undefined) {
+      setClauses.push('reduce_transparency = ?');
+      values.push(params.reduceTransparency ? 1 : 0);
     }
     if (params.hapticsEnabled !== undefined) {
       setClauses.push('haptics_enabled = ?');

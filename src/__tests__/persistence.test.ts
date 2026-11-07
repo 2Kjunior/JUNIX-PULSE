@@ -113,6 +113,25 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
       },
     };
 
+    it('accepte une ancienne sauvegarde sans personnes de rappel ni de tâche, et garde celles d’une récente', () => {
+      const old = parseBackup(JSON.stringify(baseValidBackup));
+      expect(old.reminder_persons).toEqual([]);
+      expect(old.task_persons).toEqual([]);
+
+      const recent = parseBackup(
+        JSON.stringify({
+          ...baseValidBackup,
+          data: {
+            ...baseValidBackup.data,
+            reminder_persons: [{ reminder_id: 'r1', person_id: 'p1' }],
+            task_persons: [{ task_id: 't1', person_id: 'p2' }],
+          },
+        })
+      );
+      expect(recent.reminder_persons).toEqual([{ reminder_id: 'r1', person_id: 'p1' }]);
+      expect(recent.task_persons).toEqual([{ task_id: 't1', person_id: 'p2' }]);
+    });
+
     it('valide et parse une sauvegarde contenant appearance_mode ("dark")', () => {
       const json = JSON.stringify(baseValidBackup);
       const parsed = parseBackup(json);
@@ -300,9 +319,11 @@ describe('Phase P2 — Persistance & Sauvegarde', () => {
         'goal_tasks',
         'goals',
         'reminder_checklist_items',
+        'reminder_persons',
         'reminders',
         'recurrence_rules',
         'subtasks',
+        'task_persons',
         'tasks',
         'event_persons',
         'events',

@@ -530,5 +530,43 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE reminders ADD COLUMN requires_confirmation INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    version: 31,
+    name: 'add_people_of_reminders_and_tasks',
+    sql: `
+      -- Plusieurs personnes par rappel et par tache, comme pour les evenements. La colonne
+      -- person_id reste la personne principale (celle que le bouton Appeler appelle).
+      CREATE TABLE IF NOT EXISTS reminder_persons (
+        reminder_id TEXT NOT NULL,
+        person_id TEXT NOT NULL,
+        PRIMARY KEY (reminder_id, person_id),
+        FOREIGN KEY (reminder_id) REFERENCES reminders(id) ON DELETE CASCADE,
+        FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS task_persons (
+        task_id TEXT NOT NULL,
+        person_id TEXT NOT NULL,
+        PRIMARY KEY (task_id, person_id),
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_reminder_persons_person ON reminder_persons(person_id);
+      CREATE INDEX IF NOT EXISTS idx_task_persons_person ON task_persons(person_id);
+      -- Les liens existants passent dans les nouvelles tables, rien ne se perd
+      INSERT OR IGNORE INTO reminder_persons (reminder_id, person_id)
+        SELECT id, person_id FROM reminders WHERE person_id IS NOT NULL;
+      INSERT OR IGNORE INTO task_persons (task_id, person_id)
+        SELECT id, person_id FROM tasks WHERE person_id IS NOT NULL;
+    `,
+  },
+  {
+    version: 32,
+    name: 'add_reduce_transparency',
+    sql: `
+      -- Effet verre coupe dans les reglages : cartes et barres sur fond plein, plus lisibles.
+      -- Propre au telephone, comme le verrou : pas dans les sauvegardes.
+      ALTER TABLE settings ADD COLUMN reduce_transparency INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];
 

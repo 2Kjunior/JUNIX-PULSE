@@ -78,7 +78,7 @@ const APPEARANCE_OPTIONS: {
 ];
 
 /** The pages of the settings: the summary lists them, each opens on its own. */
-type SettingsSection = 'appearance' | 'notifications' | 'mascot' | 'security' | 'data';
+type SettingsSection = 'notifications' | 'mascot' | 'security' | 'data';
 type SettingsPage = SettingsSection | 'profile';
 
 const HUB_SECTIONS: readonly {
@@ -87,7 +87,6 @@ const HUB_SECTIONS: readonly {
   icon: keyof typeof Ionicons.glyphMap;
   color: 'primary' | 'tertiary' | 'success' | 'error';
 }[] = [
-  { id: 'appearance', titleKey: 'settingsScreen.appearance', icon: 'color-palette-outline', color: 'primary' },
   { id: 'notifications', titleKey: 'settingsHub.notifications', icon: 'notifications-outline', color: 'tertiary' },
   { id: 'mascot', titleKey: 'mascotSettings.title', icon: 'happy-outline', color: 'primary' },
   { id: 'security', titleKey: 'settingsHub.security', icon: 'shield-checkmark-outline', color: 'success' },
@@ -102,7 +101,7 @@ function pageOf(value: unknown): SettingsPage | null {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode } = useAppStore();
+  const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode, setReduceTransparency } = useAppStore();
   const { palette } = useTheme();
   const deviceTimezone = detectDeviceTimezone();
   const t = useT();
@@ -325,6 +324,19 @@ export default function SettingsScreen() {
   };
 
 
+  // The glass effect: on by default, off puts cards and bars on a plain background
+  const handleToggleGlass = async (glass: boolean) => {
+    setReduceTransparency(!glass);
+    setSettings(s => (s ? { ...s, reduceTransparency: !glass } : s));
+    try {
+      await SettingsRepository.update({ reduceTransparency: !glass, updatedAt: new Date().toISOString() });
+    } catch {
+      setReduceTransparency(glass);
+      setSettings(s => (s ? { ...s, reduceTransparency: glass } : s));
+      showSnackbar(t('settingsScreen.appearanceFailed'));
+    }
+  };
+
   const handleUpdateBriefingHour = async (hour: number) => {
     try {
       await SettingsRepository.update({
@@ -441,14 +453,9 @@ export default function SettingsScreen() {
     thumbColor: value ? palette.primary.default : palette.onSurface.disabled,
   });
 
-  const appearanceLabel = t(
-    (APPEARANCE_OPTIONS.find(option => option.value === (settings.appearanceMode ?? themeMode)) ?? APPEARANCE_OPTIONS[2])
-      .labelKey
-  );
   const languageLabel = t(settings.language === 'auto' ? 'language.auto' : settings.language === 'en' ? 'language.en' : 'language.fr');
 
   const summaries: Record<SettingsSection, string> = {
-    appearance: appearanceLabel,
     notifications: settings.notificationsEnabled
       ? [
           t('settingsHub.notifOn'),
@@ -492,6 +499,9 @@ export default function SettingsScreen() {
           </View>
         </GlowCard>
       </TouchableOpacity>
+
+      {/* Apparence : choisie ici même, sans page à ouvrir */}
+      {renderAppearance()}
 
       <View style={styles.hubGroup}>
         {HUB_SECTIONS.map((section, index) => (
@@ -550,7 +560,8 @@ export default function SettingsScreen() {
   );
 
   const renderAppearance = () => (
-    <View style={styles.section}>
+    <View style={[styles.hubGroup, styles.appearanceGroup]}>
+      <Text style={styles.sectionLabel}>{t('settingsScreen.appearance')}</Text>
       <View
         style={styles.segmentedControl}
         accessibilityRole="radiogroup"
@@ -581,21 +592,18 @@ export default function SettingsScreen() {
 
       <Text style={styles.appearanceHelp}>{t('settingsScreen.appearanceHelp')}</Text>
 
-      {/* Mini aperçu en direct avec GlowCard */}
-      <View style={styles.previewContainer}>
-        <GlowCard tone="primary" intensity="soft" size="list">
-          <View style={styles.previewCardInner}>
-            <View style={styles.previewHeader}>
-              <Ionicons name="sparkles" size={16} color={palette.primary.default} />
-              <Text style={styles.previewTitle}>{t('settingsScreen.preview')}</Text>
-            </View>
-            <Text style={styles.previewDesc}>
-              {t('settingsScreen.themeActive', {
-                mode: t(palette.mode === 'light' ? 'settingsScreen.light' : 'settingsScreen.dark'),
-              })}
-            </Text>
-          </View>
-        </GlowCard>
+      <View style={styles.glassRow}>
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.glass')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.glassHelp')}</Text>
+        </View>
+        <Switch
+          value={!settings.reduceTransparency}
+          onValueChange={handleToggleGlass}
+          {...switchColors(!settings.reduceTransparency)}
+          accessibilityLabel={t('settingsScreen.glass')}
+          testID="settings-glass"
+        />
       </View>
     </View>
   );
@@ -856,7 +864,6 @@ export default function SettingsScreen() {
 
   const PAGES: Record<SettingsPage, () => ReactElement> = {
     profile: renderProfile,
-    appearance: renderAppearance,
     notifications: renderNotifications,
     mascot: renderMascot,
     security: renderSecurity,

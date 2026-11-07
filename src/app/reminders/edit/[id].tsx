@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { updateReminder } from '@/use-cases/reminder-use-cases';
 import { PersonField } from '@/components/people/PersonField';
+import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
@@ -99,7 +100,7 @@ export default function EditReminderScreen() {
       setScheduledAt(new Date(rem.scheduledAt));
       setPriority(rem.priority);
       setActionType(rem.actionType);
-      setPersonIds(rem.personId ? [rem.personId] : []);
+      setPersonIds(await ReminderRepository.findPersonIds(rem.id));
       setRequiresConfirmation(!!rem.requiresConfirmation);
       setLoading(false);
     } catch (e) {
@@ -132,7 +133,7 @@ export default function EditReminderScreen() {
         scheduledAt,
         priority,
         actionType,
-        personId: personIds[0] ?? null,
+        personIds,
         requiresConfirmation,
       });
 
@@ -279,7 +280,10 @@ export default function EditReminderScreen() {
             </View>
             <Switch
               value={requiresConfirmation}
-              onValueChange={setRequiresConfirmation}
+              onValueChange={(value: boolean) => {
+                setRequiresConfirmation(value);
+                if (value) void offerExactAlarmsForConfirmation();
+              }}
               trackColor={{ false: palette.outline.variant, true: palette.primary.default }}
               thumbColor={requiresConfirmation ? '#FFFFFF' : palette.onSurface.disabled}
               accessibilityLabel={t('confirmReminder.label')}
@@ -289,7 +293,7 @@ export default function EditReminderScreen() {
           {/* Avec qui ? */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>{t('personField.header')}</Text>
-            <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" />
+            <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" multiple />
           </View>
 
           {/* Note / Description */}

@@ -119,6 +119,9 @@ export function makeReminderDetailStyles(theme: ThemePalette) {
     actionSection: {
       marginTop: 2,
     },
+    peopleList: {
+      gap: Spacing.md,
+    },
     actionCardRow: {
       flexDirection: 'row',
       alignItems: 'center',
