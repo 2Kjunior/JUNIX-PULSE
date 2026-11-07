@@ -20,8 +20,10 @@ import {
 const MOODS = Object.keys(MOOD_VISUALS) as MascotMood[];
 
 describe('MOOD_VISUALS', () => {
-  it('covers the six moods with the colours of the reference sheet', () => {
-    expect(MOODS.sort()).toEqual(['alert', 'calm', 'focused', 'happy', 'party', 'sleepy']);
+  it('covers the seven moods with the colours of the reference sheet', () => {
+    expect(MOODS.sort()).toEqual(['alert', 'calm', 'focused', 'happy', 'party', 'sleepy', 'worried']);
+    // Worried: amber, never the red of the alert
+    expect(MOOD_VISUALS.worried.ring).toEqual(['#f5b942', '#8B3DF0']);
     expect(MOOD_VISUALS.calm.ring).toEqual(['#8B3DF0', '#0AE8F0']);
     expect(MOOD_VISUALS.alert.ring).toEqual(['#ff9a3d', '#ff4f8b']);
     expect(MOOD_VISUALS.party.ring).toEqual(['#ff5fa2', '#8B3DF0']);

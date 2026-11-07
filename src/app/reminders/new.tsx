@@ -27,6 +27,7 @@ import { format, addHours, setHours, setMinutes } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { createReminder } from '@/use-cases/reminder-use-cases';
+import { PersonField } from '@/components/people/PersonField';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { Reminder } from '@/domain/entities';
@@ -64,9 +65,11 @@ export default function NewReminderScreen() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeNewReminderStyles);
 
-  const { defaultHour, defaultDate } = useLocalSearchParams<{
+  const { defaultHour, defaultDate, personId: defaultPersonId } = useLocalSearchParams<{
     defaultHour?: string;
     defaultDate?: string;
+    /** Opened from the page of a person: the reminder is already about them. */
+    personId?: string;
   }>();
 
   // Champs du formulaire
@@ -87,7 +90,9 @@ export default function NewReminderScreen() {
   });
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');
   const [actionType, setActionType] = useState<ActionType>('NONE');
+  const [personIds, setPersonIds] = useState<string[]>(() => (defaultPersonId ? [defaultPersonId] : []));
   const [hasRecurrence, setHasRecurrence] = useState(false);
+  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
 
   // États UI
@@ -139,6 +144,8 @@ export default function NewReminderScreen() {
         timezone: settings.timezone,
         priority,
         actionType,
+        personId: personIds[0],
+        requiresConfirmation,
         recurrenceRule: hasRecurrence
           ? {
               type: recurrenceType,
@@ -314,6 +321,9 @@ export default function NewReminderScreen() {
             })}
           </View>
 
+          {/* ─── Avec qui ? La personne du rappel, une seule ─────────────────────── */}
+          <PersonField selectedIds={personIds} onChange={setPersonIds} look="reminder" />
+
           {/* ─── Priorité (Groupe 4 - R-05) ───────────────────────────────────────── */}
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="flash-outline" size={16} color={palette.primary.default} />
@@ -390,6 +400,22 @@ export default function NewReminderScreen() {
                 })}
               </View>
             )}
+
+            {/* À confirmer : il sonne de nouveau tant qu'il n'est ni terminé ni reporté */}
+            <View style={[styles.rowBetween, { marginTop: Spacing.sm }]}>
+              <View style={{ flex: 1, paddingRight: Spacing.sm }}>
+                <Text style={styles.fieldLabel}>{t('confirmReminder.label')}</Text>
+                <Text style={styles.fieldHelper}>{t('confirmReminder.helper')}</Text>
+              </View>
+              <Switch
+                value={requiresConfirmation}
+                onValueChange={setRequiresConfirmation}
+                trackColor={{ false: palette.outline.variant, true: palette.primary.default }}
+                thumbColor={requiresConfirmation ? '#FFFFFF' : palette.onSurface.disabled}
+                accessibilityLabel={t('confirmReminder.label')}
+                testID="reminder-confirmation"
+              />
+            </View>
           </View>
 
           {/* ─── CTA Principal Dégradé (Unique dégradé R-05) ───────────────────────── */}

@@ -10,13 +10,14 @@
 import type { DailyRecapKind, DailyRecapNotification } from "@/domain/rules/daily-recap-rules";
 import { t } from "@/i18n";
 import { logger } from "@/utils/logger";
+import { expectAppLockReturn } from "@/services/app-lock-service";
 import {
   REMINDER_ACTION_COMPLETE,
   REMINDER_ACTION_SNOOZE,
+  REMINDER_ACTION_TASK,
   REMINDER_CATEGORY_ID,
 } from "@/domain/rules/reminder-notification-rules";
 import { Platform } from "react-native";
-import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
 
 type NotificationsType = typeof import("expo-notifications");
@@ -24,8 +25,12 @@ type NotificationsType = typeof import("expo-notifications");
 let Notifications: NotificationsType | null = null;
 
 try {
+  // No local notifications on the web: every method then returns early, as without the module
+  if (Platform.OS === "web") throw new Error("web");
   // Les notifications locales fonctionnent dans Expo Go depuis SDK 53.
   // Seul le push distant est bloqué — mais Junix Pulse n'utilise pas de push.
+  // Loaded here so that a build without the module still starts (Expo Go, tests)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   Notifications = require("expo-notifications");
 } catch {
   logger.warn("[NotificationService] expo-notifications non disponible — notifications désactivées");
@@ -128,20 +133,30 @@ export const NotificationService = {
           showBadge: false,
         });
       }
-      // The buttons open the app, which completes or snoozes the reminder: reliable even when it was closed.
+      // On Android the buttons act without opening the app: expo-notifications hands the tap to the
+      // background task, even when the app was closed. Elsewhere they open the app, which acts.
+      // Called again on a language change, the category is replaced with the new button texts.
       // No buttons on web, where notifications are not shown by the app
-      if (Platform.OS !== "web") await Notifications.setNotificationCategoryAsync(REMINDER_CATEGORY_ID, [
-        {
-          identifier: REMINDER_ACTION_COMPLETE,
-          buttonTitle: t('notifAction.complete'),
-          options: { opensAppToForeground: true },
-        },
-        {
-          identifier: REMINDER_ACTION_SNOOZE,
-          buttonTitle: t('notifAction.snooze'),
-          options: { opensAppToForeground: true },
-        },
-      ]);
+      if (Platform.OS !== "web") {
+        const opensApp = Platform.OS !== "android";
+        await Notifications.setNotificationCategoryAsync(REMINDER_CATEGORY_ID, [
+          {
+            identifier: REMINDER_ACTION_COMPLETE,
+            buttonTitle: t('notifAction.complete'),
+            options: { opensAppToForeground: opensApp },
+          },
+          {
+            identifier: REMINDER_ACTION_SNOOZE,
+            buttonTitle: t('notifAction.snooze'),
+            options: { opensAppToForeground: opensApp },
+          },
+        ]);
+      }
+      if (Platform.OS === "android") {
+        await Notifications.registerTaskAsync(REMINDER_ACTION_TASK).catch(() =>
+          logger.warn("[NotificationService] Tâche des boutons non enregistrée"),
+        );
+      }
     } catch {
       logger.error(
         "[NotificationService] Initialisation des notifications ignorée",
@@ -257,6 +272,8 @@ export const NotificationService = {
   async requestExactAlarms(): Promise<boolean> {
     if (!Notifications || Platform.OS !== "android") return true;
     try {
+      // The system settings open, then the app comes back: not a reason to lock it
+      expectAppLockReturn();
       const { granted } = await Notifications.requestExactAlarmPermissionsAsync();
       return granted;
     } catch {
@@ -301,6 +318,23 @@ export const NotificationService = {
       });
     } catch {
       logger.error("[NotificationService] Erreur lors de scheduleDailyRecap");
+    }
+  },
+
+  /**
+   * Montre tout de suite une notification d'information de l'application, sans bouton :
+   * par exemple l'échec d'une sauvegarde automatique faite en arrière-plan.
+   */
+  async notifyNow(params: { identifier: string; title: string; body: string; data: Record<string, unknown> }): Promise<void> {
+    if (!Notifications) return;
+    try {
+      await Notifications.scheduleNotificationAsync({
+        identifier: params.identifier,
+        content: { title: params.title, body: params.body, data: params.data, sound: true },
+        trigger: Platform.OS === "android" ? { channelId: DAILY_RECAP_CHANNEL_ID } : null,
+      });
+    } catch {
+      logger.error("[NotificationService] Erreur lors de notifyNow");
     }
   },
 
@@ -422,6 +456,24 @@ export const NotificationService = {
       await Notifications.dismissNotificationAsync(identifier);
     } catch {
       logger.warn("[NotificationService] Notification non retirée");
+    }
+  },
+
+  /**
+   * Retire du volet toutes les notifications affichées d'un rappel : l'original et ses relances,
+   * une fois le rappel terminé ou reporté.
+   */
+  async dismissForReminder(reminderId: string): Promise<void> {
+    if (!Notifications) return;
+    try {
+      const shown = await Notifications.getPresentedNotificationsAsync();
+      for (const notification of shown) {
+        if (notification.request.content.data?.reminderId === reminderId) {
+          await Notifications.dismissNotificationAsync(notification.request.identifier);
+        }
+      }
+    } catch {
+      logger.warn("[NotificationService] Notifications du rappel non retirées");
     }
   },
 

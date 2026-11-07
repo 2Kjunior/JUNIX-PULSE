@@ -128,7 +128,7 @@ function GlowCardInner({
         easing: Easing.out(Easing.cubic),
       })
     );
-  }, [isReduced, delay, index]);
+  }, [isReduced, delay, index, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

@@ -69,5 +69,12 @@ export function buildMascotMoodInput(input: MascotDayInput): MascotMoodInput {
     todayTaskCompleted: input.todayTasks.filter(task => task.status === 'COMPLETED').length,
     birthdayToday: input.persons.some(person => isBirthdayToday(person.birthDate, now)),
     daysSinceLastOpen: input.daysSinceLastOpen,
+    todayOpenItemCount:
+      input.todayTasks.filter(task => task.status !== 'COMPLETED').length +
+      input.reminders.filter(reminder => {
+        if (SETTLED_STATUSES.includes(reminder.status)) return false;
+        const due = new Date(reminder.scheduledAt);
+        return due.toDateString() === now.toDateString();
+      }).length,
   };
 }

@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import { DeadlineBadge } from '@/components/tasks/DeadlineBadge';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 
@@ -103,6 +104,12 @@ export default function TasksScreen() {
         const bCompleted = b.task.status === 'COMPLETED';
         if (aCompleted !== bCompleted) {
           return aCompleted ? 1 : -1;
+        }
+        // "Toutes" : la prochaine échéance d'abord, puis la priorité
+        if (activeTab === 'all' && a.task.dueDate !== b.task.dueDate) {
+          if (!a.task.dueDate) return 1;
+          if (!b.task.dueDate) return -1;
+          return a.task.dueDate.localeCompare(b.task.dueDate);
         }
         return (priorityWeights[a.task.priority] ?? 2) - (priorityWeights[b.task.priority] ?? 2);
       });
@@ -390,6 +397,9 @@ function TaskCardR08({
                 <Text style={styles.metaPillText}>{t('tasks.filter.inbox')}</Text>
               </View>
             )}
+
+            {/* Échéance : J-3, Demain, Aujourd'hui, En retard */}
+            {!!task.dueDate && task.status !== 'COMPLETED' && <DeadlineBadge dueDate={task.dueDate} />}
 
             {/* Sous-tâches */}
             {totalSubs > 0 && (

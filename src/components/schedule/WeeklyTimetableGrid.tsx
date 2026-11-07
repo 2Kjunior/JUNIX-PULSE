@@ -11,7 +11,7 @@
  * - Carte IA "Junix Pulse IA" avec score de rythme et zones tampons.
  */
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   View,
   Text,
@@ -55,8 +55,6 @@ const DAYS_DEFINITION = [
   { num: 6, label: 'SAM', full: 'Samedi', dateNum: '06' },
   { num: 0, label: 'DIM', full: 'Dimanche', dateNum: '07' },
 ];
-
-type PresetFilter = 'ideal' | 'pro' | 'weekend';
 
 function timeToMinutes(timeStr: string): number {
   if (!timeStr) return 0;

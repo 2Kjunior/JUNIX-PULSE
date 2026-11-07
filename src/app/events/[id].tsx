@@ -26,6 +26,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { PersonPicker } from '@/components/people/PersonPicker';
+import { PersonRepository } from '@/repositories/person-repository';
 import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
 
@@ -43,6 +45,9 @@ export default function EventDetailScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [event, setEvent] = useState<Event | null>(null);
   const [associatedPersons, setAssociatedPersons] = useState<Person[]>([]);
+  // Events have no edit screen: their people change here, saved at once
+  const [allPersons, setAllPersons] = useState<Person[]>([]);
+  const [pickingPersons, setPickingPersons] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -69,6 +74,22 @@ export default function EventDetailScreen() {
       setScreenState('error');
     }
   }, [id, t]);
+
+  const openPersonPicker = async () => {
+    setAllPersons(await PersonRepository.findAll().catch(() => []));
+    setPickingPersons(true);
+  };
+
+  const changePersons = async (ids: string[]) => {
+    if (!event) return;
+    setAssociatedPersons(ids.map(personId => allPersons.find(person => person.id === personId)).filter((person): person is Person => !!person));
+    try {
+      await EventUseCases.updateEvent({ id: event.id, personIds: ids });
+    } catch {
+      showSnackbar(t('common.genericError'));
+      void load();
+    }
+  };
 
   useEffect(() => {
     load();
@@ -222,10 +243,29 @@ export default function EventDetailScreen() {
         </View>
         </GlowCard>
 
-        {/* Personnes associées */}
-        {associatedPersons.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('eventDetail.people', { count: associatedPersons.length })}</Text>
+        {/* Personnes associées, modifiables ici */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {associatedPersons.length > 0
+                ? t('eventDetail.people', { count: associatedPersons.length })
+                : t('personField.header')}
+            </Text>
+            <TouchableOpacity
+              onPress={openPersonPicker}
+              style={styles.sectionAction}
+              accessibilityRole="button"
+              accessibilityLabel={t('eventDetail.editPeople')}
+              testID="event-edit-people"
+            >
+              <Ionicons name={associatedPersons.length > 0 ? 'create-outline' : 'add'} size={16} color={theme.primary.default} />
+              <Text style={styles.sectionActionText}>
+                {t(associatedPersons.length > 0 ? 'eventDetail.editPeopleShort' : 'personField.add')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {associatedPersons.length > 0 && (
+          <>
             {associatedPersons.map(p => {
               const initials = p.displayName
                 .split(' ')
@@ -255,9 +295,18 @@ export default function EventDetailScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
-        )}
+          </>
+          )}
+        </View>
       </ScrollView>
+      <PersonPicker
+        visible={pickingPersons}
+        persons={allPersons}
+        selectedIds={associatedPersons.map(person => person.id)}
+        multiple
+        onChange={changePersons}
+        onClose={() => setPickingPersons(false)}
+      />
     </View>
   );
 }

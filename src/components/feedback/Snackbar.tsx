@@ -55,6 +55,7 @@ export function Snackbar() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs for each new message only; dismiss and the animated values do not change it
   }, [snackbar]);
 
   function dismiss() {

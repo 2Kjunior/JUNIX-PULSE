@@ -195,6 +195,40 @@ export const EventRepository = {
     return rows.map(rowToEvent);
   },
 
+  /** The events this person takes part in, oldest first. */
+  async findByPerson(personId: string): Promise<Event[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT e.* FROM events e
+       JOIN event_persons ep ON e.id = ep.event_id
+       WHERE ep.person_id = ? AND e.deleted_at IS NULL
+       ORDER BY e.start_at ASC`,
+      personId
+    );
+    return rows.map(rowToEvent);
+  },
+
+  /** Events with people that ended in this window: the ones that may count as meetings. */
+  async findEndedWithPersons(fromIso: string, toIso: string): Promise<{ event: Event; personIds: string[] }[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT e.*, ep.person_id AS linked_person_id FROM events e
+       JOIN event_persons ep ON e.id = ep.event_id
+       WHERE e.deleted_at IS NULL AND e.end_at > ? AND e.end_at <= ?
+       ORDER BY e.end_at ASC`,
+      fromIso,
+      toIso
+    );
+    const byEvent = new Map<string, { event: Event; personIds: string[] }>();
+    for (const row of rows) {
+      const id = row.id as string;
+      const entry = byEvent.get(id) ?? { event: rowToEvent(row), personIds: [] };
+      entry.personIds.push(row.linked_person_id as string);
+      byEvent.set(id, entry);
+    }
+    return [...byEvent.values()];
+  },
+
   async findEventPersons(eventId: string): Promise<Person[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(

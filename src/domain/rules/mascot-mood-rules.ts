@@ -6,12 +6,14 @@
 
 import { FocusState } from './focus-rules';
 
-export type MascotMood = 'calm' | 'happy' | 'focused' | 'alert' | 'sleepy' | 'party';
+export type MascotMood = 'calm' | 'happy' | 'focused' | 'alert' | 'sleepy' | 'party' | 'worried';
 
 export const NIGHT_START_HOUR = 23;
 export const NIGHT_END_HOUR = 5;
 export const LONG_ABSENCE_DAYS = 3;
 export const ALERT_REST_INTENSITY = 0.45;
+/** Open tasks and reminders of today from which the day is overloaded, as for the suggestion. */
+export const WORRIED_ITEM_THRESHOLD = 8;
 
 export interface MascotMoodInput {
   hour: number; // Local hour, 0 to 23
@@ -21,6 +23,8 @@ export interface MascotMoodInput {
   todayTaskCompleted: number;
   birthdayToday: boolean;
   daysSinceLastOpen: number | null; // null when the app has never been opened before
+  /** Open tasks and pending reminders of today. */
+  todayOpenItemCount?: number;
 }
 
 export interface MascotMoodState {
@@ -54,6 +58,10 @@ export function deriveMascotMood(input: MascotMoodInput): MascotMoodState {
   }
   if (input.todayTaskTotal > 0 && input.todayTaskCompleted >= input.todayTaskTotal) {
     return { mood: 'happy', intensity: 1 };
+  }
+  // An overloaded day: Pulse looks worried, a cue to lighten it
+  if ((input.todayOpenItemCount ?? 0) >= WORRIED_ITEM_THRESHOLD) {
+    return { mood: 'worried', intensity: 1 };
   }
   if (input.daysSinceLastOpen !== null && input.daysSinceLastOpen >= LONG_ABSENCE_DAYS) {
     return { mood: 'sleepy', intensity: 1 };

@@ -207,6 +207,14 @@ export default function PulseScreen() {
       bg: isLight ? theme.success.container : 'rgba(109, 213, 140, 0.12)',
       route: '/goals',
     },
+    {
+      icon: 'stats-chart-outline' as const,
+      label: t('pulse.reviewTitle'),
+      desc: t('pulse.reviewDesc'),
+      color: theme.primary.default,
+      bg: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.12)',
+      route: '/review?period=week',
+    },
   ];
 
   const hasNoSuggestions = suggestions.length === 0;

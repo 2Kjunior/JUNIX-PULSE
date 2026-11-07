@@ -50,6 +50,8 @@ export interface Reminder {
   status: ReminderStatus;
   actionType: ActionType;
   personId?: string;
+  /** Rings again every few minutes until it is completed or snoozed. */
+  requiresConfirmation?: boolean;
   recurrenceRuleId?: string;
   notificationId?: string;     // ID fourni par expo-notifications (pour annulation)
   snoozedUntil?: string;       // ISO 8601 si snooze actif
@@ -75,6 +77,7 @@ export interface Task {
   description?: string;
   status: TaskStatus;
   scheduledDate?: string;      // ISO date (YYYY-MM-DD) — pas d'heure, c'est une journée
+  dueDate?: string;            // ISO date (YYYY-MM-DD) — à rendre ce jour-là au plus tard
   estimatedMinutes?: number;   // Estimation en minutes (15, 30, 60, etc.)
   priority: ReminderPriority;
   goalId?: string;
@@ -153,6 +156,8 @@ export interface Interaction {
   occurredAt: string;          // ISO 8601
   notes?: string;
   reminderId?: string;         // Si l'interaction est liée à un rappel complété
+  taskId?: string;             // Si elle vient d'une tâche
+  eventId?: string;            // Si elle vient d'un événement passé avec la personne
   createdAt: string;
 }
 
@@ -270,6 +275,12 @@ export interface Settings {
   notificationSoundEnabled: boolean;
   /** Vibrations in answer to the actions of the user. True by default. */
   hapticsEnabled: boolean;
+  /** Fingerprint or phone code at launch and on a return. False by default. */
+  appLockEnabled: boolean;
+  /** Minutes away from the app before it asks again: 0, 1, 5 or 15. */
+  appLockDelayMinutes: number;
+  /** The phone calendars shown read-only in the calendar. False by default. */
+  deviceCalendarEnabled: boolean;
   forgottenContactThresholdDays: number;
   endOfDayHour: number;        // Heure à laquelle Junix propose de gérer les tâches restantes (ex: 20)
   morningBriefingHour: number; // Heure du résumé matin (ex: 8)

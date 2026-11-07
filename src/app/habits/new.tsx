@@ -251,6 +251,9 @@ export default function NewHabitScreen() {
                   color === c.id && styles.colorCircleSelected,
                 ]}
                 onPress={() => setColor(c.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: color === c.id }}
+                accessibilityLabel={t('a11y.color', { color: c.label })}
               >
                 {color === c.id && (
                   <Ionicons name="checkmark" size={18} color="#FFFFFF" />

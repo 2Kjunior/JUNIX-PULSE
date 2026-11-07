@@ -6,7 +6,7 @@
 
 import type { AppLanguage } from './language-rules';
 import { formatSpokenTime, MascotSuggestionMessage } from './mascot-suggestion-rules';
-import { MascotTimeTrigger } from './mascot-time-rules';
+import { MascotTimeTrigger, PlanningBlockKind } from './mascot-time-rules';
 
 export interface TriggerEventInfo {
   title: string;
@@ -20,6 +20,15 @@ export interface TriggerMessageContext {
   tasksDone: number;
   /** Events by id, for the triggers that name one. */
   events: Readonly<Record<string, TriggerEventInfo>>;
+  /** Planning blocks of today by id, for the block triggers. */
+  blocks?: Readonly<Record<string, TriggerBlockInfo>>;
+  /** Tasks due soon by id, with the days left. */
+  deadlines?: Readonly<Record<string, { title: string; daysLeft: number }>>;
+}
+
+export interface TriggerBlockInfo {
+  label: string;
+  kind: PlanningBlockKind;
 }
 
 export function triggerToMascotMessage(
@@ -56,8 +65,18 @@ export function triggerToMascotMessage(
       if (!event) return null;
       return { id: 'EVENT_START', params: { title: event.title } };
 
-    case 'PLANNING_BLOCK_START':
-      // Planning blocks are not shown on the home screen yet
+    case 'DEADLINE_SOON': {
+      const deadline = trigger.subjectId ? context.deadlines?.[trigger.subjectId] : undefined;
+      if (!deadline) return null;
+      return { id: 'DEADLINE_SOON', params: { title: deadline.title, days: deadline.daysLeft } };
+    }
+
+    case 'PLANNING_BLOCK_START': {
+      const block = trigger.subjectId ? context.blocks?.[trigger.subjectId] : undefined;
+      if (!block) return null;
+      if (block.kind === 'SPORT') return { id: 'BLOCK_SPORT', params: {} };
+      if (block.kind === 'WORK' || block.kind === 'STUDY') return { id: 'BLOCK_FOCUS', params: { block: block.label } };
       return null;
+    }
   }
 }

@@ -6,7 +6,7 @@
  * Entièrement thématisé : toutes les couleurs proviennent de `useTheme()`
  * et `useThemedStyles(makeSettingsStyles)`. Aucun hex en dur.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ReactElement } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { GlassAlert } from '@/components/feedback/GlassAlert';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -35,7 +35,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { getDatabase } from '@/database/sqlite';
 import { clearAllData } from '@/database/seed';
-import { Directory, File, Paths } from 'expo-file-system';
+import Constants from 'expo-constants';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { createBackup, encryptBackup } from '@/services/backup-service';
 import { purgeBackupExports } from '@/services/backup-export-cleanup';
@@ -44,17 +45,20 @@ import { syncReminderNotifications } from '@/services/reminder-notification-serv
 import { NotificationService } from '@/services/notification-service';
 import { MascotSettingsSection } from '@/features/mascot/MascotSettingsSection';
 import { useBackupRestore } from '@/features/backup/use-backup-restore';
-import { GlassActionButton } from '@/components/ui/GlassActionButton';
 import { playHaptic, setHapticsEnabled } from '@/services/haptic-service';
 import {
   AutoBackupConfig,
   disableAutoBackup,
-  enableAutoBackup,
   getAutoBackupConfig,
   runAutoBackup,
+  setAutoBackupBiometric,
 } from '@/services/auto-backup-service';
+import { useAutoBackupSetup } from '@/features/backup/use-auto-backup-setup';
+import { canUseAppLock, expectAppLockReturn, setAppLockConfig } from '@/services/app-lock-service';
+import { APP_LOCK_DELAYS_MINUTES } from '@/domain/rules/app-lock-rules';
+import { requestDeviceCalendarAccess } from '@/services/device-calendar-service';
 import { format } from 'date-fns';
-import type { HapticKind } from '@/domain/rules/haptic-rules';
+import { hexToRgba } from '@/utils/color';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
 import { detectDeviceTimezone } from '@/services/device-timezone';
@@ -73,17 +77,28 @@ const APPEARANCE_OPTIONS: {
   { value: 'system', labelKey: 'settingsScreen.auto', icon: 'phone-portrait-outline' },
 ];
 
-const HAPTIC_TESTS: readonly {
-  kind: HapticKind;
-  label: MessageKey;
-  icon: 'checkmark-circle-outline' | 'radio-button-on-outline' | 'warning-outline' | 'close-circle-outline';
-  color: 'success' | 'primary' | 'tertiary' | 'error';
+/** The pages of the settings: the summary lists them, each opens on its own. */
+type SettingsSection = 'appearance' | 'notifications' | 'mascot' | 'security' | 'data';
+type SettingsPage = SettingsSection | 'profile';
+
+const HUB_SECTIONS: readonly {
+  id: SettingsSection;
+  titleKey: MessageKey;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: 'primary' | 'tertiary' | 'success' | 'error';
 }[] = [
-  { kind: 'success', label: 'haptic.success', icon: 'checkmark-circle-outline', color: 'success' },
-  { kind: 'light', label: 'haptic.light', icon: 'radio-button-on-outline', color: 'primary' },
-  { kind: 'warning', label: 'haptic.warning', icon: 'warning-outline', color: 'tertiary' },
-  { kind: 'error', label: 'haptic.error', icon: 'close-circle-outline', color: 'error' },
+  { id: 'appearance', titleKey: 'settingsScreen.appearance', icon: 'color-palette-outline', color: 'primary' },
+  { id: 'notifications', titleKey: 'settingsHub.notifications', icon: 'notifications-outline', color: 'tertiary' },
+  { id: 'mascot', titleKey: 'mascotSettings.title', icon: 'happy-outline', color: 'primary' },
+  { id: 'security', titleKey: 'settingsHub.security', icon: 'shield-checkmark-outline', color: 'success' },
+  { id: 'data', titleKey: 'settingsHub.data', icon: 'cloud-outline', color: 'tertiary' },
 ];
+
+const PAGE_IDS: readonly string[] = ['profile', ...HUB_SECTIONS.map(item => item.id)];
+
+function pageOf(value: unknown): SettingsPage | null {
+  return typeof value === 'string' && PAGE_IDS.includes(value) ? (value as SettingsPage) : null;
+}
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -93,11 +108,20 @@ export default function SettingsScreen() {
   const t = useT();
   const language = useLanguage();
   const styles = useThemedStyles(makeSettingsStyles);
+  // The summary, or one of its pages: each page is the same screen opened with its name
+  const section = pageOf(useLocalSearchParams<{ section?: string }>().section);
+  const openSection = (page: SettingsPage) => router.push({ pathname: '/settings', params: { section: page } });
+  // A page opened directly (a notification at launch) has nothing behind it: the summary, or home
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace(section ? '/settings' : '/(tabs)');
+  };
+  const hubTint = (color: 'primary' | 'tertiary' | 'success' | 'error') =>
+    hexToRgba(palette[color].default, palette.mode === 'light' ? 0.14 : 0.18);
 
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [autoBackup, setAutoBackup] = useState<AutoBackupConfig | null>(null);
-  const [autoBackupDirectory, setAutoBackupDirectory] = useState<string | null>(null);
   const dateLocale = useDateLocale();
   const { startRestore, restoreModal } = useBackupRestore(async () => {
     await syncReminderNotifications();
@@ -131,6 +155,17 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  const refreshAutoBackup = async () => setAutoBackup(await getAutoBackupConfig());
+
+  const runAutoBackupNow = async () => {
+    const result = await runAutoBackup({ force: true });
+    await refreshAutoBackup();
+    showSnackbar(result === 'done' ? t('autoBackup.done') : t('autoBackup.failed'));
+  };
+
+  // Before the early return below: a hook must run on every render
+  const { startSetup: startAutoBackupSetup, setupModal: autoBackupSetupModal } = useAutoBackupSetup(runAutoBackupNow);
 
   if (!settings) return <LoadingState message={t('settingsScreen.loading')} />;
 
@@ -200,6 +235,43 @@ export default function SettingsScreen() {
         ? ` · ${t('autoBackup.statusFailed')}`
         : '');
 
+  const saveAppLock = async (enabled: boolean, delayMinutes: number) => {
+    await SettingsRepository.update({
+      appLockEnabled: enabled,
+      appLockDelayMinutes: delayMinutes,
+      updatedAt: new Date().toISOString(),
+    });
+    setAppLockConfig({ enabled, delayMinutes });
+    setSettings(s => (s ? { ...s, appLockEnabled: enabled, appLockDelayMinutes: delayMinutes } : s));
+  };
+
+  const handleToggleAppLock = async (val: boolean) => {
+    try {
+      // A phone without fingerprint nor code could never be unlocked: refused rather than a dead end
+      if (val && !(await canUseAppLock())) {
+        GlassAlert.alert(t('appLock.unavailableTitle'), t('appLock.unavailableBody'));
+        return;
+      }
+      await saveAppLock(val, settings.appLockDelayMinutes);
+      showSnackbar(t(val ? 'appLock.on' : 'appLock.off'));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+
+  const handleToggleDeviceCalendar = async (val: boolean) => {
+    try {
+      if (val && !(await requestDeviceCalendarAccess())) {
+        GlassAlert.alert(t('deviceCalendar.deniedTitle'), t('deviceCalendar.deniedBody'));
+        return;
+      }
+      await SettingsRepository.update({ deviceCalendarEnabled: val, updatedAt: new Date().toISOString() });
+      setSettings(s => (s ? { ...s, deviceCalendarEnabled: val } : s));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+
   const handleToggleHaptics = async (val: boolean) => {
     try {
       await SettingsRepository.update({ hapticsEnabled: val, updatedAt: new Date().toISOString() });
@@ -210,30 +282,14 @@ export default function SettingsScreen() {
     }
   };
 
-  const refreshAutoBackup = async () => setAutoBackup(await getAutoBackupConfig());
-
-  const runAutoBackupNow = async () => {
-    const result = await runAutoBackup({ force: true });
+  const handleToggleAutoBackupBiometric = async (val: boolean) => {
+    await setAutoBackupBiometric(val);
     await refreshAutoBackup();
-    showSnackbar(result === 'done' ? t('autoBackup.done') : t('autoBackup.failed'));
   };
 
   const handleAutoBackup = () => {
     if (!autoBackup) {
-      GlassAlert.alert(t('autoBackup.setupTitle'), t('autoBackup.setupBody'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('autoBackup.pickFolder'),
-          onPress: async () => {
-            try {
-              const directory = await Directory.pickDirectoryAsync();
-              if (directory?.uri) setAutoBackupDirectory(directory.uri);
-            } catch {
-              // Picker closed without a folder
-            }
-          },
-        },
-      ]);
+      startAutoBackupSetup();
       return;
     }
     GlassAlert.alert(t('autoBackup.title'), autoBackupStatus, [
@@ -250,12 +306,6 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const handleEnableAutoBackup = async (password: string) => {
-    if (!autoBackupDirectory) return;
-    await enableAutoBackup(autoBackupDirectory, password);
-    setAutoBackupDirectory(null);
-    await runAutoBackupNow();
-  };
 
   const handleSelectAppearance = async (newMode: AppearanceMode) => {
     const previousMode = themeMode;
@@ -333,6 +383,8 @@ export default function SettingsScreen() {
       throw new Error(t('settingsScreen.shareUnavailable'));
     }
 
+    // The share sheet is a step of this flow: coming back from it does not lock the app
+    expectAppLockReturn();
     await Sharing.shareAsync(file.uri, {
       mimeType: 'application/json',
       dialogTitle: t('settingsScreen.shareDialog'),
@@ -382,350 +434,467 @@ export default function SettingsScreen() {
     );
   };
 
+  // ─── Pages ──────────────────────────────────────────────────────────────
+
+  const switchColors = (value: boolean) => ({
+    trackColor: { false: palette.outline.variant, true: palette.primary.container },
+    thumbColor: value ? palette.primary.default : palette.onSurface.disabled,
+  });
+
+  const appearanceLabel = t(
+    (APPEARANCE_OPTIONS.find(option => option.value === (settings.appearanceMode ?? themeMode)) ?? APPEARANCE_OPTIONS[2])
+      .labelKey
+  );
+  const languageLabel = t(settings.language === 'auto' ? 'language.auto' : settings.language === 'en' ? 'language.en' : 'language.fr');
+
+  const summaries: Record<SettingsSection, string> = {
+    appearance: appearanceLabel,
+    notifications: settings.notificationsEnabled
+      ? [
+          t('settingsHub.notifOn'),
+          settings.notificationSoundEnabled ? t('settingsHub.sound') : t('settingsHub.silent'),
+          settings.hapticsEnabled ? t('settingsHub.vibrations') : t('settingsHub.noVibrations'),
+        ].join(' · ')
+      : t('settingsHub.notifOff'),
+    mascot:
+      settings.mascotPresence === 'off'
+        ? t('mascotSettings.presence.off')
+        : t('settingsHub.mascotSummary', { morning: settings.morningBriefingHour, evening: settings.endOfDayHour }),
+    security: [
+      settings.appLockEnabled ? t('settingsHub.lockOn') : t('settingsHub.lockOff'),
+      isSanctumPinConfigured ? t('settingsHub.sanctumOn') : t('settingsHub.sanctumOff'),
+    ].join(' · '),
+    data: autoBackup ? autoBackupStatus : t('settingsHub.backupOff'),
+  };
+
+  const renderHub = () => (
+    <>
+      {/* Profil : prénom et langue, touchés ensemble */}
+      <TouchableOpacity
+        onPress={() => openSection('profile')}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t('settingsScreen.profile')}
+        testID="settings-open-profile"
+      >
+        <GlowCard tone="primary" intensity="soft" size="list">
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{(settings.displayName?.trim()[0] ?? 'J').toUpperCase()}</Text>
+            </View>
+            <View style={styles.rowTextFill}>
+              <Text style={styles.profileName}>{settings.displayName?.trim() || t('settingsHub.profileEmpty')}</Text>
+              <Text style={styles.rowSub}>
+                {t('settingsHub.profileSub', { language: languageLabel, timezone: timezoneLabel(deviceTimezone, language) })}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+          </View>
+        </GlowCard>
+      </TouchableOpacity>
+
+      <View style={styles.hubGroup}>
+        {HUB_SECTIONS.map((section, index) => (
+          <TouchableOpacity
+            key={section.id}
+            style={[styles.hubRow, index > 0 && styles.hubRowDivider]}
+            onPress={() => openSection(section.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`${t(section.titleKey)}, ${summaries[section.id]}`}
+            testID={`settings-open-${section.id}`}
+          >
+            <View style={[styles.hubIcon, { backgroundColor: hubTint(section.color) }]}>
+              <Ionicons name={section.icon} size={20} color={palette[section.color].default} />
+            </View>
+            <View style={styles.rowTextFill}>
+              <Text style={styles.rowLabel}>{t(section.titleKey)}</Text>
+              <Text style={styles.rowSub} numberOfLines={1}>
+                {summaries[section.id]}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.infoBox}>
+        <Ionicons name="shield-checkmark-outline" size={18} color={palette.primary.default} />
+        <Text style={styles.infoText}>{t('settingsScreen.localFirst')}</Text>
+      </View>
+    </>
+  );
+
+  const renderProfile = () => (
+    <View style={styles.section}>
+      <TouchableOpacity style={styles.row} onPress={() => setEditingName(true)} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.firstName')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.firstNameHint')}</Text>
+        </View>
+        <View style={styles.rowValCol}>
+          <Text style={styles.rowValue}>{settings.displayName ?? t('settingsScreen.notDefined')}</Text>
+          <Ionicons name="create-outline" size={16} color={palette.primary.default} />
+        </View>
+      </TouchableOpacity>
+
+      <View style={styles.rowCol}>
+        <Text style={styles.rowLabel}>{t('language.label')}</Text>
+        <LanguagePicker onError={showSnackbar} />
+      </View>
+
+      {/* Le fuseau suit le téléphone : une information, pas un réglage */}
+      <Text style={styles.footnote}>
+        {t('settingsHub.timezoneNote', { timezone: timezoneLabel(deviceTimezone, language) })}
+      </Text>
+    </View>
+  );
+
+  const renderAppearance = () => (
+    <View style={styles.section}>
+      <View
+        style={styles.segmentedControl}
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('settingsScreen.appearanceA11y')}
+      >
+        {APPEARANCE_OPTIONS.map(opt => {
+          const selected = (settings.appearanceMode ?? themeMode) === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.segmentBtn, selected && styles.segmentBtnActive]}
+              onPress={() => handleSelectAppearance(opt.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={`${t(opt.labelKey)}${selected ? t('settingsScreen.selectedSuffix') : ''}`}
+            >
+              <Ionicons
+                name={opt.icon}
+                size={16}
+                color={selected ? palette.primary.on : palette.onSurface.variant}
+                style={{ marginRight: 6 }}
+              />
+              <Text style={[styles.segmentText, selected && styles.segmentTextActive]}>{t(opt.labelKey)}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={styles.appearanceHelp}>{t('settingsScreen.appearanceHelp')}</Text>
+
+      {/* Mini aperçu en direct avec GlowCard */}
+      <View style={styles.previewContainer}>
+        <GlowCard tone="primary" intensity="soft" size="list">
+          <View style={styles.previewCardInner}>
+            <View style={styles.previewHeader}>
+              <Ionicons name="sparkles" size={16} color={palette.primary.default} />
+              <Text style={styles.previewTitle}>{t('settingsScreen.preview')}</Text>
+            </View>
+            <Text style={styles.previewDesc}>
+              {t('settingsScreen.themeActive', {
+                mode: t(palette.mode === 'light' ? 'settingsScreen.light' : 'settingsScreen.dark'),
+              })}
+            </Text>
+          </View>
+        </GlowCard>
+      </View>
+    </View>
+  );
+
+  const renderNotifications = () => (
+    <View style={styles.section}>
+      <View style={styles.row}>
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.remindersAlerts')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.offlineNotifs')}</Text>
+        </View>
+        <Switch
+          value={settings.notificationsEnabled}
+          onValueChange={handleToggleNotifications}
+          {...switchColors(settings.notificationsEnabled)}
+          accessibilityLabel={t('settingsScreen.remindersAlerts')}
+        />
+      </View>
+
+      {settings.notificationsEnabled && canEnableExactAlarms && (
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleEnableExactAlarms}
+          accessibilityRole="button"
+          accessibilityLabel={t('settingsScreen.exactA11y')}
+        >
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('settingsScreen.exactLabel')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.exactHint')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+        </TouchableOpacity>
+      )}
+
+      {settings.notificationsEnabled && (
+        <View style={styles.row}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('settingsScreen.soundLabel')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.soundHint')}</Text>
+          </View>
+          <Switch
+            value={settings.notificationSoundEnabled}
+            onValueChange={handleToggleNotificationSound}
+            {...switchColors(settings.notificationSoundEnabled)}
+            accessibilityLabel={t('settingsScreen.soundLabel')}
+          />
+        </View>
+      )}
+
+      {/* Vibrations : un interrupteur, et un seul essai plutôt que quatre boutons */}
+      <View style={styles.row}>
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsHub.vibrationsLabel')}</Text>
+          <Text style={styles.rowSub}>{t('settingsHub.vibrationsHint')}</Text>
+        </View>
+        <Switch
+          value={settings.hapticsEnabled}
+          onValueChange={handleToggleHaptics}
+          {...switchColors(settings.hapticsEnabled)}
+          accessibilityLabel={t('settingsScreen.hapticsSwitch')}
+        />
+      </View>
+      {settings.hapticsEnabled && (
+        <TouchableOpacity
+          style={styles.inlineAction}
+          onPress={() => playHaptic('success')}
+          accessibilityRole="button"
+          accessibilityLabel={t('settingsHub.testVibration')}
+          testID="settings-test-haptic"
+        >
+          <Ionicons name="pulse-outline" size={16} color={palette.primary.default} />
+          <Text style={styles.inlineActionText}>{t('settingsHub.testVibration')}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const renderHourPills = (hours: readonly number[], value: number, onSelect: (hour: number) => void) => (
+    <View style={styles.hoursRow} accessibilityRole="radiogroup">
+      {hours.map(hour => {
+        const active = value === hour;
+        return (
+          <TouchableOpacity
+            key={hour}
+            style={[styles.hourPill, active && styles.hourPillActive]}
+            onPress={() => onSelect(hour)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: active }}
+          >
+            <Text style={[styles.hourPillText, active && styles.hourPillTextActive]}>
+              {t('settingsScreen.hour', { hour })}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
+  const renderMascot = () => (
+    <>
+      <MascotSettingsSection displayName={settings.displayName} showTitle={false} />
+      {/* Les heures du point du matin et du bilan du soir, que Pulse annonce */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>{t('settingsScreen.briefings')}</Text>
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.morningHour')}</Text>
+          {renderHourPills([6, 7, 8, 9], settings.morningBriefingHour, handleUpdateBriefingHour)}
+        </View>
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.eveningHour')}</Text>
+          {renderHourPills([18, 19, 20, 21], settings.endOfDayHour, handleUpdateEndOfDayHour)}
+        </View>
+      </View>
+    </>
+  );
+
+  const renderSecurity = () => (
+    <View style={styles.section}>
+      <View style={styles.rowCol}>
+        <View style={styles.hapticHeader}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('appLock.label')}</Text>
+            <Text style={styles.rowSub}>{t('appLock.hint')}</Text>
+          </View>
+          <Switch
+            value={settings.appLockEnabled}
+            onValueChange={handleToggleAppLock}
+            {...switchColors(settings.appLockEnabled)}
+            accessibilityLabel={t('appLock.label')}
+            testID="settings-app-lock"
+          />
+        </View>
+        {settings.appLockEnabled && (
+          <>
+            <Text style={[styles.rowSub, styles.lockDelayLabel]}>{t('appLock.delay')}</Text>
+            <View style={styles.hoursRow} accessibilityRole="radiogroup">
+              {APP_LOCK_DELAYS_MINUTES.map(minutes => {
+                const active = settings.appLockDelayMinutes === minutes;
+                const label = minutes === 0 ? t('appLock.delayNow') : t('appLock.delayMinutes', { count: minutes });
+                return (
+                  <TouchableOpacity
+                    key={minutes}
+                    style={[styles.hourPill, active && styles.hourPillActive]}
+                    onPress={() => void saveAppLock(true, minutes)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={label}
+                  >
+                    <Text style={[styles.hourPillText, active && styles.hourPillTextActive]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
+      </View>
+
+      <Text style={styles.sectionLabel}>{t('settingsHub.sanctumGroup')}</Text>
+      <TouchableOpacity style={styles.row} onPress={() => router.push('/sanctum')} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.sanctum')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.sanctumHint')}</Text>
+        </View>
+        <Ionicons name="lock-closed-outline" size={20} color={palette.primary.default} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.row}
+        onPress={() =>
+          isSanctumPinConfigured
+            ? router.push({ pathname: '/sanctum', params: { action: 'change_pin' } })
+            : router.push('/sanctum')
+        }
+        accessibilityRole="button"
+      >
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.pin')}</Text>
+          <Text style={styles.rowSub}>{isSanctumPinConfigured ? t('settingsScreen.pinSet') : t('settingsScreen.pinUnset')}</Text>
+        </View>
+        <Ionicons name="key-outline" size={20} color={palette.primary.default} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderData = () => (
+    <View style={styles.section}>
+      {/* Sauvegarde automatique d'abord : c'est celle qui protège sans y penser */}
+      <TouchableOpacity style={styles.row} onPress={handleAutoBackup} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('autoBackup.title')}</Text>
+          <Text style={styles.rowSub}>{autoBackupStatus}</Text>
+        </View>
+        <Ionicons name="sync-outline" size={20} color={palette.primary.default} />
+      </TouchableOpacity>
+      {autoBackup && (
+        <View style={styles.row}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('autoBackup.biometricLabel')}</Text>
+            <Text style={styles.rowSub}>{t('autoBackup.biometricHint')}</Text>
+          </View>
+          <Switch
+            value={!!autoBackup.requireBiometric}
+            onValueChange={handleToggleAutoBackupBiometric}
+            {...switchColors(!!autoBackup.requireBiometric)}
+            accessibilityLabel={t('autoBackup.biometricLabel')}
+          />
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.row} onPress={handleExportData} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.backup')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.backupHint')}</Text>
+        </View>
+        <Ionicons name="download-outline" size={20} color={palette.primary.default} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.row} onPress={startRestore} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.restore')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.restoreHint')}</Text>
+        </View>
+        <Ionicons name="cloud-upload-outline" size={20} color={palette.primary.default} />
+      </TouchableOpacity>
+
+      {Platform.OS !== 'web' && (
+        <View style={styles.row}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('deviceCalendar.label')}</Text>
+            <Text style={styles.rowSub}>{t('deviceCalendar.hint')}</Text>
+          </View>
+          <Switch
+            value={settings.deviceCalendarEnabled}
+            onValueChange={handleToggleDeviceCalendar}
+            {...switchColors(settings.deviceCalendarEnabled)}
+            accessibilityLabel={t('deviceCalendar.label')}
+            testID="settings-device-calendar"
+          />
+        </View>
+      )}
+
+      {/* Zone sensible : tout en bas, et en rouge pour ce qui efface */}
+      <Text style={[styles.sectionLabel, styles.dangerLabel]}>{t('settingsHub.dangerZone')}</Text>
+      <TouchableOpacity style={styles.row} onPress={handleResetApp} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.restartRow')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.restartHint')}</Text>
+        </View>
+        <Ionicons name="refresh-outline" size={20} color={palette.onSurface.variant} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.row} onPress={handleClearAllData} accessibilityRole="button">
+        <View style={styles.rowTextFill}>
+          <Text style={[styles.rowLabel, { color: palette.error.default }]}>{t('settingsScreen.clearTitle')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.clearHint')}</Text>
+        </View>
+        <Ionicons name="trash-outline" size={20} color={palette.error.default} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const PAGES: Record<SettingsPage, () => ReactElement> = {
+    profile: renderProfile,
+    appearance: renderAppearance,
+    notifications: renderNotifications,
+    mascot: renderMascot,
+    security: renderSecurity,
+    data: renderData,
+  };
+
+  const pageTitle =
+    section === null
+      ? t('common.settings')
+      : section === 'profile'
+        ? t('settingsScreen.profile')
+        : t(HUB_SECTIONS.find(item => item.id === section)!.titleKey);
+
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.lg }]}
     >
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => router.back()}
+          onPress={goBack}
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
         >
           <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.title}>{t('common.settings')}</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {pageTitle}
+        </Text>
         <View style={{ width: 36 }} />
       </View>
 
-      {/* Section Profil */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('settingsScreen.profile')}</Text>
-        <TouchableOpacity style={styles.row} onPress={() => setEditingName(true)}>
-          <View>
-            <Text style={styles.rowLabel}>{t('settingsScreen.firstName')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.firstNameHint')}</Text>
-          </View>
-          <View style={styles.rowValCol}>
-            <Text style={styles.rowValue}>{settings.displayName ?? t('settingsScreen.notDefined')}</Text>
-            <Ionicons name="create-outline" size={16} color={palette.primary.default} />
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowLabel}>{t('settings.timezone')}</Text>
-            <Text style={styles.rowSub}>{t('settings.timezoneHint')}</Text>
-          </View>
-          <Text style={styles.rowValue}>{timezoneLabel(deviceTimezone, language)}</Text>
-        </View>
-
-        <View style={styles.rowCol}>
-          <Text style={styles.rowLabel}>{t('language.label')}</Text>
-          <LanguagePicker onError={showSnackbar} />
-        </View>
-      </View>
-
-      {/* Section Apparence */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('settingsScreen.appearance')}</Text>
-        <View
-          style={styles.segmentedControl}
-          accessibilityRole="radiogroup"
-          accessibilityLabel={t('settingsScreen.appearanceA11y')}
-        >
-          {APPEARANCE_OPTIONS.map((opt) => {
-            const selected = (settings.appearanceMode ?? themeMode) === opt.value;
-            return (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.segmentBtn,
-                  selected && styles.segmentBtnActive,
-                ]}
-                onPress={() => handleSelectAppearance(opt.value)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={`${t(opt.labelKey)}${selected ? t('settingsScreen.selectedSuffix') : ''}`}
-              >
-                <Ionicons
-                  name={opt.icon}
-                  size={16}
-                  color={selected ? palette.primary.on : palette.onSurface.variant}
-                  style={{ marginRight: 6 }}
-                />
-                <Text
-                  style={[
-                    styles.segmentText,
-                    selected && styles.segmentTextActive,
-                  ]}
-                >
-                  {t(opt.labelKey)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <Text style={styles.appearanceHelp}>
-          {t('settingsScreen.appearanceHelp')}
-        </Text>
-
-        {/* Mini aperçu en direct avec GlowCard */}
-        <View style={styles.previewContainer}>
-          <GlowCard tone="primary" intensity="soft" size="list">
-            <View style={styles.previewCardInner}>
-
-              <View style={styles.previewHeader}>
-                <Ionicons name="sparkles" size={16} color={palette.primary.default} />
-                <Text style={styles.previewTitle}>
-                  {t('settingsScreen.preview')}
-                </Text>
-              </View>
-              <Text style={styles.previewDesc}>
-                {t('settingsScreen.themeActive', { mode: t(palette.mode === 'light' ? 'settingsScreen.light' : 'settingsScreen.dark') })}
-              </Text>
-            </View>
-          </GlowCard>
-        </View>
-      </View>
-
-      {/* Section Horaires des briefings */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('settingsScreen.briefings')}</Text>
-
-        {/* Heure Résumé Matin */}
-        <View style={styles.rowCol}>
-          <Text style={styles.rowLabel}>{t('settingsScreen.morningHour')}</Text>
-          <View style={styles.hoursRow}>
-            {[6, 7, 8, 9].map(h => (
-              <TouchableOpacity
-                key={h}
-                style={[
-                  styles.hourPill,
-                  settings.morningBriefingHour === h && styles.hourPillActive,
-                ]}
-                onPress={() => handleUpdateBriefingHour(h)}
-              >
-                <Text
-                  style={[
-                    styles.hourPillText,
-                    settings.morningBriefingHour === h && styles.hourPillTextActive,
-                  ]}
-                >
-                  {t('settingsScreen.hour', { hour: h })}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Heure Bilan Soir */}
-        <View style={styles.rowCol}>
-          <Text style={styles.rowLabel}>{t('settingsScreen.eveningHour')}</Text>
-          <View style={styles.hoursRow}>
-            {[18, 19, 20, 21].map(h => (
-              <TouchableOpacity
-                key={h}
-                style={[
-                  styles.hourPill,
-                  settings.endOfDayHour === h && styles.hourPillActive,
-                ]}
-                onPress={() => handleUpdateEndOfDayHour(h)}
-              >
-                <Text
-                  style={[
-                    styles.hourPillText,
-                    settings.endOfDayHour === h && styles.hourPillTextActive,
-                  ]}
-                >
-                  {t('settingsScreen.hour', { hour: h })}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      {/* Section Pulse, ta mascotte */}
-      <MascotSettingsSection displayName={settings.displayName} />
-
-      {/* Section Notifications */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('settingsScreen.notifications')}</Text>
-        <View style={styles.row}>
-          <View>
-            <Text style={styles.rowLabel}>{t('settingsScreen.remindersAlerts')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.offlineNotifs')}</Text>
-          </View>
-          <Switch
-            value={settings.notificationsEnabled}
-            onValueChange={handleToggleNotifications}
-            trackColor={{ false: palette.outline.variant, true: palette.primary.container }}
-            thumbColor={settings.notificationsEnabled ? palette.primary.default : palette.onSurface.disabled}
-          />
-        </View>
-
-        {settings.notificationsEnabled && canEnableExactAlarms && (
-          <TouchableOpacity
-            style={styles.row}
-            onPress={handleEnableExactAlarms}
-            accessibilityRole="button"
-            accessibilityLabel={t('settingsScreen.exactA11y')}
-          >
-            <View style={styles.rowTextFill}>
-              <Text style={styles.rowLabel}>{t('settingsScreen.exactLabel')}</Text>
-              <Text style={styles.rowSub}>{t('settingsScreen.exactHint')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
-          </TouchableOpacity>
-        )}
-
-        {/* Son des notifications — visible seulement si les notifications sont activées */}
-        {settings.notificationsEnabled && (
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.rowLabel}>{t('settingsScreen.soundLabel')}</Text>
-              <Text style={styles.rowSub}>{t('settingsScreen.soundHint')}</Text>
-            </View>
-            <Switch
-              value={settings.notificationSoundEnabled}
-              onValueChange={handleToggleNotificationSound}
-              trackColor={{ false: palette.outline.variant, true: palette.primary.container }}
-              thumbColor={settings.notificationSoundEnabled ? palette.primary.default : palette.onSurface.disabled}
-            />
-          </View>
-        )}
-      </View>
-
-      {/* Section Zone de danger */}
-      <View style={styles.section}>
-        <TouchableOpacity style={styles.row} onPress={handleClearAllData}>
-          <View>
-            <Text style={[styles.rowLabel, { color: palette.error.default }]}>
-              {t('settingsScreen.clearTitle')}
-            </Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.clearHint')}</Text>
-          </View>
-          <Ionicons name="trash-outline" size={20} color={palette.error.default} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Section Données & Confidentialité */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('settingsScreen.dataPrivacy')}</Text>
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => router.push('/sanctum')}
-        >
-          <View>
-            <Text style={styles.rowLabel}>{t('settingsScreen.sanctum')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.sanctumHint')}</Text>
-          </View>
-          <Ionicons name="lock-closed-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => {
-            if (isSanctumPinConfigured) {
-              router.push({ pathname: '/sanctum', params: { action: 'change_pin' } });
-            } else {
-              router.push('/sanctum');
-            }
-          }}
-        >
-          <View>
-            <Text style={styles.rowLabel}>{t('settingsScreen.pin')}</Text>
-            <Text style={styles.rowSub}>
-              {isSanctumPinConfigured
-                ? t('settingsScreen.pinSet')
-                : t('settingsScreen.pinUnset')}
-            </Text>
-          </View>
-          <Ionicons name="key-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row} onPress={handleExportData}>
-          <View>
-            <Text style={styles.rowLabel}>{t('settingsScreen.backup')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.backupHint')}</Text>
-          </View>
-          <Ionicons name="download-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row} onPress={startRestore} accessibilityRole="button">
-          <View style={styles.rowTextFill}>
-            <Text style={styles.rowLabel}>{t('settingsScreen.restore')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.restoreHint')}</Text>
-          </View>
-          <Ionicons name="cloud-upload-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row} onPress={handleAutoBackup} accessibilityRole="button">
-          <View style={styles.rowTextFill}>
-            <Text style={styles.rowLabel}>{t('autoBackup.title')}</Text>
-            <Text style={styles.rowSub}>{autoBackupStatus}</Text>
-          </View>
-          <Ionicons name="sync-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <View style={styles.rowCol}>
-          <View style={styles.hapticHeader}>
-            <View style={styles.rowTextFill}>
-              <Text style={styles.rowLabel}>{t('settingsScreen.haptics')}</Text>
-              <Text style={styles.rowSub}>{t('settingsScreen.hapticsHint')}</Text>
-            </View>
-            <Switch
-              value={settings.hapticsEnabled}
-              onValueChange={handleToggleHaptics}
-              trackColor={{ false: palette.outline.variant, true: palette.primary.container }}
-              thumbColor={settings.hapticsEnabled ? palette.primary.default : palette.onSurface.disabled}
-              accessibilityLabel={t('settingsScreen.hapticsSwitch')}
-            />
-          </View>
-          <View style={styles.hapticRow}>
-            {HAPTIC_TESTS.map(test => (
-              <GlassActionButton
-                key={test.kind}
-                icon={test.icon}
-                label={t(test.label)}
-                color={palette[test.color].default}
-                onPress={() => playHaptic(test.kind)}
-                layout="stacked"
-                style={styles.hapticButton}
-              />
-            ))}
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.row} onPress={handleResetApp}>
-          <View>
-            <Text style={[styles.rowLabel, { color: palette.primary.default }]}>
-              {t('settingsScreen.restartRow')}
-            </Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.restartHint')}</Text>
-          </View>
-          <Ionicons name="refresh-outline" size={20} color={palette.primary.default} />
-        </TouchableOpacity>
-
-        <View style={styles.infoBox}>
-          <Ionicons name="shield-checkmark-outline" size={18} color={palette.primary.default} />
-          <Text style={styles.infoText}>
-            {t('settingsScreen.localFirst')}
-          </Text>
-        </View>
-      </View>
+      {section === null ? renderHub() : PAGES[section]()}
 
       {/* Modal d'édition du prénom */}
       <Modal visible={editingName} animationType="fade" transparent>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t('settingsScreen.editName')}</Text>
             <TextInput
@@ -737,12 +906,7 @@ export default function SettingsScreen() {
               autoFocus
             />
             <View style={styles.modalActions}>
-              <Button
-                label={t('common.cancel')}
-                onPress={() => setEditingName(false)}
-                variant="ghost"
-                size="sm"
-              />
+              <Button label={t('common.cancel')} onPress={() => setEditingName(false)} variant="ghost" size="sm" />
               <Button
                 label={saving ? t('settingsScreen.saving') : t('settingsScreen.save')}
                 onPress={handleSaveName}
@@ -754,16 +918,9 @@ export default function SettingsScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      <Text style={styles.version}>Junix Pulse v1.0.0 — Offline-First SQLite</Text>
+      {section === null && <Text style={styles.version}>Junix Pulse v{Constants.expoConfig?.version ?? ''}</Text>}
       {restoreModal}
-      <BackupPasswordModal
-        visible={autoBackupDirectory !== null}
-        title={t('autoBackup.passwordTitle')}
-        confirmLabel={t('autoBackup.enable')}
-        confirmPassword
-        onCancel={() => setAutoBackupDirectory(null)}
-        onSubmit={handleEnableAutoBackup}
-      />
+      {autoBackupSetupModal}
       <BackupPasswordModal
         visible={backupPasswordVisible}
         title={t('settingsScreen.protect')}

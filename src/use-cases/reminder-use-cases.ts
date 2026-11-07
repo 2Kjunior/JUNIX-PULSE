@@ -10,9 +10,12 @@
 import { randomUUID } from 'expo-crypto';
 import { ReminderRepository } from '../repositories/reminder-repository';
 import { syncReminderNotifications } from '../services/reminder-notification-service';
+import { NotificationService } from '../services/notification-service';
 import { getNextOccurrence, computeSnoozeUntil, computeSnoozeTomorrowSameTime, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
 import { Reminder, RecurrenceRule } from '../domain/entities';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
+import { interactionTypeForAction } from '../domain/rules/person-link-rules';
+import { recordLinkedInteraction } from './person-use-cases';
 
 // ─── Création ────────────────────────────────────────────────────────────────
 
@@ -24,6 +27,8 @@ export interface CreateReminderInput {
   priority?: Reminder['priority'];
   actionType?: Reminder['actionType'];
   personId?: string;
+  /** Rings again every few minutes until completed or snoozed. */
+  requiresConfirmation?: boolean;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
   checklistItems?: { title: string; position: number }[];
 }
@@ -53,6 +58,7 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     priority: input.priority ?? 'NORMAL',
     actionType: input.actionType ?? 'NONE',
     personId: input.personId,
+    requiresConfirmation: input.requiresConfirmation,
     recurrenceRuleId,
     createdAt: now,
     updatedAt: now,
@@ -86,7 +92,9 @@ export interface UpdateReminderInput {
   scheduledAt?: Date;
   priority?: Reminder['priority'];
   actionType?: Reminder['actionType'];
-  personId?: string;
+  /** null takes the person off the reminder. */
+  personId?: string | null;
+  requiresConfirmation?: boolean;
 }
 
 export async function updateReminder(input: UpdateReminderInput): Promise<void> {
@@ -134,6 +142,7 @@ export async function completeReminder(reminder: Reminder): Promise<void> {
           priority: reminder.priority,
           actionType: reminder.actionType,
           personId: reminder.personId,
+          requiresConfirmation: reminder.requiresConfirmation,
           recurrenceRule: {
             type: rule.type,
             interval: rule.interval,
@@ -148,6 +157,14 @@ export async function completeReminder(reminder: Reminder): Promise<void> {
   }
 
   await syncReminderNotifications();
+  // The reminder and its repeats leave the notification shade
+  void NotificationService.dismissForReminder(reminder.id);
+
+  // Calling, writing to or meeting the person of the reminder is an exchange with them
+  const exchange = interactionTypeForAction(reminder.actionType);
+  if (reminder.personId && exchange) {
+    await recordLinkedInteraction({ personId: reminder.personId, type: exchange, reminderId: reminder.id });
+  }
 
   emitMascotEvent({ type: 'REMINDER_COMPLETED', priority: reminder.priority });
 }
@@ -194,6 +211,7 @@ export async function snoozeReminder(
   });
 
   await syncReminderNotifications({ interactive: true });
+  void NotificationService.dismissForReminder(reminder.id);
 
   emitMascotEvent({ type: 'REMINDER_SNOOZED' });
 }

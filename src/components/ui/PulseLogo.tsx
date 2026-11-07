@@ -105,6 +105,7 @@ export function PulseLogo({ size = 80, mode = 'static', onDrawComplete }: PulseL
         startIdleLoop();
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the animation restarts when the mode changes, not when its helpers are recreated
   }, [mode]);
 
   function handleDrawFinished() {

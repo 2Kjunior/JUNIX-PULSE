@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Modal,
 } from 'react-native';
 import { format, isToday, parseISO } from 'date-fns';
 import { useT } from '@/i18n';

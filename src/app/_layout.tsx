@@ -26,7 +26,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useEffect, useState, useRef } from "react";
-import { Appearance, AppState, LogBox, StyleSheet } from "react-native";
+import { Appearance, AppState, LogBox, Platform, StyleSheet } from "react-native";
 import { GlassAlert, GlassAlertHost } from "@/components/feedback/GlassAlert";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -47,24 +47,26 @@ import { detectDeviceTimezone } from "@/services/device-timezone";
 import { applyLanguage } from "@/services/language-service";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
-import {
-  notificationActionFor,
-  notificationRoute,
-  REMINDER_ACTION_SNOOZE_MINUTES,
-} from "@/domain/rules/reminder-notification-rules";
-import { ReminderRepository } from "@/repositories/reminder-repository";
-import { runAutoBackup } from "@/services/auto-backup-service";
+import { notificationActionFor, notificationRoute } from "@/domain/rules/reminder-notification-rules";
+import { runReminderAction } from "@/services/notification-action-service";
 import { setHapticsEnabled, startActionHaptics } from "@/services/haptic-service";
+import { subscribeMascotEvents } from "@/services/mascot/mascot-event-bus";
+import { refreshTodayWidget } from "@/widget/widget-task-handler";
+import {
+  consumeAppLockResume,
+  isAppLockEnabled,
+  recordAppLockBackground,
+  setAppLockConfig,
+} from "@/services/app-lock-service";
+import { AppLockScreen } from "@/features/security/AppLockScreen";
+import { runAutoBackup, syncAutoBackupTask } from "@/services/auto-backup-service";
 import { NotificationService } from "@/services/notification-service";
 import { onReminderSyncProblem, syncReminderNotifications } from "@/services/reminder-notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
 import { SessionManager } from "@/services/session/SessionManager";
 import { useAppStore } from "@/store/app-store";
-import {
-  completeReminder,
-  reconcileOverdueRecurringReminders,
-  snoozeReminder,
-} from "@/use-cases/reminder-use-cases";
+import { reconcileOverdueRecurringReminders } from "@/use-cases/reminder-use-cases";
+import { EventUseCases } from "@/use-cases/event-use-cases";
 
 // Masquer les avertissements connus non-bloquants dans l'UI mobile (LogBox)
 LogBox.ignoreLogs([
@@ -115,23 +117,23 @@ function StartupError({ detail, onRetry }: { detail: string; onRetry: () => void
   );
 }
 
-async function openNotification(response: NotificationResponse) {
+async function openNotification(response: NotificationResponse, atLaunch = false) {
   const data = response.notification.request.content.data;
   const action = notificationActionFor(response.actionIdentifier);
 
   // A button of the notification: complete or snooze, without going through the reminder screen
-  if (action !== "open" && typeof data?.reminderId === "string") {
-    void NotificationService.dismiss(response.notification.request.identifier);
-    const reminder = await ReminderRepository.findById(data.reminderId);
-    // Already done or removed, from a second tap or another screen: nothing left to do
-    if (!reminder || reminder.status === "COMPLETED" || reminder.status === "DELETED") return;
-    if (action === "complete") {
-      await completeReminder(reminder);
-      useAppStore.getState().showSnackbar(tNow("notifAction.completed"));
-    } else {
-      await snoozeReminder(reminder, { kind: "quick", minutes: REMINDER_ACTION_SNOOZE_MINUTES });
-      useAppStore.getState().showSnackbar(tNow("notifAction.snoozed"));
-    }
+  if (action !== "open") {
+    // On Android a button tap with the app closed went to the background task, already done
+    if (atLaunch && Platform.OS === "android") return;
+    if (typeof data?.reminderId !== "string") return;
+    const outcome = await runReminderAction({
+      actionIdentifier: response.actionIdentifier,
+      notificationIdentifier: response.notification.request.identifier,
+      reminderId: data.reminderId,
+      date: response.notification.date,
+    });
+    if (outcome === "completed") useAppStore.getState().showSnackbar(tNow("notifAction.completed"));
+    if (outcome === "snoozed") useAppStore.getState().showSnackbar(tNow("notifAction.snoozed"));
     return;
   }
 
@@ -176,6 +178,13 @@ export default function RootLayout() {
   // Read by long-lived listeners, which would otherwise keep the value of the first render
   const splashFinishedRef = useRef(false);
   splashFinishedRef.current = splashFinished;
+  // App lock: "pending" hides the screen while coming back, until the delay is known to have passed
+  const [lockState, setLockStateValue] = useState<"open" | "locked" | "pending">("open");
+  const lockStateRef = useRef<"open" | "locked" | "pending">("open");
+  const setLockState = (next: "open" | "locked" | "pending") => {
+    lockStateRef.current = next;
+    setLockStateValue(next);
+  };
 
   useEffect(() => {
     // Option A : Masquer le splash natif une fois que les polices ET la base sont prêtes (DEF-06)
@@ -203,6 +212,9 @@ export default function RootLayout() {
         // La langue choisie, ou celle du téléphone sur « auto »
         applyLanguage(settings.language);
         setHapticsEnabled(settings.hapticsEnabled);
+        // Verrou de l'application : demandé dès le lancement, une fois l'onboarding fait
+        setAppLockConfig({ enabled: settings.appLockEnabled, delayMinutes: settings.appLockDelayMinutes });
+        if (settings.appLockEnabled && settings.onboardingCompleted) setLockState("locked");
         // Le fuseau de l'utilisateur est celui du téléphone : il suit ses déplacements
         const deviceTimezone = detectDeviceTimezone();
         setUserTimezone(deviceTimezone);
@@ -240,7 +252,7 @@ export default function RootLayout() {
     }
 
     initialize();
-  }, [appReady, startAttempt]);
+  }, [appReady, startAttempt, setDbError, setDbReady, setOnboardingComplete, setThemeMode, setUserTimezone]);
 
   // Synchroniser le thème avec les composants natifs et l'arrière-plan système
   useEffect(() => {
@@ -257,10 +269,19 @@ export default function RootLayout() {
     const sub = AppState.addEventListener("change", (nextAppState) => {
       if (nextAppState === "background") {
         void SessionManager.recordBackground();
-      } else if (nextAppState === "active" && SessionManager.consumeResumeSplash()) {
-        setSplashRun((run) => run + 1);
-        setSplashFinished(false);
-        setSplashPlaying(true);
+        if (isAppLockEnabled()) {
+          recordAppLockBackground();
+          if (lockStateRef.current === "open") setLockState("pending");
+        }
+      } else if (nextAppState === "active") {
+        // The lock is decided first: the backup listener below waits for it
+        const relock = consumeAppLockResume();
+        if (lockStateRef.current === "pending") setLockState(relock ? "locked" : "open");
+        if (SessionManager.consumeResumeSplash()) {
+          setSplashRun((run) => run + 1);
+          setSplashFinished(false);
+          setSplashPlaying(true);
+        }
       }
     });
     return () => sub.remove();
@@ -284,21 +305,53 @@ export default function RootLayout() {
   // Une vibration répond aux actions, quel que soit l'écran qui les déclenche
   useEffect(() => startActionHaptics(), []);
 
+  // Le widget de l'écran d'accueil suit les changements : après une action, et en quittant l'application
+  useEffect(() => {
+    if (Platform.OS !== "android" || !dbReady) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => void refreshTodayWidget(), 800);
+    };
+    later();
+    const stopEvents = subscribeMascotEvents(later);
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "background") void refreshTodayWidget();
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      stopEvents();
+      sub.remove();
+    };
+  }, [dbReady]);
+
   // Récaps et rappels : au lancement, et dès la fin de l'onboarding
   useEffect(() => {
     if (!dbReady || !onboardingComplete) return;
     void syncDailyRecapNotifications();
     void syncReminderNotifications();
-    // La sauvegarde automatique de la semaine, si elle est activée
-    void runAutoBackup();
+    // Les événements passés avec des proches comptent comme des rencontres
+    void EventUseCases.recordPastMeetings().catch(() => 0);
+    // La tâche de fond de la sauvegarde suit les réglages, même après une restauration
+    void syncAutoBackupTask();
   }, [dbReady, onboardingComplete]);
+
+  // La sauvegarde automatique de la semaine, si elle est activée : une fois l'application
+  // déverrouillée, car elle peut elle aussi demander l'empreinte
+  useEffect(() => {
+    if (!dbReady || !onboardingComplete || lockState !== "open") return;
+    void runAutoBackup();
+  }, [dbReady, onboardingComplete, lockState]);
 
   // Au retour dans l'application, les récurrences déjà passées repartent de la bonne date
   useEffect(() => {
     if (!dbReady || !onboardingComplete) return;
     const sub = AppState.addEventListener("change", (nextAppState) => {
       if (nextAppState !== "active") return;
-      void runAutoBackup();
+      // Locked again: the backup runs once the app is unlocked (effect above)
+      if (lockStateRef.current === "open") void runAutoBackup();
+      // Les rencontres qui viennent de se terminer comptent comme des échanges
+      void EventUseCases.recordPastMeetings().catch(() => 0);
       reconcileOverdueRecurringReminders()
         .catch(() => 0)
         .then(() => syncReminderNotifications());
@@ -323,7 +376,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (!dbReady || !splashFinished || !onboardingComplete) return;
     const response = NotificationService.consumeLastResponse();
-    if (response) openNotification(response);
+    if (response) void openNotification(response, true);
   }, [dbReady, splashFinished, onboardingComplete]);
 
   // Écouteurs de notifications pour navigation directe & snooze
@@ -470,14 +523,20 @@ export default function RootLayout() {
               <Stack.Screen name="capture" options={{ presentation: "modal" }} />
               <Stack.Screen name="sanctum" options={{ presentation: "card" }} />
               <Stack.Screen name="search" options={{ presentation: "card" }} />
+              {/* Bilan du jour et de la semaine, ouvert aussi par la notification du récap */}
+              <Stack.Screen name="review" options={{ presentation: "card" }} />
             </Stack>
           </ThemeProvider>
           {/* Snackbar global (au-dessus de tout le contenu) */}
           <Snackbar />
-          {/* Fenêtres d'alerte en verre, à la place des alertes natives */}
-          <GlassAlertHost />
+          {/* Fenêtres d'alerte en verre, à la place des alertes natives ; en attente tant que c'est verrouillé */}
+          <GlassAlertHost paused={lockState !== "open"} />
           {/* Compagne Pulse : une seule instance, qui suit l'utilisateur d'un écran à l'autre, au-dessus du Snackbar */}
           <MascotCompanion />
+          {/* Verrou de l'application, au-dessus de tout le reste une fois l'animation finie */}
+          {lockState !== "open" && onboardingComplete && (
+            <AppLockScreen pending={lockState === "pending"} onUnlocked={() => setLockState("open")} />
+          )}
         </SafeAreaProvider>
       </GestureHandlerRootView>
       {splashOverlay}

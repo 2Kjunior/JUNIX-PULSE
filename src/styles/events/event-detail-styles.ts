@@ -116,6 +116,23 @@ export function makeEventDetailStyles(theme: ThemePalette) {
       ...Typography.titleMedium,
       color: theme.onSurface.primary,
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sectionAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minHeight: 44,
+      paddingHorizontal: Spacing.xs,
+    },
+    sectionActionText: {
+      ...Typography.labelMedium,
+      color: theme.primary.default,
+      fontWeight: '600',
+    },
     personRow: {
       flexDirection: 'row',
       alignItems: 'center',

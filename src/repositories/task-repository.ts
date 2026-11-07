@@ -19,6 +19,7 @@ function rowToTask(row: Record<string, unknown>): Task {
     description: (row.description as string | null) ?? undefined,
     status: row.status as Task['status'],
     scheduledDate: (row.scheduled_date as string | null) ?? undefined,
+    dueDate: (row.due_date as string | null) ?? undefined,
     estimatedMinutes: (row.estimated_minutes as number | null) ?? undefined,
     priority: row.priority as Task['priority'],
     goalId: (row.goal_id as string | null) ?? undefined,
@@ -54,11 +55,11 @@ export const TaskRepository = {
   async create(task: Omit<Task, 'deletedAt'>): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO tasks (id, title, description, status, scheduled_date, estimated_minutes,
+      `INSERT INTO tasks (id, title, description, status, scheduled_date, due_date, estimated_minutes,
         priority, goal_id, person_id, tags, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       task.id, task.title, task.description ?? null, task.status,
-      task.scheduledDate ?? null, task.estimatedMinutes ?? null, task.priority,
+      task.scheduledDate ?? null, task.dueDate ?? null, task.estimatedMinutes ?? null, task.priority,
       task.goalId ?? null, task.personId ?? null,
       task.tags ? JSON.stringify(task.tags) : null,
       task.createdAt, task.updatedAt
@@ -80,6 +81,10 @@ export const TaskRepository = {
     if (params.status !== undefined) {
       setClauses.push('status = ?');
       values.push(params.status);
+    }
+    if (params.dueDate !== undefined) {
+      setClauses.push('due_date = ?');
+      values.push(params.dueDate);
     }
     if (params.scheduledDate !== undefined) {
       setClauses.push('scheduled_date = ?');
@@ -198,6 +203,16 @@ export const TaskRepository = {
          AND status NOT IN ('COMPLETED', 'POSTPONED')
        ORDER BY scheduled_date ASC`,
       beforeDate
+    );
+    return rows.map(rowToTask);
+  },
+
+  /** The tasks linked to a person. */
+  async findByPerson(personId: string): Promise<Task[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM tasks WHERE person_id = ? AND deleted_at IS NULL ORDER BY created_at DESC`,
+      personId
     );
     return rows.map(rowToTask);
   },

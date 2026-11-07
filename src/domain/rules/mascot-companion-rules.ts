@@ -340,26 +340,27 @@ export function glancePointAt(placement: GuidePlacement, target: GuidePoint): Gu
  * have their own bubble (a reminder arriving, an event approaching) or that mean nothing to
  * celebrate (a deletion, a snooze) say nothing here.
  */
-export function reactionMessageId(eventType: MascotEventType): MascotMessageId | null {
-  switch (eventType) {
-    case 'TASK_COMPLETED':
-    case 'REMINDER_COMPLETED':
-    case 'FOCUS_COMPLETED':
-    case 'HABIT_COMPLETED':
-    case 'HABIT_RESUMED':
-    case 'SUGGESTION_ACCEPTED':
-    case 'BACKUP_DONE':
-      return 'REACT_DONE';
-    case 'DAY_CLEARED':
-      return 'REACT_DAY_CLEARED';
-    case 'GOAL_COMPLETED':
-      return 'REACT_GOAL';
-    case 'PERSON_CONTACTED':
-      return 'REACT_CONTACT';
-    default:
-      return null;
-  }
+export function reactionMessageId(eventType: MascotEventType, turn = 0): MascotMessageId | null {
+  const wordings = REACTION_WORDINGS[eventType];
+  if (!wordings) return null;
+  // A different wording at each reaction, in turn
+  return wordings[Math.abs(Math.trunc(turn)) % wordings.length];
 }
+
+const DONE_WORDINGS: readonly MascotMessageId[] = ['REACT_DONE', 'REACT_DONE_2', 'REACT_DONE_3'];
+
+const REACTION_WORDINGS: Partial<Record<MascotEventType, readonly MascotMessageId[]>> = {
+  TASK_COMPLETED: DONE_WORDINGS,
+  REMINDER_COMPLETED: DONE_WORDINGS,
+  FOCUS_COMPLETED: DONE_WORDINGS,
+  HABIT_COMPLETED: DONE_WORDINGS,
+  HABIT_RESUMED: DONE_WORDINGS,
+  SUGGESTION_ACCEPTED: DONE_WORDINGS,
+  BACKUP_DONE: DONE_WORDINGS,
+  DAY_CLEARED: ['REACT_DAY_CLEARED', 'REACT_DAY_CLEARED_2'],
+  GOAL_COMPLETED: ['REACT_GOAL', 'REACT_GOAL_2'],
+  PERSON_CONTACTED: ['REACT_CONTACT', 'REACT_CONTACT_2'],
+};
 
 /**
  * Whether a reaction also gets a short bubble. Small ones are only a gesture of the body and

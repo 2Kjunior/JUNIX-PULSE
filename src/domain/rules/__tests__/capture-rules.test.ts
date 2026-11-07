@@ -199,14 +199,106 @@ describe('parseQuickCapture (DEF-10)', () => {
     });
 
     it('passe au lendemain quand aucun jour n est donne et que l heure est passee', () => {
-      const result = parseQuickCapture('Acheter du pain', [], afternoon);
+      const result = parseQuickCapture('Appeler Marie', [], afternoon);
       expect(result.targetTime).toBe('09:00');
       expect(result.targetDate.getDate()).toBe(18);
       expect(parseQuickCapture('Appeler Marie à 18h', [], afternoon).targetDate.getDate()).toBe(17);
     });
 
+    it('fait une tache du jour d une chose a faire sans heure', () => {
+      const result = parseQuickCapture('Acheter du pain', [], afternoon);
+      expect(result.kind).toBe('task');
+      expect(result.targetDate.getDate()).toBe(17);
+      expect(parseQuickCapture('Acheter du pain à 18h', [], afternoon).kind).toBe('reminder');
+      expect(parseQuickCapture('Appeler Marie', [], afternoon).kind).toBe('reminder');
+    });
+
     it('garde le jour donne explicitement, meme passe', () => {
       expect(parseQuickCapture("Aujourd'hui à 9h", [], afternoon).targetDate.getDate()).toBe(17);
+    });
+  });
+
+  // ─── 7. Formules relatives, dates, répétitions, anglais ────────────────────
+  describe('Formules relatives et dates du calendrier', () => {
+    // Mardi 17 juin 2025, 15:00 heure locale
+    const now = new Date(2025, 5, 17, 15, 0, 0);
+    const day = (text: string, language: 'fr' | 'en' = 'fr') => parseQuickCapture(text, [], now, language);
+
+    it('comprend "dans 2 heures" et "dans 30 minutes" sans lire une heure du jour', () => {
+      expect(day('Appeler Marie dans 2 heures').targetTime).toBe('17:00');
+      expect(day('Appeler Marie dans 2h').targetTime).toBe('17:00');
+      expect(day('Sortir le linge dans 30 min').targetTime).toBe('15:30');
+      expect(day('Appeler Marie dans une heure').targetTime).toBe('16:00');
+    });
+
+    it('comprend "dans 3 jours", "la semaine prochaine" et "le mois prochain"', () => {
+      expect(day('Rappeler le garage dans 3 jours').targetDate.getDate()).toBe(20);
+      expect(day('Réunion la semaine prochaine').targetDate.getDate()).toBe(23); // lundi suivant
+      expect(day('Payer le loyer le mois prochain').targetDate.getMonth()).toBe(6);
+    });
+
+    it('comprend "le 12", "12/11" et "12 novembre"', () => {
+      const the12 = day('Dentiste le 12 à 10h').targetDate;
+      expect([the12.getDate(), the12.getMonth()]).toEqual([12, 6]); // le 12 juin est passé
+      const numeric = day('Anniversaire 12/11').targetDate;
+      expect([numeric.getDate(), numeric.getMonth()]).toEqual([12, 10]);
+      const named = day('Vaccin 3 novembre').targetDate;
+      expect([named.getDate(), named.getMonth()]).toEqual([3, 10]);
+      expect(day('Vaccin 3 mars').targetDate.getFullYear()).toBe(2026);
+    });
+
+    it('lit "11/12" mois d abord en anglais', () => {
+      const date = day('Dentist 11/12', 'en').targetDate;
+      expect([date.getDate(), date.getMonth()]).toEqual([12, 10]);
+    });
+  });
+
+  describe('Repetitions', () => {
+    const now = new Date(2025, 5, 17, 15, 0, 0); // mardi
+
+    it('comprend "tous les jours" et "tous les 3 jours"', () => {
+      expect(parseQuickCapture('Prendre mes vitamines tous les jours à 8h', [], now).recurrence).toEqual({
+        type: 'DAILY',
+        interval: 1,
+      });
+      expect(parseQuickCapture('Arroser tous les 3 jours', [], now).recurrence).toEqual({ type: 'DAILY', interval: 3 });
+    });
+
+    it('comprend "tous les lundis et jeudis" et commence au premier de ces jours', () => {
+      const result = parseQuickCapture('Sport tous les lundis et jeudis à 18h', [], now);
+      expect(result.recurrence).toEqual({ type: 'WEEKLY', interval: 1, daysOfWeek: [1, 4] });
+      expect(result.targetDate.getDay()).toBe(4);
+      expect(result.kind).toBe('reminder');
+    });
+
+    it('comprend "chaque mois" et "every week"', () => {
+      expect(parseQuickCapture('Payer le loyer chaque mois le 5', [], now).recurrence).toEqual({
+        type: 'MONTHLY',
+        interval: 1,
+        dayOfMonth: 5,
+      });
+      expect(parseQuickCapture('Call mom every week on sunday', [], now, 'en').recurrence?.type).toBe('WEEKLY');
+    });
+  });
+
+  describe('Anglais', () => {
+    const now = new Date(2025, 5, 17, 15, 0, 0);
+    const en = (text: string) => parseQuickCapture(text, SAMPLE_PERSONS, now, 'en');
+
+    it('comprend les actions, les jours et les heures', () => {
+      const call = en('Call Marc tomorrow at 6pm');
+      expect(call.actionType).toBe('CALL');
+      expect(call.targetPerson?.displayName).toBe('Marc Dupont');
+      expect(call.targetDate.getDate()).toBe(18);
+      expect(call.targetTime).toBe('18:00');
+      expect(en('Lunch with Aline on friday at noon').targetTime).toBe('12:00');
+      expect(en('Lunch with Aline on friday').targetDate.getDay()).toBe(5);
+      expect(en('Email the quote tonight').targetTime).toBe('20:30');
+      expect(en('Text Paul in 2 hours').targetTime).toBe('17:00');
+      expect(en('Buy bread').kind).toBe('task');
+      expect(en('Pay rent asap').priority).toBe('URGENT');
+      expect(en('Dentist the day after tomorrow at 9:30am').targetDate.getDate()).toBe(19);
+      expect(en('Dentist the day after tomorrow at 9:30am').targetTime).toBe('09:30');
     });
   });
 });

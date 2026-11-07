@@ -46,6 +46,8 @@ function rowToInteraction(row: Record<string, unknown>): Interaction {
     occurredAt: row.occurred_at as string,
     notes: (row.notes as string | null) ?? undefined,
     reminderId: (row.reminder_id as string | null) ?? undefined,
+    taskId: (row.task_id as string | null) ?? undefined,
+    eventId: (row.event_id as string | null) ?? undefined,
     createdAt: row.created_at as string,
   };
 }
@@ -187,24 +189,51 @@ export const PersonRepository = {
   async createInteraction(interaction: Interaction): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO interactions (id, person_id, type, occurred_at, notes, reminder_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO interactions (id, person_id, type, occurred_at, notes, reminder_id, task_id, event_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       interaction.id,
       interaction.personId,
       interaction.type,
       interaction.occurredAt,
       interaction.notes ?? null,
       interaction.reminderId ?? null,
+      interaction.taskId ?? null,
+      interaction.eventId ?? null,
       interaction.createdAt
     );
 
-    // Mettre à jour automatiquement la date de dernière interaction de la personne
+    // La date du dernier échange avance, et ne recule jamais : un échange passé noté après coup
+    // ne doit pas faire oublier un échange plus récent (les dates ISO se comparent comme du texte)
     await db.runAsync(
-      `UPDATE persons SET last_interaction_at = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE persons
+         SET last_interaction_at = CASE
+               WHEN last_interaction_at IS NULL OR last_interaction_at < ? THEN ?
+               ELSE last_interaction_at
+             END,
+             updated_at = ?
+       WHERE id = ?`,
+      interaction.occurredAt,
       interaction.occurredAt,
       new Date().toISOString(),
       interaction.personId
     );
+  },
+
+  /** Whether this source (a reminder, a task or an event) already counted as an exchange. */
+  async hasInteractionFrom(
+    personId: string,
+    source: { reminderId?: string; taskId?: string; eventId?: string }
+  ): Promise<boolean> {
+    const db = await getDatabase();
+    const column = source.reminderId ? 'reminder_id' : source.taskId ? 'task_id' : 'event_id';
+    const value = source.reminderId ?? source.taskId ?? source.eventId;
+    if (!value) return false;
+    const row = await db.getFirstAsync<{ count: number }>(
+      `SELECT count(*) AS count FROM interactions WHERE person_id = ? AND ${column} = ?`,
+      personId,
+      value
+    );
+    return (row?.count ?? 0) > 0;
   },
 
   async findInteractions(personId: string): Promise<Interaction[]> {

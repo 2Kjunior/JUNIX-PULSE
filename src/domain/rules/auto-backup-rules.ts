@@ -6,6 +6,20 @@ export const AUTO_BACKUP_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 export const AUTO_BACKUP_KEPT_FILES = 4;
 export const AUTO_BACKUP_FILE_PREFIX = 'junix-pulse-auto-';
 
+/** Background task of the backup on Android, and how often the system may run it at most. */
+export const AUTO_BACKUP_TASK = 'junix-pulse-auto-backup';
+export const AUTO_BACKUP_TASK_INTERVAL_MINUTES = 12 * 60;
+export const AUTO_BACKUP_FAILED_NOTIFICATION_ID = 'junix-pulse-auto-backup-failed';
+
+/**
+ * Whether a failure deserves a notification: the first one after a success (or ever), not the
+ * next ones, so a missing folder does not send one twice a day.
+ */
+export function shouldWarnAutoBackupFailure(lastSuccessAt: number | null, lastFailedAt: number | null): boolean {
+  if (lastFailedAt === null) return true;
+  return lastSuccessAt !== null && lastSuccessAt > lastFailedAt;
+}
+
 /** Due once a week, or right away when it never succeeded. A clock set back counts as due. */
 export function isAutoBackupDue(lastSuccessAt: number | null, now: number): boolean {
   if (lastSuccessAt === null) return true;

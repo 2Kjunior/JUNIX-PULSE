@@ -246,6 +246,9 @@ export default function HabitsListScreen() {
                         item.completedToday && { backgroundColor: habitColor },
                       ]}
                       onPress={() => handleToggleToday(item)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: item.completedToday }}
+                      accessibilityLabel={t('a11y.habitDoneToday', { title: item.habit.title })}
                     >
                       <Ionicons
                         name="checkmark"

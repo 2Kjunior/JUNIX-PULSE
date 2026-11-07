@@ -22,12 +22,13 @@
       "permissions": [
         "android.permission.READ_CONTACTS",
         "android.permission.SCHEDULE_EXACT_ALARM",
-        "android.permission.USE_BIOMETRIC"
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.READ_CALENDAR"
       ],
       "blockedPermissions": [
         "android.permission.WRITE_CONTACTS",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_CALENDAR"
       ]
     },
     "web": {
@@ -96,7 +97,49 @@
         }
       ],
       "expo-asset",
-      "react-native-quick-crypto"
+      "react-native-quick-crypto",
+      "expo-background-task",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Autoriser Junix Pulse à utiliser le micro pour dicter une capture rapide.",
+          "speechRecognitionPermission": "Autoriser Junix Pulse à reconnaître la parole, sur le téléphone uniquement.",
+          "androidSpeechServicePackages": [
+            "com.google.android.as",
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Autoriser Junix Pulse à lire votre agenda pour afficher vos rendez-vous à côté de vos rappels."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Autoriser Junix Pulse à utiliser Face ID pour déverrouiller l’application."
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Today",
+              "label": "Junix Pulse",
+              "description": "Pulse, votre prochain rappel et les tâches du jour",
+              "minWidth": "250dp",
+              "minHeight": "150dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/images/icon.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -19,6 +19,7 @@ export interface CreateReminderParams {
   priority: Reminder['priority'];
   actionType: Reminder['actionType'];
   personId?: string;
+  requiresConfirmation?: boolean;
   recurrenceRuleId?: string;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +34,7 @@ export interface UpdateReminderParams {
   status?: Reminder['status'];
   actionType?: Reminder['actionType'];
   personId?: string | null;
+  requiresConfirmation?: boolean;
   notificationId?: string | null;
   snoozedUntil?: string | null;
   updatedAt: string;
@@ -53,6 +55,7 @@ function rowToReminder(row: Record<string, unknown>): Reminder {
     status: row.status as Reminder['status'],
     actionType: row.action_type as Reminder['actionType'],
     personId: (row.person_id as string | null) ?? undefined,
+    requiresConfirmation: (row.requires_confirmation as number | null) === 1,
     recurrenceRuleId: (row.recurrence_rule_id as string | null) ?? undefined,
     notificationId: (row.notification_id as string | null) ?? undefined,
     snoozedUntil: (row.snoozed_until as string | null) ?? undefined,
@@ -84,8 +87,8 @@ export const ReminderRepository = {
     await db.runAsync(
       `INSERT INTO reminders (
         id, title, notes, scheduled_at, timezone, priority, status, action_type,
-        person_id, recurrence_rule_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'UPCOMING', ?, ?, ?, ?, ?)`,
+        person_id, recurrence_rule_id, requires_confirmation, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'UPCOMING', ?, ?, ?, ?, ?, ?)`,
       params.id,
       params.title,
       params.notes ?? null,
@@ -95,6 +98,7 @@ export const ReminderRepository = {
       params.actionType,
       params.personId ?? null,
       params.recurrenceRuleId ?? null,
+      params.requiresConfirmation ? 1 : 0,
       params.createdAt,
       params.updatedAt
     );
@@ -130,6 +134,10 @@ export const ReminderRepository = {
     if (params.actionType !== undefined) {
       setClauses.push('action_type = ?');
       values.push(params.actionType);
+    }
+    if (params.requiresConfirmation !== undefined) {
+      setClauses.push('requires_confirmation = ?');
+      values.push(params.requiresConfirmation ? 1 : 0);
     }
     if (params.personId !== undefined) {
       setClauses.push('person_id = ?');
@@ -202,6 +210,16 @@ export const ReminderRepository = {
   /**
    * Récupère tous les rappels actifs (non supprimés), triés par date.
    */
+  /** The reminders linked to a person, oldest first. */
+  async findByPerson(personId: string): Promise<Reminder[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown>>(
+      `SELECT * FROM reminders WHERE person_id = ? AND deleted_at IS NULL ORDER BY scheduled_at ASC`,
+      personId
+    );
+    return rows.map(rowToReminder);
+  },
+
   async findAll(): Promise<Reminder[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(

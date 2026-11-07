@@ -3,17 +3,16 @@
  * Design Junix Pulse, zéro emoji, contrastes vérifiés sombre et clair.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   TouchableOpacity,
   Linking,
   KeyboardAvoidingView,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -21,33 +20,25 @@ import { format, differenceInDays } from 'date-fns';
 import { PersonRepository } from '@/repositories/person-repository';
 import { PersonUseCases } from '@/use-cases/person-use-cases';
 import { Person, Interaction, InteractionType } from '@/domain/entities';
+import { EventRepository } from '@/repositories/event-repository';
+import { ReminderRepository } from '@/repositories/reminder-repository';
+import { TaskRepository } from '@/repositories/task-repository';
+import { createReminder } from '@/use-cases/reminder-use-cases';
+import { followUpDate, FOLLOW_UP_DAYS, personAgenda, PersonAgendaItem } from '@/domain/rules/person-link-rules';
+import { PersonAgenda } from '@/components/people/PersonAgenda';
+import { INTERACTION_TYPES, LogInteractionSheet } from '@/components/people/LogInteractionSheet';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useAppStore } from '@/store/app-store';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
-import { Button } from '@/components/ui/Button';
 import { PersonTimeCard } from '@/components/people/PersonTimeCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makePersonDetailStyles } from '@/styles/people/person-detail-styles';
-import { MessageKey, useDateLocale, useT } from '@/i18n';
+import { useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
-
-interface InteractionTypeConfig {
-  type: InteractionType;
-  labelKey: MessageKey;
-  icon: keyof typeof Ionicons.glyphMap;
-}
-
-const INTERACTION_TYPES: InteractionTypeConfig[] = [
-  { type: 'CALL', labelKey: 'interaction.CALL', icon: 'call-outline' },
-  { type: 'SMS', labelKey: 'interaction.SMS', icon: 'chatbubble-outline' },
-  { type: 'WHATSAPP', labelKey: 'interaction.WHATSAPP', icon: 'logo-whatsapp' },
-  { type: 'IN_PERSON', labelKey: 'interaction.IN_PERSON', icon: 'people-outline' },
-  { type: 'EMAIL', labelKey: 'interaction.EMAIL', icon: 'mail-outline' },
-  { type: 'OTHER', labelKey: 'interaction.OTHER', icon: 'document-text-outline' },
-];
 
 function formatWhatsAppUrl(rawPhone?: string): string {
   if (!rawPhone) return '';
@@ -75,12 +66,9 @@ export default function PersonDetailScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [person, setPerson] = useState<Person | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
+  const [agenda, setAgenda] = useState<PersonAgendaItem[]>([]);
   const [error, setError] = useState('');
-
-  // Nouvelle interaction inline
-  const [selectedType, setSelectedType] = useState<InteractionType>('CALL');
-  const [logNotes, setLogNotes] = useState('');
-  const [logging, setLogging] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -89,9 +77,12 @@ export default function PersonDetailScreen() {
       return;
     }
     try {
-      const [p, inters] = await Promise.all([
+      const [p, inters, reminders, tasks, events] = await Promise.all([
         PersonRepository.findById(id),
         PersonRepository.findInteractions(id),
+        ReminderRepository.findByPerson(id),
+        TaskRepository.findByPerson(id),
+        EventRepository.findByPerson(id),
       ]);
       if (!p) {
         setError(t('person.notFound'));
@@ -100,6 +91,7 @@ export default function PersonDetailScreen() {
       }
       setPerson(p);
       setInteractions(inters);
+      setAgenda(personAgenda(reminders, tasks, events, new Date()));
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.loadError'));
@@ -107,30 +99,49 @@ export default function PersonDetailScreen() {
     }
   }, [id, t]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Read again on each return: a reminder or a task may just have been planned with this person
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   // ─── Enregistrer une interaction ───────────────────────────────────────────
 
-  async function handleLogInteraction() {
+  async function handleLogInteraction(type: InteractionType, notes: string) {
     if (!id || !person) return;
-    setLogging(true);
     try {
-      await PersonUseCases.logInteraction({
-        personId: id,
-        type: selectedType,
-        notes: logNotes.trim() || undefined,
-      });
-
-      setLogNotes('');
+      await PersonUseCases.logInteraction({ personId: id, type, notes: notes || undefined });
       showSnackbar(t('person.interactionSaved'));
       await load();
     } catch (e) {
       showSnackbar(e instanceof Error ? e.message : t('common.error'));
-    } finally {
-      setLogging(false);
     }
+  }
+
+  // ─── Relancer : un rappel pour recontacter la personne ─────────────────────
+
+  function handleFollowUp() {
+    if (!person) return;
+    const plan = (days: number) => async () => {
+      try {
+        await createReminder({
+          title: t('personAgenda.followUpTitle', { name: person.displayName }),
+          scheduledAt: followUpDate(days, new Date()),
+          timezone: userTimezone,
+          actionType: 'CALL',
+          personId: person.id,
+        });
+        showSnackbar(t('personAgenda.followUpDone', { name: firstName }));
+        await load();
+      } catch (e) {
+        showSnackbar(e instanceof Error ? e.message : t('common.error'));
+      }
+    };
+    GlassAlert.alert(t('personAgenda.followUpAsk', { name: firstName }), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      ...FOLLOW_UP_DAYS.map(days => ({ text: t(`personAgenda.in${days}` as 'personAgenda.in1'), onPress: plan(days) })),
+    ]);
   }
 
   // ─── Supprimer une interaction ─────────────────────────────────────────────
@@ -168,6 +179,8 @@ export default function PersonDetailScreen() {
 
   const isForgotten =
     daysSinceLast === null || daysSinceLast >= (person.forgottenThresholdDays || 30);
+
+  const firstName = person.displayName.trim().split(/\s+/)[0] ?? person.displayName;
 
   const initials = person.displayName
     .split(' ')
@@ -340,68 +353,27 @@ export default function PersonDetailScreen() {
           />
         </View>
 
-        {/* Section : Enregistrer une nouvelle interaction */}
+        {/* Avec cette personne : ce qui est prévu, et de quoi prévoir plus */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('person.logTitle')}</Text>
-          <GlowCard tone="neutral">
-          <View style={styles.logCardInner}>
-            {/* Choix du type */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typeScroll}>
-              <View style={styles.typeRow}>
-                {INTERACTION_TYPES.map(item => {
-                  const isSelected = selectedType === item.type;
-                  return (
-                    <TouchableOpacity
-                      key={item.type}
-                      style={[styles.typeChip, isSelected && styles.typeChipActive]}
-                      onPress={() => setSelectedType(item.type)}
-                      activeOpacity={0.7}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: isSelected }}
-                      accessibilityLabel={`${t(item.labelKey)}${isSelected ? ', ' + t('common.selected') : ''}`}
-                    >
-                      <Ionicons
-                        name={item.icon}
-                        size={16}
-                        color={isSelected ? theme.primary.onContainer : theme.onSurface.variant}
-                      />
-                      <Text
-                        style={[styles.typeChipText, isSelected && styles.typeChipTextActive]}
-                      >
-                        {t(item.labelKey)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-
-            {/* Note sur l'interaction */}
-            <TextInput
-              style={styles.logInput}
-              value={logNotes}
-              onChangeText={setLogNotes}
-              placeholder={t('person.logNotesPlaceholder')}
-              placeholderTextColor={theme.onSurface.disabled}
-              multiline
-              numberOfLines={2}
-            />
-
-            {/* Bouton avec dégradé unique */}
-            <Button
-              label={t('person.logButton')}
-              onPress={handleLogInteraction}
-              variant="primary"
-              size="md"
-              loading={logging}
-            />
-          </View>
-          </GlowCard>
+          <PersonAgenda personId={person.id} firstName={firstName} items={agenda} onFollowUp={handleFollowUp} />
         </View>
 
         {/* Section : Historique / Timeline */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('person.history', { count: interactions.length })}</Text>
+          <View style={styles.historyHeader}>
+            <Text style={styles.sectionTitle}>{t('person.history', { count: interactions.length })}</Text>
+            {/* Le formulaire occupait toute une section : un bouton l'ouvre maintenant */}
+            <TouchableOpacity
+              style={styles.historyAction}
+              onPress={() => setLogOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('person.logTitle')}
+              testID="person-log-open"
+            >
+              <Ionicons name="add" size={16} color={theme.primary.default} />
+              <Text style={styles.historyActionText}>{t('person.logShort')}</Text>
+            </TouchableOpacity>
+          </View>
 
           {interactions.length === 0 ? (
             <GlowCard tone="neutral">
@@ -430,6 +402,12 @@ export default function PersonDetailScreen() {
                       </Text>
                     </View>
                     {!!item.notes && <Text style={styles.timelineNotes}>{item.notes}</Text>}
+                    {/* Les échanges comptés tout seuls disent d'où ils viennent */}
+                    {!item.notes && (item.reminderId || item.eventId) && (
+                      <Text style={styles.timelineNotes}>
+                        {t(item.eventId ? 'person.fromEvent' : 'person.fromReminder')}
+                      </Text>
+                    )}
                   </View>
                   <TouchableOpacity
                     onPress={() => handleDeleteInteraction(item.id)}
@@ -449,6 +427,7 @@ export default function PersonDetailScreen() {
           )}
         </View>
       </ScrollView>
+      <LogInteractionSheet visible={logOpen} onClose={() => setLogOpen(false)} onSave={handleLogInteraction} />
     </KeyboardAvoidingView>
   );
 }

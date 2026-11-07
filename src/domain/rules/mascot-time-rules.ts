@@ -14,6 +14,7 @@ export type MascotTimeTriggerKind =
   | 'EVENT_DEPARTURE'
   | 'EVENT_START'
   | 'PLANNING_BLOCK_START'
+  | 'DEADLINE_SOON'
   | 'EVENING_REVIEW';
 
 export type PlanningBlockKind = 'WORK' | 'STUDY' | 'SPORT' | 'REST' | 'HOUSE' | 'OTHER' | 'FREE';
@@ -37,6 +38,12 @@ export interface MascotTimeBlock {
   startAt: number; // Epoch milliseconds, resolved by the caller for today
 }
 
+/** A task due soon that Pulse may mention, picked by the caller with isDeadlineToAnnounce. */
+export interface MascotTimeDeadline {
+  id: string;
+  dueDate: string; // YYYY-MM-DD
+}
+
 export interface MascotTimeInput {
   now: number;
   hour: number; // Local hour, 0 to 23
@@ -47,6 +54,8 @@ export interface MascotTimeInput {
   focusState: FocusState;
   events: readonly MascotTimeEvent[];
   blocks: readonly MascotTimeBlock[];
+  /** Tasks due within the warning days. */
+  deadlines?: readonly MascotTimeDeadline[];
   todayTaskTotal: number;
   todayTaskCompleted: number;
   firedKeys: ReadonlySet<string>;
@@ -183,6 +192,22 @@ function dailyTriggers(input: MascotTimeInput): MascotTimeTrigger[] {
   return triggers;
 }
 
+function deadlineTriggers(input: MascotTimeInput): MascotTimeTrigger[] {
+  // During the day, once per task and deadline: before the evening review takes over
+  if (input.hour < input.morningBriefingHour || input.hour >= input.endOfDayHour) return [];
+  return (input.deadlines ?? []).map(deadline => ({
+    key: `DEADLINE_SOON:${deadline.id}:${deadline.dueDate}`,
+    kind: 'DEADLINE_SOON' as const,
+    subjectId: deadline.id,
+    dueAt: 0,
+    mood: 'calm' as const,
+    attentive: true,
+    level: 'small' as const,
+    hasMessage: true,
+    proposesFocus: false,
+  }));
+}
+
 /**
  * Time-driven interventions due right now, oldest first, minus those already shown.
  * Nothing is due at night or during a Focus session.
@@ -191,7 +216,7 @@ export function dueMascotTimeTriggers(input: MascotTimeInput): MascotTimeTrigger
   if (isNightHour(input.hour)) return [];
   if (input.focusState === 'running' || input.focusState === 'paused') return [];
 
-  return [...dailyTriggers(input), ...eventTriggers(input), ...blockTriggers(input)]
+  return [...dailyTriggers(input), ...deadlineTriggers(input), ...eventTriggers(input), ...blockTriggers(input)]
     .filter(trigger => !input.firedKeys.has(trigger.key))
     .sort((a, b) => a.dueAt - b.dueAt);
 }

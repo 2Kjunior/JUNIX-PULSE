@@ -183,7 +183,7 @@ export function MascotCompanion() {
 
       counterRef.current += 1;
       const id = counterRef.current;
-      const messageId = reactionMessageId(reaction.eventType);
+      const messageId = reactionMessageId(reaction.eventType, id);
       const wantsBubble = messageId !== null && reactionHasBubble(reaction.level, getMascotPresence());
 
       const show = (text: string | null) => {

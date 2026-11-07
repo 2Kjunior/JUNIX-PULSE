@@ -5,10 +5,6 @@ import {
   registerSanctumFailedAttempt,
   getSanctumLockoutStatus,
   INITIAL_SANCTUM_LOCKOUT,
-  filterSanctumNotes,
-  formatSanctumSnippet,
-  extractUniqueFolders,
-  SanctumNoteItem,
 } from '../domain/rules/sanctum-rules';
 
 describe('Sanctum Rules — Validation des codes PIN (V-02)', () => {

@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
 import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -21,6 +22,7 @@ import { format } from 'date-fns';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { updateReminder } from '@/use-cases/reminder-use-cases';
+import { PersonField } from '@/components/people/PersonField';
 import { Reminder } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { useTheme } from '@/hooks/use-theme';
@@ -70,6 +72,8 @@ export default function EditReminderScreen() {
   const [scheduledAt, setScheduledAt] = useState<Date>(new Date());
   const [priority, setPriority] = useState<PriorityKey>('NORMAL');
   const [actionType, setActionType] = useState<ActionType>('NONE');
+  const [personIds, setPersonIds] = useState<string[]>([]);
+  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
 
   // UI state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -95,6 +99,8 @@ export default function EditReminderScreen() {
       setScheduledAt(new Date(rem.scheduledAt));
       setPriority(rem.priority);
       setActionType(rem.actionType);
+      setPersonIds(rem.personId ? [rem.personId] : []);
+      setRequiresConfirmation(!!rem.requiresConfirmation);
       setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.loadError'));
@@ -126,6 +132,8 @@ export default function EditReminderScreen() {
         scheduledAt,
         priority,
         actionType,
+        personId: personIds[0] ?? null,
+        requiresConfirmation,
       });
 
       showSnackbar(t('remEdit.updated'));
@@ -261,6 +269,27 @@ export default function EditReminderScreen() {
                 );
               })}
             </View>
+          </View>
+
+          {/* À confirmer */}
+          <View style={styles.switchRow}>
+            <View style={styles.switchText}>
+              <Text style={styles.label}>{t('confirmReminder.label')}</Text>
+              <Text style={styles.helper}>{t('confirmReminder.helper')}</Text>
+            </View>
+            <Switch
+              value={requiresConfirmation}
+              onValueChange={setRequiresConfirmation}
+              trackColor={{ false: palette.outline.variant, true: palette.primary.default }}
+              thumbColor={requiresConfirmation ? '#FFFFFF' : palette.onSurface.disabled}
+              accessibilityLabel={t('confirmReminder.label')}
+            />
+          </View>
+
+          {/* Avec qui ? */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>{t('personField.header')}</Text>
+            <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" />
           </View>
 
           {/* Note / Description */}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,8 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format, addHours } from 'date-fns';
 
 import { EventUseCases } from '@/use-cases/event-use-cases';
-import { PersonRepository } from '@/repositories/person-repository';
-import { Person, EventType } from '@/domain/entities';
+import { PersonField } from '@/components/people/PersonField';
+import { EventType } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { Spacing, Radius, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
@@ -45,9 +45,11 @@ export default function NewEventScreen() {
   const formStyles = useThemedStyles(makeFormStyles);
   const styles = useThemedStyles(makeNewEventStyles);
 
-  const { defaultHour, defaultDate } = useLocalSearchParams<{
+  const { defaultHour, defaultDate, personId: defaultPersonId } = useLocalSearchParams<{
     defaultHour?: string;
     defaultDate?: string;
+    /** Opened from the page of a person: the event already includes them. */
+    personId?: string;
   }>();
 
   const [title, setTitle] = useState('');
@@ -85,24 +87,13 @@ export default function NewEventScreen() {
   const [eventType, setEventType] = useState<EventType>('BUSY');
   const [travelBufferMinutes, setTravelBufferMinutes] = useState<number>(0);
 
-  // Personnes disponibles & sélection associées
-  const [availablePersons, setAvailablePersons] = useState<Person[]>([]);
-  const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
+  // Personnes associées : le sélecteur partagé les charge lui-même
+  const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(() => (defaultPersonId ? [defaultPersonId] : []));
 
   // Picker states
   const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
   const [saving, setSaving] = useState(false);
   const [titleError, setTitleError] = useState('');
-
-  useEffect(() => {
-    PersonRepository.findAll().then(setAvailablePersons).catch(() => {});
-  }, []);
-
-  function togglePersonSelect(id: string) {
-    setSelectedPersonIds(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-    );
-  }
 
   function validate(): boolean {
     if (!title.trim()) {
@@ -338,41 +329,8 @@ export default function NewEventScreen() {
           </View>
         </View>
 
-        {/* Carte 5 : Personnes associées */}
-        {availablePersons.length > 0 && (
-          <>
-            <View style={formStyles.sectionHeaderRow}>
-              <View style={formStyles.sectionHeaderIconBadge}>
-                <Ionicons name="people-outline" size={14} color={palette.primary.default} />
-              </View>
-              <Text style={formStyles.sectionHeaderTitle}>{t('eventNew.peopleHeader', { count: selectedPersonIds.length })}</Text>
-            </View>
-
-            <View style={formStyles.cardGroup}>
-              <View style={formStyles.chipsRow}>
-                {availablePersons.map(p => {
-                  const isSelected = selectedPersonIds.includes(p.id);
-                  return (
-                    <TouchableOpacity
-                      key={p.id}
-                      style={[formStyles.chip, isSelected && formStyles.chipActive]}
-                      onPress={() => togglePersonSelect(p.id)}
-                    >
-                      <Ionicons
-                        name={isSelected ? 'checkmark-circle' : 'person-outline'}
-                        size={14}
-                        color={isSelected ? palette.primary.default : palette.onSurface.variant}
-                      />
-                      <Text style={[formStyles.chipText, isSelected && formStyles.chipTextActive]}>
-                        {p.displayName}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          </>
-        )}
+        {/* Carte 5 : Avec qui ? Plusieurs personnes possibles */}
+        <PersonField selectedIds={selectedPersonIds} onChange={setSelectedPersonIds} multiple />
 
         {/* Bouton Créer */}
         <Button

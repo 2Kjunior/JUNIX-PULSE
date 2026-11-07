@@ -47,6 +47,7 @@ const MOODS: readonly { mood: MascotMood; label: string }[] = [
   { mood: 'alert', label: 'Alerte' },
   { mood: 'sleepy', label: 'Endormi' },
   { mood: 'party', label: 'Fête' },
+  { mood: 'worried', label: 'Inquiète' },
 ];
 
 const LEVELS: readonly { level: MascotReactionLevel; label: string }[] = [

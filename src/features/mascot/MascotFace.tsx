@@ -44,6 +44,21 @@ function Eye({ x, y, mood }: EyeProps) {
       return <Path d={`M${x - 6} ${y - 1} Q${x} ${y + 6} ${x + 6} ${y - 1}`} fill="none" stroke={INK} strokeWidth={2.8} strokeLinecap="round" />;
     case 'party':
       return <Path d={`M${x - 6} ${y + 3} Q${x} ${y - 8} ${x + 6} ${y + 3}`} fill="none" stroke={INK} strokeWidth={3.2} strokeLinecap="round" />;
+    case 'worried': {
+      // Round eyes under brows raised towards the middle of the face
+      const inward = x < 80 ? 1 : -1;
+      return (
+        <G>
+          <Circle cx={x} cy={y + 1} r={3.6} fill={INK} />
+          <Path
+            d={`M${x - 6 * inward} ${y - 6} L${x + 5 * inward} ${y - 10}`}
+            stroke={INK}
+            strokeWidth={2.2}
+            strokeLinecap="round"
+          />
+        </G>
+      );
+    }
   }
 }
 
@@ -94,6 +109,13 @@ function PulseLine({ mood }: { mood: MascotMood }) {
           {SPARKLES.map((point, index) => (
             <Path key={point.join('-')} d={sparklePath(point)} fill={index % 2 ? '#0AE8F0' : '#ffd36b'} opacity={0.9} />
           ))}
+        </G>
+      );
+    case 'worried':
+      return (
+        <G>
+          <Path d="M62 76 q4.5 -4 9 0 t9 0 t9 0 t9 0" fill="none" stroke={INK} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M110 30 q4.5 6.5 0 9.5 q-4.5 -3 0 -9.5Z" fill="#7fd3ff" opacity={0.9} />
         </G>
       );
   }

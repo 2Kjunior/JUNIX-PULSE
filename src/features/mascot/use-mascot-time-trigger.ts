@@ -5,7 +5,7 @@
  * the background.
  *
  * It follows the user's settings: nothing when the mascot is off, no briefings when they are off.
- * The planning blocks are not shown here yet.
+ * The planning blocks of today announce their start: a Focus for work and study, sport for sport.
  */
 
 import { useFocusEffect } from 'expo-router';
@@ -16,13 +16,28 @@ import { dueMascotTimeTriggers, MascotTimeTrigger } from '@/domain/rules/mascot-
 import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
 import { triggerToMascotMessage } from '@/domain/rules/mascot-trigger-message-rules';
 import { EventRepository } from '@/repositories/event-repository';
+import { PersonalScheduleRepository } from '@/repositories/personal-schedule-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { TaskRepository } from '@/repositories/task-repository';
 import { loadFiredKeys, markTriggerFired } from '@/services/mascot/mascot-fired-store';
+import { deadlineInfo, isDeadlineToAnnounce } from '@/domain/rules/deadline-rules';
 import { getMascotFocusState, getMascotPreferences, getMascotSettings } from '@/services/mascot/mascot-runtime';
 
 const CHECK_EVERY_MS = 60 * 1000;
+
+/** The blocks of the active timetable for today, with their start as an instant. */
+async function loadTodayBlocks(now: Date) {
+  const schedule = await PersonalScheduleRepository.findActiveSchedule();
+  if (!schedule) return [];
+  const blocks = await PersonalScheduleRepository.getBlocksForDay(schedule.id, now.getDay());
+  return blocks.map(block => {
+    const [hours, minutes] = block.startTime.split(':').map(Number);
+    const startAt = new Date(now);
+    startAt.setHours(hours, minutes, 0, 0);
+    return { ...block, startAt: startAt.getTime() };
+  });
+}
 
 export interface MascotTimeMessage {
   key: string;
@@ -54,13 +69,16 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
         return;
       }
 
-      const [settings, events, reminders, tasks, firedKeys] = await Promise.all([
+      const [settings, events, reminders, tasks, firedKeys, blocks, openTasks] = await Promise.all([
         SettingsRepository.get(),
         EventRepository.findForDate(day),
         ReminderRepository.findAll(),
         TaskRepository.findAllForDate(day),
         loadFiredKeys(day),
+        loadTodayBlocks(now),
+        TaskRepository.findAllActive(),
       ]);
+      const dueSoon = openTasks.filter(task => isDeadlineToAnnounce(task.dueDate, false, now));
 
       const remindersToday = reminders.filter(
         r => r.status !== 'DELETED' && r.status !== 'COMPLETED' && format(new Date(r.scheduledAt), 'yyyy-MM-dd') === day
@@ -81,7 +99,8 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
           travelBufferMinutes: event.travelBufferMinutes ?? 0,
           hasLocation: Boolean(event.location),
         })),
-        blocks: [],
+        blocks: blocks.map(block => ({ id: block.id, kind: block.type, startAt: block.startAt })),
+        deadlines: dueSoon.map(task => ({ id: task.id, dueDate: task.dueDate as string })),
         todayTaskTotal: tasks.length,
         todayTaskCompleted: tasksDone,
         firedKeys,
@@ -91,6 +110,10 @@ export function useMascotTimeTrigger(displayName: string | null | undefined): Us
         remindersToday,
         tasksTotal: tasks.length,
         tasksDone,
+        blocks: Object.fromEntries(blocks.map(block => [block.id, { label: block.label, kind: block.type }])),
+        deadlines: Object.fromEntries(
+          dueSoon.map(task => [task.id, { title: task.title, daysLeft: deadlineInfo(task.dueDate, now)?.daysLeft ?? 0 }])
+        ),
         events: Object.fromEntries(
           events.map(event => [
             event.id,

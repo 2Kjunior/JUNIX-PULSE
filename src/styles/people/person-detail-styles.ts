@@ -178,6 +178,23 @@ export function makePersonDetailStyles(theme: ThemePalette) {
     section: {
       gap: Spacing.md,
     },
+    historyHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    historyAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minHeight: 44,
+      paddingHorizontal: Spacing.xs,
+    },
+    historyActionText: {
+      ...Typography.labelMedium,
+      color: theme.primary.default,
+      fontWeight: '600',
+    },
     sectionTitle: {
       ...Typography.titleMedium,
       color: theme.onSurface.primary,

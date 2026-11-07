@@ -330,6 +330,7 @@ export function SplashAnimation({ onFinish }: SplashAnimationProps) {
     );
 
     return () => clearTimeout(safetyTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the launch animation plays once per mount
   }, [reduceMotion]);
 
   // ─── Styles animés des Orbes ───────────────────────────────────────────────

@@ -7,9 +7,8 @@
  * - Titre en Outfit Bold (règle A.2)
  * - StepIndicator harmonisé (barre, pas dots)
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { setDiscoverCardsY } from '@/features/mascot/onboarding-guide-state';
 import { Ionicons } from '@expo/vector-icons';

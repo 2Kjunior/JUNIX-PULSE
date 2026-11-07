@@ -10,7 +10,7 @@
  * - Navigation 5 destinations inchangée
  */
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { setGuidePermission, setWelcomeAnchorY } from '@/features/mascot/onboarding-guide-state';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';

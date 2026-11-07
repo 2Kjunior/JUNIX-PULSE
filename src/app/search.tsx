@@ -310,7 +310,12 @@ export default function SearchScreen() {
               autoCorrect={false}
             />
             {query.length > 0 && (
-              <TouchableOpacity onPress={() => setQuery('')} style={styles.clearButton}>
+              <TouchableOpacity
+                onPress={() => setQuery('')}
+                style={styles.clearButton}
+                accessibilityRole="button"
+                accessibilityLabel={t('a11y.clearSearch')}
+              >
                 <Ionicons name="close-circle" size={18} color={theme.onSurface.disabled} />
               </TouchableOpacity>
             )}

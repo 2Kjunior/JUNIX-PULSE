@@ -5,7 +5,7 @@
  * Règle d'or : JAMAIS de création silencieuse, validation explicite obligatoire.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { closeScreen } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays } from 'date-fns';
 
 import { createReminder } from '@/use-cases/reminder-use-cases';
+import { TaskUseCases } from '@/use-cases/task-use-cases';
+import { useDictation, type DictationProblem } from '@/features/capture/use-dictation';
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person, ActionType, ReminderPriority } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
@@ -35,9 +37,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 
-import { parseQuickCapture } from '@/domain/rules/capture-rules';
+import { parseQuickCapture, type CaptureKind, type CaptureRecurrence } from '@/domain/rules/capture-rules';
 import { callAdvice } from '@/domain/rules/person-availability-rules';
-import { useDateLocale, useT } from '@/i18n';
+import { useDateLocale, useLanguage, useT } from '@/i18n';
 import { WEEKDAY_KEYS } from '@/i18n/weekdays';
 
 export default function QuickCaptureScreen() {
@@ -45,6 +47,7 @@ export default function QuickCaptureScreen() {
   const { userTimezone, showSnackbar } = useAppStore();
   const t = useT();
   const dateLocale = useDateLocale();
+  const language = useLanguage();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeQuickCaptureStyles);
 
@@ -59,6 +62,8 @@ export default function QuickCaptureScreen() {
   const [targetTime, setTargetTime] = useState<string>('09:00');
   const [priority, setPriority] = useState<ReminderPriority>('NORMAL');
   const [cleanTitle, setCleanTitle] = useState('');
+  const [kind, setKind] = useState<CaptureKind>('reminder');
+  const [recurrence, setRecurrence] = useState<CaptureRecurrence | undefined>(undefined);
 
   // Charger les contacts pour la reconnaissance
   useEffect(() => {
@@ -75,14 +80,16 @@ export default function QuickCaptureScreen() {
 
   // Analyseur en langage naturel (local, déterministe et testé — DEF-10)
   useEffect(() => {
-    const parsed = parseQuickCapture(input, persons);
+    const parsed = parseQuickCapture(input, persons, new Date(), language);
     setCleanTitle(parsed.cleanTitle);
+    setKind(parsed.kind);
+    setRecurrence(parsed.recurrence);
     setActionType(parsed.actionType);
     setTargetPerson(parsed.targetPerson ?? null);
     setTargetDate(parsed.targetDate);
     setTargetTime(parsed.targetTime);
     setPriority(parsed.priority);
-  }, [input, persons]);
+  }, [input, persons, language]);
 
   // Construire la date finale combinée
   const computedDateTime = useMemo(() => {
@@ -92,7 +99,8 @@ export default function QuickCaptureScreen() {
     return d;
   }, [targetDate, targetTime]);
 
-  const isDateTimePast = computedDateTime <= new Date();
+  // A task has a day, not an hour: only a reminder can be in the past
+  const isDateTimePast = kind === 'reminder' && computedDateTime <= new Date();
 
   // Calling someone who lives elsewhere: what time it will be there, and whether it suits them
   const advice = useMemo(
@@ -110,6 +118,24 @@ export default function QuickCaptureScreen() {
 
   const handleCreate = async () => {
     if (!cleanTitle.trim()) return;
+    if (kind === 'task') {
+      setSaving(true);
+      try {
+        await TaskUseCases.createTask({
+          title: cleanTitle.trim(),
+          scheduledDate: format(targetDate, 'yyyy-MM-dd'),
+          priority,
+          personId: targetPerson?.id,
+        });
+        showSnackbar(t('capture.createdTask'));
+        closeScreen();
+      } catch (e) {
+        showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
     if (computedDateTime <= new Date()) {
       showSnackbar(t('capture.mustBeFuture'));
       return;
@@ -123,10 +149,11 @@ export default function QuickCaptureScreen() {
         priority,
         actionType,
         personId: targetPerson?.id,
+        recurrenceRule: recurrence,
       });
 
       showSnackbar(t('capture.created'));
-      router.back();
+      closeScreen();
     } catch (e) {
       showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
     } finally {
@@ -150,6 +177,23 @@ export default function QuickCaptureScreen() {
     setTargetDate(prev => addDays(prev, 1));
   };
 
+  // Dictation: what is heard replaces the text, which the parser then reads as if typed
+  const onDictationProblem = useCallback(
+    (problem: DictationProblem) => showSnackbar(t(DICTATION_PROBLEM_KEYS[problem])),
+    [showSnackbar, t]
+  );
+  const dictation = useDictation(language, setInput, onDictationProblem);
+
+  const recurrenceLabel = (rule: CaptureRecurrence): string => {
+    if (rule.type === 'MONTHLY') return t('capture.repeat.monthly', { day: rule.dayOfMonth ?? targetDate.getDate() });
+    if (rule.type === 'WEEKLY') {
+      // getDay() counts Sunday as 0, the weekday keys go from Monday (1) to Sunday (7)
+      const days = (rule.daysOfWeek ?? []).map(day => t(WEEKDAY_KEYS[(day + 6) % 7])).join(', ');
+      return t('capture.repeat.weekly', { days });
+    }
+    return rule.interval > 1 ? t('capture.repeat.everyDays', { count: rule.interval }) : t('capture.repeat.daily');
+  };
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { paddingTop: insets.top }]}
@@ -159,12 +203,12 @@ export default function QuickCaptureScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.closeBtn}
-          onPress={() => router.back()}
+          onPress={() => closeScreen()}
           accessibilityLabel={t('personNew.close')}
         >
           <Ionicons name="close" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Quick Capture</Text>
+        <Text style={styles.headerTitle}>{t('capture.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -188,7 +232,23 @@ export default function QuickCaptureScreen() {
             multiline
             numberOfLines={3}
           />
+          {dictation.available && (
+            <TouchableOpacity
+              style={[styles.micButton, dictation.listening && styles.micButtonActive]}
+              onPress={dictation.toggle}
+              accessibilityRole="button"
+              accessibilityLabel={t(dictation.listening ? 'capture.dictation.stop' : 'capture.dictation.start')}
+              testID="capture-dictation"
+            >
+              <Ionicons
+                name={dictation.listening ? 'stop' : 'mic-outline'}
+                size={20}
+                color={dictation.listening ? palette.onSurface.primary : palette.primary.default}
+              />
+            </TouchableOpacity>
+          )}
         </View>
+        {dictation.listening && <Text style={styles.hint}>{t('capture.dictation.listening')}</Text>}
 
         {/* Interprétation en temps réel */}
         {cleanTitle.length > 0 && (
@@ -199,43 +259,62 @@ export default function QuickCaptureScreen() {
             </View>
 
             <View style={styles.chipsWrap}>
-              {/* Chip Action */}
+              {/* Chip Tâche ou Rappel : ce qui sera créé */}
               <TouchableOpacity
-                style={[styles.chip, actionType !== 'NONE' && styles.chipActiveAction]}
-                onPress={cycleAction}
+                style={[styles.chip, styles.chipActiveAction]}
+                onPress={() => setKind(current => (current === 'task' ? 'reminder' : 'task'))}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('capture.kindSwitch')}
+                testID="capture-kind"
               >
                 <Ionicons
-                  name={
-                    actionType === 'CALL'
-                      ? 'call-outline'
-                      : actionType === 'MESSAGE'
-                      ? 'chatbubble-outline'
-                      : actionType === 'EMAIL'
-                      ? 'mail-outline'
-                      : actionType === 'MEET'
-                      ? 'people-outline'
-                      : actionType === 'TASK'
-                      ? 'checkbox-outline'
-                      : 'ellipse-outline'
-                  }
+                  name={kind === 'task' ? 'checkbox-outline' : 'notifications-outline'}
                   size={15}
                   color={palette.primary.default}
                 />
-                <Text style={styles.chipText}>
-                  {actionType === 'CALL'
-                    ? t('interaction.CALL')
-                    : actionType === 'MESSAGE'
-                    ? t('interaction.SMS')
-                    : actionType === 'EMAIL'
-                    ? t('interaction.EMAIL')
-                    : actionType === 'MEET'
-                    ? t('interaction.IN_PERSON')
-                    : actionType === 'TASK'
-                    ? t('search.type.task')
-                    : t('capture.freeAction')}
-                </Text>
+                <Text style={styles.chipText}>{t(kind === 'task' ? 'capture.kind.task' : 'capture.kind.reminder')}</Text>
               </TouchableOpacity>
+
+              {/* Chip Action : pour un rappel seulement, une tâche ne garde pas d'action */}
+              {kind === 'reminder' && (
+                <TouchableOpacity
+                  style={[styles.chip, actionType !== 'NONE' && styles.chipActiveAction]}
+                  onPress={cycleAction}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={
+                      actionType === 'CALL'
+                        ? 'call-outline'
+                        : actionType === 'MESSAGE'
+                        ? 'chatbubble-outline'
+                        : actionType === 'EMAIL'
+                        ? 'mail-outline'
+                        : actionType === 'MEET'
+                        ? 'people-outline'
+                        : actionType === 'TASK'
+                        ? 'checkbox-outline'
+                        : 'ellipse-outline'
+                    }
+                    size={15}
+                    color={palette.primary.default}
+                  />
+                  <Text style={styles.chipText}>
+                    {actionType === 'CALL'
+                      ? t('interaction.CALL')
+                      : actionType === 'MESSAGE'
+                      ? t('interaction.SMS')
+                      : actionType === 'EMAIL'
+                      ? t('interaction.EMAIL')
+                      : actionType === 'MEET'
+                      ? t('interaction.IN_PERSON')
+                      : actionType === 'TASK'
+                      ? t('search.type.task')
+                      : t('capture.freeAction')}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               {/* Chip Personne */}
               {targetPerson && (
@@ -253,11 +332,29 @@ export default function QuickCaptureScreen() {
                 </Text>
               </TouchableOpacity>
 
-              {/* Chip Heure */}
-              <View style={styles.chip}>
-                <Ionicons name="time-outline" size={14} color={palette.onSurface.variant} />
-                <Text style={styles.chipText}>{targetTime}</Text>
-              </View>
+              {/* Chip Heure : une tâche a un jour, pas d'heure */}
+              {kind === 'reminder' && (
+                <View style={styles.chip}>
+                  <Ionicons name="time-outline" size={14} color={palette.onSurface.variant} />
+                  <Text style={styles.chipText}>{targetTime}</Text>
+                </View>
+              )}
+
+              {/* Chip Répétition : touchée, elle est retirée */}
+              {kind === 'reminder' && recurrence && (
+                <TouchableOpacity
+                  style={[styles.chip, styles.chipActiveAction]}
+                  onPress={() => setRecurrence(undefined)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('capture.repeat.remove')}
+                  testID="capture-recurrence"
+                >
+                  <Ionicons name="repeat-outline" size={14} color={palette.primary.default} />
+                  <Text style={styles.chipText}>{recurrenceLabel(recurrence)}</Text>
+                  <Ionicons name="close" size={12} color={palette.onSurface.variant} />
+                </TouchableOpacity>
+              )}
 
               {/* Chip Priorité */}
               <TouchableOpacity
@@ -333,7 +430,7 @@ export default function QuickCaptureScreen() {
         {/* Bouton de confirmation unique avec dégradé */}
         <View style={styles.actionBlock}>
           <Button
-            label={t('capture.confirm')}
+            label={t(kind === 'task' ? 'capture.confirmTask' : 'capture.confirm')}
             onPress={handleCreate}
             variant="primary"
             size="lg"
@@ -345,6 +442,12 @@ export default function QuickCaptureScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const DICTATION_PROBLEM_KEYS = {
+  permission: 'capture.dictation.permission',
+  language: 'capture.dictation.language',
+  failed: 'capture.dictation.failed',
+} as const;
 
 const makeQuickCaptureStyles = (theme: ThemePalette) =>
   StyleSheet.create({
@@ -389,6 +492,21 @@ const makeQuickCaptureStyles = (theme: ThemePalette) =>
       color: theme.onSurface.primary,
       minHeight: 80,
       textAlignVertical: 'top',
+    },
+    micButton: {
+      alignSelf: 'flex-end',
+      width: 44,
+      height: 44,
+      borderRadius: Radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: theme.primary.default,
+      backgroundColor: theme.primary.container,
+    },
+    micButtonActive: {
+      backgroundColor: theme.error.default,
+      borderColor: theme.error.default,
     },
     adviceBox: {
       flexDirection: 'row',

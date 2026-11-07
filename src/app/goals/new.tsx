@@ -168,6 +168,8 @@ export default function NewGoalScreen() {
               <TouchableOpacity
                 onPress={() => setDeadline(null)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('a11y.clearDeadline')}
               >
                 <Ionicons name="close-circle" size={20} color={palette.onSurface.disabled} />
               </TouchableOpacity>

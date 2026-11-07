@@ -49,7 +49,6 @@ jest.mock('expo-document-picker', () => ({
 
 jest.mock('expo-file-system', () => ({
   File: class MockFile {
-    constructor() {}
     text() { return Promise.resolve('{}'); }
   },
   Paths: { cache: '/cache' },

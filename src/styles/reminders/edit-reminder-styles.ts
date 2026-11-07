@@ -70,6 +70,19 @@ export function makeEditReminderStyles(theme: ThemePalette) {
     fieldGroup: {
       gap: Spacing.xs,
     },
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    switchText: {
+      flex: 1,
+      gap: 2,
+    },
+    helper: {
+      ...Typography.bodySmall,
+      color: theme.onSurface.variant,
+    },
     label: {
       ...Typography.labelMedium,
       color: theme.onSurface.variant,

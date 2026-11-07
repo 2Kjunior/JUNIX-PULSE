@@ -464,8 +464,9 @@ export default function TodayScreen() {
         </TouchableOpacity>
         </TourTarget>
 
-        {/* ─── Mode Découverte (si base vide) ─────────────────────────────── */}
-        {isEmptyState && (
+        {/* ─── Mode Découverte (si base vide), en développement seulement : en production, les
+            données de démonstration se mêleraient aux vraies ─────────────────────────────── */}
+        {isEmptyState && __DEV__ && (
           <View style={styles.demoCardWrapper}>
             <LinearGradient
               colors={['rgba(208, 188, 255, 0.15)', 'rgba(123, 208, 255, 0.06)']}

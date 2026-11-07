@@ -7,6 +7,8 @@ import { EventRepository } from '../repositories/event-repository';
 import { EventType } from '../domain/entities';
 import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
+import { meetingWindow } from '../domain/rules/person-link-rules';
+import { recordLinkedInteraction } from './person-use-cases';
 
 export interface CreateEventInput {
   title: string;
@@ -97,6 +99,29 @@ export const EventUseCases = {
     const now = new Date().toISOString();
     await EventRepository.softDelete(id, now);
     emitMascotEvent({ type: 'ITEM_DELETED' });
+  },
+
+  /**
+   * Les événements avec des personnes qui viennent de se terminer comptent comme une rencontre
+   * avec chacune d'elles, une seule fois. Appelé au lancement et au retour dans l'application.
+   * Retourne le nombre d'échanges ajoutés.
+   */
+  async recordPastMeetings(now: Date = new Date()): Promise<number> {
+    const { from, to } = meetingWindow(now);
+    const ended = await EventRepository.findEndedWithPersons(from.toISOString(), to.toISOString());
+    let added = 0;
+    for (const { event, personIds } of ended) {
+      for (const personId of personIds) {
+        const recorded = await recordLinkedInteraction({
+          personId,
+          type: 'IN_PERSON',
+          eventId: event.id,
+          occurredAt: new Date(event.startAt),
+        });
+        if (recorded) added += 1;
+      }
+    }
+    return added;
   },
 
   /**

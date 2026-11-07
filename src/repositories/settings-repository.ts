@@ -14,6 +14,7 @@ import {
 } from '../domain/entities';
 import { DEFAULT_MASCOT_SETTINGS } from '../domain/rules/mascot-preferences';
 import { DEFAULT_LANGUAGE_SETTING, isLanguageSetting } from '../domain/rules/language-rules';
+import { isAppLockDelay } from '../domain/rules/app-lock-rules';
 
 const VALID_APPEARANCE_MODES: ReadonlySet<AppearanceMode> = new Set(['system', 'light', 'dark']);
 const VALID_MASCOT_PRESENCE: ReadonlySet<string> = new Set<MascotPresence>(['full', 'discreet', 'off']);
@@ -40,6 +41,9 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     notificationsEnabled: row.notifications_enabled !== undefined ? (row.notifications_enabled as number) === 1 : true,
     notificationSoundEnabled: row.notification_sound_enabled !== undefined ? (row.notification_sound_enabled as number) === 1 : true,
     hapticsEnabled: row.haptics_enabled !== undefined ? (row.haptics_enabled as number) === 1 : true,
+    appLockEnabled: (row.app_lock_enabled as number) === 1,
+    deviceCalendarEnabled: (row.device_calendar_enabled as number) === 1,
+    appLockDelayMinutes: isAppLockDelay(row.app_lock_delay_minutes) ? row.app_lock_delay_minutes : 0,
     forgottenContactThresholdDays: (row.forgotten_contact_threshold_days as number) ?? 30,
     endOfDayHour: (row.end_of_day_hour as number) ?? 20,
     morningBriefingHour: (row.morning_briefing_hour as number) ?? 8,
@@ -101,6 +105,18 @@ export const SettingsRepository = {
     if (params.notificationSoundEnabled !== undefined) {
       setClauses.push('notification_sound_enabled = ?');
       values.push(params.notificationSoundEnabled ? 1 : 0);
+    }
+    if (params.deviceCalendarEnabled !== undefined) {
+      setClauses.push('device_calendar_enabled = ?');
+      values.push(params.deviceCalendarEnabled ? 1 : 0);
+    }
+    if (params.appLockEnabled !== undefined) {
+      setClauses.push('app_lock_enabled = ?');
+      values.push(params.appLockEnabled ? 1 : 0);
+    }
+    if (params.appLockDelayMinutes !== undefined) {
+      setClauses.push('app_lock_delay_minutes = ?');
+      values.push(params.appLockDelayMinutes);
     }
     if (params.hapticsEnabled !== undefined) {
       setClauses.push('haptics_enabled = ?');

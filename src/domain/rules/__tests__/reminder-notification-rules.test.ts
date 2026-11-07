@@ -90,7 +90,8 @@ describe('planReminderNotifications', () => {
 describe('notificationRoute', () => {
   it('opens the reminder, or the home screen for a recap', () => {
     expect(notificationRoute({ reminderId: 'r1', type: 'REMINDER' })).toBe('/reminders/r1');
-    expect(notificationRoute({ type: 'DAILY_RECAP' })).toBe('/(tabs)');
+    expect(notificationRoute({ type: 'DAILY_RECAP' })).toBe('/review?period=day');
+    expect(notificationRoute({ type: 'AUTO_BACKUP_FAILED' })).toBe('/settings?section=data');
   });
 
   it('opens nothing in particular otherwise', () => {

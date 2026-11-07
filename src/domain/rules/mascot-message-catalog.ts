@@ -302,6 +302,44 @@ export const MASCOT_MESSAGES = {
     ["Vous avez repris contact. Ça compte.", "{name}, vous avez repris contact. Ça compte."],
     ["Contact repris.", "{name}, contact repris."],
   ),
+  // ─── Deadlines (said on the home screen, 2 days and 1 day before) ─────────────────────────
+  DEADLINE_SOON: entry(
+    ["« {title} » est à rendre dans {days} {days|jour|jours}. On s'y met ?", "{name}, « {title} » est à rendre dans {days} {days|jour|jours}. On s'y met ?"],
+    ["« {title} » : échéance dans {days} {days|jour|jours}.", "{name}, « {title} » : échéance dans {days} {days|jour|jours}."],
+    ["« {title} » est à rendre dans {days} {days|jour|jours}. On s'y met ?", "{name}, « {title} » est à rendre dans {days} {days|jour|jours}. On s'y met ?"],
+    ["« {title} » : échéance dans {days} {days|jour|jours}.", "{name}, « {title} » : échéance dans {days} {days|jour|jours}."],
+  ),
+  // Other wordings of the same reactions, said in turn so that Pulse does not repeat itself
+  REACT_DONE_2: entry(
+    ["Et une de moins !", "Et une de moins, {name} !"],
+    ["Une de moins.", "{name}, une de moins."],
+    ["Et une de moins !", "Et une de moins, {name} !"],
+    ["Une de moins.", "{name}, une de moins."],
+  ),
+  REACT_DONE_3: entry(
+    ["Bien avancé ! Continue comme ça.", "Bien avancé, {name} ! Continue comme ça."],
+    ["Avancée notée.", "{name}, avancée notée."],
+    ["Bien avancé ! Continuez comme ça.", "Bien avancé, {name} ! Continuez comme ça."],
+    ["Avancée notée.", "{name}, avancée notée."],
+  ),
+  REACT_DAY_CLEARED_2: entry(
+    ["Tout est bouclé pour aujourd'hui. Profite !", "{name}, tout est bouclé pour aujourd'hui. Profite !"],
+    ["Plus rien pour aujourd'hui.", "{name}, plus rien pour aujourd'hui."],
+    ["Tout est bouclé pour aujourd'hui. Profitez !", "{name}, tout est bouclé pour aujourd'hui. Profitez !"],
+    ["Plus rien pour aujourd'hui.", "{name}, plus rien pour aujourd'hui."],
+  ),
+  REACT_GOAL_2: entry(
+    ["Tu l'as fait : objectif atteint !", "{name}, tu l'as fait : objectif atteint !"],
+    ["Objectif accompli.", "{name}, objectif accompli."],
+    ["Vous l'avez fait : objectif atteint !", "{name}, vous l'avez fait : objectif atteint !"],
+    ["Objectif accompli.", "{name}, objectif accompli."],
+  ),
+  REACT_CONTACT_2: entry(
+    ["Un lien entretenu, c'est précieux.", "{name}, un lien entretenu, c'est précieux."],
+    ["Échange noté.", "{name}, échange noté."],
+    ["Un lien entretenu, c'est précieux.", "{name}, un lien entretenu, c'est précieux."],
+    ["Échange noté.", "{name}, échange noté."],
+  ),
 } as const satisfies Record<string, MessageEntry>;
 
 export type MascotMessageId = keyof typeof MASCOT_MESSAGES;

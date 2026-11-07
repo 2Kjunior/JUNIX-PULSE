@@ -202,4 +202,28 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["You got back in touch. That counts.", "{name}, you got back in touch. That counts."],
     ["Contact resumed.", "{name}, contact resumed."],
   ),
+  DEADLINE_SOON: entry(
+    ["“{title}” is due in {days} {days|day|days}. Shall we start?", "{name}, “{title}” is due in {days} {days|day|days}. Shall we start?"],
+    ["“{title}”: due in {days} {days|day|days}.", "{name}, “{title}”: due in {days} {days|day|days}."],
+  ),
+  REACT_DONE_2: entry(
+    ["One less!", "One less, {name}!"],
+    ["One down.", "{name}, one down."],
+  ),
+  REACT_DONE_3: entry(
+    ["Nice progress! Keep it up.", "Nice progress, {name}! Keep it up."],
+    ["Progress noted.", "{name}, progress noted."],
+  ),
+  REACT_DAY_CLEARED_2: entry(
+    ["All wrapped up for today. Enjoy!", "{name}, all wrapped up for today. Enjoy!"],
+    ["Nothing left for today.", "{name}, nothing left for today."],
+  ),
+  REACT_GOAL_2: entry(
+    ["You did it: goal reached!", "{name}, you did it: goal reached!"],
+    ["Goal accomplished.", "{name}, goal accomplished."],
+  ),
+  REACT_CONTACT_2: entry(
+    ["A bond kept alive is precious.", "{name}, a bond kept alive is precious."],
+    ["Exchange noted.", "{name}, exchange noted."],
+  ),
 };

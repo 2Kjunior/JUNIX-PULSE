@@ -108,6 +108,7 @@ export default function FocusScreen() {
         timerRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the timer follows the session state; the remaining seconds it reads change every second
   }, [session.state, showSnackbar]);
 
   // La mascotte se tait pendant une session : elle doit savoir qu'elle est en cours

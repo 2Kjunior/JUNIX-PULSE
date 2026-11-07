@@ -47,7 +47,12 @@ export function ReminderSnoozeSheet({
 
   return (
     <View style={styles.snoozeOverlay}>
-      <TouchableOpacity style={styles.snoozeBackdrop} onPress={onClose} />
+      <TouchableOpacity
+        style={styles.snoozeBackdrop}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.close')}
+      />
       <View style={[styles.snoozeSheet, { paddingBottom: insetsBottom + Spacing.lg }]}>
         <View style={styles.sheetHandle} />
         <Text style={styles.snoozeTitle}>{t('snooze.title')}</Text>

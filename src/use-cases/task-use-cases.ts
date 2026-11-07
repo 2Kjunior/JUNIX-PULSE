@@ -18,6 +18,7 @@ export interface CreateTaskInput {
   description?: string;
   status?: TaskStatus;
   scheduledDate?: string;      // YYYY-MM-DD
+  dueDate?: string;            // YYYY-MM-DD, à rendre au plus tard ce jour-là
   estimatedMinutes?: number;   // 15, 30, 60...
   priority?: ReminderPriority;
   goalId?: string;
@@ -32,10 +33,13 @@ export interface UpdateTaskInput {
   description?: string;
   status?: TaskStatus;
   scheduledDate?: string;
+  /** null takes the deadline off the task. */
+  dueDate?: string | null;
   estimatedMinutes?: number;
   priority?: ReminderPriority;
   goalId?: string;
-  personId?: string;
+  /** null takes the person off the task. */
+  personId?: string | null;
   tags?: string[];
 }
 
@@ -82,6 +86,7 @@ export const TaskUseCases = {
       description: input.description?.trim(),
       status: initialStatus,
       scheduledDate: input.scheduledDate,
+      dueDate: input.dueDate,
       estimatedMinutes: input.estimatedMinutes,
       priority: input.priority ?? 'NORMAL',
       goalId: input.goalId,

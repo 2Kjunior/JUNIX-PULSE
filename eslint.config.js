@@ -9,6 +9,11 @@ module.exports = defineConfig([
     ignores: ["dist/*", ".expo/*", "node_modules/*"],
   },
   {
+    // Jest hoists jest.mock above the imports: the mocks, and the modules loaded after them, use require
+    files: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
     // Ce plugin doit etre redeclare ici car chaque objet de config ESLint 9
     // (flat config) est independant : les regles "@typescript-eslint/*"
     // utilisees plus bas ne sont visibles que dans les objets qui enregistrent

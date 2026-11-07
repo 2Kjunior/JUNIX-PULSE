@@ -10,6 +10,9 @@ import type { AppLanguage } from './language-rules';
 import { getNextOccurrence } from './reminder-rules';
 
 export const MAX_RECURRING_OCCURRENCES = 14;
+/** A reminder to confirm rings again this many times, this many minutes apart. */
+export const CONFIRMATION_REPEATS = 3;
+export const CONFIRMATION_INTERVAL_MINUTES = 5;
 export const MAX_SCHEDULED_REMINDERS = 60;
 export const REMINDER_IDENTIFIER_PREFIX = 'reminder-';
 
@@ -49,13 +52,42 @@ function bodyOf(reminder: Reminder, language: AppLanguage): string {
     : translate(language, 'reminderNotif.snoozed');
 }
 
+/**
+ * The repeats of a reminder to confirm: after its current occurrence (even once passed, so the
+ * repeats survive the next sync) and after the next one. They stop when the reminder is done or
+ * snoozed, since it then leaves the active ones, or moves to its new time.
+ */
+function confirmationRepeats(item: ReminderToPlan, now: Date, language: AppLanguage): PlannedReminderNotification[] {
+  if (!item.reminder.requiresConfirmation) return [];
+  const anchors = new Set([new Date(item.reminder.scheduledAt).getTime()]);
+  const next = occurrencesOf(item, now)[0];
+  if (next) anchors.add(new Date(next).getTime());
+
+  const repeats: PlannedReminderNotification[] = [];
+  for (const anchor of anchors) {
+    if (Number.isNaN(anchor)) continue;
+    for (let turn = 1; turn <= CONFIRMATION_REPEATS; turn++) {
+      const scheduledAt = new Date(anchor + turn * CONFIRMATION_INTERVAL_MINUTES * 60 * 1000);
+      if (scheduledAt <= now) continue;
+      repeats.push({
+        identifier: `${REMINDER_IDENTIFIER_PREFIX}${item.reminder.id}-${anchor}-r${turn}`,
+        reminderId: item.reminder.id,
+        title: item.reminder.title,
+        body: translate(language, 'reminderNotif.confirmAgain'),
+        scheduledAt,
+      });
+    }
+  }
+  return repeats;
+}
+
 export function planReminderNotifications(
   items: ReminderToPlan[],
   now: Date,
   language: AppLanguage = 'fr'
 ): PlannedReminderNotification[] {
-  return items
-    .filter(({ reminder }) => ACTIVE_STATUSES.includes(reminder.status) && !reminder.deletedAt)
+  const active = items.filter(({ reminder }) => ACTIVE_STATUSES.includes(reminder.status) && !reminder.deletedAt);
+  const planned = active
     .flatMap(item =>
       occurrencesOf(item, now).map(occurrence => {
         const scheduledAt = new Date(occurrence);
@@ -70,6 +102,13 @@ export function planReminderNotifications(
     )
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
     .slice(0, MAX_SCHEDULED_REMINDERS);
+
+  // The repeats take the places left: they never push a reminder of its own out of the phone
+  const repeats = active
+    .flatMap(item => confirmationRepeats(item, now, language))
+    .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+    .slice(0, MAX_SCHEDULED_REMINDERS - planned.length);
+  return [...planned, ...repeats];
 }
 
 /** Category of the reminder notifications and its buttons. Neither ":" nor "-" in the category. */
@@ -77,6 +116,8 @@ export const REMINDER_CATEGORY_ID = 'reminder_actions';
 export const REMINDER_ACTION_COMPLETE = 'complete';
 export const REMINDER_ACTION_SNOOZE = 'snooze_1h';
 export const REMINDER_ACTION_SNOOZE_MINUTES = 60;
+/** Background task that receives the button taps on Android, even with the app closed. */
+export const REMINDER_ACTION_TASK = 'junix-pulse-reminder-action';
 
 export type ReminderNotificationAction = 'complete' | 'snooze' | 'open';
 
@@ -90,6 +131,9 @@ export function notificationActionFor(actionIdentifier: string): ReminderNotific
 /** Where a tapped notification leads, or null when opening the app is enough. */
 export function notificationRoute(data: Record<string, unknown> | null | undefined): string | null {
   if (typeof data?.reminderId === 'string') return `/reminders/${data.reminderId}`;
-  if (data?.type === 'DAILY_RECAP') return '/(tabs)';
+  // The recap of the day opens the review of the day, where it is always there to read
+  if (data?.type === 'DAILY_RECAP') return '/review?period=day';
+  // A failed automatic backup: its settings, to pick the folder again or try now
+  if (data?.type === 'AUTO_BACKUP_FAILED') return '/settings?section=data';
   return null;
 }

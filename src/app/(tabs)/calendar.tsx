@@ -27,6 +27,9 @@ import {
 } from 'date-fns';
 
 import { EventRepository } from '@/repositories/event-repository';
+import { SettingsRepository } from '@/repositories/settings-repository';
+import { loadDeviceEvents } from '@/services/device-calendar-service';
+import { DeviceEvent, deviceEventsForDay } from '@/domain/rules/device-calendar-rules';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
 import { Event, Reminder, Task, PlanningBlock } from '@/domain/entities';
@@ -61,6 +64,7 @@ export default function CalendarScreen() {
   const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
+  const [deviceEvents, setDeviceEvents] = useState<DeviceEvent[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allWeeklyBlocks, setAllWeeklyBlocks] = useState<PlanningBlock[]>([]);
@@ -84,6 +88,7 @@ export default function CalendarScreen() {
         weekEvts,
         weekRems,
         weekTsks,
+        weekDeviceEvts,
       ] = await Promise.all([
         EventRepository.findForDate(dateYmd),
         ReminderRepository.findForDate(dateYmd),
@@ -91,9 +96,14 @@ export default function CalendarScreen() {
         Promise.all(weekDatesYmd.map(d => EventRepository.findForDate(d))),
         Promise.all(weekDatesYmd.map(d => ReminderRepository.findForDate(d))),
         Promise.all(weekDatesYmd.map(d => TaskRepository.findForDate(d))),
+        // L'agenda du téléphone, si l'utilisateur l'a activé : lu, jamais modifié
+        SettingsRepository.get().then(settings =>
+          settings.deviceCalendarEnabled ? loadDeviceEvents(weekDays[0], addDays(weekDays[0], 7)) : []
+        ),
       ]);
 
       setEvents(evts);
+      setDeviceEvents(deviceEventsForDay(weekDeviceEvts, selectedDate));
       setReminders(rems);
       setTasks(tsks);
 
@@ -141,6 +151,22 @@ export default function CalendarScreen() {
       });
       const reminderBlocks = Array.from(reminderBlocksMap.values());
 
+      // Les rendez-vous de l'agenda du téléphone, à leur place dans la semaine (hors journées entières)
+      const deviceBlocks: PlanningBlock[] = weekDeviceEvts
+        .filter(e => !e.allDay)
+        .map(e => ({
+          id: `device-${e.id}`,
+          scheduleId: 'device',
+          label: e.title,
+          type: 'OTHER',
+          dayOfWeek: e.startAt.getDay(),
+          startTime: format(e.startAt, 'HH:mm'),
+          endTime: format(e.endAt, 'HH:mm'),
+          color: theme.success.default,
+          createdAt: e.startAt.toISOString(),
+          updatedAt: e.startAt.toISOString(),
+        }));
+
       // Décompte précis des tâches non terminées par jour pour le bandeau supérieur All-Day
       const taskCounts: Record<number, number> = {};
       weekDays.forEach((d, idx) => {
@@ -150,13 +176,13 @@ export default function CalendarScreen() {
       setTasksCountByDay(taskCounts);
 
       // 100% vraies données : uniquement les événements réels et rappels de la semaine
-      setAllWeeklyBlocks([...eventBlocks, ...reminderBlocks]);
+      setAllWeeklyBlocks([...eventBlocks, ...reminderBlocks, ...deviceBlocks]);
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [dateYmd, theme, weekDays, t]);
+  }, [dateYmd, theme, weekDays, t, selectedDate]);
 
   useFocusEffect(
     useCallback(() => {
@@ -193,7 +219,7 @@ export default function CalendarScreen() {
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
-  const hasItems = events.length > 0 || reminders.length > 0 || tasks.length > 0;
+  const hasItems = events.length > 0 || reminders.length > 0 || tasks.length > 0 || deviceEvents.length > 0;
   const weekEnd = addDays(weekStart, 6);
   const weekLabel = t('calendar.weekLabel', {
     from: format(weekStart, 'd MMM', { locale: dateLocale }),
@@ -456,6 +482,45 @@ export default function CalendarScreen() {
                       </Text>
                     </View>
                   </View>
+                  </GlowCard>
+                ))}
+              </View>
+            )}
+
+            {/* Agenda du téléphone, en lecture seule */}
+            {deviceEvents.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="phone-portrait-outline" size={16} color={theme.success.default} />
+                  <Text style={styles.sectionTitle}>{t('deviceCalendar.section', { count: deviceEvents.length })}</Text>
+                </View>
+                {deviceEvents.map((e, idx) => (
+                  <GlowCard
+                    key={`agenda-device-${e.id}`}
+                    index={idx}
+                    tone="info"
+                    intensity="soft"
+                    accessibilityLabel={`${e.title}, ${t('deviceCalendar.readOnly')}`}
+                  >
+                    <View style={styles.itemRow}>
+                      <View style={styles.eventTimeCol}>
+                        <Text style={styles.eventTimeText}>
+                          {e.allDay ? t('deviceCalendar.allDay') : format(e.startAt, 'HH:mm')}
+                        </Text>
+                        {!e.allDay && <Text style={styles.eventDurationText}>{format(e.endAt, 'HH:mm')}</Text>}
+                      </View>
+                      <View style={styles.eventBody}>
+                        <Text style={styles.eventTitle}>{e.title}</Text>
+                        {!!e.location && (
+                          <View style={styles.metaRow}>
+                            <Ionicons name="location-outline" size={13} color={theme.onSurface.variant} />
+                            <Text style={styles.eventLocation} numberOfLines={1}>
+                              {e.location}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
                   </GlowCard>
                 ))}
               </View>

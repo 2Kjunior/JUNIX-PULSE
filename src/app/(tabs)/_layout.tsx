@@ -103,7 +103,7 @@ function TabItem({ tab, focused, onPress }: TabItemProps) {
       activeBgOpacity.value = withTiming(0, { duration: 160 });
       iconTranslateY.value = withSpring(0, { damping: 14, stiffness: 220 });
     }
-  }, [focused]);
+  }, [focused, activeBgOpacity, iconTranslateY]);
 
   const animatedItemStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressScale.value }],

@@ -245,7 +245,7 @@ describe('SanctumRepository — Persistance chiffrée XChaCha20-Poly1305', () =>
 
   it('re-chiffre toutes les notes lors du changement de clé', async () => {
     const plainText = 'Secret important devant être conservé lors du changement de clé.';
-    const saved = await SanctumRepository.saveNote(
+    await SanctumRepository.saveNote(
       {
         title: 'Note confidentielle',
         content: plainText,

@@ -318,7 +318,11 @@ export default function NewPersonScreen() {
                 : t('personNew.birthdayPlaceholder')}
             </Text>
             {birthDate && (
-              <TouchableOpacity onPress={() => setBirthDate(undefined)}>
+              <TouchableOpacity
+                onPress={() => setBirthDate(undefined)}
+                accessibilityRole="button"
+                accessibilityLabel={t('a11y.clearBirthday')}
+              >
                 <Ionicons name="close-circle" size={18} color={palette.onSurface.disabled} />
               </TouchableOpacity>
             )}

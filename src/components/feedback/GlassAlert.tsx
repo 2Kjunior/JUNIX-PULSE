@@ -6,10 +6,12 @@
 
 import { useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Button, type ButtonVariant } from '@/components/ui/Button';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
+import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT } from '@/i18n';
 
@@ -76,60 +78,84 @@ function variantOf(button: GlassAlertButton, isMain: boolean): ButtonVariant {
   return isMain ? 'primary' : 'secondary';
 }
 
-/** Mounted once at the root of the app. */
-export function GlassAlertHost() {
+/** Mounted once at the root of the app. While `paused` (app locked), alerts wait in line. */
+export function GlassAlertHost({ paused = false }: { paused?: boolean }) {
   const styles = useThemedStyles(makeGlassAlertStyles);
   const t = useT();
+  const reduceMotion = useSafeReducedMotion();
   const [current, setCurrent] = useState<AlertRequest | null>(queue[0] ?? null);
+  // The last alert stays drawn while the window fades out
+  const [lastShown, setLastShown] = useState<AlertRequest | null>(queue[0] ?? null);
 
   useEffect(() => {
-    listeners.add(setCurrent);
-    setCurrent(queue[0] ?? null);
+    const show = (next: AlertRequest | null) => {
+      setCurrent(next);
+      if (next) setLastShown(next);
+    };
+    listeners.add(show);
+    show(queue[0] ?? null);
     return () => {
-      listeners.delete(setCurrent);
+      listeners.delete(show);
     };
   }, []);
 
-  if (!current) return null;
+  // Each alert rises a little and grows from 94 % as the dark background fades in
+  const entrance = useSharedValue(1);
+  const currentId = current?.id;
+  useEffect(() => {
+    if (currentId === undefined || paused) return;
+    if (reduceMotion) {
+      entrance.value = 1;
+      return;
+    }
+    entrance.value = 0;
+    entrance.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
+  }, [currentId, paused, reduceMotion, entrance]);
+  const dialogMotion = useAnimatedStyle(() => ({
+    transform: [{ translateY: (1 - entrance.value) * 10 }, { scale: 0.94 + 0.06 * entrance.value }],
+  }));
 
-  const cancelButton = current.buttons.find(button => button.style === 'cancel');
+  const shown = current ?? lastShown;
+  if (!shown) return null;
+
+  const cancelButton = shown.buttons.find(button => button.style === 'cancel');
   // The last button that is not a cancel one is the main action, as on the native alerts
-  const mainIndex = current.buttons.map(button => button.style !== 'cancel').lastIndexOf(true);
-  const stacked = current.buttons.length > 2;
+  const mainIndex = shown.buttons.map(button => button.style !== 'cancel').lastIndexOf(true);
+  const stacked = shown.buttons.length > 2;
 
   return (
     <Modal
-      visible
+      visible={current !== null && !paused}
       transparent
       animationType="fade"
       statusBarTranslucent
       onRequestClose={() => {
-        if (cancelButton) pressGlassAlertButton(current.id, cancelButton);
-        else if (current.options?.cancelable) close(current.id);
+        if (cancelButton) pressGlassAlertButton(shown.id, cancelButton);
+        else if (shown.options?.cancelable) close(shown.id);
       }}
     >
       <View style={styles.overlay}>
-        <View style={styles.dialog} accessibilityViewIsModal accessibilityRole="alert">
-          <Text style={styles.title}>{current.title}</Text>
-          {!!current.message && (
+        <Animated.View style={[styles.dialog, dialogMotion]} accessibilityViewIsModal accessibilityRole="alert">
+          <Text style={styles.title}>{shown.title}</Text>
+          {!!shown.message && (
             <ScrollView style={styles.messageScroll}>
-              <Text style={styles.message}>{current.message}</Text>
+              <Text style={styles.message}>{shown.message}</Text>
             </ScrollView>
           )}
           <View style={[styles.actions, stacked && styles.actionsStacked]}>
-            {current.buttons.map((button, index) => (
+            {shown.buttons.map((button, index) => (
               <Button
-                key={`${current.id}-${index}`}
+                key={`${shown.id}-${index}`}
                 label={button.text ?? t('common.close')}
                 variant={variantOf(button, index === mainIndex)}
                 size="sm"
-                onPress={() => pressGlassAlertButton(current.id, button)}
+                onPress={() => pressGlassAlertButton(shown.id, button)}
                 style={stacked ? styles.actionStacked : styles.action}
                 testID={`glass-alert-button-${index}`}
               />
             ))}
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

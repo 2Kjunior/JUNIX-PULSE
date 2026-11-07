@@ -5,6 +5,8 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { PersonField } from '@/components/people/PersonField';
+import { DeadlineField } from '@/components/tasks/DeadlineField';
 import {
   View,
   Text,
@@ -57,6 +59,8 @@ export default function TaskDetailScreen() {
   const [priority, setPriority] = useState<ReminderPriority>('NORMAL');
   const [scheduledDateStr, setScheduledDateStr] = useState<string | undefined>(undefined);
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>(undefined);
+  const [personIds, setPersonIds] = useState<string[]>([]);
+  const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [newSubtaskInput, setNewSubtaskInput] = useState('');
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -105,6 +109,8 @@ export default function TaskDetailScreen() {
       setPriority(loaded.priority);
       setScheduledDateStr(loaded.scheduledDate);
       setEstimatedMinutes(loaded.estimatedMinutes);
+      setPersonIds(loaded.personId ? [loaded.personId] : []);
+      setDueDate(loaded.dueDate);
 
       setScreenState('content');
     } catch (e) {
@@ -179,6 +185,8 @@ export default function TaskDetailScreen() {
         priority,
         scheduledDate: scheduledDateStr,
         estimatedMinutes: estimatedMinutes,
+        personId: personIds[0] ?? null,
+        dueDate: dueDate ?? null,
         status:
           task.status === 'INBOX' && scheduledDateStr
             ? 'SCHEDULED'
@@ -435,6 +443,17 @@ export default function TaskDetailScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* À rendre le… */}
+        <View style={styles.field}>
+          <DeadlineField value={dueDate} onChange={setDueDate} />
+        </View>
+
+        {/* Avec qui ? */}
+        <View style={styles.field}>
+          <Text style={styles.label}>{t('personField.header')}</Text>
+          <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" />
         </View>
 
         {/* Sous-tâches */}

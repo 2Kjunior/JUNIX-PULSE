@@ -47,6 +47,8 @@ export const MOOD_VISUALS: Record<MascotMood, MoodVisual> = {
   alert: { ring: ['#ff9a3d', '#ff4f8b'], liquid: ['#ffc08a', '#ff9ab8'], restArms: [158, -150], swingDeg: 10, swingPeriodMs: 260 },
   sleepy: { ring: ['#b9a7ff', '#8aa0b8'], liquid: ['#d6cbff', '#b4c4d6'], restArms: [-12, 14], swingDeg: 2, swingPeriodMs: 3200 },
   party: { ring: ['#ff5fa2', '#8B3DF0'], liquid: ['#ffa6cf', '#b58bff'], restArms: [150, -150], swingDeg: 10, swingPeriodMs: 500 },
+  // Arms held close and a quick small fidget: busy, a little anxious, never alarming
+  worried: { ring: ['#f5b942', '#8B3DF0'], liquid: ['#ffd98a', '#c4a0ff'], restArms: [28, -28], swingDeg: 4, swingPeriodMs: 900 },
 };
 
 /** Arms of the "greet" pose: raised in a V, waving a little faster than the mood. */

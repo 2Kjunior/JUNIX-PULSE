@@ -492,5 +492,43 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN haptics_enabled INTEGER NOT NULL DEFAULT 1;
     `,
   },
+  {
+    version: 28,
+    name: 'add_app_lock_and_device_calendar_settings',
+    sql: `
+      -- Verrouillage de toute l application : 0 = desactive (par defaut). Delai en minutes avant de
+      -- redemander une empreinte au retour (0 = tout de suite). Propre au telephone : hors sauvegarde.
+      ALTER TABLE settings ADD COLUMN app_lock_enabled INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE settings ADD COLUMN app_lock_delay_minutes INTEGER NOT NULL DEFAULT 0;
+      -- Agenda du telephone, en lecture seule : 0 = non affiche (par defaut), hors sauvegarde.
+      ALTER TABLE settings ADD COLUMN device_calendar_enabled INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
+  {
+    version: 29,
+    name: 'link_interactions_to_tasks_and_events',
+    sql: `
+      -- Un echange peut venir d une tache ou d un evenement, comme il venait deja d un rappel :
+      -- chaque source ne compte qu une fois.
+      ALTER TABLE interactions ADD COLUMN task_id TEXT;
+      ALTER TABLE interactions ADD COLUMN event_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_interactions_reminder ON interactions(reminder_id);
+      CREATE INDEX IF NOT EXISTS idx_interactions_event ON interactions(event_id);
+      CREATE INDEX IF NOT EXISTS idx_reminders_person ON reminders(person_id);
+      CREATE INDEX IF NOT EXISTS idx_tasks_person ON tasks(person_id);
+      CREATE INDEX IF NOT EXISTS idx_event_persons_person ON event_persons(person_id);
+    `,
+  },
+  {
+    version: 30,
+    name: 'add_task_due_date_and_confirmed_reminders',
+    sql: `
+      -- Echeance d une tache (AAAA-MM-JJ) : la date a laquelle elle doit etre faite, distincte
+      -- du jour prevu pour la faire.
+      ALTER TABLE tasks ADD COLUMN due_date TEXT;
+      -- Rappel a confirmer : il sonne de nouveau tant qu il n est ni termine ni reporte.
+      ALTER TABLE reminders ADD COLUMN requires_confirmation INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];
 

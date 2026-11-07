@@ -26,6 +26,7 @@ import {
   summarizeBackup,
 } from '@/services/backup-service';
 import { reconcileOverdueRecurringReminders } from '@/use-cases/reminder-use-cases';
+import { expectAppLockReturn } from '@/services/app-lock-service';
 
 const SANCTUM_RESTORE_NOTICE: Record<BackupSanctumRestore, MessageKey | null> = {
   none: null,
@@ -51,6 +52,7 @@ export function useBackupRestore(onRestored: (outcome: BackupRestoreOutcome) => 
         GlassAlert.alert(t('welcome.restore.unavailableTitle'), t('welcome.restore.unavailableBody'));
         return;
       }
+      expectAppLockReturn();
       const selection = await DocumentPicker.getDocumentAsync({
         type: 'application/json',
         copyToCacheDirectory: true,

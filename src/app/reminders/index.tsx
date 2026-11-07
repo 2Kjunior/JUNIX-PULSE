@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import { closeScreen } from '@/utils/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, isTomorrow, isPast, addHours } from 'date-fns';
 
@@ -206,7 +207,7 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
       <View style={styles.topBar}>
         {!hideBackButton && (
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => closeScreen()}
             style={styles.backBtn}
             accessibilityLabel={t('common.back')}
           >

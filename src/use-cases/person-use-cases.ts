@@ -54,6 +54,33 @@ export interface LogInteractionInput {
   notes?: string;
   occurredAt?: Date;
   reminderId?: string;
+  taskId?: string;
+  eventId?: string;
+}
+
+/**
+ * An exchange that comes with something done (a reminder, an event over): recorded once per
+ * source, and silently, since the action that brought it already got its own reaction.
+ * Never fails the action it comes with.
+ */
+export async function recordLinkedInteraction(input: LogInteractionInput): Promise<boolean> {
+  try {
+    const source = { reminderId: input.reminderId, taskId: input.taskId, eventId: input.eventId };
+    if (await PersonRepository.hasInteractionFrom(input.personId, source)) return false;
+    if (!(await PersonRepository.findById(input.personId))) return false;
+    await PersonRepository.createInteraction({
+      id: randomUUID(),
+      personId: input.personId,
+      type: input.type,
+      occurredAt: (input.occurredAt ?? new Date()).toISOString(),
+      notes: input.notes?.trim(),
+      ...source,
+      createdAt: new Date().toISOString(),
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export const PersonUseCases = {
@@ -145,6 +172,8 @@ export const PersonUseCases = {
       occurredAt: occurredAtStr,
       notes: input.notes?.trim(),
       reminderId: input.reminderId,
+      taskId: input.taskId,
+      eventId: input.eventId,
       createdAt: now,
     };
 

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationService } from '@/services/notification-service';
@@ -25,6 +25,8 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { useT } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
+import { useAutoBackupSetup } from '@/features/backup/use-auto-backup-setup';
+import { runAutoBackup } from '@/services/auto-backup-service';
 
 export default function OnboardingPermissions() {
   const t = useT();
@@ -33,6 +35,12 @@ export default function OnboardingPermissions() {
   const { setOnboardingComplete } = useAppStore();
   const [notifStatus, setNotifStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
   const [finishing, setFinishing] = useState(false);
+  const [autoBackupOn, setAutoBackupOn] = useState(false);
+  // The automatic backup, offered once here: the first copy is made at once
+  const { startSetup: startAutoBackupSetup, setupModal: autoBackupSetupModal } = useAutoBackupSetup(async () => {
+    setAutoBackupOn(true);
+    await runAutoBackup({ force: true });
+  });
 
   async function requestNotifications() {
     try {
@@ -122,6 +130,36 @@ export default function OnboardingPermissions() {
         )}
       </View>
 
+      {/* Sauvegarde automatique, proposée une fois ici (pas sur le web, sans dossier du système) */}
+      {Platform.OS !== 'web' && (
+        <View style={styles.permCard}>
+          <View style={styles.permHeader}>
+            <View style={[styles.permIcon, { backgroundColor: palette.primary.container + '33' }]}>
+              <Ionicons name="sync-outline" size={22} color={palette.primary.default} />
+            </View>
+            <View style={styles.permInfo}>
+              <Text style={styles.permTitle}>{t('permissions.autoBackup.title')}</Text>
+              <Text style={styles.permDesc}>{t('permissions.autoBackup.desc')}</Text>
+            </View>
+          </View>
+          {autoBackupOn ? (
+            <View style={styles.permGranted}>
+              <Ionicons name="checkmark-circle" size={16} color={palette.success.default} style={{ marginRight: 6 }} />
+              <Text style={styles.permGrantedText}>{t('permissions.autoBackup.enabled')}</Text>
+            </View>
+          ) : (
+            <Button
+              label={t('permissions.autoBackup.enable')}
+              onPress={startAutoBackupSetup}
+              variant="secondary"
+              size="md"
+              style={styles.permBtn}
+              testID="onboarding-auto-backup-btn"
+            />
+          )}
+        </View>
+      )}
+
       {/* Note contacts (pour plus tard dans l'app) */}
       <View style={styles.noteCard}>
         <View style={styles.noteTitleRow}>
@@ -145,6 +183,7 @@ export default function OnboardingPermissions() {
         style={styles.btnFinish}
         testID="onboarding-finish-btn"
       />
+      {autoBackupSetupModal}
     </ScrollView>
   );
 }

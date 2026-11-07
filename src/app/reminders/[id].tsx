@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { PersonRepository } from '@/repositories/person-repository';
+import { PersonAvatar } from '@/components/people/PersonAvatar';
 import {
   completeReminder,
   snoozeReminder,
@@ -256,7 +257,13 @@ export default function ReminderDetailScreen() {
                 <View>
                   <Text style={styles.actionCardLabel}>{actionInfo.label}</Text>
                   {person ? (
-                    <Text style={styles.actionCardTarget}>{t('remDetail.with', { name: person.displayName })}</Text>
+                    <Text
+                      style={styles.actionCardTarget}
+                      onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
+                      accessibilityRole="link"
+                    >
+                      {t('remDetail.with', { name: person.displayName })}
+                    </Text>
                   ) : null}
                 </View>
               </View>
@@ -271,6 +278,25 @@ export default function ReminderDetailScreen() {
                 </TouchableOpacity>
               ) : null}
             </View>
+            </GlowCard>
+          </View>
+        )}
+
+        {/* ─── La personne du rappel, quand aucune action ne la montre déjà ───── */}
+        {person && !actionInfo?.label && (
+          <View style={styles.actionSection}>
+            <GlowCard
+              tone="neutral"
+              onPress={() => router.push({ pathname: '/people/[id]', params: { id: person.id } })}
+              accessibilityLabel={t('remDetail.with', { name: person.displayName })}
+            >
+              <View style={styles.actionCardRow}>
+                <View style={styles.actionCardLeft}>
+                  <PersonAvatar name={person.displayName} size={36} />
+                  <Text style={styles.actionCardLabel}>{t('remDetail.with', { name: person.displayName })}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
+              </View>
             </GlowCard>
           </View>
         )}

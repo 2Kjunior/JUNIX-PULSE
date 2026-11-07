@@ -96,7 +96,8 @@ function Pills<T extends string>({ choices, value, onSelect, styles }: PillsProp
   );
 }
 
-export function MascotSettingsSection({ displayName }: { displayName?: string }) {
+/** `showTitle` false inside its own settings page, which already says what it is. */
+export function MascotSettingsSection({ displayName, showTitle = true }: { displayName?: string; showTitle?: boolean }) {
   const styles = useThemedStyles(makeSettingsStyles);
   const { palette } = useTheme();
   const t = useT();
@@ -149,7 +150,7 @@ export function MascotSettingsSection({ displayName }: { displayName?: string })
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionLabel}>{t('mascotSettings.title')}</Text>
+      {showTitle && <Text style={styles.sectionLabel}>{t('mascotSettings.title')}</Text>}
 
       <View style={styles.rowCol}>
         <Text style={styles.rowLabel}>{t('mascotSettings.presence')}</Text>

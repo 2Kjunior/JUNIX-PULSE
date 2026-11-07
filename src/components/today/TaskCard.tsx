@@ -11,6 +11,7 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { styles } from '@/styles/tabs/today-styles';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
+import { DeadlineBadge } from '@/components/tasks/DeadlineBadge';
 
 interface TaskCardProps {
   task: Task;
@@ -56,6 +57,7 @@ export function TaskCard({ task, onComplete }: TaskCardProps) {
           >
             {task.title}
           </Text>
+          {!!task.dueDate && !isCompleted && <DeadlineBadge dueDate={task.dueDate} />}
           {task.estimatedMinutes ? (
             <View style={styles.inlineMeta}>
               <Ionicons name="time-outline" size={12} color={palette.onSurface.variant} />

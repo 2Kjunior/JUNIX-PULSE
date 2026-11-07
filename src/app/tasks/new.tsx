@@ -16,6 +16,8 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
 
 import { TaskUseCases } from '@/use-cases/task-use-cases';
+import { PersonField } from '@/components/people/PersonField';
+import { DeadlineField } from '@/components/tasks/DeadlineField';
 import { useAppStore } from '@/store/app-store';
 import { ReminderPriority } from '@/domain/entities';
 import { Spacing, Radius, Typography } from '@/constants/theme';
@@ -44,7 +46,8 @@ export default function NewTaskScreen() {
   const { palette } = useTheme();
   const formStyles = useThemedStyles(makeFormStyles);
   const styles = useThemedStyles(makeNewTaskStyles);
-  const params = useLocalSearchParams<{ defaultDate?: string }>();
+  // personId: opened from the page of a person, the task is already for them
+  const params = useLocalSearchParams<{ defaultDate?: string; personId?: string }>();
 
   // Champs de saisie
   const [title, setTitle] = useState('');
@@ -58,6 +61,8 @@ export default function NewTaskScreen() {
   // Sous-tâches dynamiques
   const [subtaskInput, setSubtaskInput] = useState('');
   const [subtasks, setSubtasks] = useState<string[]>([]);
+  const [personIds, setPersonIds] = useState<string[]>(() => (params.personId ? [params.personId] : []));
+  const [dueDate, setDueDate] = useState<string | undefined>(undefined);
 
   // Modal DatePicker
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -108,8 +113,10 @@ export default function NewTaskScreen() {
         description: description.trim() || undefined,
         priority,
         scheduledDate: scheduledDateStr,
+        dueDate,
         estimatedMinutes,
         subtasks,
+        personId: personIds[0],
       });
 
       showSnackbar(t('taskNew.created'));
@@ -312,6 +319,8 @@ export default function NewTaskScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+          {/* À rendre le… : l'échéance, à part du jour prévu */}
+          <DeadlineField value={dueDate} onChange={setDueDate} />
         </View>
 
         {/* Carte 4 : Durée estimée */}
@@ -341,6 +350,9 @@ export default function NewTaskScreen() {
           </View>
         </View>
 
+        {/* Avec qui ? La personne de la tâche, une seule */}
+        <PersonField selectedIds={personIds} onChange={setPersonIds} />
+
         {/* Carte 5 : Sous-tâches */}
         <View style={formStyles.sectionHeaderRow}>
           <View style={formStyles.sectionHeaderIconBadge}>
@@ -354,7 +366,12 @@ export default function NewTaskScreen() {
             <View key={index} style={styles.subtaskItem}>
               <Ionicons name="ellipse-outline" size={16} color={palette.primary.default} />
               <Text style={styles.subtaskLabel}>{st}</Text>
-              <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.subtaskRemoveBtn}>
+              <TouchableOpacity
+                onPress={() => removeSubtask(index)}
+                style={styles.subtaskRemoveBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('a11y.removeSubtask', { title: st })}
+              >
                 <Ionicons name="close-circle" size={18} color={palette.error.default} />
               </TouchableOpacity>
             </View>
@@ -370,7 +387,12 @@ export default function NewTaskScreen() {
               onSubmitEditing={addSubtask}
               returnKeyType="done"
             />
-            <TouchableOpacity style={styles.subtaskAddIconButton} onPress={addSubtask}>
+            <TouchableOpacity
+              style={styles.subtaskAddIconButton}
+              onPress={addSubtask}
+              accessibilityRole="button"
+              accessibilityLabel={t('a11y.addSubtask')}
+            >
               <Ionicons name="add" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>

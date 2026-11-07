@@ -194,6 +194,7 @@ export default function SanctumScreen() {
       }
     }
     checkSecurityCapabilities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once on opening: asking the fingerprint at each render would loop
   }, []);
 
   // ─── Authentification Biométrique native ──────────────────────────────
