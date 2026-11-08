@@ -151,8 +151,8 @@ export const HabitUseCases = {
       HabitRepository.getPauses(habitId),
     ]);
 
-    const currentStreak = calculateCurrentStreak(completions, pauses);
-    const bestStreak = calculateBestStreak(completions, pauses, habit.createdAt);
+    const currentStreak = calculateCurrentStreak(completions, pauses, new Date(), habit);
+    const bestStreak = calculateBestStreak(completions, pauses, habit.createdAt, habit);
     const completedToday = isCompletedToday(completions);
 
     return {
@@ -175,8 +175,9 @@ export const HabitUseCases = {
         HabitRepository.getPauses(habit.id),
       ]);
 
-      const currentStreak = calculateCurrentStreak(completions, pauses);
-      const bestStreak = calculateBestStreak(completions, pauses, habit.createdAt);
+      // A habit "n times a week" keeps its streak through its days of rest
+      const currentStreak = calculateCurrentStreak(completions, pauses, new Date(), habit);
+      const bestStreak = calculateBestStreak(completions, pauses, habit.createdAt, habit);
       const completedToday = isCompletedToday(completions);
 
       statsList.push({

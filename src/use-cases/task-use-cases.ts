@@ -5,6 +5,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { format } from 'date-fns';
+import { GoalUseCases } from './goal-use-cases';
 import { TagRepository } from '../repositories/tag-repository';
 import { TaskRepository } from '../repositories/task-repository';
 import { Subtask, Task, TaskStatus, ReminderPriority } from '../domain/entities';
@@ -171,6 +172,8 @@ export const TaskUseCases = {
     });
 
     if (isNowCompleted) await announceTaskCompleted(task);
+    // Its goals follow: reached with their last task, active again if one is reopened
+    await GoalUseCases.refreshGoalsOfTask(id).catch(() => {});
     return newStatus;
   },
 

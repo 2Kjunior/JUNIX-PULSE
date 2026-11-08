@@ -1,7 +1,8 @@
 /**
  * Dictation for the quick capture, recognised on the phone only: the voice never leaves it,
- * as the app promises to work fully offline. Phones that cannot recognise speech on their own
- * (before Android 13, or without the offline language) get no microphone button.
+ * as the app promises to work fully offline. The microphone shows on every Android phone; on
+ * one that cannot recognise speech on its own (before Android 12, or without Google's speech
+ * service), a tap says so and points to the microphone of the keyboard instead of hiding.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -13,7 +14,7 @@ import { logger } from '@/utils/logger';
 
 const LOCALES: Record<AppLanguage, string> = { fr: 'fr-FR', en: 'en-US' };
 
-export type DictationProblem = 'permission' | 'language' | 'failed';
+export type DictationProblem = 'permission' | 'language' | 'failed' | 'unsupported';
 
 export function isOnDeviceDictationAvailable(): boolean {
   if (Platform.OS !== 'android') return false;
@@ -30,10 +31,12 @@ export function useDictation(
   onProblem: (problem: DictationProblem) => void
 ) {
   const [listening, setListening] = useState(false);
-  const [available] = useState(isOnDeviceDictationAvailable);
+  // Shown on every Android phone; recognised only where the phone can do it offline
+  const available = Platform.OS === 'android';
+  const [supported] = useState(isOnDeviceDictationAvailable);
 
   useEffect(() => {
-    if (!available) return;
+    if (!supported) return;
     const emitter = ExpoSpeechRecognitionModule;
     const subscriptions = [
       emitter.addListener('result', event => {
@@ -55,9 +58,13 @@ export function useDictation(
       }),
     ];
     return () => subscriptions.forEach(subscription => subscription.remove());
-  }, [available, language, onText, onProblem]);
+  }, [supported, language, onText, onProblem]);
 
   const toggle = useCallback(async () => {
+    if (!supported) {
+      onProblem('unsupported');
+      return;
+    }
     const recognizer = ExpoSpeechRecognitionModule;
     if (listening) {
       recognizer.stop();
@@ -75,7 +82,7 @@ export function useDictation(
       requiresOnDeviceRecognition: true,
     });
     setListening(true);
-  }, [language, listening, onProblem]);
+  }, [language, listening, onProblem, supported]);
 
-  return { available, listening, toggle };
+  return { available, supported, listening, toggle };
 }

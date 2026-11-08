@@ -517,6 +517,7 @@ export const REST_FR = {
   'widget.nextLater': "Prochain · {day}",
   'widget.noReminder': "Aucun rappel à venir",
   'widget.locked': "Détails masqués : Junix est verrouillé",
+  'capture.dictation.unsupported': "Ce téléphone ne sait pas reconnaître la voix hors ligne, et Junix ne l’envoie jamais sur Internet. Le micro de votre clavier permet aussi de dicter.",
   'home.a11y.openBirthday': "Ouvrir la fiche de {name} : c’est son anniversaire",
   'person.reached.title': "Vous avez pu joindre {name} ?",
   'person.reached.body': "Junix note l’échange d’aujourd’hui pour garder le fil.",

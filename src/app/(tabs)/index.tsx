@@ -106,7 +106,8 @@ export default function TodayScreen() {
     try {
       const [allRems, tks, evts, habStats, suggs, settings, goalsData] = await Promise.all([
         ReminderRepository.findAll(),
-        TaskRepository.findForDate(todayStr),
+        // Done ones included: the home counts what is done today, not only what is left
+        TaskRepository.findAllForDate(todayStr),
         EventRepository.findForDate(todayStr),
         HabitUseCases.getAllHabitsWithStats(),
         SuggestionUseCases.generateSuggestions(),
@@ -289,6 +290,7 @@ export default function TodayScreen() {
   const dateLabel = format(today, 'EEEE d MMMM', { locale: dateLocale });
   const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
   const totalTasksCount = tasks.length;
+  const openTasksCount = totalTasksCount - completedTasksCount;
   const urgentReminders = dueTodayReminders.filter(r => r.priority === 'URGENT' || r.status === 'MISSED');
   const nextEvent = events.length > 0 ? events[0] : null;
 
@@ -409,7 +411,7 @@ export default function TodayScreen() {
             onPress={() => router.push('/(tabs)/tasks' as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
-            accessibilityLabel={t('home.tasksA11y', { count: tasks.length })}
+            accessibilityLabel={t('home.tasksA11y', { count: openTasksCount })}
           >
             <View style={styles.waveCardHeader}>
               <View style={[styles.waveIconCircle, { backgroundColor: palette.tertiary.container }]}>
@@ -417,7 +419,7 @@ export default function TodayScreen() {
               </View>
               <Ionicons name="chevron-forward" size={14} color={palette.onSurface.variant} />
             </View>
-            <Text style={styles.waveCardNumber}>{tasks.length}</Text>
+            <Text style={styles.waveCardNumber}>{openTasksCount}</Text>
             <Text style={styles.waveCardLabel}>{t('home.tasks')}</Text>
             <Text style={styles.waveCardSub}>
               {t('home.tasksDone', { done: completedTasksCount, total: totalTasksCount })}

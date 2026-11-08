@@ -1,6 +1,10 @@
 /**
  * The review of a day or a week: what was done, what slipped, and the habits kept.
- * Pure: the screen loads the data of the period and gives the days it covers.
+ * Pure: the screen loads the data and gives the days the period covers.
+ *
+ * A task counts on the day it was done, whatever day it was planned for (or none, from the
+ * Inbox); the total is what was planned in the period plus what was done in it. A reminder
+ * slipped when its time passed in the period and it is still not done.
  */
 
 import { addDays, format, startOfDay, startOfWeek } from 'date-fns';
@@ -10,7 +14,11 @@ import type { ReminderStatus, TaskStatus } from '../enums';
 export type ReviewPeriod = 'day' | 'week';
 
 export interface ReviewTask {
+  id: string;
   status: TaskStatus;
+  /** Day it was planned for, YYYY-MM-DD; none for a task of the Inbox. */
+  scheduledDate?: string;
+  completedAt?: string;
 }
 
 export interface ReviewReminder {
@@ -28,10 +36,12 @@ export interface ReviewHabit {
 
 export interface ReviewInput {
   days: readonly Date[];
-  /** Tasks of each day, in the order of `days`. */
-  tasksByDay: readonly (readonly ReviewTask[])[];
+  /** Every task, done ones included: the period picks its own. */
+  tasks: readonly ReviewTask[];
   reminders: readonly ReviewReminder[];
   habits: readonly ReviewHabit[];
+  /** The moment of the review: a reminder still to come has not slipped. */
+  now?: Date;
 }
 
 export interface ReviewStats {
@@ -62,18 +72,42 @@ function inPeriod(iso: string | undefined, keys: ReadonlySet<string>): boolean {
   return !Number.isNaN(date.getTime()) && keys.has(format(date, 'yyyy-MM-dd'));
 }
 
+/** The day a task was done; an old task done without a date counts on the day it was planned. */
+function doneDay(task: ReviewTask): string | null {
+  if (task.status !== 'COMPLETED') return null;
+  if (task.completedAt) {
+    const at = new Date(task.completedAt);
+    if (!Number.isNaN(at.getTime())) return format(at, 'yyyy-MM-dd');
+  }
+  return task.scheduledDate ?? null;
+}
+
 export function buildReviewStats(input: ReviewInput): ReviewStats {
   const keys = new Set(input.days.map(day => format(day, 'yyyy-MM-dd')));
+  const now = input.now ?? new Date();
 
-  const doneByDay = input.tasksByDay.map(tasks => tasks.filter(task => task.status === 'COMPLETED').length);
-  const tasksDone = doneByDay.reduce((sum, done) => sum + done, 0);
-  const tasksTotal = input.tasksByDay.reduce((sum, tasks) => sum + tasks.length, 0);
+  const done = input.tasks.filter(task => {
+    const day = doneDay(task);
+    return day !== null && keys.has(day);
+  });
+  const planned = input.tasks.filter(task => task.scheduledDate !== undefined && keys.has(task.scheduledDate));
+  const doneByDay = input.days.map(day => {
+    const key = format(day, 'yyyy-MM-dd');
+    return done.filter(task => doneDay(task) === key).length;
+  });
+  const tasksDone = done.length;
+  const tasksTotal = new Set([...planned, ...done].map(task => task.id)).size;
 
   const remindersDone = input.reminders.filter(
     reminder => reminder.status === 'COMPLETED' && inPeriod(reminder.completedAt ?? reminder.scheduledAt, keys)
   ).length;
+  // Its time passed in the period and it is still not done: missed, snoozed past or waiting
   const remindersMissed = input.reminders.filter(
-    reminder => reminder.status === 'MISSED' && inPeriod(reminder.scheduledAt, keys)
+    reminder =>
+      reminder.status !== 'COMPLETED' &&
+      reminder.status !== 'DELETED' &&
+      inPeriod(reminder.scheduledAt, keys) &&
+      new Date(reminder.scheduledAt).getTime() < now.getTime()
   ).length;
 
   const habitCounts = input.habits

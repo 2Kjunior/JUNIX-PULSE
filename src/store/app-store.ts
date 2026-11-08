@@ -55,10 +55,6 @@ interface AppStore {
   // Timezone de l'utilisateur
   userTimezone: string;
   setUserTimezone: (tz: string) => void;
-
-  // Temps de focus du jour (en minutes)
-  todayFocusMinutes: number;
-  addFocusMinutes: (minutes: number) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -99,9 +95,5 @@ export const useAppStore = create<AppStore>((set) => ({
   // Timezone
   userTimezone: 'UTC',
   setUserTimezone: (tz) => set({ userTimezone: tz }),
-
-  // Focus
-  todayFocusMinutes: 0,
-  addFocusMinutes: (minutes) => set((s) => ({ todayFocusMinutes: s.todayFocusMinutes + minutes })),
 }));
 

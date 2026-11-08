@@ -97,6 +97,7 @@ async function loadCandidateFacts(now: Date): Promise<LoadedFacts> {
       active: item.habit.status === 'ACTIVE',
       currentStreak: item.currentStreak,
       completedToday: item.completedToday,
+      weekly: item.habit.frequency === 'WEEKLY',
     })),
     todayTasks,
     inboxTasks: inbox.filter(task => !task.scheduledDate),

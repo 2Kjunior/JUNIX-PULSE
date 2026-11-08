@@ -143,7 +143,8 @@ export default function RemindersListScreen({ hideBackButton = false }: { hideBa
         continue;
       }
       const d = new Date(r.scheduledAt);
-      if (isPast(d) && r.status === 'UPCOMING') {
+      // Its time passed and it is not done: late, whether it was planned, rang or put off
+      if (isPast(d)) {
         missed.push(r);
       } else if (isToday(d)) {
         tonight.push(r);

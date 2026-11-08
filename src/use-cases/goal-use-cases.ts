@@ -99,6 +99,19 @@ export const GoalUseCases = {
         updatedAt: new Date().toISOString(),
       });
       emitMascotEvent({ type: 'GOAL_COMPLETED' });
+      return;
+    }
+
+    // A task reopened: the goal is not reached any more (its status only ever changes here)
+    if (details.goal.status === 'COMPLETED' && details.progress !== null && details.progress < 100) {
+      await GoalRepository.update({ id: goalId, status: 'ACTIVE', updatedAt: new Date().toISOString() });
+    }
+  },
+
+  /** A task was done, reopened or removed: each goal it belongs to follows. */
+  async refreshGoalsOfTask(taskId: string): Promise<void> {
+    for (const goalId of await GoalRepository.findGoalIdsForTask(taskId)) {
+      await GoalUseCases.refreshGoalStatus(goalId);
     }
   },
 

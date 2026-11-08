@@ -14,8 +14,75 @@ import {
   isWithinInterval,
   isBefore,
   isSameDay,
+  addDays,
+  addWeeks,
+  startOfWeek,
+  subWeeks,
 } from 'date-fns';
-import { HabitCompletion, HabitPause } from '../entities';
+import { Habit, HabitCompletion, HabitPause } from '../entities';
+
+/**
+ * A habit "n times a week" keeps its streak as long as each week reaches its target: a day of
+ * rest is part of the plan. The streak still counts the times it was done.
+ */
+export type HabitRhythm = Pick<Habit, 'frequency' | 'targetDaysPerWeek' | 'createdAt'>;
+
+const WEEK_OPTIONS = { weekStartsOn: 1 } as const;
+
+/** The days of the week of this date, Monday to Sunday. */
+function weekDays(weekStart: Date): Date[] {
+  return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+}
+
+/**
+ * How a week went: the times the habit was done, and whether it reached its target. A week with
+ * a pause never fails; the week the habit was created asks only for the days it had left.
+ */
+function weekResult(
+  weekStart: Date,
+  completedDates: ReadonlySet<string>,
+  pauses: HabitPause[],
+  rhythm: HabitRhythm
+): { done: number; reached: boolean } {
+  const createdOn = startOfDay(parseISO(rhythm.createdAt));
+  const days = weekDays(weekStart).filter(day => !isBefore(day, createdOn));
+  const done = days.filter(day => completedDates.has(format(day, 'yyyy-MM-dd'))).length;
+  if (days.some(day => isDayPaused(day, pauses))) return { done, reached: true };
+  const target = Math.min(Math.max(1, rhythm.targetDaysPerWeek ?? 1), days.length);
+  return { done, reached: done >= target };
+}
+
+function weeklyCurrentStreak(completions: HabitCompletion[], pauses: HabitPause[], now: Date, rhythm: HabitRhythm): number {
+  const completedDates = new Set(completions.map(c => c.completedDate));
+  const createdWeek = startOfWeek(parseISO(rhythm.createdAt), WEEK_OPTIONS);
+  const thisWeek = startOfWeek(now, WEEK_OPTIONS);
+  // The week in progress counts what is done, and is never a failure before it ends
+  let streak = weekResult(thisWeek, completedDates, pauses, rhythm).done;
+  for (let week = subWeeks(thisWeek, 1); !isBefore(week, createdWeek); week = subWeeks(week, 1)) {
+    const result = weekResult(week, completedDates, pauses, rhythm);
+    if (!result.reached) break;
+    streak += result.done;
+    if (differenceInDays(thisWeek, week) > 730) break;
+  }
+  return streak;
+}
+
+function weeklyBestStreak(completions: HabitCompletion[], pauses: HabitPause[], rhythm: HabitRhythm, now: Date): number {
+  const completedDates = new Set(completions.map(c => c.completedDate));
+  const thisWeek = startOfWeek(now, WEEK_OPTIONS);
+  let best = 0;
+  let current = 0;
+  for (let week = startOfWeek(parseISO(rhythm.createdAt), WEEK_OPTIONS); !isBefore(thisWeek, week); week = addWeeks(week, 1)) {
+    const result = weekResult(week, completedDates, pauses, rhythm);
+    if (result.reached || week.getTime() === thisWeek.getTime()) {
+      current += result.done;
+      best = Math.max(best, current);
+    } else {
+      current = 0;
+    }
+  }
+  return best;
+}
 
 /**
  * Détermine si un jour donné est couvert par une période de pause.
@@ -39,8 +106,10 @@ export function isDayPaused(date: Date, pauses: HabitPause[]): boolean {
 export function calculateCurrentStreak(
   completions: HabitCompletion[],
   pauses: HabitPause[],
-  now: Date = new Date()
+  now: Date = new Date(),
+  rhythm?: HabitRhythm
 ): number {
+  if (rhythm?.frequency === 'WEEKLY') return weeklyCurrentStreak(completions, pauses, now, rhythm);
   const completedDates = new Set(completions.map(c => c.completedDate));
   let streak = 0;
   let day = startOfDay(now);
@@ -81,9 +150,11 @@ export function calculateCurrentStreak(
 export function calculateBestStreak(
   completions: HabitCompletion[],
   pauses: HabitPause[],
-  createdAt: string
+  createdAt: string,
+  rhythm?: HabitRhythm
 ): number {
   if (completions.length === 0) return 0;
+  if (rhythm?.frequency === 'WEEKLY') return weeklyBestStreak(completions, pauses, rhythm, new Date());
 
   const completedDates = new Set(completions.map(c => c.completedDate));
   const start = parseISO(createdAt);

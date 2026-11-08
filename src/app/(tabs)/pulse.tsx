@@ -38,6 +38,7 @@ import { GoalUseCases } from '@/use-cases/goal-use-cases';
 import { SuggestionUseCases } from '@/use-cases/suggestion-use-cases';
 import { Suggestion } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
+import { getTodayFocusMinutes } from '@/services/focus-stats-service';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
@@ -111,7 +112,7 @@ export default function PulseScreen() {
   const t = useT();
   const language = useLanguage();
   const insets = useSafeAreaInsets();
-  const { showSnackbar, todayFocusMinutes } = useAppStore();
+  const { showSnackbar } = useAppStore();
   const { theme } = useTheme();
   const styles = useThemedStyles(makePulseStyles);
   const isLight = theme.mode === 'light';
@@ -121,16 +122,20 @@ export default function PulseScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [habitCount, setHabitCount] = useState<number | null>(null);
   const [goalCount, setGoalCount] = useState<number | null>(null);
+  // Minutes of Focus finished today, kept across restarts
+  const [todayFocusMinutes, setTodayFocusMinutes] = useState(0);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   // Le moteur de suggestion est appelé à chaque focus — SQLite local, latence ~0.
   const loadData = useCallback(async () => {
     try {
-      const [habits, goals, suggs] = await Promise.all([
+      const [habits, goals, suggs, focusMinutes] = await Promise.all([
         HabitUseCases.getAllHabitsWithStats(),
         GoalUseCases.getAllGoalsWithDetails(),
         SuggestionUseCases.generateSuggestions(),
+        getTodayFocusMinutes().catch(() => 0),
       ]);
+      setTodayFocusMinutes(focusMinutes);
       setHabitCount(habits.filter(h => h.habit.status === 'ACTIVE').length);
       setGoalCount(goals.filter(g => g.goal.status === 'ACTIVE').length);
       setSuggestions(suggs);

@@ -45,6 +45,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { NotificationService } from '@/services/notification-service';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { setMascotFocusState } from '@/services/mascot/mascot-runtime';
+import { addFocusMinutes } from '@/services/focus-stats-service';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useT } from '@/i18n';
 
@@ -58,7 +59,7 @@ export default function FocusScreen() {
   const insets = useSafeAreaInsets();
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeFocusStyles);
-  const { showSnackbar, addFocusMinutes } = useAppStore();
+  const { showSnackbar } = useAppStore();
 
   const params = useLocalSearchParams<{ taskId?: string; taskTitle?: string }>();
 
@@ -88,7 +89,8 @@ export default function FocusScreen() {
         setSession((prev) => {
           const next = syncFocusSessionWithClock(prev, endsAtRef.current);
           if (next.state === 'completed' && prev.state === 'running') {
-            addFocusMinutes(prev.durationMinutes);
+            // Kept for the day, even if the app is closed afterwards
+            void addFocusMinutes(prev.durationMinutes).catch(() => {});
             emitMascotEvent({ type: 'FOCUS_COMPLETED', durationMinutes: prev.durationMinutes });
             showSnackbar(t('focus.done'));
           }

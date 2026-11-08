@@ -519,6 +519,7 @@ export const REST_EN: Record<keyof typeof REST_FR, string> = {
   'widget.nextLater': "Next · {day}",
   'widget.noReminder': "No upcoming reminder",
   'widget.locked': "Details hidden: Junix is locked",
+  'capture.dictation.unsupported': "This phone cannot recognise speech offline, and Junix never sends your voice online. The microphone of your keyboard can dictate too.",
   'home.a11y.openBirthday': "Open {name}’s page: it is their birthday",
   'person.reached.title': "Did you reach {name}?",
   'person.reached.body': "Junix notes today’s exchange to keep track.",

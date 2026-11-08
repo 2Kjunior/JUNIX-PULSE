@@ -447,6 +447,7 @@ const DICTATION_PROBLEM_KEYS = {
   permission: 'capture.dictation.permission',
   language: 'capture.dictation.language',
   failed: 'capture.dictation.failed',
+  unsupported: 'capture.dictation.unsupported',
 } as const;
 
 const makeQuickCaptureStyles = (theme: ThemePalette) =>

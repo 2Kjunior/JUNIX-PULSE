@@ -40,15 +40,16 @@ const TONE_TEXT: Record<ReviewPeriod, Record<ReviewTone, MessageKey>> = {
 
 async function loadStats(period: ReviewPeriod): Promise<ReviewStats> {
   const days = reviewDays(period, new Date());
-  const [tasksByDay, reminders, habits] = await Promise.all([
-    Promise.all(days.map(day => TaskRepository.findAllForDate(format(day, 'yyyy-MM-dd')))),
+  const [tasks, reminders, habits] = await Promise.all([
+    // All of them: a task done today from the Inbox, or planned for another day, counts today
+    TaskRepository.findAll(),
     ReminderRepository.findAll(),
     HabitRepository.findAllActive(),
   ]);
   const completions = await Promise.all(habits.map(habit => HabitRepository.getCompletions(habit.id)));
   return buildReviewStats({
     days,
-    tasksByDay,
+    tasks,
     reminders,
     habits: habits.map((habit, index) => ({
       id: habit.id,

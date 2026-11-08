@@ -117,6 +117,13 @@ export const GoalRepository = {
     );
   },
 
+  /** The goals a task belongs to. */
+  async findGoalIdsForTask(taskId: string): Promise<string[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{ goal_id: string }>('SELECT goal_id FROM goal_tasks WHERE task_id = ?', taskId);
+    return rows.map(row => row.goal_id);
+  },
+
   async getAssociatedTasks(goalId: string): Promise<Task[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<Record<string, unknown>>(

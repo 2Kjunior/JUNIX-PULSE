@@ -47,6 +47,8 @@ export interface CandidateHabit {
   active: boolean;
   currentStreak: number;
   completedToday: boolean;
+  /** A habit "n times a week" rests some days: a day without it never puts its streak at risk. */
+  weekly?: boolean;
 }
 
 export interface CandidateTask {
@@ -200,7 +202,7 @@ export function buildSuggestionCandidates(facts: CandidateFacts): SuggestionCand
   // P3: a streak at risk, only from the evening on
   if (hour >= streakAlertHour(facts.endOfDayHour)) {
     for (const habit of facts.habits) {
-      if (habit.active && !habit.completedToday && habit.currentStreak > 0) {
+      if (habit.active && !habit.weekly && !habit.completedToday && habit.currentStreak > 0) {
         candidates.push({
           type: 'HABIT_REMINDER',
           targetId: habit.id,

@@ -369,13 +369,20 @@ describe('review of the day and of the week', () => {
     const days = reviewDays('week', tuesday);
     const stats = buildReviewStats({
       days,
-      tasksByDay: days.map((_, index) =>
-        index === 1 ? [{ status: 'COMPLETED' }, { status: 'COMPLETED' }, { status: 'SCHEDULED' }] : index === 3 ? [{ status: 'COMPLETED' }] : []
-      ),
+      now: new Date(2025, 5, 19, 12, 0),
+      tasks: [
+        { id: 't1', status: 'COMPLETED', scheduledDate: '2025-06-17', completedAt: '2025-06-17T10:00:00' },
+        { id: 't2', status: 'COMPLETED', scheduledDate: '2025-06-17', completedAt: '2025-06-17T11:00:00' },
+        { id: 't3', status: 'SCHEDULED', scheduledDate: '2025-06-17' },
+        { id: 't4', status: 'COMPLETED', scheduledDate: '2025-06-19', completedAt: '2025-06-19T09:00:00' },
+        { id: 'old', status: 'COMPLETED', scheduledDate: '2025-06-02', completedAt: '2025-06-02T09:00:00' },
+      ],
       reminders: [
         { status: 'COMPLETED', scheduledAt: '2025-06-17T09:00:00', completedAt: '2025-06-17T09:05:00' },
         { status: 'MISSED', scheduledAt: '2025-06-18T09:00:00' },
         { status: 'COMPLETED', scheduledAt: '2025-06-01T09:00:00', completedAt: '2025-06-01T09:00:00' },
+        // Still to come this week: not slipped
+        { status: 'UPCOMING', scheduledAt: '2025-06-21T09:00:00' },
       ],
       habits: [
         { id: 'h1', title: 'Lire', completedDates: ['2025-06-16', '2025-06-17', '2025-06-10'] },
@@ -395,5 +402,36 @@ describe('review of the day and of the week', () => {
     expect(reviewTone(stats)).toBe('good');
     expect(reviewTone({ ...stats, completionRate: 90 })).toBe('great');
     expect(reviewTone({ ...stats, tasksTotal: 0, remindersDone: 0, habitChecks: 0, completionRate: null })).toBe('empty');
+  });
+
+  it('counts a task on the day it was done, from the Inbox or planned for another day', () => {
+    const stats = buildReviewStats({
+      days: reviewDays('day', tuesday),
+      now: tuesday,
+      tasks: [
+        { id: 'inbox', status: 'COMPLETED', completedAt: '2025-06-17T08:00:00' },
+        { id: 'early', status: 'COMPLETED', scheduledDate: '2025-06-20', completedAt: '2025-06-17T09:00:00' },
+        { id: 'today', status: 'SCHEDULED', scheduledDate: '2025-06-17' },
+      ],
+      reminders: [],
+      habits: [],
+    });
+    expect([stats.tasksDone, stats.tasksTotal, stats.completionRate]).toEqual([2, 3, 67]);
+  });
+
+  it('counts as slipped a reminder whose time passed and that is still not done, snoozed or waiting', () => {
+    const stats = buildReviewStats({
+      days: reviewDays('day', tuesday),
+      now: tuesday,
+      tasks: [],
+      reminders: [
+        { status: 'UPCOMING', scheduledAt: '2025-06-17T09:00:00' },
+        { status: 'SNOOZED', scheduledAt: '2025-06-17T11:00:00' },
+        { status: 'UPCOMING', scheduledAt: '2025-06-17T18:00:00' },
+        { status: 'DELETED', scheduledAt: '2025-06-17T08:00:00' },
+      ],
+      habits: [],
+    });
+    expect(stats.remindersMissed).toBe(2);
   });
 });
