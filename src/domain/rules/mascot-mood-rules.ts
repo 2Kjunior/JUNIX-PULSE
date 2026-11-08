@@ -11,6 +11,8 @@ export type MascotMood = 'calm' | 'happy' | 'focused' | 'alert' | 'sleepy' | 'pa
 export const NIGHT_START_HOUR = 23;
 export const NIGHT_END_HOUR = 5;
 export const LONG_ABSENCE_DAYS = 3;
+/** After a long absence Pulse wakes up with the user: sleepy for these first minutes only. */
+export const ABSENCE_MOOD_MINUTES = 5;
 export const ALERT_REST_INTENSITY = 0.45;
 /** Open tasks and reminders of today from which the day is overloaded, as for the suggestion. */
 export const WORRIED_ITEM_THRESHOLD = 8;
@@ -30,6 +32,15 @@ export interface MascotMoodInput {
 export interface MascotMoodState {
   mood: MascotMood;
   intensity: number; // 0 to 1, how strongly the mood is expressed
+}
+
+/**
+ * The days of absence the mood takes into account: those measured at launch, during the first
+ * minutes after it only. Without a launch time (never opened, or unknown) there is no absence.
+ */
+export function absenceDaysForMood(days: number | null, launchedAt: number | null, now: number): number | null {
+  if (days === null || launchedAt === null) return null;
+  return now - launchedAt < ABSENCE_MOOD_MINUTES * 60_000 ? days : null;
 }
 
 export function isNightHour(hour: number): boolean {

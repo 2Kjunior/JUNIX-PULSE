@@ -1,9 +1,7 @@
 /**
- * Resting mood of the mascot, computed from the day's local data each time the screen is focused.
- *
- * Not available yet, so they take their neutral value: the running Focus session (the timer is
- * local to its screen) and the days since the last opening (it needs the small persisted store
- * planned for the settings step).
+ * Resting mood of the mascot, computed from the day's local data each time the screen is focused,
+ * with the Focus session in progress and, in the first minutes after a launch, the days the app
+ * was left unopened.
  */
 
 import { useFocusEffect } from 'expo-router';
@@ -14,7 +12,9 @@ import {
   buildMascotMoodInput,
   pendingUrgentReminders,
 } from '@/domain/rules/mascot-day-rules';
-import { deriveMascotMood, MascotMood } from '@/domain/rules/mascot-mood-rules';
+import { absenceDaysForMood, deriveMascotMood, MascotMood } from '@/domain/rules/mascot-mood-rules';
+import { getMascotFocusState } from '@/services/mascot/mascot-runtime';
+import { SessionManager } from '@/services/session/SessionManager';
 import { PersonRepository } from '@/repositories/person-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TaskRepository } from '@/repositories/task-repository';
@@ -40,11 +40,15 @@ export async function loadMascotDayMood(): Promise<MascotDayMood> {
 
     const input = {
       now,
-      focusState: 'idle' as const,
+      focusState: getMascotFocusState(),
       reminders,
       todayTasks,
       persons,
-      daysSinceLastOpen: null,
+      daysSinceLastOpen: absenceDaysForMood(
+        SessionManager.getDaysSinceLastOpen(now.getTime()),
+        SessionManager.getLaunchedAt(),
+        now.getTime()
+      ),
     };
     const urgent = pendingUrgentReminders(reminders, now);
 

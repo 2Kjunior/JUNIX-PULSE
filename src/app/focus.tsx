@@ -45,6 +45,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { NotificationService } from '@/services/notification-service';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { setMascotFocusState } from '@/services/mascot/mascot-runtime';
+import { PulseMascot } from '@/features/mascot/PulseMascot';
 import { useT } from '@/i18n';
 
 const CIRCLE_SIZE = 260;
@@ -195,6 +196,14 @@ export default function FocusScreen() {
             </Text>
           </View>
         ) : null}
+
+        {/* ─── Pulse se concentre avec vous pendant la session, se réjouit à la fin ─── */}
+        <View style={styles.mascot} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          <PulseMascot
+            mood={isCompleted ? 'happy' : session.state === 'running' || session.state === 'paused' ? 'focused' : 'calm'}
+            size={48}
+          />
+        </View>
 
         {/* ─── Cadran Circulaire ────────────────────────────────────────────── */}
         <View style={styles.timerCircleContainer}>
@@ -432,6 +441,11 @@ function makeFocusStyles(palette: ThemePalette) {
       fontSize: Typography.labelLarge.fontSize,
       color: palette.onSurface.primary,
       fontWeight: Typography.labelLarge.fontWeight,
+    },
+    mascot: {
+      alignItems: 'center',
+      marginTop: Spacing.md,
+      marginBottom: -Spacing.md,
     },
     timerCircleContainer: {
       width: CIRCLE_SIZE,

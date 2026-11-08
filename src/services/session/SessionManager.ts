@@ -21,6 +21,8 @@ export const SESSION_INACTIVITY_TIMEOUT_MS = SPLASH_REPLAY_AFTER_MS;
 const STORAGE_KEY_LAST_ACTIVE = 'junix_pulse_last_active_at';
 
 let hasPlayedSplashInProcess = false;
+// When this process started: the mascot wakes up with the user for a few minutes after it
+let launchedAt: number | null = null;
 let backgroundAt: number | null = null;
 
 // Dernière activité connue AU DÉMARRAGE du process, lue avant que recordActive() ne l'écrase.
@@ -57,6 +59,7 @@ export const SessionManager = {
     await loadPreviousLastActive();
     if (hasPlayedSplashInProcess) return false;
     hasPlayedSplashInProcess = true;
+    launchedAt = Date.now();
     await this.recordActive();
     return true;
   },
@@ -68,6 +71,11 @@ export const SessionManager = {
   getDaysSinceLastOpen(now: number = Date.now()): number | null {
     if (previousLastActiveAt === null) return null;
     return Math.max(0, Math.floor((now - previousLastActiveAt) / (24 * 60 * 60 * 1000)));
+  },
+
+  /** When this launch happened, or null before the first one. */
+  getLaunchedAt(): number | null {
+    return launchedAt;
   },
 
   /**
@@ -102,6 +110,7 @@ export const SessionManager = {
    */
   _resetForTesting(): void {
     hasPlayedSplashInProcess = false;
+    launchedAt = null;
     backgroundAt = null;
     previousLastActiveAt = null;
     previousLastActiveLoaded = false;
