@@ -9,6 +9,7 @@ import { useCallback, useState } from 'react';
 import { format } from 'date-fns';
 
 import {
+  birthdaysToWish,
   buildMascotMoodInput,
   pendingUrgentReminders,
 } from '@/domain/rules/mascot-day-rules';
@@ -23,9 +24,11 @@ export interface MascotDayMood {
   mood: MascotMood;
   /** The oldest urgent reminder nobody has settled, which a tap on the mascot opens. */
   urgentReminderId: string | null;
+  /** Someone whose birthday is today and who has not been wished it yet: a tap opens their page. */
+  birthdayPerson: { id: string; name: string } | null;
 }
 
-const NEUTRAL: MascotDayMood = { mood: 'calm', urgentReminderId: null };
+const NEUTRAL: MascotDayMood = { mood: 'calm', urgentReminderId: null, birthdayPerson: null };
 
 /** The mood of the day and the urgent reminder, read from the local data now. */
 export async function loadMascotDayMood(): Promise<MascotDayMood> {
@@ -51,10 +54,12 @@ export async function loadMascotDayMood(): Promise<MascotDayMood> {
       ),
     };
     const urgent = pendingUrgentReminders(reminders, now);
+    const birthday = birthdaysToWish(persons, now)[0];
 
     return {
       mood: deriveMascotMood(buildMascotMoodInput(input)).mood,
       urgentReminderId: urgent.length > 0 ? urgent[0].id : null,
+      birthdayPerson: birthday ? { id: birthday.id, name: birthday.displayName } : null,
     };
   } catch {
     // The mascot is decoration: on any failure it simply stays calm

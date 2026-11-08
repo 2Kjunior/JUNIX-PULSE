@@ -78,7 +78,7 @@ export default function TodayScreen() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeTodayStyles);
   const { width: windowWidth } = useWindowDimensions();
-  const { urgentReminderId } = useMascotDayMood();
+  const { urgentReminderId, birthdayPerson } = useMascotDayMood();
 
   const [state, setState] = useState<ScreenState>('loading');
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -318,7 +318,8 @@ export default function TodayScreen() {
       <View style={styles.responsiveContainer}>
         {/* ─── 1. En-tête convivial & Statut immédiat ───────────────────────── */}
         <View style={styles.header}>
-          {/* Compagne : un appui ouvre ce qui compte, le rappel urgent sinon l'onglet Pulse.
+          {/* Compagne : un appui ouvre ce qui compte, le rappel urgent, sinon la fiche de la
+              personne dont c'est l'anniversaire, sinon l'onglet Pulse.
               Absente quand l'utilisateur a désactivé la mascotte. */}
           {mascotPresent && (
           <TourTarget id="mascot">
@@ -327,11 +328,19 @@ export default function TodayScreen() {
             onPress={() =>
               urgentReminderId
                 ? router.push(`/reminders/${urgentReminderId}` as never)
-                : router.push('/(tabs)/pulse' as never)
+                : birthdayPerson
+                  ? router.push({ pathname: '/people/[id]', params: { id: birthdayPerson.id } })
+                  : router.push('/(tabs)/pulse' as never)
             }
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel={urgentReminderId ? t('home.a11y.openUrgent') : t('home.a11y.openPulse')}
+            accessibilityLabel={
+              urgentReminderId
+                ? t('home.a11y.openUrgent')
+                : birthdayPerson
+                  ? t('home.a11y.openBirthday', { name: birthdayPerson.name })
+                  : t('home.a11y.openPulse')
+            }
           >
             <CompanionAnchor screen="home" size={56} />
           </TouchableOpacity>

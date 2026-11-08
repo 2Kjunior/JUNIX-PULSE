@@ -9,7 +9,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Linking,
   KeyboardAvoidingView,
 } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -37,6 +36,7 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makePersonDetailStyles } from '@/styles/people/person-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
+import { useContactFollowUp } from '@/features/people/use-contact-follow-up';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -118,6 +118,9 @@ export default function PersonDetailScreen() {
       showSnackbar(e instanceof Error ? e.message : t('common.error'));
     }
   }
+
+  // Calling or writing opens another app; back in Junix, one question records the exchange
+  const contact = useContactFollowUp(person?.displayName, type => void handleLogInteraction(type, ''));
 
   // ─── Relancer : un rappel pour recontacter la personne ─────────────────────
 
@@ -283,7 +286,7 @@ export default function PersonDetailScreen() {
                 <>
                   <TouchableOpacity
                     style={styles.quickActionBtn}
-                    onPress={() => Linking.openURL(`tel:${person.phone}`)}
+                    onPress={() => contact('CALL', `tel:${person.phone}`)}
                     activeOpacity={0.7}
                   >
                     <Ionicons name="call-outline" size={18} color={theme.primary.default} />
@@ -292,7 +295,7 @@ export default function PersonDetailScreen() {
 
                   <TouchableOpacity
                     style={styles.quickActionBtn}
-                    onPress={() => Linking.openURL(`sms:${person.phone}`)}
+                    onPress={() => contact('SMS', `sms:${person.phone}`)}
                     activeOpacity={0.7}
                   >
                     <Ionicons name="chatbubble-outline" size={18} color={theme.primary.default} />
@@ -301,7 +304,7 @@ export default function PersonDetailScreen() {
 
                   <TouchableOpacity
                     style={styles.quickActionBtn}
-                    onPress={() => Linking.openURL(formatWhatsAppUrl(person.phone))}
+                    onPress={() => contact('WHATSAPP', formatWhatsAppUrl(person.phone))}
                     activeOpacity={0.7}
                   >
                     <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
@@ -313,7 +316,7 @@ export default function PersonDetailScreen() {
               {!!person.email && (
                 <TouchableOpacity
                   style={styles.quickActionBtn}
-                  onPress={() => Linking.openURL(`mailto:${person.email}`)}
+                  onPress={() => contact('EMAIL', `mailto:${person.email}`)}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="mail-outline" size={18} color={theme.primary.default} />

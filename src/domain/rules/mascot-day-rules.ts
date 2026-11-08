@@ -19,7 +19,11 @@ export interface MascotDayTask {
 }
 
 export interface MascotDayPerson {
+  id?: string;
+  displayName?: string;
   birthDate?: string | null; // ISO date, YYYY-MM-DD
+  /** The latest exchange with the person, ISO 8601. */
+  lastInteractionAt?: string | null;
 }
 
 export interface MascotDayInput {
@@ -42,6 +46,21 @@ export function isBirthdayToday(birthDate: string | null | undefined, now: Date)
   const month = Number(match[1]);
   const day = Number(match[2]);
   return month === now.getMonth() + 1 && day === now.getDate();
+}
+
+/** Whether there was an exchange with the person today: a call, a message, a meeting... */
+export function contactedToday(lastInteractionAt: string | null | undefined, now: Date): boolean {
+  if (!lastInteractionAt) return false;
+  const at = new Date(lastInteractionAt);
+  return !Number.isNaN(at.getTime()) && at.toDateString() === now.toDateString();
+}
+
+/**
+ * The people whose birthday is today and who have not been wished it yet. Pulse celebrates
+ * until the user gets in touch with each of them; an exchange recorded today ends the party.
+ */
+export function birthdaysToWish<T extends MascotDayPerson>(persons: readonly T[], now: Date): T[] {
+  return persons.filter(person => isBirthdayToday(person.birthDate, now) && !contactedToday(person.lastInteractionAt, now));
 }
 
 /** Urgent reminders whose time has come and that nobody has settled yet, oldest first. */
@@ -67,7 +86,7 @@ export function buildMascotMoodInput(input: MascotDayInput): MascotMoodInput {
     hasUrgentPendingReminder: pendingUrgentReminders(input.reminders, now).length > 0,
     todayTaskTotal: input.todayTasks.length,
     todayTaskCompleted: input.todayTasks.filter(task => task.status === 'COMPLETED').length,
-    birthdayToday: input.persons.some(person => isBirthdayToday(person.birthDate, now)),
+    birthdayToday: birthdaysToWish(input.persons, now).length > 0,
     daysSinceLastOpen: input.daysSinceLastOpen,
     todayOpenItemCount:
       input.todayTasks.filter(task => task.status !== 'COMPLETED').length +
