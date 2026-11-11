@@ -16,21 +16,22 @@ export function useAutoBackupSetup(onEnabled: () => void | Promise<void>) {
   const t = useT();
   const [directoryUri, setDirectoryUri] = useState<string | null>(null);
 
+  /** The folder, picked through the system; the password is asked next. */
+  const pickFolder = async () => {
+    try {
+      expectAppLockReturn();
+      const directory = await Directory.pickDirectoryAsync();
+      if (directory?.uri) setDirectoryUri(directory.uri);
+    } catch {
+      // Picker closed without a folder
+    }
+  };
+
+  /** From the onboarding: a word on what it does first, then the folder. */
   const startSetup = () => {
     GlassAlert.alert(t('autoBackup.setupTitle'), t('autoBackup.setupBody'), [
       { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('autoBackup.pickFolder'),
-        onPress: async () => {
-          try {
-            expectAppLockReturn();
-            const directory = await Directory.pickDirectoryAsync();
-            if (directory?.uri) setDirectoryUri(directory.uri);
-          } catch {
-            // Picker closed without a folder
-          }
-        },
-      },
+      { text: t('autoBackup.pickFolder'), onPress: pickFolder },
     ]);
   };
 
@@ -52,5 +53,5 @@ export function useAutoBackupSetup(onEnabled: () => void | Promise<void>) {
     />
   );
 
-  return { startSetup, setupModal };
+  return { startSetup, pickFolder, setupModal };
 }

@@ -225,6 +225,9 @@ export const makeSettingsStyles = (t: ThemePalette) => {
       color: t.error.default,
       marginTop: Spacing.lg,
     },
+    manualLabel: {
+      marginTop: Spacing.lg,
+    },
     lockDelayLabel: {
       marginTop: Spacing.md,
     },

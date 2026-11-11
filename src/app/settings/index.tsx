@@ -54,6 +54,7 @@ import {
   setAutoBackupBiometric,
 } from '@/services/auto-backup-service';
 import { useAutoBackupSetup } from '@/features/backup/use-auto-backup-setup';
+import { AutoBackupCard } from '@/components/settings/AutoBackupCard';
 import { canUseAppLock, expectAppLockReturn, setAppLockConfig } from '@/services/app-lock-service';
 import { refreshTodayWidget } from '@/widget/widget-task-handler';
 import { APP_LOCK_DELAYS_MINUTES } from '@/domain/rules/app-lock-rules';
@@ -122,6 +123,8 @@ export default function SettingsScreen() {
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [autoBackup, setAutoBackup] = useState<AutoBackupConfig | null>(null);
+  // A backup made from the card: its button turns while it runs
+  const [backupRunning, setBackupRunning] = useState(false);
   const dateLocale = useDateLocale();
   const { startRestore, restoreModal } = useBackupRestore(async () => {
     await syncReminderNotifications();
@@ -159,13 +162,18 @@ export default function SettingsScreen() {
   const refreshAutoBackup = async () => setAutoBackup(await getAutoBackupConfig());
 
   const runAutoBackupNow = async () => {
-    const result = await runAutoBackup({ force: true });
-    await refreshAutoBackup();
-    showSnackbar(result === 'done' ? t('autoBackup.done') : t('autoBackup.failed'));
+    setBackupRunning(true);
+    try {
+      const result = await runAutoBackup({ force: true });
+      await refreshAutoBackup();
+      showSnackbar(result === 'done' ? t('autoBackup.done') : t('autoBackup.failed'));
+    } finally {
+      setBackupRunning(false);
+    }
   };
 
   // Before the early return below: a hook must run on every render
-  const { startSetup: startAutoBackupSetup, setupModal: autoBackupSetupModal } = useAutoBackupSetup(runAutoBackupNow);
+  const { pickFolder: pickAutoBackupFolder, setupModal: autoBackupSetupModal } = useAutoBackupSetup(runAutoBackupNow);
 
   if (!settings) return <LoadingState message={t('settingsScreen.loading')} />;
 
@@ -289,12 +297,9 @@ export default function SettingsScreen() {
     await refreshAutoBackup();
   };
 
-  const handleAutoBackup = () => {
-    if (!autoBackup) {
-      startAutoBackupSetup();
-      return;
-    }
-    GlassAlert.alert(t('autoBackup.title'), autoBackupStatus, [
+  // Turning off asks first; the backups already made stay in their folder
+  const handleDisableAutoBackup = () => {
+    GlassAlert.alert(t('autoBackup.disableTitle'), t('autoBackup.disableBody'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('autoBackup.disable'),
@@ -304,7 +309,6 @@ export default function SettingsScreen() {
           await refreshAutoBackup();
         },
       },
-      { text: t('autoBackup.now'), onPress: runAutoBackupNow },
     ]);
   };
 
@@ -774,27 +778,17 @@ export default function SettingsScreen() {
   const renderData = () => (
     <View style={styles.section}>
       {/* Sauvegarde automatique d'abord : c'est celle qui protège sans y penser */}
-      <TouchableOpacity style={styles.row} onPress={handleAutoBackup} accessibilityRole="button">
-        <View style={styles.rowTextFill}>
-          <Text style={styles.rowLabel}>{t('autoBackup.title')}</Text>
-          <Text style={styles.rowSub}>{autoBackupStatus}</Text>
-        </View>
-        <Ionicons name="sync-outline" size={20} color={palette.primary.default} />
-      </TouchableOpacity>
-      {autoBackup && (
-        <View style={styles.row}>
-          <View style={styles.rowTextFill}>
-            <Text style={styles.rowLabel}>{t('autoBackup.biometricLabel')}</Text>
-            <Text style={styles.rowSub}>{t('autoBackup.biometricHint')}</Text>
-          </View>
-          <Switch
-            value={!!autoBackup.requireBiometric}
-            onValueChange={handleToggleAutoBackupBiometric}
-            {...switchColors(!!autoBackup.requireBiometric)}
-            accessibilityLabel={t('autoBackup.biometricLabel')}
-          />
-        </View>
-      )}
+      <AutoBackupCard
+        config={autoBackup}
+        running={backupRunning}
+        onEnable={() => void pickAutoBackupFolder()}
+        onRunNow={() => void runAutoBackupNow()}
+        onDisable={handleDisableAutoBackup}
+        onToggleBiometric={value => void handleToggleAutoBackupBiometric(value)}
+      />
+
+      {/* Puis la sauvegarde à la main, quand on veut un fichier tout de suite */}
+      <Text style={[styles.sectionLabel, styles.manualLabel]}>{t('autoBackup.manualLabel')}</Text>
 
       <TouchableOpacity style={styles.row} onPress={handleExportData} accessibilityRole="button">
         <View style={styles.rowTextFill}>

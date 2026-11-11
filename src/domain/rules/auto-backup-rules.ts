@@ -41,3 +41,26 @@ export function autoBackupFilesToDelete(names: readonly string[]): string[] {
     .reverse()
     .slice(AUTO_BACKUP_KEPT_FILES);
 }
+
+/** When the next automatic backup is expected: a week after the last one, unknown before the first. */
+export function nextAutoBackupAt(lastSuccessAt: number | null): number | null {
+  return lastSuccessAt === null ? null : lastSuccessAt + AUTO_BACKUP_INTERVAL_MS;
+}
+
+/**
+ * A readable name for the folder chosen through the system: "Documents/Junix" for a folder of
+ * the phone, "Google Drive" for Drive, whose links hide the folder name; null when unknown.
+ */
+export function autoBackupFolderLabel(uri: string): string | null {
+  let text = uri;
+  try {
+    text = decodeURIComponent(uri);
+  } catch {
+    // An odd link stays as it is
+  }
+  if (text.includes('com.google.android.apps.docs')) return 'Google Drive';
+  const tree = text.split('/tree/')[1];
+  if (!tree) return null;
+  const path = tree.slice(tree.indexOf(':') + 1).split('/document/')[0].replace(/\/+$/, '');
+  return path.length > 0 ? path : null;
+}

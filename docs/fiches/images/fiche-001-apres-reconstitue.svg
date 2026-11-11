@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="520" viewBox="0 0 760 520" font-family="Arial, sans-serif">
+  <rect width="760" height="520" fill="#ffffff"/>
+  <!-- Téléphone 1 : sauvegarde désactivée -->
+  <rect x="20" y="20" width="340" height="460" rx="28" fill="#141317" stroke="#444" stroke-width="2"/>
+  <text x="190" y="58" fill="#E6E1E7" font-size="15" font-weight="700" text-anchor="middle">Sauvegarde et données</text>
+  <rect x="38" y="80" width="304" height="230" rx="16" fill="#211F23" stroke="#3a3840"/>
+  <circle cx="62" cy="108" r="14" fill="#3b2f5c"/>
+  <text x="62" y="113" fill="#D0BCFF" font-size="13" text-anchor="middle">☁</text>
+  <text x="84" y="113" fill="#E6E1E7" font-size="14" font-weight="700">Sauvegarde automatique</text>
+  <rect x="268" y="99" width="66" height="18" rx="9" fill="#2B292D"/>
+  <text x="301" y="112" fill="#C9C5CA" font-size="10" text-anchor="middle">Désactivée</text>
+  <text x="56" y="150" fill="#C9C5CA" font-size="12">▢  Chaque semaine, sans y penser</text>
+  <text x="56" y="176" fill="#C9C5CA" font-size="12">▢  Chiffrée avec votre mot de passe</text>
+  <text x="56" y="202" fill="#C9C5CA" font-size="12">▢  Dans le dossier de votre choix :</text>
+  <text x="76" y="218" fill="#C9C5CA" font-size="12">Google Drive la met à l’abri</text>
+  <rect x="56" y="248" width="268" height="40" rx="20" fill="#7C4DFF"/>
+  <text x="190" y="273" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">Activer</text>
+  <text x="44" y="340" fill="#D0BCFF" font-size="11" font-weight="700">SAUVEGARDE MANUELLE</text>
+  <rect x="38" y="350" width="304" height="44" rx="12" fill="#211F23"/>
+  <text x="54" y="377" fill="#E6E1E7" font-size="12">Sauvegarder les données</text>
+  <rect x="38" y="402" width="304" height="44" rx="12" fill="#211F23"/>
+  <text x="54" y="429" fill="#E6E1E7" font-size="12">Restaurer une sauvegarde</text>
+  <circle cx="352" cy="96" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="352" y="101" font-size="13" font-weight="700" text-anchor="middle" fill="#111">1</text>
+  <circle cx="352" cy="176" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="352" y="181" font-size="13" font-weight="700" text-anchor="middle" fill="#111">2</text>
+  <circle cx="352" cy="268" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="352" y="273" font-size="13" font-weight="700" text-anchor="middle" fill="#111">3</text>
+  <circle cx="352" cy="336" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="352" y="341" font-size="13" font-weight="700" text-anchor="middle" fill="#111">4</text>
+
+  <!-- Téléphone 2 : sauvegarde active -->
+  <rect x="400" y="20" width="340" height="460" rx="28" fill="#141317" stroke="#444" stroke-width="2"/>
+  <text x="570" y="58" fill="#E6E1E7" font-size="15" font-weight="700" text-anchor="middle">Sauvegarde et données</text>
+  <rect x="418" y="80" width="304" height="300" rx="16" fill="#1d2a22" stroke="#2f5a3d"/>
+  <circle cx="442" cy="108" r="14" fill="#1f4a2d"/>
+  <text x="442" y="113" fill="#6DD58C" font-size="13" text-anchor="middle">✓</text>
+  <text x="464" y="113" fill="#E6E1E7" font-size="14" font-weight="700">Sauvegarde automatique</text>
+  <rect x="660" y="99" width="54" height="18" rx="9" fill="#1f4a2d"/>
+  <text x="687" y="112" fill="#6DD58C" font-size="10" text-anchor="middle">Active</text>
+  <text x="436" y="148" fill="#C9C5CA" font-size="12">Dernière sauvegarde</text>
+  <text x="706" y="148" fill="#E6E1E7" font-size="12" text-anchor="end">lundi 9 nov., 10:12</text>
+  <text x="436" y="172" fill="#C9C5CA" font-size="12">Prochaine</text>
+  <text x="706" y="172" fill="#E6E1E7" font-size="12" text-anchor="end">vers le lundi 16 nov.</text>
+  <text x="436" y="196" fill="#C9C5CA" font-size="12">Dossier</text>
+  <text x="706" y="196" fill="#E6E1E7" font-size="12" text-anchor="end">Google Drive</text>
+  <line x1="436" y1="212" x2="706" y2="212" stroke="#3a3840"/>
+  <text x="436" y="236" fill="#E6E1E7" font-size="12">Demander l’empreinte avant</text>
+  <text x="436" y="252" fill="#E6E1E7" font-size="12">chaque sauvegarde</text>
+  <rect x="664" y="230" width="40" height="22" rx="11" fill="#3a3840"/>
+  <circle cx="676" cy="241" r="9" fill="#888"/>
+  <rect x="436" y="290" width="168" height="40" rx="20" fill="#2B292D" stroke="#555"/>
+  <text x="520" y="315" fill="#E6E1E7" font-size="12" font-weight="700" text-anchor="middle">Sauvegarder maintenant</text>
+  <text x="664" y="315" fill="#FFB4AB" font-size="12" font-weight="700" text-anchor="middle">Désactiver</text>
+  <circle cx="732" cy="96" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="732" y="101" font-size="13" font-weight="700" text-anchor="middle" fill="#111">5</text>
+  <circle cx="732" cy="172" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="732" y="177" font-size="13" font-weight="700" text-anchor="middle" fill="#111">6</text>
+  <circle cx="732" cy="241" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="732" y="246" font-size="13" font-weight="700" text-anchor="middle" fill="#111">7</text>
+  <circle cx="732" cy="310" r="13" fill="#3DDC84" stroke="#fff" stroke-width="2"/><text x="732" y="315" font-size="13" font-weight="700" text-anchor="middle" fill="#111">8</text>
+  <text x="380" y="505" fill="#333" font-size="13" text-anchor="middle">Illustration reconstituée — après : à gauche désactivée, à droite active (vert = ajouté)</text>
+</svg>
