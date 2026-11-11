@@ -164,6 +164,7 @@ npx eas-cli build --platform android --profile preview --non-interactive --no-wa
 | `pathspec 'x' did not match any files` | Chemin mal tapé ou fichier inexistant | Vérifiez avec `git status --short` |
 | `Updates were rejected` | Le dépôt distant a des commits que vous n'avez pas | `git pull --rebase origin master`, puis push |
 | Build **Errored** sur expo.dev | Erreur de compilation côté serveur | Ouvrez les logs, cherchez la première ligne `error` |
+| `This account has used its Android builds from the Free plan this month` puis `Error: build command failed.` | Le forfait gratuit d'Expo limite le nombre de builds Android par mois | Attendre la remise à zéro (date indiquée dans le message), passer à un forfait payant sur expo.dev (décision du propriétaire du compte), ou construire l'APK sur l'ordinateur (voir « Et après », point 4) |
 
 ## 10. Lexique
 
@@ -180,3 +181,9 @@ npx eas-cli build --platform android --profile preview --non-interactive --no-wa
 1. Installer l'APK sur le téléphone de test et suivre le « Test final » de la [fiche 001](FICHE-001-sauvegarde-auto.md) (point 4).
 2. Pour les prochaines interventions, réutiliser cette fiche : seule la liste des fichiers (étapes 1 et 2) et le titre du commit changent.
 3. Suite prévue : même design de carte à la fin de l'onboarding (fiche 001, « Et après », point 3).
+4. **Build local, si le quota Expo est épuisé** (le 11 novembre 2026, il l'était jusqu'au 1er décembre) : l'ordinateur a le SDK Android (`%LOCALAPPDATA%\Android\Sdk`) et Android Studio. Un APK construit en local est signé avec une autre clé que ceux d'Expo : il faut **désinstaller** l'ancienne application du téléphone avant de l'installer, ce qui efface ses données (faire une sauvegarde avant, puis la restaurer). Cette procédure fera l'objet d'une fiche à part si elle est choisie.
+
+## Compte rendu d'exécution (11 novembre 2026)
+
+- Étapes 1 à 4 : faites. Commit `fe0d9f2`, poussé sur GitHub (`c3e008c..fe0d9f2  master -> master`).
+- Étape 5 : **refusée** par Expo, quota mensuel de builds Android gratuits épuisé (remise à zéro le 1er décembre 2026). L'étape 6 n'a donc pas pu être faite.
