@@ -111,10 +111,10 @@ export const MASCOT_MESSAGES = {
     ["Votre accueil réunit rappels, tâches, planning et proches.", "{name}, votre accueil réunit rappels, tâches, planning et proches."],
   ),
   TOUR_QUICK_ADD: entry(
-    ["Ici, tu ajoutes un rappel, une tâche ou une note en quelques secondes.", "{name}, ici, tu ajoutes un rappel, une tâche ou une note en quelques secondes."],
-    ["Ajoute ici un rappel, une tâche ou une note.", "{name}, ajoute ici un rappel, une tâche ou une note."],
-    ["Ici, vous ajoutez un rappel, une tâche ou une note en quelques secondes.", "{name}, ici, vous ajoutez un rappel, une tâche ou une note en quelques secondes."],
-    ["Ajoutez ici un rappel, une tâche ou une note.", "{name}, ajoutez ici un rappel, une tâche ou une note."],
+    ["Ici, tu ajoutes un rappel, une tâche ou un événement en quelques secondes.", "{name}, ici, tu ajoutes un rappel, une tâche ou un événement en quelques secondes."],
+    ["Ajoute ici un rappel, une tâche ou un événement.", "{name}, ajoute ici un rappel, une tâche ou un événement."],
+    ["Ici, vous ajoutez un rappel, une tâche ou un événement en quelques secondes.", "{name}, ici, vous ajoutez un rappel, une tâche ou un événement en quelques secondes."],
+    ["Ajoutez ici un rappel, une tâche ou un événement.", "{name}, ajoutez ici un rappel, une tâche ou un événement."],
   ),
   TOUR_TIMELINE: entry(
     ["Ton fil du jour met tout ce qui compte aujourd'hui dans l'ordre.", "{name}, ton fil du jour met tout ce qui compte aujourd'hui dans l'ordre."],

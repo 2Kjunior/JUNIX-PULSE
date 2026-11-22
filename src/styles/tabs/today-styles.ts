@@ -619,12 +619,17 @@ export function makeTodayStyles(theme: ThemePalette) {
       ...Typography.labelLarge,
       fontWeight: '700',
     },
+    timelineKind: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      marginTop: 1,
+    },
     timelineTypeTag: {
       ...Typography.labelSmall,
       color: theme.onSurface.variant,
       fontSize: 9,
       textTransform: 'uppercase',
-      marginTop: 1,
     },
     timelineDivider: {
       width: 1,

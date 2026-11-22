@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Construire Junix Pulse</title>
+<style>
+:root {
+  --bg: #fbfaf8; --paper: #ffffff; --text: #22202a; --muted: #5d5868; --line: #e4e0ea; --accent: #6b46c1; --accent-soft: #f1ecfb;
+  --ok: #15803d; --ok-soft: #e9f7ee; --warn: #b45309; --warn-soft: #fdf3e4; --bad: #b91c1c; --bad-soft: #fdecec;
+  --code-bg: #1e1e1e; --code-text: #d4d4d4; --code-com: #6a9955; --term-bg: #0c0c0c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141317; --paper: #1b1a20; --text: #ecebf0; --muted: #a8a3b5; --line: #2e2b36; --accent: #a78bfa; --accent-soft: #2a2438;
+    --ok: #4ade80; --ok-soft: #14271c; --warn: #fbbf24; --warn-soft: #2d2412; --bad: #f87171; --bad-soft: #2d1616;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 "Segoe UI", system-ui, -apple-system, sans-serif; }
+.layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); max-width: 1280px; margin: 0 auto; }
+nav.toc { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 24px 12px 40px 20px; border-right: 1px solid var(--line); font-size: 13.5px; }
+nav.toc b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 16px 0 6px; }
+nav.toc a { display: block; color: var(--text); text-decoration: none; padding: 3px 8px; border-radius: 6px; }
+nav.toc a:hover { background: var(--accent-soft); color: var(--accent); }
+main { padding: 32px 44px 80px; min-width: 0; }
+.doc-head { border-bottom: 2px solid var(--accent); padding-bottom: 16px; margin-bottom: 28px; }
+.doc-head .kicker { color: var(--accent); font-weight: 700; letter-spacing: .06em; font-size: 13px; text-transform: uppercase; }
+h1 { font-size: 32px; line-height: 1.2; margin: 6px 0 10px; }
+.meta { color: var(--muted); font-size: 14px; }
+h2 { font-size: 25px; margin: 52px 0 14px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 20px; margin: 36px 0 10px; color: var(--accent); }
+h4 { font-size: 16.5px; margin: 26px 0 8px; }
+p, li { max-width: 78ch; }
+a { color: var(--accent); }
+code { font-family: Consolas, "Cascadia Code", monospace; font-size: .9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0 18px; font-size: 14.5px; background: var(--paper); }
+th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); }
+.box { border-radius: 10px; padding: 12px 16px; margin: 14px 0; border-left: 4px solid; background: var(--paper); }
+.box.ok { border-color: var(--ok); background: var(--ok-soft); }
+.box.warn { border-color: var(--warn); background: var(--warn-soft); }
+.box.bad { border-color: var(--bad); background: var(--bad-soft); }
+.box.info { border-color: var(--accent); background: var(--accent-soft); }
+.box > b:first-child { display: block; margin-bottom: 2px; }
+.step { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 6px 22px 16px; margin: 22px 0; break-inside: auto; }
+.step > h4 { margin-top: 16px; }
+.lbl { display: inline-block; min-width: 92px; font-weight: 700; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.row { margin: 8px 0; }
+.file { margin: 12px 0 16px; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+.file .fname { background: #2d2d30; color: #e6e6e6; font: 13px Consolas, monospace; padding: 7px 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.file .fname span:last-child { color: #9d9d9d; }
+pre { margin: 0; background: var(--code-bg); color: var(--code-text); font: 13.2px/1.55 Consolas, "Cascadia Code", monospace; padding: 12px 14px; overflow: auto; white-space: pre; }
+pre .c { color: var(--code-com); }
+.term { margin: 12px 0 16px; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+.term .tbar { background: #2b2b2b; color: #cfcfcf; font: 12.5px "Segoe UI", sans-serif; padding: 6px 12px; }
+.term pre { background: var(--term-bg); }
+.term .cmd { color: #ffffff; font-weight: 700; }
+.term .out { color: #9fd3a3; }
+.fig { margin: 18px 0 22px; text-align: center; }
+.fig figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.fig figcaption em { font-style: normal; font-weight: 700; color: var(--warn); }
+.badge-n { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #e11d48; color: #fff; font: 700 12px/22px sans-serif; justify-content: center; vertical-align: middle; }
+.phone { display: inline-block; width: 250px; height: 500px; border-radius: 34px; background: #0b0a0e; padding: 12px; box-shadow: 0 10px 30px #0004; text-align: left; position: relative; vertical-align: top; margin: 0 8px; }
+.phone .scr { width: 100%; height: 100%; border-radius: 24px; background: #141317; overflow: hidden; display: flex; flex-direction: column; color: #fff; font-family: "Segoe UI", sans-serif; position: relative; }
+.phone .sb { height: 24px; font-size: 11px; color: #ddd; padding: 4px 16px; display: flex; justify-content: space-between; }
+.phone .hdr { padding: 8px 16px 10px; font-weight: 700; font-size: 17px; border-bottom: 1px solid #2a2733; }
+.phone .body { flex: 1; padding: 14px; font-size: 13px; }
+.phone .tabs { height: 54px; background: #1c1a21; border-top: 1px solid #2a2733; display: flex; justify-content: space-around; align-items: center; font-size: 9.5px; color: #8a8597; text-align: center; }
+.phone .tabs .on { color: #8b5cf6; }
+.phone .tabs i { display: block; font-style: normal; font-size: 16px; }
+.phone .card { background: #1c1a21; border-radius: 12px; padding: 10px; display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.phone .ring { width: 18px; height: 18px; border: 2px solid #8b5cf6; border-radius: 50%; flex: none; }
+.phone .pill { background: #7c3aed; border-radius: 999px; padding: 10px; text-align: center; font-weight: 700; }
+.phone .chip { display: inline-block; background: #1c1a21; border-radius: 999px; padding: 6px 10px; margin: 0 4px 6px 0; font-size: 11.5px; }
+.phone .chip.on { background: #7c3aed; }
+.phone .inp { background: #1c1a21; border-radius: 10px; padding: 10px; color: #fff; }
+.phone .lb { color: #b9b4c7; font-size: 10.5px; font-weight: 700; text-transform: uppercase; margin: 12px 0 6px; }
+.vscode { display: inline-block; width: min(560px, 100%); text-align: left; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; overflow: hidden; font: 13px Consolas, monospace; color: #ccc; }
+.vscode .vt { background: #2b2b2b; padding: 6px 12px; font-family: "Segoe UI", sans-serif; font-size: 12px; }
+.vscode .vb { display: grid; grid-template-columns: 220px 1fr; min-height: 220px; }
+.vscode .side { background: #181818; padding: 8px 0; border-right: 1px solid #2b2b2b; }
+.vscode .side div { padding: 1px 10px; white-space: nowrap; }
+.vscode .side .add { background: #1f3b26; color: #9be3a6; }
+.vscode .side .sel { background: #04395e; }
+.vscode .ed { padding: 10px 12px; white-space: pre; overflow: hidden; }
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; }
+.layers div { border-radius: 10px; padding: 10px 12px; font-size: 13.5px; color: #111; }
+.layers div b { display: block; font-size: 14px; }
+.timeline td:first-child { white-space: nowrap; }
+.toggle { position: fixed; right: 14px; bottom: 14px; background: var(--paper); border: 1px solid var(--line); color: var(--text); border-radius: 999px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 13px; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  main { padding: 20px 16px 60px; }
+  .vscode .vb { grid-template-columns: 1fr; }
+  .phone { margin: 8px 0; }
+}
+@media print {
+  @page { size: A4; margin: 14mm 13mm 16mm; }
+  :root, :root:not([data-theme="light"]) {
+    --bg: #ffffff; --paper: #ffffff; --text: #111111; --muted: #555555; --line: #d9d4e2; --accent: #4b2aa8; --accent-soft: #f1ecfb;
+    --ok: #15803d; --ok-soft: #e9f7ee; --warn: #b45309; --warn-soft: #fdf3e4; --bad: #b91c1c; --bad-soft: #fdecec;
+  }
+  body { background: #fff; color: #111; font-size: 11pt; }
+  .layout { display: block; }
+  nav.toc, .toggle { display: none; }
+  main { padding: 0; }
+  h2 { break-before: page; border-top: 0; margin-top: 0; }
+  h2.first { break-before: auto; }
+  .step, .file, .term, .fig, table, .box { break-inside: avoid-page; }
+  .file, .term { break-inside: auto; }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 9pt; }
+  a { color: #4b2aa8; }
+  .phone { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="var r=document.documentElement;r.dataset.theme=r.dataset.theme==='light'?'dark':'light'">Clair / sombre</button>
+<div class="layout">
+<nav class="toc" aria-label="Sommaire">
+  <b>Fiche 004</b>
+  <a href="#objectif">1. Objectif</a>
+  <a href="#depart">2. État de départ</a>
+  <a href="#materiel">3. Matériel</a>
+  <a href="#hypotheses">4. Hypothèses</a>
+  <a href="#carte">5. Carte du projet</a>
+  <a href="#sauvegarde">6. Sauvegarde</a>
+  <b>7. Étapes</b>
+  <a href="#p0">Phase 0 · Installer les outils</a>
+  <a href="#p1">Phase 1 · Créer le projet</a>
+  <a href="#p2">Phase 2 · Première page sur le téléphone</a>
+  <a href="#p3">Phase 3 · Ranger et configurer</a>
+  <a href="#p4">Phase 4 · La navigation à onglets</a>
+  <a href="#p5">Phase 5 · Les bibliothèques de la tranche</a>
+  <a href="#p6">Phase 6 · La base de données</a>
+  <a href="#p7">Phase 7 · Le domaine et son test</a>
+  <a href="#p8">Phase 8 · Le dépôt (SQL)</a>
+  <a href="#p9">Phase 9 · Les notifications</a>
+  <a href="#p10">Phase 10 · Cas d'usage et écrans</a>
+  <a href="#p11">Phase 11 · Les autres modules</a>
+  <a href="#p12">Phase 12 · Le design system</a>
+  <a href="#p13">Phase 13 · La qualité</a>
+  <a href="#p14">Phase 14 · Premier lancement et animation</a>
+  <a href="#p15">Phase 15 · Passer au SDK 58</a>
+  <a href="#p16">Phase 16 · Sécurité et build de développement</a>
+  <a href="#p17">Phase 17 · Sauvegardes</a>
+  <a href="#p18">Phase 18 · La mascotte Pulse</a>
+  <a href="#p19">Phase 19 · La traduction</a>
+  <a href="#p20">Phase 20 · Les dernières fonctions</a>
+  <a href="#p21">Phase 21 · Fabriquer l'APK</a>
+  <b>Fin</b>
+  <a href="#test">8. Test final</a>
+  <a href="#depannage">9. Dépannage</a>
+  <a href="#lexique">10. Lexique</a>
+  <a href="#apres">11. Et après</a>
+  <a href="#histoire">Annexe · L'histoire réelle</a>
+</nav>
+<main>
+
+<div class="doc-head">
+  <div class="kicker">Fiche opératoire n° 004</div>
+  <h1>Construire Junix Pulse de zéro, de l'installation à l'application actuelle</h1>
+  <div class="meta">Projet : <b>Junix Pulse</b> · Date : 12 novembre 2026 · Suite de : <a href="FICHE-003-build-local-apk.md">FICHE 003</a> (construire l'APK sur l'ordinateur) · Compagnon : <a href="../apprendre/explorateur-du-projet.html">l'explorateur du projet</a></div>
+</div>
+
+<div class="box info"><b>Comment lire cette fiche</b>
+Les phases 0 à 10 se font <b>en entier, à la main</b> : chaque fichier est donné complet, chaque ligne est commentée, et ce code a été vérifié par TypeScript et par Jest avant d'être écrit ici. À la fin de la phase 10, tu as une vraie petite app : des onglets, une base de données, des rappels qu'on crée, qui sonnent et qu'on termine.<br>
+Les phases 11 à 21 suivent l'ordre dans lequel le vrai Junix Pulse a été construit. Le vrai code fait plusieurs dizaines de milliers de lignes : ces phases donnent les commandes exactes, la liste des fichiers à créer couche par couche, la recette, et un lien vers chaque vrai fichier dans l'explorateur, où tu peux lire son code.</div>
+
+<h2 id="objectif" class="first">1. Objectif</h2>
+<p>Savoir refaire, seul et sans IA, le chemin complet qui mène à Junix Pulse : installer les outils, créer un projet Expo, voir sa première page sur son téléphone avec Expo Go, construire la première fonction complète (les rappels) en respectant l'architecture du projet, puis enchaîner les autres modules jusqu'à l'application actuelle et son fichier d'installation Android (APK).</p>
+<p>On reconnaît la réussite à trois choses :</p>
+<ol>
+  <li>sur le téléphone, l'app d'entraînement <code>junix-pulse-tuto</code> affiche cinq onglets, et un rappel créé « Dans 1 h » apparaît dans la liste puis sonne à l'heure ;</li>
+  <li>dans le terminal, <code>npx jest</code> affiche <code>Tests: 5 passed</code> ;</li>
+  <li>tu sais dire, pour n'importe quel fichier du vrai projet, dans quelle couche il se trouve et à quoi il sert (l'explorateur t'aide).</li>
+</ol>
+
+<h2 id="depart">2. État de départ</h2>
+<table>
+  <tr><th>À vérifier</th><th>Comment</th><th>Résultat attendu</th></tr>
+  <tr><td>Un PC Windows 10 ou 11 avec Internet</td><td>—</td><td>—</td></tr>
+  <tr><td>Un téléphone Android</td><td>Paramètres › À propos du téléphone</td><td>Android 10 ou plus récent conseillé</td></tr>
+  <tr><td>Le PC et le téléphone sur le <b>même Wi-Fi</b></td><td>Regarder le nom du réseau sur les deux</td><td>Le même nom (sinon, voir l'option <code>--tunnel</code> en phase 2)</td></tr>
+  <tr><td>Au moins 10 Go libres</td><td>Explorateur Windows › Ce PC</td><td>10 Go ou plus</td></tr>
+</table>
+<p>Aucune connaissance préalable n'est supposée : chaque mot technique est expliqué la première fois qu'il apparaît et repris dans le <a href="#lexique">lexique</a>.</p>
+
+<h2 id="materiel">3. Matériel</h2>
+<table>
+  <tr><th>Outil</th><th>Rôle</th><th>Preuve qu'il est installé</th><th>Sinon</th></tr>
+  <tr><td><b>Node.js</b> (version LTS, 22.13 au minimum pour Expo SDK 57 et 58)</td><td>Fait tourner JavaScript sur le PC ; fournit <code>npm</code> et <code>npx</code></td><td><code>node --version</code> affiche <code>v22.13.0</code> ou plus</td><td>Phase 0, étape 1</td></tr>
+  <tr><td><b>Git</b></td><td>Garde l'historique du code (commits)</td><td><code>git --version</code></td><td>Phase 0, étape 2</td></tr>
+  <tr><td><b>VS Code</b> + extension <b>Expo Tools</b></td><td>L'éditeur de code</td><td>Le menu Démarrer propose « Visual Studio Code »</td><td>Phase 0, étape 3</td></tr>
+  <tr><td><b>Expo Go</b> sur le téléphone</td><td>Ouvre l'app en cours de développement, sans rien fabriquer</td><td>L'icône Expo Go sur le téléphone</td><td>Phase 0, étape 4</td></tr>
+  <tr><td>Un compte <b>Expo</b> (gratuit)</td><td>Nécessaire pour fabriquer l'APK avec EAS (phase 21)</td><td>Connexion sur expo.dev</td><td>Créer le compte sur expo.dev (toi-même)</td></tr>
+  <tr><td><b>Android Studio</b> (plus tard)</td><td>Fournit Java et le SDK Android pour fabriquer l'app sur le PC (phases 16 et 21)</td><td>Le dossier <code>C:\Program Files\Android\Android Studio</code></td><td>developer.android.com/studio, puis l'ouvrir une fois</td></tr>
+</table>
+
+<h2 id="hypotheses">4. Hypothèses</h2>
+<ul>
+  <li>Windows 11, terminal intégré de VS Code. Les commandes sont les mêmes dans PowerShell, Invite de commandes et Git Bash, sauf mention contraire.</li>
+  <li>Le projet d'entraînement est créé dans <code>C:\Users\simon\Desktop\Projets\junix-pulse-tuto</code>, <b>à côté</b> du vrai projet, pour ne jamais l'abîmer.</li>
+  <li><b>Expo Go et la version du SDK.</b> Expo Go n'ouvre que les projets d'une version précise d'Expo (le « SDK »). Au 12 novembre 2026, la documentation d'Expo indique : <code>npx create-expo-app@latest</code> sans option crée un projet <b>SDK 57</b>, la version qu'Expo Go accepte sur un vrai téléphone ; un projet SDK 58 (celui du vrai Junix Pulse) se crée avec <code>--template default@sdk-58</code> mais ne s'ouvre pas dans Expo Go pendant la transition. On fait donc comme le vrai projet : on commence en SDK 57 avec Expo Go, et on passe au SDK 58 à la phase 15.</li>
+  <li>Expo Go suffit jusqu'à la phase 15. À partir de la phase 16, le projet utilise des modules natifs qu'Expo Go ne contient pas (chiffrement natif, widget, dictée) : on passe alors à un « build de développement » ou à l'APK.</li>
+</ul>
+
+<h2 id="carte">5. Carte du projet</h2>
+<p>Junix Pulse n'a <b>pas de serveur</b>. Le « front-end » (ce qu'on voit) et le « back-end » (la logique et les données) tournent tous les deux dans le téléphone. Le back-end est donc local, et rangé en couches. Chaque couche ne parle qu'à la suivante :</p>
+<div class="layers">
+  <div style="background:#4FC1FF"><b>Écrans</b>src/app — ce qu'on voit</div>
+  <div style="background:#7DD3FC"><b>Composants</b>src/components, src/features — morceaux d'écran</div>
+  <div style="background:#F59E0B"><b>Cas d'usage</b>src/use-cases — une action de l'utilisateur</div>
+  <div style="background:#4EC9B0"><b>Domaine</b>src/domain — forme des données et calculs purs</div>
+  <div style="background:#DCDCAA"><b>Dépôts</b>src/repositories — le seul endroit avec du SQL</div>
+  <div style="background:#CE9178"><b>Base</b>src/database — ouverture et migrations</div>
+  <div style="background:#F472B6"><b>Services</b>src/services — le téléphone (notifications…)</div>
+</div>
+<p>Fichiers créés par les phases 0 à 10 (le projet d'entraînement) :</p>
+<table>
+  <tr><th>Fichier</th><th>Action</th><th>Raison</th></tr>
+  <tr><td><code>src/app/index.tsx</code></td><td>modifié (phase 2), puis <b>supprimé</b> (phase 4)</td><td>Première page ; remplacée par l'onglet Accueil</td></tr>
+  <tr><td><code>src/app/_layout.tsx</code></td><td>remplacé (phases 4 et 10)</td><td>Le cadre de toute l'app</td></tr>
+  <tr><td><code>src/app/(tabs)/_layout.tsx</code></td><td>créé (phase 4)</td><td>La barre d'onglets</td></tr>
+  <tr><td><code>src/app/(tabs)/index.tsx, reminders.tsx, tasks.tsx, calendar.tsx, people.tsx</code></td><td>créés (phase 4) ; index et reminders remplacés (phase 10)</td><td>Les cinq onglets</td></tr>
+  <tr><td><code>src/database/migrations.ts</code>, <code>sqlite.ts</code></td><td>créés (phase 6)</td><td>La base</td></tr>
+  <tr><td><code>src/domain/entities/index.ts</code>, <code>src/domain/rules/reminder-rules.ts</code> + son test</td><td>créés (phase 7)</td><td>Le domaine</td></tr>
+  <tr><td><code>src/repositories/reminder-repository.ts</code></td><td>créé (phase 8)</td><td>Le SQL des rappels</td></tr>
+  <tr><td><code>src/services/notification-service.ts</code></td><td>créé (phase 9)</td><td>Les notifications</td></tr>
+  <tr><td><code>src/use-cases/reminder-use-cases.ts</code>, <code>src/app/reminders/new.tsx</code></td><td>créés (phase 10)</td><td>L'action et le formulaire</td></tr>
+</table>
+
+<h2 id="sauvegarde">6. Sauvegarde</h2>
+<p>Le projet d'entraînement est neuf : il n'y a rien à perdre. On prend quand même l'habitude du vrai projet : <b>un commit à la fin de chaque phase</b>. Un commit est une photo du code à laquelle on peut revenir.</p>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto — à la fin de chaque phase</div><pre><span class="cmd">git add -A</span>
+<span class="cmd">git commit -m "Phase 4 : navigation à onglets"</span></pre></div>
+<p><code>git add -A</code> prépare tous les fichiers modifiés ; <code>git commit -m "…"</code> prend la photo avec un message. Pour revenir à la dernière photo et jeter les changements en cours d'un fichier : <code>git restore chemin/du/fichier</code>.</p>
+<div class="box bad"><b>⚠ Point de non-retour</b>Ne lance aucune commande de cette fiche dans le dossier du <b>vrai</b> projet (<code>junix-pulse-glowcard</code>). Vérifie toujours le dossier affiché par le terminal avant d'appuyer sur Entrée.</div>
+
+<h2 id="etapes">7. Étapes</h2>
+
+<!-- ═══════════════════════════ PHASE 0 ═══════════════════════════ -->
+<h3 id="p0">Phase 0 · Installer les outils</h3>
+
+<div class="step"><h4>Étape 0.1 — Installer Node.js</h4>
+<div class="row"><span class="lbl">Où</span>Navigateur › <code>nodejs.org</code></div>
+<div class="row"><span class="lbl">Geste</span>Clique sur le bouton de la version <b>LTS</b> › télécharge l'installateur Windows (.msi) › ouvre-le › Suivant à chaque écran (laisse cochée l'option « Add to PATH ») › Installer › Terminer.</div>
+<div class="row"><span class="lbl">Pourquoi</span>Expo, npm et npx sont des programmes JavaScript : Node.js les fait tourner sur le PC. npm télécharge les bibliothèques ; npx lance un outil sans l'installer pour de bon.</div>
+<div class="row"><span class="lbl">Contrôle</span>Ouvre un nouveau terminal (menu Démarrer › « Terminal ») et tape :</div>
+<div class="term"><div class="tbar">Terminal — n'importe quel dossier</div><pre><span class="cmd">node --version</span>
+<span class="out">v22.13.0</span>        <span class="c"># ou un numéro plus grand</span>
+<span class="cmd">npm --version</span>
+<span class="out">10.9.2</span>         <span class="c"># un numéro, peu importe lequel</span></pre></div>
+<div class="row"><span class="lbl">Si ça rate</span>« node n'est pas reconnu » : ferme et rouvre le terminal (il ne voit les nouveaux programmes qu'au démarrage). Toujours rien : réinstalle en vérifiant l'option « Add to PATH ».</div>
+</div>
+
+<div class="step"><h4>Étape 0.2 — Installer Git</h4>
+<div class="row"><span class="lbl">Où</span>Navigateur › <code>git-scm.com</code> › Download for Windows</div>
+<div class="row"><span class="lbl">Geste</span>Installe avec les choix proposés par défaut, puis, dans un terminal, donne ton nom et ton e-mail (ils signent tes commits) :</div>
+<div class="term"><div class="tbar">Terminal — n'importe quel dossier</div><pre><span class="cmd">git config --global user.name "&lt;TON_NOM&gt;"</span>
+<span class="cmd">git config --global user.email "&lt;TON_EMAIL&gt;"</span></pre></div>
+<div class="row"><span class="lbl">Valeurs</span><code>&lt;TON_NOM&gt;</code> : ton pseudo GitHub (celui du vrai projet est <code>2Kjunior</code>). <code>&lt;TON_EMAIL&gt;</code> : l'e-mail de ton compte GitHub.</div>
+<div class="row"><span class="lbl">Contrôle</span><code>git --version</code> affiche <code>git version 2.…</code></div>
+<div class="row"><span class="lbl">Si ça rate</span>Même remède que pour Node : rouvrir le terminal.</div>
+</div>
+
+<div class="step"><h4>Étape 0.3 — Installer VS Code et l'extension Expo Tools</h4>
+<div class="row"><span class="lbl">Où</span><code>code.visualstudio.com</code>, puis dans VS Code : barre de gauche › icône des Extensions (quatre carrés) </div>
+<div class="row"><span class="lbl">Geste</span>Installe VS Code (coche « Ajouter l'action Ouvrir avec Code » et « Ajouter à PATH »). Dans VS Code, Extensions › tape <code>Expo Tools</code> › Installer.</div>
+<div class="row"><span class="lbl">Pourquoi</span>Expo Tools complète automatiquement <code>app.json</code> et signale ses erreurs.</div>
+<div class="row"><span class="lbl">Contrôle</span>Dans un terminal, <code>code --version</code> affiche un numéro.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« code n'est pas reconnu » : réinstalle en cochant « Ajouter à PATH », ou ouvre les dossiers par Fichier › Ouvrir le dossier.</div>
+</div>
+
+<div class="step"><h4>Étape 0.4 — Installer Expo Go sur le téléphone</h4>
+<div class="row"><span class="lbl">Où</span>Téléphone › Google Play Store</div>
+<div class="row"><span class="lbl">Geste</span>Cherche <b>Expo Go</b> (éditeur : Expo, identifiant <code>host.exp.exponent</code>) › Installer. Ouvre-le une fois.</div>
+<div class="row"><span class="lbl">Contrôle</span>Expo Go s'ouvre et propose « Scan QR code ».</div>
+<div class="row"><span class="lbl">Si ça rate</span>Le Play Store dit « appareil incompatible » : ton Android est trop ancien pour la dernière Expo Go ; utilise un autre téléphone ou passe directement au build de la phase 16.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 1 ═══════════════════════════ -->
+<h3 id="p1">Phase 1 · Créer le projet</h3>
+
+<div class="step"><h4>Étape 1.1 — Générer le projet avec create-expo-app</h4>
+<div class="row"><span class="lbl">Où</span>VS Code › menu Terminal › Nouveau terminal. Place-toi dans le dossier Projets :</div>
+<div class="term"><div class="tbar">Terminal — sortie typique, les détails peuvent varier</div><pre><span class="cmd">cd C:\Users\simon\Desktop\Projets</span>
+<span class="cmd">npx create-expo-app@latest junix-pulse-tuto</span>
+<span class="out">✔ Downloaded and extracted project files.
+✔ Installed JavaScript dependencies.
+✅ Your project is ready!
+To run your project, navigate to the directory and run one of the following npm commands.
+- cd junix-pulse-tuto
+- npm run android</span></pre></div>
+<table><tr><th>Morceau</th><th>Sens</th></tr>
+<tr><td><code>npx</code></td><td>lance un outil téléchargé à la volée</td></tr>
+<tr><td><code>create-expo-app@latest</code></td><td>l'outil qui fabrique un projet Expo, dans sa dernière version</td></tr>
+<tr><td><code>junix-pulse-tuto</code></td><td>le nom du dossier à créer</td></tr></table>
+<div class="row"><span class="lbl">Pourquoi</span>Le modèle (« template ») fournit d'un coup React Native, Expo Router, TypeScript, les bibliothèques de base et un premier commit Git. C'est exactement ainsi qu'est né Junix Pulse le 3 septembre 2026 (commit « Initial commit »).</div>
+<div class="row"><span class="lbl">Contrôle</span>Le message <code>Your project is ready!</code> et un nouveau dossier <code>junix-pulse-tuto</code>.</div>
+<div class="row"><span class="lbl">Si ça rate</span>Dans PowerShell, « l'exécution de scripts est désactivée sur ce système » : ouvre plutôt un terminal « Command Prompt » (flèche à côté du + du terminal de VS Code › Command Prompt) et relance. Erreur réseau : vérifie Internet et relance.</div>
+</div>
+
+<div class="step"><h4>Étape 1.2 — Ouvrir le projet dans VS Code</h4>
+<div class="term"><div class="tbar">Terminal — dossier Projets</div><pre><span class="cmd">cd junix-pulse-tuto</span>
+<span class="cmd">code .</span>        <span class="c"># « . » = le dossier où je suis</span></pre></div>
+<div class="row"><span class="lbl">Geste</span>Une nouvelle fenêtre VS Code s'ouvre ; si elle demande « Faites-vous confiance aux auteurs ? », réponds Oui. Rouvre un terminal dans cette fenêtre (Terminal › Nouveau terminal) : il est déjà dans le bon dossier.</div>
+<div class="row"><span class="lbl">Contrôle</span>L'explorateur de gauche montre <code>assets</code>, <code>node_modules</code>, <code>scripts</code>, <code>src</code>, <code>app.json</code>, <code>package.json</code>, <code>tsconfig.json</code>.</div>
+</div>
+
+<div class="step"><h4>Étape 1.3 — Repartir d'une page blanche</h4>
+<div class="row"><span class="lbl">Geste</span>Le modèle contient une app de démonstration. Son script <code>reset-project</code> la range de côté :</div>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto</div><pre><span class="cmd">npm run reset-project</span>
+<span class="out">Do you want to move existing files to /example instead of deleting them? (Y/n):</span> <span class="cmd">Y</span>
+<span class="out">📁 /example directory created.
+➡️ /src moved to /example/src.
+➡️ /scripts moved to /example/scripts.
+📁 New /src/app directory created.
+📄 src/app/index.tsx created.
+📄 src/app/_layout.tsx created.
+✅ Project reset complete.</span></pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>On garde l'exemple dans <code>example/</code> pour pouvoir le lire, mais notre code part de zéro. (Le vrai projet a fait pareil : son <code>.gitignore</code> contient encore la ligne <code>example</code>.)</div>
+<figure class="fig"><div class="vscode"><div class="vt">junix-pulse-tuto — Visual Studio Code</div><div class="vb"><div class="side">
+<div>▸ assets</div><div class="add">▸ example <span class="badge-n">1</span></div><div>▸ node_modules</div><div>▾ src</div><div>&nbsp;&nbsp;▾ app</div><div class="add">&nbsp;&nbsp;&nbsp;&nbsp;_layout.tsx <span class="badge-n">2</span></div><div class="add sel">&nbsp;&nbsp;&nbsp;&nbsp;index.tsx</div><div>app.json</div><div>package.json</div><div>tsconfig.json</div></div><div class="ed"><span style="color:#c586c0">import</span> { Stack } <span style="color:#c586c0">from</span> <span style="color:#ce9178">"expo-router"</span>;
+
+<span style="color:#c586c0">export default function</span> <span style="color:#dcdcaa">RootLayout</span>() {
+  <span style="color:#c586c0">return</span> &lt;<span style="color:#4ec9b0">Stack</span> /&gt;;
+}</div></div></div>
+<figcaption><em>Illustration reconstituée</em> — ① l'ancienne démo rangée dans <code>example/</code> ; ② les deux fichiers neufs (en vert = ajouté). Ton écran peut différer légèrement.</figcaption></figure>
+<div class="row"><span class="lbl">Contrôle</span><code>src/app</code> ne contient plus que <code>_layout.tsx</code> et <code>index.tsx</code>.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« Missing script: reset-project » : ton modèle n'a pas ce script ; supprime à la main le contenu de <code>src</code> puis crée les deux fichiers de la phase 2 et de la phase 4.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 2 ═══════════════════════════ -->
+<h3 id="p2">Phase 2 · Afficher la première page sur le téléphone avec Expo Go</h3>
+
+<div class="step"><h4>Étape 2.1 — Écrire la première page</h4>
+<div class="row"><span class="lbl">Où</span>VS Code › <code>src/app/index.tsx</code> › Ctrl+A (tout sélectionner) › Suppr › colle ce contenu › Ctrl+S.</div>
+<div class="file"><div class="fname"><span>src/app/index.tsx</span><span>fichier complet · 26 lignes</span></div><pre><span class="c">// src/app/index.tsx — la toute première page : l'adresse « / » de l'app.</span>
+import { StyleSheet, Text, View } from "react-native"; <span class="c">// les briques d'affichage de base</span>
+
+<span class="c">// « export default » : Expo Router affiche ce composant pour ce fichier.</span>
+export default function Index() {
+  return (
+<span class="c">    // View = une boîte (comme une &lt;div&gt; en HTML)</span>
+    &lt;View style={styles.container}&gt;
+      <span class="c">{/* Text = du texte ; en React Native, tout texte doit être dans un &lt;Text&gt; */}</span>
+      &lt;Text style={styles.title}&gt;Bonjour Junix Pulse&lt;/Text&gt;
+      &lt;Text style={styles.subtitle}&gt;Ma première page sur mon téléphone.&lt;/Text&gt;
+    &lt;/View&gt;
+  );
+}
+
+<span class="c">// Les styles : comme du CSS, mais écrits en objets JavaScript.</span>
+const styles = StyleSheet.create({
+  container: {
+    flex: 1, <span class="c">// prendre tout l'écran</span>
+    alignItems: "center", <span class="c">// centrer horizontalement</span>
+    justifyContent: "center", <span class="c">// centrer verticalement</span>
+    backgroundColor: "#141317", <span class="c">// le fond sombre de Junix Pulse</span>
+  },
+  title: { fontSize: 28, fontWeight: "700", color: "#FFFFFF" }, <span class="c">// gros titre blanc</span>
+  subtitle: { fontSize: 16, color: "#B9B4C7", marginTop: 8 }, <span class="c">// sous-titre gris, 8 points plus bas</span>
+});</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Avec Expo Router, le fichier <code>src/app/index.tsx</code> <i>est</i> la page d'accueil (adresse <code>/</code>). Pas de configuration de routes à écrire.</div>
+</div>
+
+<div class="step"><h4>Étape 2.2 — Lancer le serveur de développement</h4>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto — sortie typique</div><pre><span class="cmd">npx expo start</span>
+<span class="out">Starting Metro Bundler
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▀▄█▀ ▀▄ ▄█ ▄▄▄▄▄ █      <span class="c"># le QR code (dessin simplifié)</span>
+█ █   █ █▄▀▄▀▄ ▀▄██ █   █ █
+█ █▄▄▄█ █ ▄▀▀▄█▀▄▄█ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄▀ █▄█▄▀▄█▄▄▄▄▄▄▄█
+› Metro waiting on exp://192.168.1.20:8081
+› Scan the QR code above with Expo Go (Android) or the Camera app (iOS)
+› Press a │ open Android
+› Press r │ reload app</span></pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Metro (le « bundler ») assemble tout le code en un paquet et le sert au téléphone par le Wi-Fi. Tant que ce terminal tourne, chaque Ctrl+S met l'app à jour sur le téléphone en une seconde (« rechargement à chaud »).</div>
+<div class="row"><span class="lbl">Contrôle</span>Un QR code et la ligne <code>Metro waiting on exp://…</code>.</div>
+<div class="row"><span class="lbl">Si ça rate</span>Le pare-feu Windows demande l'accès pour Node.js : coche « Réseaux privés » › Autoriser.</div>
+</div>
+
+<div class="step"><h4>Étape 2.3 — Ouvrir l'app dans Expo Go</h4>
+<div class="row"><span class="lbl">Geste</span>Téléphone › Expo Go › <b>Scan QR code</b> › vise le QR code du terminal.</div>
+<figure class="fig"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮▮ 87 %</span></div><div class="body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div style="font-size:21px;font-weight:700">Bonjour Junix Pulse <span class="badge-n">1</span></div><div style="color:#b9b4c7;margin-top:6px">Ma première page sur mon téléphone.</div></div></div></div>
+<figcaption><em>Illustration reconstituée</em> — ① le titre écrit dans <code>index.tsx</code>. Modifie le texte, Ctrl+S : le téléphone change tout seul.</figcaption></figure>
+<div class="row"><span class="lbl">Contrôle</span>Le texte « Bonjour Junix Pulse » sur fond sombre.</div>
+<div class="row"><span class="lbl">Si ça rate</span>Ça tourne sans fin ou « Could not connect » : PC et téléphone ne sont pas sur le même Wi-Fi, ou le réseau bloque. Arrête le serveur (Ctrl+C) et relance avec <code>npx expo start --tunnel</code> (plus lent mais passe partout). « Project is incompatible with this version of Expo Go » : le SDK du projet ne correspond pas à Expo Go (voir <a href="#hypotheses">Hypothèses</a>).</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 3 ═══════════════════════════ -->
+<h3 id="p3">Phase 3 · Ranger et configurer le projet</h3>
+
+<div class="step"><h4>Étape 3.1 — Donner son identité à l'app (app.json)</h4>
+<div class="row"><span class="lbl">Où</span><code>app.json</code>, à la racine. Change seulement ces trois valeurs (Ctrl+F pour les trouver) :</div>
+<table><tr><th>Clé</th><th>Avant</th><th>Après</th></tr>
+<tr><td><code>"name"</code></td><td><code>"junix-pulse-tuto"</code></td><td><code>"Junix Pulse"</code> (le nom sous l'icône)</td></tr>
+<tr><td><code>"scheme"</code></td><td><code>"junixpulsetuto"</code></td><td><code>"junixpulse"</code> (le début des liens profonds)</td></tr>
+<tr><td><code>"userInterfaceStyle"</code></td><td><code>"automatic"</code></td><td><code>"automatic"</code> (inchangé : suit le thème du téléphone)</td></tr></table>
+<div class="row"><span class="lbl">Pourquoi</span><code>app.json</code> est la carte d'identité de l'app pour Expo : nom, icône, identifiant Android, permissions. Le vrai projet y ajoute <code>"android": { "package": "com.junix.pulse" }</code> avant de fabriquer un APK (phase 21).</div>
+<div class="row"><span class="lbl">Contrôle</span>Après Ctrl+S, aucune ligne rouge dans <code>app.json</code> (Expo Tools vérifie).</div>
+<div class="row"><span class="lbl">Si ça rate</span>Ligne rouge : une virgule ou un guillemet manque. Le JSON exige des guillemets doubles et une virgule entre chaque paire.</div>
+</div>
+
+<div class="step"><h4>Étape 3.2 — Vérifier le raccourci « @/ » (tsconfig.json)</h4>
+<div class="row"><span class="lbl">Où</span><code>tsconfig.json</code>. Il doit contenir ce bloc (le modèle le met déjà) :</div>
+<div class="file"><div class="fname"><span>tsconfig.json</span><span>extrait à vérifier</span></div><pre>{
+  "extends": "expo/tsconfig.base.json",   <span class="c">// les réglages conseillés par Expo</span>
+  "compilerOptions": {
+    "strict": true,                       <span class="c">// TypeScript le plus exigeant : il attrape plus d'erreurs</span>
+    "paths": {
+      "@/*": ["./src/*"]                  <span class="c">// « @/x » veut dire « src/x » dans les imports</span>
+    }
+  }
+}</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Sans ce raccourci, un écran profond devrait écrire <code>../../../domain/entities</code>. Avec lui : <code>@/domain/entities</code>, depuis n'importe où.</div>
+<div class="row"><span class="lbl">Contrôle</span><code>npx tsc --noEmit</code> ne répond rien (rien = aucune erreur).</div>
+<div class="row"><span class="lbl">Si ça rate</span>Le bloc <code>paths</code> manque : ajoute-le à l'intérieur de <code>compilerOptions</code>, puis Ctrl+Maj+P › « TypeScript: Restart TS Server ».</div>
+</div>
+
+<div class="step"><h4>Étape 3.3 — Premier commit à toi</h4>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto</div><pre><span class="cmd">git add -A</span>
+<span class="cmd">git commit -m "Phase 3 : page d'accueil et identité de l'app"</span>
+<span class="out">[main 1a2b3c4] Phase 3 : page d'accueil et identité de l'app</span></pre></div>
+<div class="row"><span class="lbl">Contrôle</span><code>git log --oneline</code> montre ton commit au-dessus de « Initial commit ».</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 4 ═══════════════════════════ -->
+<h3 id="p4">Phase 4 · La navigation à onglets</h3>
+<p>Expo Router transforme les fichiers en écrans. Quatre conventions suffisent : <code>_layout.tsx</code> = le cadre des écrans d'un dossier ; <code>(nom)</code> = un groupe qui n'apparaît pas dans l'adresse ; <code>[id]</code> = un morceau d'adresse variable ; <code>index.tsx</code> = l'écran par défaut du dossier.</p>
+
+<div class="step"><h4>Étape 4.1 — Supprimer src/app/index.tsx</h4>
+<div class="row"><span class="lbl">Geste</span>Explorateur de VS Code › clic droit sur <code>src/app/index.tsx</code> › Supprimer.</div>
+<div class="row"><span class="lbl">Pourquoi</span>L'adresse <code>/</code> va être l'onglet Accueil, <code>src/app/(tabs)/index.tsx</code>. Deux fichiers pour la même adresse = conflit.</div>
+<div class="row"><span class="lbl">Ce qui part</span>Le fichier entier écrit à l'étape 2.1 (il reste dans le commit de la phase 3).</div>
+</div>
+
+<div class="step"><h4>Étape 4.2 — Remplacer le cadre racine</h4>
+<div class="row"><span class="lbl">Où</span><code>src/app/_layout.tsx</code> › Ctrl+A › colle :</div>
+<div class="file"><div class="fname"><span>src/app/_layout.tsx</span><span>fichier complet, version phase 4 · 22 lignes</span></div><pre><span class="c">// src/app/_layout.tsx — le cadre racine : il entoure TOUS les écrans de l'app.</span>
+import { Stack } from "expo-router"; <span class="c">// Stack = une pile d'écrans (on empile, « retour » dépile)</span>
+import { StatusBar } from "expo-status-bar"; <span class="c">// la barre du haut du téléphone (heure, batterie)</span>
+
+export default function RootLayout() {
+  return (
+    &lt;&gt;
+      <span class="c">{/* Texte clair dans la barre d'état, car notre fond est sombre */}</span>
+      &lt;StatusBar style="light" /&gt;
+      &lt;Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#141317" }, <span class="c">// fond de l'en-tête</span>
+          headerTintColor: "#FFFFFF", <span class="c">// couleur du titre et de la flèche retour</span>
+          contentStyle: { backgroundColor: "#141317" }, <span class="c">// fond derrière chaque écran</span>
+        }}
+      &gt;
+        <span class="c">{/* Le groupe (tabs) : ses onglets ont leur propre en-tête, on cache celui de la pile */}</span>
+        &lt;Stack.Screen name="(tabs)" options={{ headerShown: false }} /&gt;
+      &lt;/Stack&gt;
+    &lt;/&gt;
+  );
+}</pre></div>
+</div>
+
+<div class="step"><h4>Étape 4.3 — Créer le dossier (tabs) et sa barre d'onglets</h4>
+<div class="row"><span class="lbl">Geste</span>Clic droit sur <code>src/app</code> › Nouveau dossier › <code>(tabs)</code> (avec les parenthèses). Clic droit sur <code>(tabs)</code> › Nouveau fichier › <code>_layout.tsx</code> :</div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/_layout.tsx</span><span>fichier complet · 34 lignes</span></div><pre><span class="c">// src/app/(tabs)/_layout.tsx — la barre d'onglets du bas.</span>
+import { Ionicons } from "@expo/vector-icons"; <span class="c">// une collection d'icônes prêtes à l'emploi</span>
+import { Tabs } from "expo-router"; <span class="c">// Tabs = des écrans côte à côte, choisis par la barre du bas</span>
+
+<span class="c">// Le nom exact d'une icône Ionicons (TypeScript refusera un nom qui n'existe pas)</span>
+type IconName = keyof typeof Ionicons.glyphMap;
+
+<span class="c">// Petite fonction qui fabrique l'icône d'un onglet : pleine et violette si actif, contour gris sinon</span>
+function tabIcon(filled: IconName, outline: IconName) {
+  return ({ focused }: { focused: boolean }) =&gt; (
+    &lt;Ionicons name={focused ? filled : outline} size={24} color={focused ? "#8B5CF6" : "#8A8597"} /&gt;
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    &lt;Tabs
+      screenOptions={{
+        headerStyle: { backgroundColor: "#141317" }, <span class="c">// en-tête sombre</span>
+        headerTintColor: "#FFFFFF", <span class="c">// titre blanc</span>
+        tabBarStyle: { backgroundColor: "#1C1A21", borderTopColor: "#2A2733" }, <span class="c">// barre du bas</span>
+        tabBarActiveTintColor: "#8B5CF6", <span class="c">// violet Junix Pulse pour l'onglet actif</span>
+        tabBarInactiveTintColor: "#8A8597", <span class="c">// gris pour les autres</span>
+      }}
+    &gt;
+      <span class="c">{/* name = le nom du fichier dans (tabs)/, sans « .tsx » */}</span>
+      &lt;Tabs.Screen name="index" options={{ title: "Accueil", tabBarIcon: tabIcon("home", "home-outline") }} /&gt;
+      &lt;Tabs.Screen name="reminders" options={{ title: "Rappels", tabBarIcon: tabIcon("notifications", "notifications-outline") }} /&gt;
+      &lt;Tabs.Screen name="tasks" options={{ title: "Tâches", tabBarIcon: tabIcon("checkmark-circle", "checkmark-circle-outline") }} /&gt;
+      &lt;Tabs.Screen name="calendar" options={{ title: "Calendrier", tabBarIcon: tabIcon("calendar", "calendar-outline") }} /&gt;
+      &lt;Tabs.Screen name="people" options={{ title: "Proches", tabBarIcon: tabIcon("people", "people-outline") }} /&gt;
+    &lt;/Tabs&gt;
+  );
+}</pre></div>
+<table><tr><th>Mot</th><th>Sens</th></tr>
+<tr><td><code>keyof typeof Ionicons.glyphMap</code></td><td>« un des noms d'icônes qui existent vraiment » : une faute de frappe dans un nom d'icône devient une erreur rouge</td></tr>
+<tr><td><code>({ focused }) =&gt; (…)</code></td><td>une fonction fléchée : elle reçoit l'état de l'onglet et renvoie l'icône à dessiner</td></tr></table>
+</div>
+
+<div class="step"><h4>Étape 4.4 — Créer les cinq onglets</h4>
+<div class="row"><span class="lbl">Geste</span>Dans <code>src/app/(tabs)</code>, crée ces cinq fichiers.</div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/index.tsx</span><span>fichier complet, version phase 4 · 17 lignes</span></div><pre><span class="c">// src/app/(tabs)/index.tsx — l'onglet Accueil (adresse « / »).</span>
+import { StyleSheet, Text, View } from "react-native";
+
+export default function HomeScreen() {
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.title}&gt;Bonjour !&lt;/Text&gt;
+      &lt;Text style={styles.text}&gt;Voici ton tableau de bord Junix Pulse.&lt;/Text&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 24, backgroundColor: "#141317" }, <span class="c">// 24 points de marge intérieure</span>
+  title: { fontSize: 28, fontWeight: "700", color: "#FFFFFF" },
+  text: { fontSize: 16, color: "#B9B4C7", marginTop: 8 },
+});</pre></div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/reminders.tsx</span><span>fichier complet, version phase 4 · 15 lignes</span></div><pre><span class="c">// src/app/(tabs)/reminders.tsx — l'onglet Rappels, vide pour l'instant (rempli à la phase 10).</span>
+import { StyleSheet, Text, View } from "react-native";
+
+export default function RemindersScreen() {
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.text}&gt;Les rappels arrivent bientôt.&lt;/Text&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#141317" },
+  text: { fontSize: 16, color: "#B9B4C7" },
+});</pre></div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/tasks.tsx</span><span>fichier complet · 15 lignes</span></div><pre><span class="c">// src/app/(tabs)/tasks.tsx — l'onglet Tâches, vide pour l'instant (rempli à la phase 11).</span>
+import { StyleSheet, Text, View } from "react-native";
+
+export default function TasksScreen() {
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.text}&gt;Les tâches arrivent bientôt.&lt;/Text&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#141317" },
+  text: { fontSize: 16, color: "#B9B4C7" },
+});</pre></div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/calendar.tsx</span><span>fichier complet · 15 lignes</span></div><pre><span class="c">// src/app/(tabs)/calendar.tsx — l'onglet Calendrier, vide pour l'instant (rempli à la phase 11).</span>
+import { StyleSheet, Text, View } from "react-native";
+
+export default function CalendarScreen() {
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.text}&gt;Le calendrier arrive bientôt.&lt;/Text&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#141317" },
+  text: { fontSize: 16, color: "#B9B4C7" },
+});</pre></div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/people.tsx</span><span>fichier complet · 15 lignes</span></div><pre><span class="c">// src/app/(tabs)/people.tsx — l'onglet Proches, vide pour l'instant (rempli à la phase 11).</span>
+import { StyleSheet, Text, View } from "react-native";
+
+export default function PeopleScreen() {
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.text}&gt;Tes proches arrivent bientôt.&lt;/Text&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#141317" },
+  text: { fontSize: 16, color: "#B9B4C7" },
+});</pre></div>
+<figure class="fig"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮▮ 87 %</span></div><div class="hdr">Accueil</div><div class="body"><div style="font-size:21px;font-weight:700">Bonjour !</div><div style="color:#b9b4c7;margin-top:4px">Voici ton tableau de bord Junix Pulse.</div></div><div class="tabs"><span class="on"><i>⌂</i>Accueil <span class="badge-n">1</span></span><span><i>🔔︎</i>Rappels</span><span><i>✓</i>Tâches</span><span><i>▦</i>Calendrier</span><span><i>☺</i>Proches</span></div></div></div>
+<figcaption><em>Illustration reconstituée</em> — ① l'onglet actif en violet. Touche chaque onglet : son texte « arrive bientôt » s'affiche.</figcaption></figure>
+<div class="row"><span class="lbl">Contrôle</span>Sur le téléphone (secoue-le › Reload si rien ne change), cinq onglets en bas.</div>
+<div class="row"><span class="lbl">Si ça rate</span>Écran rouge « Unable to resolve @expo/vector-icons » : installe-le (<code>npx expo install @expo/vector-icons</code>), puis relance <code>npx expo start</code>. Écran « Unmatched route » : vérifie les parenthèses du dossier <code>(tabs)</code> et la suppression de l'étape 4.1.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 5 ═══════════════════════════ -->
+<h3 id="p5">Phase 5 · Installer les bibliothèques de la première tranche</h3>
+<div class="step"><h4>Étape 5.1 — npx expo install</h4>
+<div class="row"><span class="lbl">Où</span>Terminal. Arrête d'abord le serveur (Ctrl+C), installe, puis relance-le.</div>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto — sortie typique</div><pre><span class="cmd">npx expo install expo-sqlite expo-crypto expo-notifications @expo/vector-icons</span>
+<span class="out">› Installing 4 SDK 57.0.0 compatible native modules using npm
+added 6 packages, and audited 1001 packages in 9s</span>
+<span class="cmd">npx expo start</span></pre></div>
+<table><tr><th>Bibliothèque</th><th>Rôle</th></tr>
+<tr><td><code>expo-sqlite</code></td><td>la base de données SQLite dans le téléphone</td></tr>
+<tr><td><code>expo-crypto</code></td><td><code>randomUUID()</code> : un identifiant unique pour chaque rappel</td></tr>
+<tr><td><code>expo-notifications</code></td><td>les notifications locales (le rappel qui sonne)</td></tr>
+<tr><td><code>@expo/vector-icons</code></td><td>les icônes Ionicons</td></tr></table>
+<div class="row"><span class="lbl">Pourquoi</span><code>npx expo install</code> choisit <b>la version compatible avec ton SDK</b>, alors que <code>npm install</code> prendrait la toute dernière, parfois incompatible. Règle du projet : toujours <code>npx expo install</code> pour une bibliothèque Expo ou React Native.</div>
+<div class="row"><span class="lbl">Contrôle</span>Les quatre noms apparaissent dans <code>package.json</code>, section <code>"dependencies"</code>.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« ERESOLVE could not resolve » : relance avec <code>npx expo install --fix</code>, qui aligne toutes les versions.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 6 ═══════════════════════════ -->
+<h3 id="p6">Phase 6 · La base de données</h3>
+<div class="step"><h4>Étape 6.1 — Les migrations</h4>
+<div class="row"><span class="lbl">Geste</span>Clic droit sur <code>src</code> › Nouveau dossier › <code>database</code> ; dedans, nouveau fichier <code>migrations.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/database/migrations.ts</span><span>fichier complet · 27 lignes</span></div><pre><span class="c">// src/database/migrations.ts — la liste des changements de la base, dans l'ordre.</span>
+<span class="c">// Règle d'or : une migration déjà publiée ne se modifie JAMAIS. Pour changer la base,</span>
+<span class="c">// on AJOUTE une nouvelle migration à la fin du tableau (version 2, 3…).</span>
+
+export interface Migration {
+  version: number; <span class="c">// numéro unique, croissant</span>
+  name: string; <span class="c">// nom lisible, pour s'y retrouver</span>
+  sql: string; <span class="c">// le SQL à exécuter une seule fois</span>
+}
+
+export const MIGRATIONS: Migration[] = [
+  {
+    version: 1,
+    name: "create_reminders",
+    sql: `
+      CREATE TABLE IF NOT EXISTS reminders (
+        id TEXT PRIMARY KEY NOT NULL,              <span class="c">-- identifiant unique (UUID)</span>
+        title TEXT NOT NULL,                       <span class="c">-- « Appeler maman »</span>
+        scheduled_at TEXT NOT NULL,                <span class="c">-- date et heure, au format ISO 8601</span>
+        status TEXT NOT NULL DEFAULT 'UPCOMING',   <span class="c">-- UPCOMING, COMPLETED…</span>
+        notification_id TEXT,                      <span class="c">-- l'id de la notification planifiée</span>
+        created_at TEXT NOT NULL,                  <span class="c">-- quand il a été créé</span>
+        completed_at TEXT                          <span class="c">-- quand il a été terminé (vide sinon)</span>
+      );
+    `,
+  },
+];</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Le téléphone de l'utilisateur garde ses données d'une version de l'app à l'autre. On ne peut donc pas « refaire la base » : on décrit chaque changement, numéroté, et l'app applique ceux qui manquent. Le vrai projet en est à la migration 33 (<a href="../apprendre/explorateur-du-projet.html#src/database/migrations.ts">voir le fichier</a>).</div>
+</div>
+<div class="step"><h4>Étape 6.2 — Le client de la base</h4>
+<div class="row"><span class="lbl">Geste</span>Dans <code>src/database</code>, nouveau fichier <code>sqlite.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/database/sqlite.ts</span><span>fichier complet · 37 lignes</span></div><pre><span class="c">// src/database/sqlite.ts — ouvre la base SQLite UNE fois et applique les migrations manquantes.</span>
+import * as SQLite from "expo-sqlite"; <span class="c">// la base de données dans le téléphone</span>
+import { MIGRATIONS } from "./migrations"; <span class="c">// notre liste de migrations</span>
+
+let dbInstance: SQLite.SQLiteDatabase | null = null; <span class="c">// la base, gardée après la 1re ouverture</span>
+
+export async function getDatabase(): Promise&lt;SQLite.SQLiteDatabase&gt; {
+  if (dbInstance) return dbInstance; <span class="c">// déjà ouverte : on la réutilise</span>
+
+  const db = await SQLite.openDatabaseAsync("junix-pulse.db"); <span class="c">// crée le fichier s'il n'existe pas</span>
+  await db.execAsync("PRAGMA foreign_keys = ON;"); <span class="c">// SQLite ne vérifie les liens entre tables que si on le demande</span>
+  await db.execAsync("PRAGMA journal_mode = WAL;"); <span class="c">// mode plus rapide et plus sûr</span>
+
+<span class="c">  // La table qui retient quelles migrations ont déjà été appliquées</span>
+  await db.execAsync(
+    "CREATE TABLE IF NOT EXISTS _migrations (version INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, applied_at TEXT NOT NULL);"
+  );
+  const applied = await db.getAllAsync&lt;{ version: number }&gt;("SELECT version FROM _migrations");
+  const done = new Set(applied.map((row) =&gt; row.version)); <span class="c">// ex. {1, 2}</span>
+
+  for (const migration of MIGRATIONS) {
+    if (done.has(migration.version)) continue; <span class="c">// déjà faite : on passe</span>
+<span class="c">    // Une transaction : soit TOUT réussit, soit RIEN n'est gardé (pas de base à moitié modifiée)</span>
+    await db.withTransactionAsync(async () =&gt; {
+      await db.execAsync(migration.sql);
+      await db.runAsync(
+        "INSERT INTO _migrations (version, name, applied_at) VALUES (?, ?, ?)",
+        migration.version,
+        migration.name,
+        new Date().toISOString()
+      );
+    });
+  }
+
+  dbInstance = db; <span class="c">// on la garde pour les prochains appels</span>
+  return db;
+}</pre></div>
+<table><tr><th>Mot</th><th>Sens</th></tr>
+<tr><td><code>async</code> / <code>await</code></td><td>la base répond « plus tard » (une Promise) ; <code>await</code> attend la réponse avant la ligne suivante, sans bloquer l'écran</td></tr>
+<tr><td><code>Promise&lt;SQLite.SQLiteDatabase&gt;</code></td><td>« une base, livrée plus tard »</td></tr>
+<tr><td><code>getAllAsync&lt;{ version: number }&gt;</code></td><td>lit toutes les lignes ; entre chevrons, la forme d'une ligne</td></tr>
+<tr><td><code>withTransactionAsync</code></td><td>tout ou rien : si une ligne échoue, rien n'est gardé</td></tr></table>
+<div class="row"><span class="lbl">Contrôle</span><code>npx tsc --noEmit</code> ne répond rien.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« Cannot find module 'expo-sqlite' » : la phase 5 n'a pas été faite.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 7 ═══════════════════════════ -->
+<h3 id="p7">Phase 7 · Le domaine : la forme des données, les règles, et leur test</h3>
+<div class="step"><h4>Étape 7.1 — L'entité Reminder</h4>
+<div class="row"><span class="lbl">Geste</span>Crée les dossiers <code>src/domain/entities</code> et le fichier <code>index.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/domain/entities/index.ts</span><span>fichier complet · 15 lignes</span></div><pre><span class="c">// src/domain/entities/index.ts — la FORME des données, en TypeScript.</span>
+<span class="c">// Aucun SQL, aucun écran ici : juste « un rappel, c'est quoi ? ».</span>
+
+<span class="c">// Les états possibles d'un rappel (une valeur hors de cette liste sera refusée par TypeScript)</span>
+export type ReminderStatus = "UPCOMING" | "COMPLETED";
+
+export interface Reminder {
+  id: string; <span class="c">// identifiant unique</span>
+  title: string; <span class="c">// ce qu'il faut faire</span>
+  scheduledAt: string; <span class="c">// date et heure ISO 8601, ex. « 2026-11-12T18:00:00.000Z »</span>
+  status: ReminderStatus; <span class="c">// à venir ou terminé</span>
+  notificationId?: string; <span class="c">// le « ? » veut dire : peut être absent</span>
+  createdAt: string;
+  completedAt?: string;
+}</pre></div>
+</div>
+<div class="step"><h4>Étape 7.2 — Les règles pures</h4>
+<div class="row"><span class="lbl">Geste</span>Crée <code>src/domain/rules/reminder-rules.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/domain/rules/reminder-rules.ts</span><span>fichier complet · 39 lignes</span></div><pre><span class="c">// src/domain/rules/reminder-rules.ts — des calculs PURS sur les rappels.</span>
+<span class="c">// « Pur » : même entrée = même sortie, pas de base, pas d'écran, pas d'horloge cachée</span>
+<span class="c">// (l'heure actuelle est passée en paramètre). C'est ce qui les rend faciles à tester.</span>
+import { Reminder } from "../entities";
+
+<span class="c">/** Un rappel est manqué s'il est encore « à venir » alors que son heure est passée. */</span>
+export function isReminderMissed(reminder: Reminder, now: Date): boolean {
+  return reminder.status === "UPCOMING" &amp;&amp; new Date(reminder.scheduledAt).getTime() &lt; now.getTime();
+}
+
+<span class="c">/** Trie les rappels du plus proche au plus lointain, sans modifier la liste reçue. */</span>
+export function sortByDate(reminders: Reminder[]): Reminder[] {
+  return [...reminders].sort((a, b) =&gt; a.scheduledAt.localeCompare(b.scheduledAt));
+}
+
+<span class="c">/** Un choix d'heure rapide proposé dans le formulaire. */</span>
+export interface QuickTime {
+  label: string; <span class="c">// le texte du bouton</span>
+  date: Date; <span class="c">// l'heure qu'il donne</span>
+}
+
+<span class="c">/** Les trois heures proposées : dans 1 h, ce soir 20 h (ou demain 20 h si c'est passé), demain 9 h. */</span>
+export function quickTimes(now: Date): QuickTime[] {
+  const inOneHour = new Date(now.getTime() + 60 * 60 * 1000); <span class="c">// + 60 minutes en millisecondes</span>
+
+  const evening = new Date(now); <span class="c">// copie de « maintenant »</span>
+  evening.setHours(20, 0, 0, 0); <span class="c">// 20:00:00.000 le même jour</span>
+  if (evening &lt;= now) evening.setDate(evening.getDate() + 1); <span class="c">// déjà passé : demain soir</span>
+
+  const tomorrowMorning = new Date(now);
+  tomorrowMorning.setDate(tomorrowMorning.getDate() + 1); <span class="c">// demain</span>
+  tomorrowMorning.setHours(9, 0, 0, 0); <span class="c">// à 9:00</span>
+
+  return [
+    { label: "Dans 1 h", date: inOneHour },
+    { label: "Ce soir 20 h", date: evening },
+    { label: "Demain 9 h", date: tomorrowMorning },
+  ];
+}</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Une règle pure ne dépend de rien : on la comprend en la lisant et on la teste en une ligne. Le vrai projet en a une quarantaine (<a href="../apprendre/explorateur-du-projet.html#src/domain/rules/">dossier rules</a>).</div>
+</div>
+<div class="step"><h4>Étape 7.3 — Installer Jest et écrire le test</h4>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto</div><pre><span class="cmd">npx expo install jest-expo jest @types/jest -- --save-dev</span></pre></div>
+<div class="row"><span class="lbl">Où</span><code>package.json</code> : ajoute la ligne <code>"test"</code> dans <code>"scripts"</code>, et la section <code>"jest"</code> juste après <code>"scripts"</code>.</div>
+<div class="file"><div class="fname"><span>package.json</span><span>AVANT (extrait)</span></div><pre>  "scripts": {
+    "start": "expo start",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "expo lint"
+  },</pre></div>
+<div class="file"><div class="fname"><span>package.json</span><span>APRÈS (extrait)</span></div><pre>  "scripts": {
+    "start": "expo start",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "expo lint",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "jest-expo"
+  },</pre></div>
+<div class="row"><span class="lbl">Ce qui change</span>Une virgule après <code>"lint": "expo lint"</code> ; la ligne <code>"test": "jest"</code> (« npm test » lance Jest) ; le bloc <code>"jest"</code> (Jest réglé pour Expo). Pas de commentaire dans un fichier JSON : il le rendrait invalide.</div>
+<div class="row"><span class="lbl">Geste</span>Crée <code>src/domain/rules/__tests__/reminder-rules.test.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/domain/rules/__tests__/reminder-rules.test.ts</span><span>fichier complet · 46 lignes</span></div><pre><span class="c">// src/domain/rules/__tests__/reminder-rules.test.ts — vérifie les règles automatiquement.</span>
+<span class="c">// Lancer : npx jest reminder-rules</span>
+import { Reminder } from "../../entities";
+import { isReminderMissed, quickTimes, sortByDate } from "../reminder-rules";
+
+<span class="c">// Fabrique un rappel de test ; « overrides » remplace les champs qu'on veut changer</span>
+function makeReminder(overrides: Partial&lt;Reminder&gt;): Reminder {
+  return {
+    id: "r1",
+    title: "Appeler maman",
+    scheduledAt: "2026-11-12T10:00:00.000Z",
+    status: "UPCOMING",
+    createdAt: "2026-11-12T08:00:00.000Z",
+    ...overrides,
+  };
+}
+
+describe("isReminderMissed", () =&gt; {
+<span class="c">  // describe = un groupe de tests, it = un test</span>
+  it("est vrai quand l'heure est passée et le rappel pas terminé", () =&gt; {
+    expect(isReminderMissed(makeReminder({}), new Date("2026-11-12T11:00:00.000Z"))).toBe(true);
+  });
+  it("est faux quand le rappel est terminé", () =&gt; {
+    expect(isReminderMissed(makeReminder({ status: "COMPLETED" }), new Date("2026-11-12T11:00:00.000Z"))).toBe(false);
+  });
+  it("est faux quand l'heure n'est pas encore arrivée", () =&gt; {
+    expect(isReminderMissed(makeReminder({}), new Date("2026-11-12T09:00:00.000Z"))).toBe(false);
+  });
+});
+
+describe("sortByDate", () =&gt; {
+  it("met le plus proche en premier", () =&gt; {
+    const later = makeReminder({ id: "b", scheduledAt: "2026-11-13T10:00:00.000Z" });
+    const sooner = makeReminder({ id: "a", scheduledAt: "2026-11-12T10:00:00.000Z" });
+    expect(sortByDate([later, sooner]).map((r) =&gt; r.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("quickTimes", () =&gt; {
+  it("propose demain 20 h quand il est déjà 21 h", () =&gt; {
+    const now = new Date(2026, 10, 12, 21, 0); <span class="c">// 12 novembre 2026, 21:00 (les mois commencent à 0)</span>
+    const evening = quickTimes(now)[1].date;
+    expect(evening.getDate()).toBe(13);
+    expect(evening.getHours()).toBe(20);
+  });
+});</pre></div>
+<div class="term"><div class="tbar">Terminal — dossier junix-pulse-tuto</div><pre><span class="cmd">npx jest reminder-rules</span>
+<span class="out"> PASS  src/domain/rules/__tests__/reminder-rules.test.ts
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total</span></pre></div>
+<div class="row"><span class="lbl">Contrôle</span><code>5 passed</code> (résultat obtenu en vérifiant cette fiche le 12 novembre 2026).</div>
+<div class="row"><span class="lbl">Si ça rate</span>« Preset jest-expo not found » : la commande d'installation n'a pas abouti, relance-la. Un test « FAIL » : lis la ligne <code>Expected / Received</code>, elle dit ce qui était attendu et ce qui est sorti.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 8 ═══════════════════════════ -->
+<h3 id="p8">Phase 8 · Le dépôt : le seul endroit qui écrit du SQL</h3>
+<div class="step"><h4>Étape 8.1 — ReminderRepository</h4>
+<div class="row"><span class="lbl">Geste</span>Crée <code>src/repositories/reminder-repository.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/repositories/reminder-repository.ts</span><span>fichier complet · 59 lignes</span></div><pre><span class="c">// src/repositories/reminder-repository.ts — le SEUL fichier qui écrit du SQL pour les rappels.</span>
+<span class="c">// Il traduit : ligne de la base (snake_case) &lt;-&gt; objet Reminder (camelCase).</span>
+import { getDatabase } from "../database/sqlite";
+import { Reminder } from "../domain/entities";
+
+<span class="c">// La forme d'une ligne telle que SQLite la renvoie</span>
+interface ReminderRow {
+  id: string;
+  title: string;
+  scheduled_at: string;
+  status: Reminder["status"];
+  notification_id: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+<span class="c">// Ligne -&gt; objet du domaine (null devient « absent »)</span>
+function rowToReminder(row: ReminderRow): Reminder {
+  return {
+    id: row.id,
+    title: row.title,
+    scheduledAt: row.scheduled_at,
+    status: row.status,
+    notificationId: row.notification_id ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+  };
+}
+
+export const ReminderRepository = {
+<span class="c">  /** Enregistre un nouveau rappel. Les « ? » sont remplacés, dans l'ordre, par les valeurs qui suivent. */</span>
+  async create(reminder: Reminder): Promise&lt;void&gt; {
+    const db = await getDatabase();
+    await db.runAsync(
+      "INSERT INTO reminders (id, title, scheduled_at, status, notification_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      reminder.id,
+      reminder.title,
+      reminder.scheduledAt,
+      reminder.status,
+      reminder.notificationId ?? null,
+      reminder.createdAt
+    );
+  },
+
+<span class="c">  /** Tous les rappels pas encore terminés, du plus proche au plus lointain. */</span>
+  async findUpcoming(): Promise&lt;Reminder[]&gt; {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync&lt;ReminderRow&gt;(
+      "SELECT * FROM reminders WHERE status = 'UPCOMING' ORDER BY scheduled_at ASC"
+    );
+    return rows.map(rowToReminder);
+  },
+
+<span class="c">  /** Marque un rappel comme terminé. */</span>
+  async complete(id: string, completedAt: string): Promise&lt;void&gt; {
+    const db = await getDatabase();
+    await db.runAsync("UPDATE reminders SET status = 'COMPLETED', completed_at = ? WHERE id = ?", completedAt, id);
+  },
+};</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Les « ? » (paramètres) empêchent l'injection SQL : un titre comme <code>'); DROP TABLE reminders; --</code> reste un simple texte. Et si la base change un jour, seul ce fichier change.</div>
+<div class="row"><span class="lbl">Contrôle</span><code>npx tsc --noEmit</code> ne répond rien.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 9 ═══════════════════════════ -->
+<h3 id="p9">Phase 9 · Le service de notifications</h3>
+<div class="step"><h4>Étape 9.1 — NotificationService</h4>
+<div class="row"><span class="lbl">Geste</span>Crée <code>src/services/notification-service.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/services/notification-service.ts</span><span>fichier complet · 46 lignes</span></div><pre><span class="c">// src/services/notification-service.ts — tout ce qui touche aux notifications du téléphone.</span>
+import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
+
+const CHANNEL_ID = "rappels"; <span class="c">// Android range les notifications par « canal »</span>
+
+<span class="c">// Que faire si une notification arrive pendant que l'app est ouverte : l'afficher quand même</span>
+Notifications.setNotificationHandler({
+  handleNotification: async () =&gt; ({
+    shouldShowBanner: true, <span class="c">// bandeau en haut de l'écran</span>
+    shouldShowList: true, <span class="c">// dans le centre de notifications</span>
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+export const NotificationService = {
+<span class="c">  /** Demande l'autorisation (une seule fois) et prépare le canal Android. Renvoie true si autorisé. */</span>
+  async prepare(): Promise&lt;boolean&gt; {
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+        name: "Rappels",
+        importance: Notifications.AndroidImportance.HIGH, <span class="c">// s'affiche en bandeau, avec son</span>
+      });
+    }
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) return true;
+    const asked = await Notifications.requestPermissionsAsync(); <span class="c">// la fenêtre « Autoriser ? »</span>
+    return asked.granted;
+  },
+
+<span class="c">  /** Planifie une notification à une date. Renvoie son identifiant (pour l'annuler plus tard). */</span>
+  async schedule(title: string, date: Date): Promise&lt;string | undefined&gt; {
+    if (date.getTime() &lt;= Date.now()) return undefined; <span class="c">// dans le passé : rien à planifier</span>
+    if (!(await this.prepare())) return undefined; <span class="c">// refusé : le rappel existe quand même dans l'app</span>
+    return Notifications.scheduleNotificationAsync({
+      content: { title: "Rappel", body: title },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: CHANNEL_ID },
+    });
+  },
+
+<span class="c">  /** Annule une notification planifiée. */</span>
+  async cancel(notificationId: string): Promise&lt;void&gt; {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+  },
+};</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Un service isole ce qui dépend du téléphone. Les notifications <b>locales</b> (planifiées par l'app elle-même) marchent dans Expo Go ; seules les notifications « push » envoyées par un serveur demandent un build. Le terminal peut afficher un avertissement jaune à ce sujet : il ne concerne pas les notifications locales.</div>
+</div>
+
+<!-- ═══════════════════════════ PHASE 10 ═══════════════════════════ -->
+<h3 id="p10">Phase 10 · Le cas d'usage et les écrans : la tranche complète</h3>
+<div class="step"><h4>Étape 10.1 — createReminder</h4>
+<div class="row"><span class="lbl">Geste</span>Crée <code>src/use-cases/reminder-use-cases.ts</code> :</div>
+<div class="file"><div class="fname"><span>src/use-cases/reminder-use-cases.ts</span><span>fichier complet · 41 lignes</span></div><pre><span class="c">// src/use-cases/reminder-use-cases.ts — les ACTIONS de l'utilisateur sur les rappels.</span>
+<span class="c">// Les écrans appellent ces fonctions, jamais le dépôt directement.</span>
+import { randomUUID } from "expo-crypto"; <span class="c">// fabrique un identifiant unique</span>
+import { Reminder } from "../domain/entities";
+import { ReminderRepository } from "../repositories/reminder-repository";
+import { NotificationService } from "../services/notification-service";
+
+export interface CreateReminderInput {
+  title: string;
+  scheduledAt: Date;
+}
+
+<span class="c">/** Crée un rappel : vérifie, planifie la notification, enregistre. Renvoie son id. */</span>
+export async function createReminder(input: CreateReminderInput): Promise&lt;string&gt; {
+  const title = input.title.trim(); <span class="c">// enlève les espaces au début et à la fin</span>
+  if (title.length === 0) throw new Error("Le titre est obligatoire.");
+
+  const notificationId = await NotificationService.schedule(title, input.scheduledAt);
+  const now = new Date().toISOString();
+  const reminder: Reminder = {
+    id: randomUUID(),
+    title,
+    scheduledAt: input.scheduledAt.toISOString(),
+    status: "UPCOMING",
+    notificationId,
+    createdAt: now,
+  };
+  await ReminderRepository.create(reminder);
+  return reminder.id;
+}
+
+<span class="c">/** Termine un rappel et annule sa notification si elle n'a pas encore sonné. */</span>
+export async function completeReminder(reminder: Reminder): Promise&lt;void&gt; {
+  if (reminder.notificationId) await NotificationService.cancel(reminder.notificationId);
+  await ReminderRepository.complete(reminder.id, new Date().toISOString());
+}
+
+<span class="c">/** La liste à afficher. */</span>
+export function listUpcomingReminders(): Promise&lt;Reminder[]&gt; {
+  return ReminderRepository.findUpcoming();
+}</pre></div>
+<div class="row"><span class="lbl">Pourquoi</span>Règle d'or du projet : un écran n'appelle <b>jamais</b> un dépôt directement. Il appelle un cas d'usage, qui orchestre règles, dépôt et services. Le vrai <code>createReminder</code> fait la même chose avec plus d'étapes (récurrence, personnes, étiquettes, mascotte) : <a href="../apprendre/explorateur-du-projet.html#src/use-cases/reminder-use-cases.ts">compare</a>.</div>
+</div>
+<div class="step"><h4>Étape 10.2 — Le formulaire</h4>
+<div class="row"><span class="lbl">Geste</span>Crée le dossier <code>src/app/reminders</code> et le fichier <code>new.tsx</code> :</div>
+<div class="file"><div class="fname"><span>src/app/reminders/new.tsx</span><span>fichier complet · 67 lignes</span></div><pre><span class="c">// src/app/reminders/new.tsx — le formulaire de création (ouvert en modale, voir _layout.tsx).</span>
+import { router } from "expo-router"; <span class="c">// pour fermer l'écran après l'enregistrement</span>
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { quickTimes } from "@/domain/rules/reminder-rules";
+import { createReminder } from "@/use-cases/reminder-use-cases";
+
+export default function NewReminderScreen() {
+  const [title, setTitle] = useState(""); <span class="c">// ce que l'utilisateur tape</span>
+  const [choices] = useState(() =&gt; quickTimes(new Date())); <span class="c">// les 3 heures proposées, calculées une fois</span>
+  const [chosen, setChosen] = useState(0); <span class="c">// l'index de l'heure choisie (0 = « Dans 1 h »)</span>
+  const [saving, setSaving] = useState(false); <span class="c">// vrai pendant l'enregistrement (évite le double clic)</span>
+
+  async function onSave() {
+    setSaving(true);
+    try {
+      await createReminder({ title, scheduledAt: choices[chosen].date }); <span class="c">// la couche « cas d'usage »</span>
+      router.back(); <span class="c">// ferme la modale ; la liste se relit toute seule (useFocusEffect)</span>
+    } catch (error) {
+      Alert.alert("Impossible d'enregistrer", error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false); <span class="c">// dans tous les cas, on réactive le bouton</span>
+    }
+  }
+
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.label}&gt;Quoi ?&lt;/Text&gt;
+      &lt;TextInput
+        value={title}
+        onChangeText={setTitle} <span class="c">// à chaque lettre, on met à jour « title »</span>
+        placeholder="Ex. Appeler maman"
+        placeholderTextColor="#6E6979"
+        style={styles.input}
+        autoFocus <span class="c">// le clavier s'ouvre tout de suite</span>
+      /&gt;
+      &lt;Text style={styles.label}&gt;Quand ?&lt;/Text&gt;
+      &lt;View style={styles.row}&gt;
+        {choices.map((choice, index) =&gt; (
+          &lt;Pressable
+            key={choice.label}
+            onPress={() =&gt; setChosen(index)}
+            style={[styles.chip, index === chosen &amp;&amp; styles.chipOn]} <span class="c">// style « allumé » si choisi</span>
+          &gt;
+            &lt;Text style={styles.chipText}&gt;{choice.label}&lt;/Text&gt;
+          &lt;/Pressable&gt;
+        ))}
+      &lt;/View&gt;
+      &lt;Pressable onPress={onSave} disabled={saving || title.trim() === ""} style={[styles.save, (saving || title.trim() === "") &amp;&amp; styles.saveOff]}&gt;
+        &lt;Text style={styles.saveText}&gt;{saving ? "Enregistrement…" : "Enregistrer"}&lt;/Text&gt;
+      &lt;/Pressable&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: "#141317" },
+  label: { color: "#B9B4C7", fontSize: 13, fontWeight: "600", marginTop: 16, marginBottom: 8, textTransform: "uppercase" },
+  input: { backgroundColor: "#1C1A21", color: "#FFFFFF", fontSize: 17, padding: 14, borderRadius: 12 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "#1C1A21" },
+  chipOn: { backgroundColor: "#7C3AED" },
+  chipText: { color: "#FFFFFF", fontWeight: "600" },
+  save: { marginTop: 32, backgroundColor: "#7C3AED", padding: 16, borderRadius: 999, alignItems: "center" },
+  saveOff: { opacity: 0.4 }, <span class="c">// grisé quand on ne peut pas encore enregistrer</span>
+  saveText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+});</pre></div>
+</div>
+<div class="step"><h4>Étape 10.3 — Déclarer le formulaire comme modale</h4>
+<div class="row"><span class="lbl">Où</span><code>src/app/_layout.tsx</code> › Ctrl+A › colle (une ligne <code>Stack.Screen</code> de plus qu'en phase 4) :</div>
+<div class="file"><div class="fname"><span>src/app/_layout.tsx</span><span>fichier complet · 24 lignes</span></div><pre><span class="c">// src/app/_layout.tsx — le cadre racine : il entoure TOUS les écrans de l'app.</span>
+import { Stack } from "expo-router"; <span class="c">// Stack = une pile d'écrans (on empile, « retour » dépile)</span>
+import { StatusBar } from "expo-status-bar"; <span class="c">// la barre du haut du téléphone (heure, batterie)</span>
+
+export default function RootLayout() {
+  return (
+    &lt;&gt;
+      <span class="c">{/* Texte clair dans la barre d'état, car notre fond est sombre */}</span>
+      &lt;StatusBar style="light" /&gt;
+      &lt;Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#141317" }, <span class="c">// fond de l'en-tête</span>
+          headerTintColor: "#FFFFFF", <span class="c">// couleur du titre et de la flèche retour</span>
+          contentStyle: { backgroundColor: "#141317" }, <span class="c">// fond derrière chaque écran</span>
+        }}
+      &gt;
+        <span class="c">{/* Le groupe (tabs) : ses onglets ont leur propre en-tête, on cache celui de la pile */}</span>
+        &lt;Stack.Screen name="(tabs)" options={{ headerShown: false }} /&gt;
+        <span class="c">{/* Le formulaire s'ouvre comme une fenêtre qui monte du bas (modale) */}</span>
+        &lt;Stack.Screen name="reminders/new" options={{ presentation: "modal", title: "Nouveau rappel" }} /&gt;
+      &lt;/Stack&gt;
+    &lt;/&gt;
+  );
+}</pre></div>
+</div>
+<div class="step"><h4>Étape 10.4 — La liste des rappels et le lien de l'accueil</h4>
+<div class="row"><span class="lbl">Où</span>Remplace tout le contenu de <code>src/app/(tabs)/reminders.tsx</code>, puis celui de <code>src/app/(tabs)/index.tsx</code> :</div>
+<div class="file"><div class="fname"><span>src/app/(tabs)/reminders.tsx</span><span>fichier complet · 64 lignes</span></div><pre><span class="c">// src/app/(tabs)/reminders.tsx — l'onglet Rappels : la liste lue dans la base.</span>
+import { Ionicons } from "@expo/vector-icons";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react"; <span class="c">// useState = une valeur qui, en changeant, redessine l'écran</span>
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Reminder } from "@/domain/entities"; <span class="c">// « @/ » = « src/ » (réglé dans tsconfig.json)</span>
+import { isReminderMissed } from "@/domain/rules/reminder-rules";
+import { completeReminder, listUpcomingReminders } from "@/use-cases/reminder-use-cases";
+
+export default function RemindersScreen() {
+  const [reminders, setReminders] = useState&lt;Reminder[]&gt;([]); <span class="c">// la liste affichée, vide au départ</span>
+
+<span class="c">  // Relit la base chaque fois que l'onglet redevient visible (ex. au retour du formulaire)</span>
+  useFocusEffect(
+    useCallback(() =&gt; {
+      listUpcomingReminders().then(setReminders);
+    }, [])
+  );
+
+  async function onComplete(reminder: Reminder) {
+    await completeReminder(reminder);
+    setReminders(await listUpcomingReminders()); <span class="c">// on relit pour mettre l'écran à jour</span>
+  }
+
+  const now = new Date();
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;FlatList
+        data={reminders} <span class="c">// les éléments à afficher</span>
+        keyExtractor={(item) =&gt; item.id} <span class="c">// une clé unique par ligne (exigée par React)</span>
+        ListEmptyComponent={&lt;Text style={styles.empty}&gt;Aucun rappel. Crée le premier !&lt;/Text&gt;}
+        renderItem={({ item }) =&gt; (
+          &lt;View style={styles.card}&gt;
+            <span class="c">{/* Le rond à toucher pour terminer le rappel */}</span>
+            &lt;Pressable onPress={() =&gt; onComplete(item)} hitSlop={12} accessibilityLabel={`Terminer ${item.title}`}&gt;
+              &lt;Ionicons name="ellipse-outline" size={26} color="#8B5CF6" /&gt;
+            &lt;/Pressable&gt;
+            &lt;View style={styles.cardText}&gt;
+              &lt;Text style={styles.title}&gt;{item.title}&lt;/Text&gt;
+              &lt;Text style={[styles.date, isReminderMissed(item, now) &amp;&amp; styles.missed]}&gt;
+                {new Date(item.scheduledAt).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
+                {isReminderMissed(item, now) ? " · manqué" : ""}
+              &lt;/Text&gt;
+            &lt;/View&gt;
+          &lt;/View&gt;
+        )}
+      /&gt;
+      &lt;Link href="/reminders/new" style={styles.add}&gt;
+        + Nouveau rappel
+      &lt;/Link&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: "#141317" },
+  empty: { color: "#8A8597", textAlign: "center", marginTop: 48 },
+  card: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, marginBottom: 10, borderRadius: 16, backgroundColor: "#1C1A21" },
+  cardText: { flex: 1 },
+  title: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  date: { color: "#B9B4C7", marginTop: 2 },
+  missed: { color: "#F59E0B" }, <span class="c">// orange quand c'est manqué</span>
+  add: { textAlign: "center", color: "#FFFFFF", backgroundColor: "#7C3AED", padding: 14, borderRadius: 999, fontWeight: "700", overflow: "hidden" },
+});</pre></div>
+<table><tr><th>Mot</th><th>Sens</th></tr>
+<tr><td><code>useState</code></td><td>une valeur gardée par l'écran ; la changer (<code>setReminders</code>) redessine l'écran</td></tr>
+<tr><td><code>useFocusEffect(useCallback(…, []))</code></td><td>« fais ceci chaque fois que l'écran redevient visible » ; <code>useCallback</code> évite de recréer la fonction à chaque dessin</td></tr>
+<tr><td><code>FlatList</code></td><td>une liste qui ne dessine que les lignes visibles (rapide même avec 1 000 rappels)</td></tr></table>
+<div class="file"><div class="fname"><span>src/app/(tabs)/index.tsx</span><span>fichier complet · 23 lignes</span></div><pre><span class="c">// src/app/(tabs)/index.tsx — l'onglet Accueil (adresse « / »).</span>
+import { Link } from "expo-router"; <span class="c">// un lien vers un autre écran</span>
+import { StyleSheet, Text, View } from "react-native";
+
+export default function HomeScreen() {
+  return (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.title}&gt;Bonjour !&lt;/Text&gt;
+      &lt;Text style={styles.text}&gt;Voici ton tableau de bord Junix Pulse.&lt;/Text&gt;
+      <span class="c">{/* href = l'adresse de l'écran : le fichier src/app/reminders/new.tsx */}</span>
+      &lt;Link href="/reminders/new" style={styles.link}&gt;
+        + Nouveau rappel
+      &lt;/Link&gt;
+    &lt;/View&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 24, backgroundColor: "#141317" }, <span class="c">// 24 points de marge intérieure</span>
+  title: { fontSize: 28, fontWeight: "700", color: "#FFFFFF" },
+  text: { fontSize: 16, color: "#B9B4C7", marginTop: 8 },
+  link: { fontSize: 17, color: "#A78BFA", marginTop: 24, fontWeight: "600" }, <span class="c">// lien violet clair</span>
+});</pre></div>
+<figure class="fig"><div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span>▮▮▮ 87 %</span></div><div class="hdr">Nouveau rappel</div><div class="body"><div class="lb">Quoi ?</div><div class="inp">Appeler maman <span class="badge-n">1</span></div><div class="lb">Quand ?</div><span class="chip on">Dans 1 h</span><span class="chip">Ce soir 20 h</span><span class="chip">Demain 9 h</span> <span class="badge-n">2</span><div class="pill" style="margin-top:22px">Enregistrer <span class="badge-n">3</span></div></div></div></div><div class="phone"><div class="scr"><div class="sb"><span>9:42</span><span>▮▮▮ 87 %</span></div><div class="hdr">Rappels</div><div class="body" style="display:flex;flex-direction:column"><div class="card"><div class="ring"></div><div><b>Appeler maman</b> <span class="badge-n">4</span><div style="color:#b9b4c7;font-size:11.5px">12 nov. 2026, 10:42</div></div></div><div style="flex:1"></div><div class="pill">+ Nouveau rappel</div></div><div class="tabs"><span><i>⌂</i>Accueil</span><span class="on"><i>🔔︎</i>Rappels</span><span><i>✓</i>Tâches</span><span><i>▦</i>Calendrier</span><span><i>☺</i>Proches</span></div></div></div>
+<figcaption><em>Illustration reconstituée</em> — ① taper le titre ; ② choisir l'heure ; ③ Enregistrer ferme la modale ; ④ le rappel apparaît dans la liste. Toucher le rond le termine.</figcaption></figure>
+<div class="row"><span class="lbl">Contrôle</span>Accueil › « + Nouveau rappel » › tape « Test » › <b>Dans 1 h</b> › Enregistrer : Android demande l'autorisation des notifications (Autoriser), la modale se ferme, l'onglet Rappels montre « Test ». Pour entendre la sonnerie sans attendre une heure, change provisoirement <code>60 * 60 * 1000</code> en <code>60 * 1000</code> dans <code>reminder-rules.ts</code> (une minute), crée un rappel, sors de l'app : la notification arrive. Remets ensuite <code>60 * 60 * 1000</code>.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« Impossible d'enregistrer — Le titre est obligatoire » : normal si le titre est vide. Liste vide après l'enregistrement : vérifie que <code>reminders.tsx</code> contient bien <code>useFocusEffect</code>. Écran rouge « no such table: reminders » : une ancienne base sans la table existe ; désinstalle puis rouvre le projet dans Expo Go (ou ajoute une migration, jamais modifier la version 1).</div>
+</div>
+<div class="box ok"><b>Fin de la tranche</b>Fais ton commit : <code>git add -A</code> puis <code>git commit -m "Phase 10 : rappels de bout en bout"</code>. Tu viens de reproduire, en petit, exactement l'architecture du vrai Junix Pulse : écran → cas d'usage → règles + dépôt → base, avec un service à côté. Tout le reste du projet répète cette recette.</div>
+
+<!-- ═══════════════════════════ PHASE 11+ ═══════════════════════════ -->
+<h3 id="p11">Phase 11 · Les autres modules, avec la même recette</h3>
+<p>Dans le vrai projet, entre le 9 et le 10 septembre 2026, les modules sont arrivés dans cet ordre : Rappels, Tâches, Personnes, Calendrier, Habitudes, Objectifs, Planning, Suggestions, Paramètres. Pour <b>chaque</b> module, la recette est la même, dans le même ordre que les phases 6 à 10 :</p>
+<ol>
+  <li><b>Migration</b> : ajouter la table à la fin de <code>migrations.ts</code> (version suivante).</li>
+  <li><b>Entité</b> : ajouter l'interface dans <code>src/domain/entities/index.ts</code>.</li>
+  <li><b>Règles</b> : <code>src/domain/rules/&lt;module&gt;-rules.ts</code> + son test.</li>
+  <li><b>Dépôt</b> : <code>src/repositories/&lt;module&gt;-repository.ts</code>.</li>
+  <li><b>Cas d'usage</b> : <code>src/use-cases/&lt;module&gt;-use-cases.ts</code>.</li>
+  <li><b>Écrans</b> : la liste (onglet ou <code>src/app/&lt;module&gt;/index.tsx</code>), <code>new.tsx</code> et <code>[id].tsx</code>.</li>
+</ol>
+<div class="term"><div class="tbar">Terminal — bibliothèques de cette phase</div><pre><span class="cmd">npx expo install date-fns zustand @react-native-community/datetimepicker react-native-modal-datetime-picker expo-contacts expo-linking</span></pre></div>
+<table>
+  <tr><th>Module</th><th>Table(s)</th><th>Fichiers du vrai projet à lire dans l'explorateur</th><th>Ce qu'il apprend</th></tr>
+  <tr><td>Tâches</td><td>tasks, subtasks</td><td><a href="../apprendre/explorateur-du-projet.html#src/domain/rules/task-rules.ts">task-rules</a>, <a href="../apprendre/explorateur-du-projet.html#src/repositories/task-repository.ts">task-repository</a>, <a href="../apprendre/explorateur-du-projet.html#src/use-cases/task-use-cases.ts">task-use-cases</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/(tabs)/tasks.tsx">(tabs)/tasks</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/tasks/[id].tsx">tasks/[id]</a></td><td>Route dynamique <code>[id]</code> (<code>useLocalSearchParams</code>), suppression annulable 30 s avec la snackbar du store Zustand (<a href="../apprendre/explorateur-du-projet.html#src/store/app-store.ts">app-store</a>)</td></tr>
+  <tr><td>Personnes</td><td>persons, interactions</td><td><a href="../apprendre/explorateur-du-projet.html#src/domain/rules/person-rules.ts">person-rules</a>, <a href="../apprendre/explorateur-du-projet.html#src/repositories/person-repository.ts">person-repository</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/people/new.tsx">people/new</a></td><td>Contact « oublié », import des contacts du téléphone (expo-contacts)</td></tr>
+  <tr><td>Calendrier</td><td>events, event_persons</td><td><a href="../apprendre/explorateur-du-projet.html#src/use-cases/event-use-cases.ts">event-use-cases</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/(tabs)/calendar.tsx">(tabs)/calendar</a></td><td>Mélanger plusieurs sources (événements, rappels, tâches) en un agenda</td></tr>
+  <tr><td>Habitudes</td><td>habits, habit_completions, habit_pauses</td><td><a href="../apprendre/explorateur-du-projet.html#src/domain/rules/habit-rules.ts">habit-rules</a> (calcul de série)</td><td>Un calcul de série qui saute les pauses</td></tr>
+  <tr><td>Objectifs</td><td>goals, goal_tasks</td><td><a href="../apprendre/explorateur-du-projet.html#src/domain/rules/goal-rules.ts">goal-rules</a></td><td>Table de liaison (plusieurs-à-plusieurs)</td></tr>
+  <tr><td>Suggestions (onglet Pulse)</td><td>suggestions</td><td><a href="../apprendre/explorateur-du-projet.html#src/use-cases/suggestion-use-cases.ts">suggestion-use-cases</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/(tabs)/pulse.tsx">(tabs)/pulse</a></td><td>Un « moteur » à règles, sans IA : il propose, l'utilisateur décide</td></tr>
+  <tr><td>Paramètres</td><td>settings (une seule ligne, id = '1')</td><td><a href="../apprendre/explorateur-du-projet.html#src/repositories/settings-repository.ts">settings-repository</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/settings/index.tsx">settings</a></td><td>Une table « singleton »</td></tr>
+</table>
+<div class="row"><span class="lbl">Contrôle</span>Pour chaque module : <code>npx tsc --noEmit</code> sans erreur, <code>npx jest</code> vert, et le parcours créer → voir → modifier → supprimer marche sur le téléphone.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« FOREIGN KEY constraint failed » : tu enregistres un lien vers une ligne qui n'existe pas (ex. une tâche liée à une personne supprimée).</div>
+
+<h3 id="p12">Phase 12 · Le design system</h3>
+<p>Fin septembre et début octobre, le projet a remplacé les couleurs écrites partout par un <b>design system</b> : des « jetons » (tokens) de couleur, d'espacement et de rayon, une carte unique (GlowCard), un bouton unique, et deux palettes (sombre « Midnight », claire « crème »).</p>
+<div class="term"><div class="tbar">Terminal</div><pre><span class="cmd">npx expo install expo-linear-gradient expo-blur react-native-svg expo-font @expo-google-fonts/inter @expo-google-fonts/outfit expo-glass-effect</span></pre></div>
+<table><tr><th>Ordre</th><th>Fichier</th><th>Rôle</th></tr>
+<tr><td>1</td><td><a href="../apprendre/explorateur-du-projet.html#src/constants/palettes.ts">src/constants/palettes.ts</a></td><td>les deux palettes, avec des noms de rôle (fond, texte, accent)</td></tr>
+<tr><td>2</td><td><a href="../apprendre/explorateur-du-projet.html#src/constants/theme.ts">src/constants/theme.ts</a></td><td>espacements, rayons, typographie, durées</td></tr>
+<tr><td>3</td><td><a href="../apprendre/explorateur-du-projet.html#src/hooks/use-theme.ts">src/hooks/use-theme.ts</a>, <a href="../apprendre/explorateur-du-projet.html#src/hooks/use-themed-styles.ts">use-themed-styles.ts</a></td><td>la palette active, et des styles qui suivent le thème</td></tr>
+<tr><td>4</td><td><a href="../apprendre/explorateur-du-projet.html#src/components/ui/GlowCard.tsx">GlowCard</a>, <a href="../apprendre/explorateur-du-projet.html#src/components/ui/Button.tsx">Button</a>, <a href="../apprendre/explorateur-du-projet.html#src/components/ui/PillTopBar.tsx">PillTopBar</a></td><td>les briques réutilisables</td></tr>
+<tr><td>5</td><td><a href="../apprendre/explorateur-du-projet.html#src/styles/">src/styles/</a></td><td>les styles sortis des écrans (un fichier par écran)</td></tr></table>
+<p><b>Recette :</b> chaque écran remplace <code>"#141317"</code> par <code>theme.background</code>, et <code>StyleSheet.create</code> au niveau du module par une fabrique <code>makeStyles(theme)</code> passée à <code>useThemedStyles</code>. Les polices se chargent dans <code>_layout.tsx</code> avec <code>useFonts</code> (<a href="../apprendre/explorateur-du-projet.html#src/app/_layout.tsx">voir le vrai cadre racine</a>).</p>
+<div class="row"><span class="lbl">Contrôle</span>Réglage « Thème » de l'app sur Clair : tout l'écran passe en crème sans texte illisible.</div>
+
+<h3 id="p13">Phase 13 · La qualité : TypeScript, ESLint, Jest, Husky, CI</h3>
+<div class="term"><div class="tbar">Terminal — dossier du projet</div><pre><span class="cmd">npx expo lint</span>                                   <span class="c"># 1re fois : crée eslint.config.js et installe ESLint</span>
+<span class="cmd">npm install --save-dev husky lint-staged</span>
+<span class="cmd">npx husky init</span>                                  <span class="c"># crée .husky/pre-commit et le script "prepare"</span></pre></div>
+<p>Puis, comme le vrai projet :</p>
+<ul>
+  <li><code>.husky/pre-commit</code> contient deux lignes : <code>npx lint-staged</code> et <code>npx tsc --noEmit</code> (<a href="../apprendre/explorateur-du-projet.html#.husky/pre-commit">voir</a>) ;</li>
+  <li><code>package.json</code> reçoit <code>"lint-staged": { "*.{ts,tsx}": ["eslint --fix"] }</code> ;</li>
+  <li><code>.github/workflows/ci.yml</code> fait tourner <code>npm ci</code>, <code>npx tsc --noEmit</code>, <code>npx expo lint</code>, <code>npx jest --ci</code> sur GitHub à chaque push (<a href="../apprendre/explorateur-du-projet.html#.github/workflows/ci.yml">voir</a>) ;</li>
+  <li><code>jest.setup.js</code> remplace les modules natifs par des imitations pour les tests (<a href="../apprendre/explorateur-du-projet.html#jest.setup.js">voir</a>).</li>
+</ul>
+<div class="row"><span class="lbl">Contrôle</span>Un commit avec une erreur de type est <b>refusé</b> par le hook pre-commit.</div>
+<div class="row"><span class="lbl">Si ça rate</span>Le hook ne se lance pas : <code>npm install</code> (le script <code>prepare</code> réinstalle Husky).</div>
+
+<h3 id="p14">Phase 14 · Le premier lancement, l'animation et le son</h3>
+<div class="term"><div class="tbar">Terminal</div><pre><span class="cmd">npx expo install expo-splash-screen expo-system-ui expo-audio expo-asset expo-haptics</span></pre></div>
+<ul>
+  <li><b>Onboarding</b> : un groupe de routes <a href="../apprendre/explorateur-du-projet.html#src/app/(onboarding)/">src/app/(onboarding)/</a> (5 écrans). Le cadre racine lit <code>onboarding_completed</code> dans les réglages et redirige vers <code>(onboarding)</code> ou <code>(tabs)</code>.</li>
+  <li><b>Animation de lancement</b> de 4 secondes : <a href="../apprendre/explorateur-du-projet.html#src/features/launch/SplashAnimation.tsx">SplashAnimation</a> + <a href="../apprendre/explorateur-du-projet.html#src/services/session/SessionManager.ts">SessionManager</a> (ne la rejouer qu'après 15 min d'absence).</li>
+  <li><b>Son des notifications</b> : le fichier .wav déclaré dans le plugin <code>expo-notifications</code> d'<code>app.json</code>, joué app ouverte par <a href="../apprendre/explorateur-du-projet.html#src/services/sound/NotificationSoundService.ts">NotificationSoundService</a>.</li>
+</ul>
+
+<h3 id="p15">Phase 15 · Passer au SDK 58</h3>
+<div class="term"><div class="tbar">Terminal — dossier du projet, serveur arrêté</div><pre><span class="cmd">npx expo install expo@^58.0.0 --fix</span>     <span class="c"># Expo 58 + toutes les bibliothèques à la version compatible</span>
+<span class="cmd">npx expo-doctor</span>                         <span class="c"># vérifie le projet : viser « 21/21 checks passed »</span></pre></div>
+<div class="row"><span class="lbl">Contrôle</span><code>package.json</code> affiche <code>"expo": "~58.0…"</code> et <code>npx expo-doctor</code> ne signale aucun problème.</div>
+<div class="row"><span class="lbl">Si ça rate</span>Expo Go refuse le projet après la mise à jour : c'est attendu tant qu'Expo Go ne prend pas encore le SDK 58 ; passe au build de développement (phase 16).</div>
+
+<h3 id="p16">Phase 16 · La sécurité, et le passage au build de développement</h3>
+<div class="box warn"><b>Ici, Expo Go ne suffit plus</b>Les modules qui suivent contiennent du code natif (C++, Java) absent d'Expo Go. On fabrique sa propre app de développement, installée par câble USB. Il faut Android Studio (Java et SDK Android, voir <a href="FICHE-003-build-local-apk.md">FICHE 003</a>) et le « débogage USB » activé sur le téléphone (Paramètres › À propos › appuyer 7 fois sur « Numéro de build », puis Options pour les développeurs › Débogage USB).</div>
+<div class="term"><div class="tbar">Terminal</div><pre><span class="cmd">npx expo install expo-secure-store expo-local-authentication expo-screen-capture react-native-quick-crypto react-native-nitro-modules react-native-quick-base64</span>
+<span class="cmd">npm install @noble/ciphers @noble/hashes zod</span>
+<span class="cmd">npx expo run:android</span>        <span class="c"># fabrique le dossier android/, compile, installe sur le téléphone branché, lance Metro</span></pre></div>
+<table><tr><th>Ordre</th><th>Ce qui est construit</th><th>Fichiers</th></tr>
+<tr><td>1</td><td>Le coffre de clés du téléphone</td><td><a href="../apprendre/explorateur-du-projet.html#src/services/kdf.ts">kdf.ts</a> (mot de passe → clé), <code>expo-secure-store</code></td></tr>
+<tr><td>2</td><td>Le Sanctuaire chiffré (PIN, empreinte)</td><td><a href="../apprendre/explorateur-du-projet.html#src/services/sanctum-crypto.ts">sanctum-crypto</a>, <a href="../apprendre/explorateur-du-projet.html#src/services/sanctum-auth-service.ts">sanctum-auth-service</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/sanctum.tsx">sanctum.tsx</a></td></tr>
+<tr><td>3</td><td>La base entière chiffrée (SQLCipher)</td><td><code>"useSQLCipher": true</code> dans le plugin <code>expo-sqlite</code> d'<code>app.json</code>, <a href="../apprendre/explorateur-du-projet.html#src/database/database-encryption.ts">database-encryption.ts</a></td></tr>
+<tr><td>4</td><td>Le verrouillage par empreinte</td><td><a href="../apprendre/explorateur-du-projet.html#src/services/app-lock-service.ts">app-lock-service</a>, <a href="../apprendre/explorateur-du-projet.html#src/features/security/AppLockScreen.tsx">AppLockScreen</a></td></tr></table>
+<div class="row"><span class="lbl">Contrôle</span>L'app « Junix Pulse » installée par <code>npx expo run:android</code> s'ouvre sur le téléphone et se met à jour à chaque Ctrl+S, comme avec Expo Go.</div>
+<div class="row"><span class="lbl">Si ça rate</span>« SDK location not found » ou erreur Java : suis les étapes 1 et 2 de la FICHE 003 (variables <code>ANDROID_HOME</code> et <code>JAVA_HOME</code>). « No devices » : câble, débogage USB, et accepter l'empreinte RSA sur le téléphone.</div>
+
+<h3 id="p17">Phase 17 · Les sauvegardes chiffrées</h3>
+<div class="term"><div class="tbar">Terminal</div><pre><span class="cmd">npx expo install expo-file-system expo-document-picker expo-sharing expo-background-task expo-task-manager</span></pre></div>
+<p>Ordre : <a href="../apprendre/explorateur-du-projet.html#src/services/backup-crypto.ts">backup-crypto</a> (chiffrer un texte avec un mot de passe) → <a href="../apprendre/explorateur-du-projet.html#src/services/backup-service.ts">backup-service</a> (toutes les tables en JSON, vérifiées par zod) → <a href="../apprendre/explorateur-du-projet.html#src/features/backup/use-backup-restore.tsx">use-backup-restore</a> (restaurer sans rien écraser) → <a href="../apprendre/explorateur-du-projet.html#src/services/auto-backup-service.ts">auto-backup-service</a> + <a href="../apprendre/explorateur-du-projet.html#src/background/tasks.ts">background/tasks.ts</a> (une fois par semaine, app fermée) → <a href="../apprendre/explorateur-du-projet.html#src/components/settings/AutoBackupCard.tsx">AutoBackupCard</a> (voir <a href="FICHE-001-sauvegarde-auto.md">FICHE 001</a>). Les tâches de fond sont déclarées dans <a href="../apprendre/explorateur-du-projet.html#index.ts">index.ts</a>, avant Expo Router : c'est pourquoi le vrai projet a son propre point d'entrée (<code>"main": "index.ts"</code> dans <code>package.json</code>).</p>
+
+<h3 id="p18">Phase 18 · La mascotte Pulse</h3>
+<p>La mascotte a été construite du 31 octobre au 8 novembre, <b>règles d'abord</b>, dessin ensuite :</p>
+<ol>
+  <li>Règles pures et leurs tests : humeur (<a href="../apprendre/explorateur-du-projet.html#src/domain/rules/mascot-mood-rules.ts">mascot-mood-rules</a>), réactions, catalogue de phrases, propositions, heures.</li>
+  <li>Dessin animé avec <code>react-native-svg</code> et <code>react-native-reanimated</code> : <a href="../apprendre/explorateur-du-projet.html#src/features/mascot/PulseMascot.tsx">PulseMascot</a>, <a href="../apprendre/explorateur-du-projet.html#src/features/mascot/MascotFace.tsx">MascotFace</a>, <a href="../apprendre/explorateur-du-projet.html#src/features/mascot/MascotArms.tsx">MascotArms</a>, testé sur l'écran <a href="../apprendre/explorateur-du-projet.html#src/app/dev/mascot.tsx">/dev/mascot</a>.</li>
+  <li>Branchement sans couplage : les cas d'usage publient sur le <a href="../apprendre/explorateur-du-projet.html#src/services/mascot/mascot-event-bus.ts">bus d'événements</a> (« tâche terminée »), la mascotte écoute.</li>
+  <li>Compagnon qui suit l'utilisateur (<a href="../apprendre/explorateur-du-projet.html#src/features/mascot/MascotCompanion.tsx">MascotCompanion</a>), visite guidée, réglages, budget d'attention.</li>
+</ol>
+
+<h3 id="p19">Phase 19 · La traduction français / anglais</h3>
+<div class="term"><div class="tbar">Terminal</div><pre><span class="cmd">npx expo install expo-localization</span></pre></div>
+<p>Recette : tous les textes vont dans <a href="../apprendre/explorateur-du-projet.html#src/i18n/messages.ts">messages.ts</a> sous une clé (<code>'tab.home': 'Accueil'</code>) ; l'anglais a <b>exactement</b> les mêmes clés (TypeScript le vérifie) ; chaque écran fait <code>const t = useT()</code> puis <code>t('tab.home')</code> (<a href="../apprendre/explorateur-du-projet.html#src/i18n/index.ts">i18n/index.ts</a>). Le vrai projet a traduit écran par écran, un commit par écran, du 1er au 2 novembre.</p>
+
+<h3 id="p20">Phase 20 · Les dernières fonctions (5 au 11 novembre)</h3>
+<div class="term"><div class="tbar">Terminal</div><pre><span class="cmd">npx expo install react-native-android-widget expo-speech-recognition expo-calendar expo-device</span></pre></div>
+<table><tr><th>Fonction</th><th>Point d'entrée dans l'explorateur</th></tr>
+<tr><td>Plusieurs personnes par tâche et rappel, échéances, étiquettes de couleur</td><td><a href="../apprendre/explorateur-du-projet.html#src/components/people/">components/people</a>, <a href="../apprendre/explorateur-du-projet.html#src/domain/rules/deadline-rules.ts">deadline-rules</a>, <a href="../apprendre/explorateur-du-projet.html#src/components/tags/">components/tags</a> (migrations 31 à 33)</td></tr>
+<tr><td>La vue « Maintenant »</td><td><a href="../apprendre/explorateur-du-projet.html#src/domain/rules/now-rules.ts">now-rules</a>, <a href="../apprendre/explorateur-du-projet.html#src/app/now.tsx">now.tsx</a></td></tr>
+<tr><td>Le widget Android</td><td><a href="../apprendre/explorateur-du-projet.html#src/widget/">src/widget</a> + son plugin dans <code>app.json</code></td></tr>
+<tr><td>La dictée et l'agenda du téléphone</td><td><a href="../apprendre/explorateur-du-projet.html#src/features/capture/use-dictation.ts">use-dictation</a>, <a href="../apprendre/explorateur-du-projet.html#src/services/device-calendar-service.ts">device-calendar-service</a></td></tr>
+<tr><td>Le bilan du jour et de la semaine</td><td><a href="../apprendre/explorateur-du-projet.html#src/app/review.tsx">review.tsx</a></td></tr></table>
+
+<h3 id="p21">Phase 21 · Fabriquer l'APK à installer</h3>
+<p>Deux chemins, déjà documentés en détail :</p>
+<ul>
+  <li><b>Par les serveurs d'Expo (EAS)</b> — <a href="FICHE-002-commit-push-build.md">FICHE 002</a> :</li>
+</ul>
+<div class="term"><div class="tbar">Terminal — dossier du projet</div><pre><span class="cmd">npm install -g eas-cli</span>        <span class="c"># l'outil en ligne de commande d'EAS, une fois pour toutes</span>
+<span class="cmd">eas login</span>                     <span class="c"># ton compte Expo (tape toi-même ton mot de passe)</span>
+<span class="cmd">eas build:configure</span>           <span class="c"># crée eas.json et relie le projet à ton compte</span>
+<span class="cmd">eas build --platform android --profile preview</span>   <span class="c"># = npm run build:android dans le vrai projet</span></pre></div>
+<ul>
+  <li><b>Sur ton PC, sans quota</b> — <a href="FICHE-003-build-local-apk.md">FICHE 003</a> : <code>npx expo prebuild --platform android --clean</code>, puis Gradle (<code>gradlew assembleRelease</code>).</li>
+</ul>
+<div class="row"><span class="lbl">Contrôle</span>Un fichier <code>.apk</code> qui s'installe et s'ouvre sur le téléphone.</div>
+
+<h2 id="test">8. Test final</h2>
+<p>Dans le projet d'entraînement après la phase 10, puis dans le vrai projet :</p>
+<div class="term"><div class="tbar">Terminal — dossier du projet</div><pre><span class="cmd">npx tsc --noEmit</span>       <span class="c"># attendu : aucune ligne (aucune erreur de type)</span>
+<span class="cmd">npx expo lint</span>          <span class="c"># attendu : aucune erreur (des avertissements jaunes sont tolérés)</span>
+<span class="cmd">npx jest</span>               <span class="c"># attendu : « Tests: N passed » et aucun « failed »</span>
+<span class="cmd">npx expo-doctor</span>        <span class="c"># attendu : tous les contrôles réussis</span></pre></div>
+<p>Puis sur le téléphone : créer un rappel « Dans 1 h », le voir dans l'onglet Rappels, le terminer d'un tap sur le rond ; il disparaît de la liste.</p>
+
+<h2 id="depannage">9. Dépannage</h2>
+<table>
+<tr><th>Message exact (ou symptôme)</th><th>Cause</th><th>Remède</th></tr>
+<tr><td>« npx.ps1 ne peut pas être chargé car l'exécution de scripts est désactivée »</td><td>PowerShell bloque les scripts par défaut</td><td>Utiliser le terminal « Command Prompt » ou « Git Bash » de VS Code</td></tr>
+<tr><td>Expo Go tourne sans fin / « Could not connect to development server »</td><td>Pas le même Wi-Fi, ou réseau qui bloque</td><td><code>npx expo start --tunnel</code></td></tr>
+<tr><td>« Project is incompatible with this version of Expo Go »</td><td>Le SDK du projet ≠ celui d'Expo Go</td><td>Créer le projet avec <code>npx create-expo-app@latest</code> sans <code>--template</code>, ou passer au build de développement (phase 16)</td></tr>
+<tr><td>« Unable to resolve module X »</td><td>Bibliothèque pas installée, ou cache de Metro périmé</td><td><code>npx expo install X</code>, puis <code>npx expo start --clear</code></td></tr>
+<tr><td>« no such table: … »</td><td>Une migration manque ou n'a pas tourné</td><td>Ajouter une migration à la fin ; ne jamais modifier une migration existante</td></tr>
+<tr><td>« TurboModuleRegistry… could not be found » ou « Cannot find native module »</td><td>Un module natif dans Expo Go</td><td>Build de développement : <code>npx expo run:android</code></td></tr>
+<tr><td>« Unable to resolve ./wa-sqlite/wa-sqlite.wasm » (version web)</td><td>Metro ne connaît pas les fichiers .wasm</td><td>Ajouter <code>config.resolver.assetExts.push('wasm')</code> dans <code>metro.config.js</code> (<a href="../apprendre/explorateur-du-projet.html#metro.config.js">comme le vrai projet</a>)</td></tr>
+<tr><td>Le commit est refusé avec des erreurs TypeScript</td><td>Le hook pre-commit (phase 13) fait son travail</td><td>Corriger les erreurs affichées, puis recommitter</td></tr>
+<tr><td>Écran rouge dans l'app avec une pile d'appels</td><td>Une erreur JavaScript</td><td>Lire la <b>première</b> ligne : elle donne le message et le fichier ; corriger, Ctrl+S</td></tr>
+</table>
+
+<h2 id="lexique">10. Lexique</h2>
+<table>
+<tr><td><b>APK</b></td><td>Le fichier d'installation d'une app Android.</td></tr>
+<tr><td><b>Back-end</b></td><td>La partie qui gère la logique et les données. Ici, elle est locale, dans le téléphone.</td></tr>
+<tr><td><b>Build de développement</b></td><td>Ta propre version d'Expo Go, qui contient les modules natifs de ton projet.</td></tr>
+<tr><td><b>Bundler (Metro)</b></td><td>L'outil qui assemble tous les fichiers en un paquet envoyé au téléphone.</td></tr>
+<tr><td><b>Cas d'usage</b></td><td>Une fonction = une action de l'utilisateur ; elle orchestre les autres couches.</td></tr>
+<tr><td><b>CI (intégration continue)</b></td><td>Un robot qui vérifie le code à chaque envoi sur GitHub.</td></tr>
+<tr><td><b>Commit</b></td><td>Une photo du code enregistrée par Git, avec un message.</td></tr>
+<tr><td><b>Composant</b></td><td>Une fonction React qui renvoie de l'affichage ; réutilisable.</td></tr>
+<tr><td><b>Dépôt (repository)</b></td><td>Le fichier qui contient le SQL d'un sujet.</td></tr>
+<tr><td><b>Design system</b></td><td>L'ensemble des couleurs, tailles et composants partagés par tout l'app.</td></tr>
+<tr><td><b>Entité</b></td><td>La forme d'une donnée du métier (un rappel a un titre, une date…).</td></tr>
+<tr><td><b>Expo / SDK</b></td><td>Le cadre qui simplifie React Native ; le SDK est sa version (57, 58…).</td></tr>
+<tr><td><b>Expo Go</b></td><td>L'app du Play Store qui ouvre un projet Expo en développement, sans le fabriquer.</td></tr>
+<tr><td><b>Expo Router</b></td><td>La navigation par fichiers : un fichier de <code>src/app</code> = un écran.</td></tr>
+<tr><td><b>Front-end</b></td><td>Ce que l'utilisateur voit et touche.</td></tr>
+<tr><td><b>Hook</b></td><td>Une fonction React qui commence par <code>use</code> (<code>useState</code>, <code>useTheme</code>…).</td></tr>
+<tr><td><b>Import</b></td><td>La ligne en haut d'un fichier qui va chercher du code ailleurs.</td></tr>
+<tr><td><b>JSX</b></td><td>L'écriture <code>&lt;View&gt;…&lt;/View&gt;</code> dans du code TypeScript.</td></tr>
+<tr><td><b>Migration</b></td><td>Un changement numéroté de la base, appliqué une seule fois.</td></tr>
+<tr><td><b>Module natif</b></td><td>Du code Java/Kotlin/C++ appelé depuis JavaScript.</td></tr>
+<tr><td><b>npm / npx</b></td><td>npm installe des bibliothèques ; npx lance un outil.</td></tr>
+<tr><td><b>Promise / async / await</b></td><td>Une réponse qui arrive plus tard, et la façon de l'attendre.</td></tr>
+<tr><td><b>Props</b></td><td>Les paramètres qu'on donne à un composant.</td></tr>
+<tr><td><b>Règle pure</b></td><td>Une fonction qui calcule sans rien lire ni écrire autour d'elle.</td></tr>
+<tr><td><b>SQLite / SQL</b></td><td>Une base de données dans un fichier ; SQL est la langue pour lui parler.</td></tr>
+<tr><td><b>Store (Zustand)</b></td><td>La mémoire partagée entre écrans pendant que l'app tourne.</td></tr>
+<tr><td><b>Test (Jest)</b></td><td>Un petit programme qui vérifie qu'une fonction donne le résultat attendu.</td></tr>
+<tr><td><b>TypeScript</b></td><td>JavaScript avec des types : il signale les erreurs avant de lancer l'app.</td></tr>
+<tr><td><b>UUID</b></td><td>Un identifiant aléatoire si long qu'il est unique en pratique.</td></tr>
+</table>
+
+<h2 id="apres">11. Et après</h2>
+<ol>
+  <li><b>Lire le vrai projet avec l'explorateur</b>, en suivant son « parcours conseillé » (17 fichiers dans l'ordre). Pour chaque fichier : lire le commentaire du haut, puis chercher ce qui ressemble à ta tranche.</li>
+  <li><b>Ajouter le module Tâches au projet d'entraînement</b> en suivant la recette de la phase 11 : migration 2 (<code>tasks</code>), entité <code>Task</code>, <code>task-rules.ts</code> + test, <code>task-repository.ts</code>, <code>task-use-cases.ts</code>, remplir <code>(tabs)/tasks.tsx</code> et créer <code>tasks/new.tsx</code>. Compare ensuite avec les vrais fichiers.</li>
+  <li><b>Ajouter la suppression annulable</b> : un store Zustand (<code>npx expo install zustand</code>) avec une snackbar « Supprimé — Annuler », sur le modèle de <a href="../apprendre/explorateur-du-projet.html#src/store/app-store.ts">app-store.ts</a> et <a href="../apprendre/explorateur-du-projet.html#src/components/feedback/Snackbar.tsx">Snackbar.tsx</a>.</li>
+  <li><b>Faire le ménage dans le vrai projet</b> : l'explorateur signale quatre fichiers que plus rien n'importe (<code>src/components/today/TaskCard.tsx</code>, <code>src/domain/task.ts</code>, <code>src/domain/reminder.ts</code>, <code>src/use-cases/schedule-use-cases.ts</code>). Les supprimer, lancer <code>npx tsc --noEmit</code> et <code>npx jest</code>, puis committer.</li>
+  <li><b>Mettre l'explorateur à jour</b> après chaque changement : <code>node docs/apprendre/generer-explorateur.js</code>.</li>
+</ol>
+
+<h2 id="histoire">Annexe · L'histoire réelle de Junix Pulse (git log)</h2>
+<table class="timeline">
+<tr><th>Date (2026)</th><th>Étape</th></tr>
+<tr><td>3 sept.</td><td>Création du projet avec le modèle Expo (SDK 57)</td></tr>
+<tr><td>6 sept.</td><td>Squelette à 5 onglets ; installation d'expo-sqlite et date-fns</td></tr>
+<tr><td>9–10 sept.</td><td>Rappels, Tâches, Personnes, Calendrier, Habitudes, Objectifs, Planning, Suggestions, Paramètres</td></tr>
+<tr><td>24 sept.</td><td>Nouvelle identité visuelle, logo, Capture rapide, Sanctuaire, Recherche</td></tr>
+<tr><td>28 sept.</td><td>Journal centralisé (logger), restauration chiffrée, types stricts partout</td></tr>
+<tr><td>1–2 oct.</td><td>Husky, lint-staged, CI, Jest ; styles sortis des écrans</td></tr>
+<tr><td>2–4 oct.</td><td>GlowCard et fond animé sur tous les écrans</td></tr>
+<tr><td>11–15 oct.</td><td>Design « Midnight Glassmorphism », thème clair/sombre dynamique, 195 tests</td></tr>
+<tr><td>19–21 oct.</td><td>Chiffrement du Sanctuaire, accessibilité, onboarding, Focus (Pomodoro)</td></tr>
+<tr><td>28–31 oct.</td><td>Animation de lancement, son, grille horaire de la semaine</td></tr>
+<tr><td>31 oct.–2 nov.</td><td>Mascotte Pulse ; traduction anglaise de toute l'app</td></tr>
+<tr><td>4–5 nov.</td><td>Clés dérivées en natif, base chiffrée, sauvegarde automatique, alertes en verre</td></tr>
+<tr><td>7–8 nov.</td><td>Personnes au centre, échéances, étiquettes, vue Maintenant, widget, humeurs de la mascotte</td></tr>
+<tr><td>11 nov.</td><td>Carte de sauvegarde automatique ; fiches opératoires 001 à 003</td></tr>
+</table>
+<p class="meta">Fiche rédigée le 12 novembre 2026 à partir du code au commit <code>132bd3d</code>. Le code des phases 2 à 10 a été vérifié avec TypeScript (<code>tsc --noEmit</code>, sans erreur) et Jest (5 tests réussis) avec les bibliothèques du projet ; il n'a pas été lancé sur un téléphone pendant la rédaction.</p>
+</main>
+</div>
+</body>
+</html>

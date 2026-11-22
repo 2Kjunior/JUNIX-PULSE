@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explorateur Junix Pulse</title>
+<style>
+:root {
+  --bg: #1e1e1e; --side: #181818; --bar: #1f1f1f; --line: #2b2b2b; --hover: #2a2d2e; --sel: #04395e; --sel-line: #0078d4;
+  --text: #cccccc; --strong: #ffffff; --muted: #9d9d9d; --faint: #6e6e6e; --card: #252526; --code: #1e1e1e; --chip: #2d2d30;
+  --accent: #3794ff; --guide: #3a3a3a;
+  --k: #569cd6; --s: #ce9178; --c: #6a9955; --n: #b5cea8; --f: #dcdcaa; --t: #4ec9b0; --ctl: #c586c0;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #ffffff; --side: #f8f8f8; --bar: #f3f3f3; --line: #e5e5e5; --hover: #e8e8e8; --sel: #cce4f7; --sel-line: #005fb8;
+  --text: #3b3b3b; --strong: #111111; --muted: #616161; --faint: #8a8a8a; --card: #f6f6f6; --code: #ffffff; --chip: #ececec;
+  --accent: #005fb8; --guide: #d6d6d6;
+  --k: #0000ff; --s: #a31515; --c: #008000; --n: #098658; --f: #795e26; --t: #267f99; --ctl: #af00db;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; }
+button { font: inherit; color: inherit; }
+a { color: var(--accent); }
+code, .mono { font-family: Consolas, "Cascadia Code", "Courier New", monospace; }
+header { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: var(--bar); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+header h1 { font-size: 14px; font-weight: 600; margin: 0 8px 0 0; color: var(--strong); white-space: nowrap; }
+header h1 span { color: var(--muted); font-weight: 400; }
+#search { flex: 1 1 260px; min-width: 0; max-width: 520px; background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 6px 10px; font: inherit; }
+#search:focus { outline: 1px solid var(--accent); }
+.hbtn { background: var(--chip); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; white-space: nowrap; text-decoration: none; color: var(--text); font-size: 13px; }
+.hbtn:hover { background: var(--hover); }
+main { flex: 1; display: flex; min-height: 0; }
+#side { width: 340px; min-width: 240px; background: var(--side); border-right: 1px solid var(--line); overflow: auto; resize: horizontal; }
+.side-title { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px 6px; position: sticky; top: 0; background: var(--side); z-index: 1; }
+#tree { padding-bottom: 40px; }
+.row { display: flex; align-items: center; gap: 4px; height: 24px; padding-right: 8px; cursor: pointer; white-space: nowrap; border: 1px solid transparent; position: relative; width: 100%; background: none; text-align: left; }
+.row:hover { background: var(--hover); }
+.row.sel { background: var(--sel); border-color: var(--sel-line); }
+.row:focus-visible { outline: 1px solid var(--sel-line); outline-offset: -1px; }
+.chev { width: 16px; flex: none; text-align: center; color: var(--muted); font-size: 11px; transition: transform .12s; }
+.open > .row .chev { transform: rotate(90deg); }
+.ico { flex: none; width: 18px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font: 700 9px/1 Consolas, monospace; border-radius: 2px; }
+.name { overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.gen .name { color: var(--faint); font-style: italic; }
+.dot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; flex: none; opacity: .85; }
+.kids { display: none; position: relative; }
+.open > .kids { display: block; }
+.guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--guide); }
+.hit .name { color: var(--strong); }
+.hit .name mark { background: #f5d76e55; color: inherit; border-radius: 2px; }
+#view { flex: 1; overflow: auto; min-width: 0; }
+.wrap { max-width: 1080px; padding: 22px 28px 60px; }
+.crumbs { font-size: 13px; color: var(--muted); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 2px; }
+.crumbs button { background: none; border: 0; padding: 0 2px; cursor: pointer; color: var(--muted); }
+.crumbs button:hover { color: var(--accent); text-decoration: underline; }
+h2 { font-size: 22px; margin: 0 0 8px; color: var(--strong); font-weight: 600; word-break: break-word; }
+h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 26px 0 10px; font-weight: 600; }
+.badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.badge { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); }
+.layer-badge { color: #111; border: 0; font-weight: 600; }
+.desc { font-size: 15.5px; color: var(--strong); max-width: 820px; }
+.help { color: var(--muted); font-size: 13.5px; margin-top: 8px; max-width: 820px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.link { background: var(--chip); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; cursor: pointer; font: 12.5px Consolas, monospace; display: inline-flex; gap: 6px; align-items: center; max-width: 100%; text-align: left; word-break: break-all; }
+.link:hover { border-color: var(--accent); }
+.link i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: none; }
+.pkgs { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13px; }
+.pkgs code { color: var(--t); }
+.empty { color: var(--faint); font-size: 13px; }
+.code { background: var(--code); border: 1px solid var(--line); border-radius: 8px; overflow: auto; font: 13px/1.5 Consolas, "Cascadia Code", monospace; max-height: 78vh; }
+.code table { border-collapse: collapse; min-width: 100%; }
+.code td { padding: 0 14px 0 0; vertical-align: top; white-space: pre; }
+.code td.ln { color: var(--faint); text-align: right; padding: 0 12px 0 12px; user-select: none; position: sticky; left: 0; background: var(--code); border-right: 1px solid var(--line); }
+.tk-k { color: var(--k); } .tk-s { color: var(--s); } .tk-c { color: var(--c); font-style: italic; } .tk-n { color: var(--n); } .tk-f { color: var(--f); } .tk-t { color: var(--t); } .tk-ctl { color: var(--ctl); }
+.kids-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.kids-table td { border-top: 1px solid var(--line); padding: 7px 10px 7px 0; vertical-align: top; }
+.kids-table td:first-child { white-space: nowrap; }
+.kids-table button { background: none; border: 0; cursor: pointer; color: var(--accent); font: 13px Consolas, monospace; padding: 0; text-align: left; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.grid3 .card { margin: 0; }
+.card b { color: var(--strong); }
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 10px 0; }
+.step { flex: 1 1 150px; background: var(--card); border: 1px solid var(--line); border-top: 3px solid; border-radius: 8px; padding: 10px 12px; cursor: pointer; text-align: left; min-width: 140px; }
+.step:hover { border-color: var(--accent); }
+.step small { display: block; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+.step code { display: block; font-size: 12px; color: var(--strong); margin: 3px 0; word-break: break-all; }
+.step span { font-size: 12.5px; color: var(--muted); }
+.arrow { align-self: center; color: var(--faint); padding: 0 6px; font-size: 18px; }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.legend div { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; flex: none; margin-top: 4px; }
+ol.path li { margin: 6px 0; }
+ol.path button { background: none; border: 0; color: var(--accent); cursor: pointer; font: 13px Consolas, monospace; padding: 0; }
+.media { max-width: 320px; max-height: 320px; border: 1px solid var(--line); border-radius: 8px; background: repeating-conic-gradient(#8883 0 25%, transparent 0 50%) 50% / 16px 16px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 760px) {
+  main { flex-direction: column; }
+  #side { width: auto; max-height: 45vh; resize: none; border-right: 0; border-bottom: 1px solid var(--line); }
+  .wrap { padding: 16px; }
+  .split { grid-template-columns: 1fr; }
+  .arrow { transform: rotate(90deg); width: 100%; text-align: center; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Junix Pulse <span>· explorateur du projet</span></h1>
+  <input id="search" type="search" placeholder="Chercher un fichier ou un mot (ex. rappel, sqlite, mascotte)…" aria-label="Chercher">
+  <button class="hbtn" id="home">Accueil du guide</button>
+  <button class="hbtn" id="collapse">Tout replier</button>
+  <a class="hbtn" href="../fiches/FICHE-004-construire-junix-pulse-de-zero.html">Tutoriel de construction</a>
+  <button class="hbtn" id="theme" aria-label="Changer de thème">Clair / sombre</button>
+</header>
+<main>
+  <nav id="side" aria-label="Arborescence">
+    <div class="side-title">Explorateur · junix-pulse-glowcard</div>
+    <div id="tree" role="tree"></div>
+  </nav>
+  <section id="view" aria-live="polite"></section>
+</main>
+<script id="data" type="application/json">/*__DATA__*/null</script>
+<script>
+(function () {
+  'use strict';
+  var DATA = JSON.parse(document.getElementById('data').textContent);
+  var E = DATA.entries, L = DATA.layers;
+  var $tree = document.getElementById('tree'), $view = document.getElementById('view'), $search = document.getElementById('search');
+
+  // ─── Thème ───
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('jp-theme'); if (saved) root.dataset.theme = saved; } catch (e) {}
+  document.getElementById('theme').onclick = function () {
+    root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+    try { localStorage.setItem('jp-theme', root.dataset.theme); } catch (e) {}
+  };
+
+  // ─── Construire l'arbre à partir des chemins ───
+  var tree = { name: 'junix-pulse-glowcard', path: '', dirs: {}, files: [] };
+  Object.keys(E).forEach(function (p) {
+    var isDir = p.slice(-1) === '/';
+    var parts = p.replace(/\/$/, '').split('/');
+    var node = tree, acc = '';
+    var last = isDir ? parts.length : parts.length - 1;
+    for (var i = 0; i < last; i++) {
+      acc += parts[i] + '/';
+      if (!node.dirs[parts[i]]) node.dirs[parts[i]] = { name: parts[i], path: acc, dirs: {}, files: [] };
+      node = node.dirs[parts[i]];
+    }
+    if (!isDir) node.files.push({ name: parts[parts.length - 1], path: p });
+  });
+  function sortName(a, b) { return a.name.toLowerCase().localeCompare(b.name.toLowerCase(), 'en'); }
+  function dirList(n) { return Object.keys(n.dirs).map(function (k) { return n.dirs[k]; }).sort(sortName); }
+  function countFiles(n) { var c = n.files.length; dirList(n).forEach(function (d) { c += countFiles(d); }); return c; }
+  function findDir(path) {
+    var n = tree; if (!path) return n;
+    var parts = path.replace(/\/$/, '').split('/');
+    for (var i = 0; i < parts.length; i++) { n = n.dirs[parts[i]]; if (!n) return null; }
+    return n;
+  }
+  function isGenerated(path) { return E[path] && E[path].gen; }
+
+  // ─── Icônes de fichiers, façon VS Code ───
+  var ICONS = {
+    tsx: ['⚛', '#4fc1ff'], ts: ['TS', '#3178c6'], js: ['JS', '#e8d44d'], mjs: ['JS', '#e8d44d'], json: ['{}', '#e8d44d'], md: ['M↓', '#519aba'],
+    html: ['<>', '#e44d26'], css: ['#', '#a074c4'], yml: ['!', '#cb171e'], png: ['▣', '#a074c4'], jpg: ['▣', '#a074c4'], svg: ['◇', '#ffb13b'],
+    wav: ['♪', '#ef7c3c'], mp3: ['♪', '#ef7c3c'], ps1: ['>_', '#4f8fd6'], pdf: ['PDF', '#e44d26'],
+  };
+  function fileIcon(name) {
+    if (name === 'package.json' || name === 'package-lock.json') return ['npm', '#cb3837'];
+    if (/^\.git/.test(name)) return ['git', '#f14e32'];
+    if (name === 'LICENSE') return ['§', '#cbcb41'];
+    if (name.indexOf('.') <= 0 && name[0] !== '.') return ['·', '#999'];
+    var ext = name.split('.').pop().toLowerCase();
+    return ICONS[ext] || ['•', '#999'];
+  }
+  function folderIcon(open) {
+    return '<svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M1 2.5C1 1.7 1.7 1 2.5 1h3.6l1.6 1.6h5.8c.8 0 1.5.7 1.5 1.5v7.4c0 .8-.7 1.5-1.5 1.5h-11C1.7 13 1 12.3 1 11.5z" fill="' + (open ? '#dcb67a' : '#c09553') + '"/></svg>';
+  }
+  function layerColor(path) { var e = E[path]; var l = e ? e.l : layerOfDir(path); return L[l] ? L[l].color : '#999'; }
+  function layerOfDir(path) {
+    var keys = Object.keys(E).filter(function (k) { return k.indexOf(path) === 0 && k.slice(-1) !== '/'; });
+    var count = {}; keys.forEach(function (k) { count[E[k].l] = (count[E[k].l] || 0) + 1; });
+    var best = null; Object.keys(count).forEach(function (k) { if (!best || count[k] > count[best]) best = k; });
+    return best;
+  }
+  function shortDesc(path) {
+    var d = path.slice(-1) === '/' ? DATA.folders[path] : (E[path] && E[path].d);
+    d = d || '';
+    var cut = d.indexOf('. ');
+    return cut > 0 && cut < 180 ? d.slice(0, cut + 1) : d.slice(0, 180);
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ─── Rendu de l'arbre (paresseux : un dossier est dessiné à sa première ouverture) ───
+  var openDirs = {};
+  try { openDirs = JSON.parse(localStorage.getItem('jp-open') || '{}'); } catch (e) {}
+  if (!Object.keys(openDirs).length) openDirs = { 'src/': true };
+  function saveOpen() { try { localStorage.setItem('jp-open', JSON.stringify(openDirs)); } catch (e) {} }
+
+  function rowHTML(depth, inner, path, extraClass, title) {
+    var guides = '';
+    for (var i = 0; i < depth; i++) guides += '<span class="guide" style="left:' + (14 + i * 14) + 'px"></span>';
+    return '<button class="row ' + (extraClass || '') + '" role="treeitem" data-path="' + esc(path) + '" style="padding-left:' + (6 + depth * 14) + 'px" title="' + esc(title) + '">' + guides + inner + '</button>';
+  }
+  function renderDir(dir, depth, filter) {
+    var html = '';
+    dirList(dir).forEach(function (d) {
+      if (filter && !filter.dirs[d.path]) return;
+      var open = filter ? true : !!openDirs[d.path];
+      var gen = isGenerated(d.path);
+      html += '<div class="dir' + (open ? ' open' : '') + (gen ? ' gen' : '') + '" data-dir="' + esc(d.path) + '">' +
+        rowHTML(depth, '<span class="chev">▶</span><span class="ico">' + folderIcon(open) + '</span><span class="name">' + hl(d.name, filter) + '</span><i class="dot" style="background:' + layerColor(d.path) + '"></i>', d.path, filter && filter.hits[d.path] ? 'hit' : '', shortDesc(d.path)) +
+        '<div class="kids" role="group">' + (open ? renderDir(d, depth + 1, filter) : '') + '</div></div>';
+    });
+    dir.files.slice().sort(function (a, b) {
+      // VS Code : fichiers commençant par un point d'abord, puis l'ordre alphabétique
+      return sortName(a, b);
+    }).forEach(function (f) {
+      if (filter && !filter.files[f.path]) return;
+      var ic = fileIcon(f.name), gen = isGenerated(f.path);
+      html += '<div class="file' + (gen ? ' gen' : '') + '">' + rowHTML(depth, '<span class="chev"></span><span class="ico" style="color:' + ic[1] + '">' + ic[0] + '</span><span class="name">' + hl(f.name, filter) + '</span><i class="dot" style="background:' + layerColor(f.path) + '"></i>', f.path, (filter && filter.hits[f.path] ? 'hit' : '') + (current === f.path ? ' sel' : ''), shortDesc(f.path)) + '</div>';
+    });
+    return html;
+  }
+  function hl(name, filter) {
+    if (!filter || !filter.q) return esc(name);
+    var i = name.toLowerCase().indexOf(filter.q);
+    if (i < 0) return esc(name);
+    return esc(name.slice(0, i)) + '<mark>' + esc(name.slice(i, i + filter.q.length)) + '</mark>' + esc(name.slice(i + filter.q.length));
+  }
+  var currentFilter = null;
+  function drawTree() {
+    $tree.innerHTML = renderDir(tree, 0, currentFilter);
+    markSelected();
+  }
+  function markSelected() {
+    Array.prototype.forEach.call($tree.querySelectorAll('.row.sel'), function (r) { r.classList.remove('sel'); });
+    var r = $tree.querySelector('.row[data-path="' + cssEsc(current) + '"]');
+    if (r) r.classList.add('sel');
+  }
+  function cssEsc(s) { return String(s || '').replace(/(["\\])/g, '\\$1'); }
+
+  $tree.addEventListener('click', function (ev) {
+    var row = ev.target.closest('.row'); if (!row) return;
+    var path = row.getAttribute('data-path');
+    if (path.slice(-1) === '/') {
+      var box = row.parentNode;
+      if (currentFilter) { go(path); return; }
+      var open = !box.classList.contains('open');
+      box.classList.toggle('open', open);
+      openDirs[path] = open; if (!open) delete openDirs[path];
+      saveOpen();
+      row.querySelector('.ico').innerHTML = folderIcon(open);
+      var kids = box.querySelector(':scope > .kids');
+      if (open && !kids.innerHTML) kids.innerHTML = renderDir(findDir(path), depthOf(path), null);
+      go(path, true);
+    } else go(path, true);
+  });
+  function depthOf(path) { return path.replace(/\/$/, '').split('/').length; }
+
+  document.getElementById('collapse').onclick = function () { openDirs = {}; saveOpen(); $search.value = ''; currentFilter = null; drawTree(); };
+  document.getElementById('home').onclick = function () { location.hash = ''; };
+
+  // ─── Recherche : dans les noms ET dans les descriptions ───
+  var timer;
+  $search.addEventListener('input', function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      var q = $search.value.trim().toLowerCase();
+      if (!q) { currentFilter = null; drawTree(); return; }
+      var f = { q: q, files: {}, dirs: {}, hits: {} };
+      function keep(path) {
+        var parts = path.replace(/\/$/, '').split('/'), acc = '';
+        for (var i = 0; i < parts.length - (path.slice(-1) === '/' ? 0 : 1); i++) { acc += parts[i] + '/'; f.dirs[acc] = true; }
+        if (path.slice(-1) !== '/') f.files[path] = true;
+      }
+      Object.keys(E).forEach(function (p) {
+        var text = (p + ' ' + (E[p].d || '') + ' ' + (E[p].p || []).join(' ')).toLowerCase();
+        if (text.indexOf(q) >= 0) { keep(p); f.hits[p] = true; }
+      });
+      Object.keys(DATA.folders).forEach(function (p) {
+        if (p && (p + ' ' + DATA.folders[p]).toLowerCase().indexOf(q) >= 0 && findDir(p)) { keep(p); f.hits[p] = true; }
+      });
+      currentFilter = f; drawTree();
+    }, 150);
+  });
+
+  // ─── Navigation par l'adresse (#src/app/_layout.tsx) ───
+  var current = '';
+  function go(path, fromTree) {
+    if (decodeURIComponent(location.hash.slice(1)) === path) { show(path, fromTree); return; }
+    skipReveal = !!fromTree;
+    location.hash = encodeURI(path);
+  }
+  var skipReveal = false;
+  window.addEventListener('hashchange', function () { show(decodeURIComponent(location.hash.slice(1)), skipReveal); skipReveal = false; });
+  function reveal(path) {
+    var parts = path.replace(/\/$/, '').split('/'), acc = '', changed = false;
+    for (var i = 0; i < parts.length - (path.slice(-1) === '/' ? 0 : 1); i++) { acc += parts[i] + '/'; if (!openDirs[acc]) { openDirs[acc] = true; changed = true; } }
+    if (changed) { saveOpen(); if (!currentFilter) drawTree(); }
+    var r = $tree.querySelector('.row[data-path="' + cssEsc(path) + '"]');
+    if (r && r.scrollIntoView) r.scrollIntoView({ block: 'nearest' });
+  }
+  function show(path, fromTree) {
+    current = path;
+    if (!path) renderHome();
+    else if (path.slice(-1) === '/') renderFolder(path);
+    else if (E[path]) renderFile(path);
+    else renderHome();
+    if (path && !fromTree) reveal(path);
+    markSelected();
+    $view.scrollTop = 0;
+  }
+
+  // ─── Vues ───
+  function link(path) {
+    var e = E[path];
+    return '<button class="link" data-go="' + esc(path) + '" title="' + esc(shortDesc(path)) + '"><i style="background:' + layerColor(path) + '"></i>' + esc(path.replace(/^src\//, '')) + '</button>';
+  }
+  function crumbs(path) {
+    var parts = path.replace(/\/$/, '').split('/'), acc = '', html = '<button data-go="">junix-pulse-glowcard</button>';
+    parts.forEach(function (p, i) {
+      acc += p + (i < parts.length - 1 || path.slice(-1) === '/' ? '/' : '');
+      html += '<span>›</span><button data-go="' + esc(acc) + '">' + esc(p) + '</button>';
+    });
+    return '<div class="crumbs">' + html + '</div>';
+  }
+  function layerBadge(l) {
+    if (!L[l]) return '';
+    return '<span class="badge layer-badge" style="background:' + L[l].color + '">' + esc(L[l].label) + '</span>';
+  }
+  function renderFile(path) {
+    var e = E[path], name = path.split('/').pop();
+    var html = '<div class="wrap">' + crumbs(path) + '<h2>' + esc(name) + '</h2><div class="badges">' + layerBadge(e.l);
+    if (e.gen) html += '<span class="badge">non suivi par Git</span>';
+    if (e.n) html += '<span class="badge">' + e.n + ' lignes</span>';
+    if (!e.gen && e.u && e.u.length === 0 && /\.(ts|tsx)$/.test(path) && !/^src\/app\//.test(path) && e.l !== 'test') html += '<span class="badge" style="border-color:#f59e0b">importé par aucun fichier</span>';
+    html += '</div><p class="desc">' + esc(e.d) + '</p>';
+    if (L[e.l]) html += '<p class="help"><b>' + esc(L[e.l].label) + ' :</b> ' + esc(L[e.l].help) + '</p>';
+    if (/^src\/app\//.test(path)) html += '<p class="help"><b>Adresse de cet écran :</b> <code>' + esc(routeOf(path)) + '</code></p>';
+    if (!e.gen) {
+      html += '<div class="split"><div><h3>Il utilise (ses imports) · ' + e.i.length + '</h3>' + (e.i.length ? '<div class="links">' + e.i.map(link).join('') + '</div>' : '<p class="empty">Aucun fichier du projet.</p>') + '</div>';
+      html += '<div><h3>Il est utilisé par · ' + e.u.length + '</h3>' + (e.u.length ? '<div class="links">' + e.u.map(link).join('') + '</div>' : '<p class="empty">' + (/^src\/app\//.test(path) ? 'Personne ne l\u2019importe : Expo Router le trouve tout seul grâce à son emplacement.' : 'Aucun fichier.') + '</p>') + '</div></div>';
+      if (e.p && e.p.length) {
+        html += '<h3>Bibliothèques npm qu\u2019il importe · ' + e.p.length + '</h3><div class="pkgs">';
+        e.p.forEach(function (p) { html += '<code>' + esc(p) + '</code><span>' + esc(DATA.packages[p] || pkgFallback(p)) + '</span>'; });
+        html += '</div>';
+      }
+    }
+    if (/\.(png|jpg|svg)$/i.test(path)) html += '<h3>Aperçu</h3><img class="media" alt="' + esc(name) + '" src="../../' + esc(path) + '">';
+    if (/\.(wav|mp3)$/i.test(path)) html += '<h3>Écouter</h3><audio controls src="../../' + esc(path) + '"></audio>';
+    if (/\.(html|pdf)$/i.test(path)) html += '<p><a href="../../' + esc(path) + '">Ouvrir ce fichier</a></p>';
+    var txt = DATA.texts[path];
+    if (txt != null && !/\.svg$/.test(path)) html += '<h3>Le code</h3>' + codeBlock(txt, path);
+    else if (!e.gen && e.n) html += '<h3>Le code</h3><p class="empty">Fichier trop gros pour être copié ici : ouvre-le dans VS Code.</p>';
+    html += '</div>';
+    $view.innerHTML = html;
+  }
+  function routeOf(path) {
+    var r = path.replace(/^src\/app/, '').replace(/\.tsx$/, '').replace(/\/\([^)]+\)/g, '').replace(/\/index$/, '').replace(/\/_layout$/, ' (cadre de ce dossier)');
+    if (/\+not-found/.test(r)) return 'toute adresse inconnue';
+    return r || '/';
+  }
+  function pkgFallback(p) {
+    if (p === 'expo-router/entry') return 'Démarre Expo Router.';
+    if (/^@?react-native|^react/.test(p)) return 'Bibliothèque de l\u2019écosystème React Native.';
+    if (/^expo/.test(p)) return 'Module Expo.';
+    if (p === 'fs' || p === 'path' || p === 'child_process') return 'Module intégré de Node.js (outil, pas l\u2019app).';
+    return 'Bibliothèque externe (voir package.json).';
+  }
+  function renderFolder(path) {
+    var d = findDir(path);
+    if (!d) { renderHome(); return; }
+    var desc = DATA.folders[path] || 'Dossier.';
+    var l = E[path] ? E[path].l : layerOfDir(path);
+    var html = '<div class="wrap">' + crumbs(path) + '<h2>' + esc(d.name) + '/</h2><div class="badges">' + (l ? layerBadge(l) : '') + '<span class="badge">' + countFiles(d) + ' fichier' + (countFiles(d) > 1 ? 's' : '') + '</span>' + (isGenerated(path) ? '<span class="badge">non suivi par Git</span>' : '') + '</div><p class="desc">' + esc(desc) + '</p>';
+    var rows = '';
+    dirList(d).forEach(function (s) { rows += '<tr><td><button data-go="' + esc(s.path) + '">' + esc(s.name) + '/</button></td><td>' + esc(shortDesc(s.path)) + '</td></tr>'; });
+    d.files.slice().sort(sortName).forEach(function (f) { rows += '<tr><td><button data-go="' + esc(f.path) + '">' + esc(f.name) + '</button></td><td>' + esc(shortDesc(f.path)) + '</td></tr>'; });
+    if (rows) html += '<h3>Son contenu</h3><table class="kids-table">' + rows + '</table>';
+    html += '</div>';
+    $view.innerHTML = html;
+  }
+  function step(path, label, color, text) {
+    return '<button class="step" data-go="' + esc(path) + '" style="border-top-color:' + color + '"><small>' + esc(label) + '</small><code>' + esc(path.replace(/^src\//, '')) + '</code><span>' + esc(text) + '</span></button>';
+  }
+  function renderHome() {
+    var counts = {};
+    Object.keys(E).forEach(function (k) { if (k.slice(-1) !== '/') counts[E[k].l] = (counts[E[k].l] || 0) + 1; });
+    var html = '<div class="wrap"><h2>Comprendre Junix Pulse, dossier par dossier</h2>' +
+      '<p class="desc">Clique sur un dossier à gauche pour l\u2019ouvrir, sur un fichier pour lire ce qu\u2019il fait, avec quoi il travaille et son code. La pastille de couleur à droite de chaque nom indique sa famille (sa « couche »).</p>' +
+      '<p class="help">Photo du projet au commit <code>' + esc(DATA.commit) + '</code>, fabriquée le ' + esc(DATA.generatedAt) + '. Pour la remettre à jour après un changement : <code>node docs/apprendre/generer-explorateur.js</code></p>' +
+      '<h3>Les trois choses à savoir d\u2019abord</h3><div class="grid3">' +
+      '<div class="card"><b>Il n\u2019y a pas de serveur.</b><br>Junix Pulse est « local d\u2019abord » : tout tourne dans le téléphone et les données sont dans une base SQLite chiffrée, sur le téléphone. Le « back-end » est donc local : ce sont les dossiers <code>use-cases</code>, <code>repositories</code>, <code>database</code> et <code>services</code>.</div>' +
+      '<div class="card"><b>Front-end = ce qu\u2019on voit.</b><br><code>src/app</code> (les écrans : un fichier = une page), <code>src/components</code> et <code>src/features</code> (les morceaux d\u2019écran), <code>src/styles</code>, <code>src/constants</code> et <code>src/hooks</code> (l\u2019apparence).</div>' +
+      '<div class="card"><b>Les importations.</b><br>Les bibliothèques sont listées dans <code>package.json</code> (installées dans <code>node_modules</code>). Chaque fichier importe ce dont il a besoin dans ses premières lignes ; <code>@/</code> veut dire <code>src/</code> (réglé dans <code>tsconfig.json</code>). L\u2019app démarre par <code>index.ts</code>.</div>' +
+      '</div>' +
+      '<h3>Le voyage d\u2019un appui : « Enregistrer un rappel »</h3><p class="help">Chaque couche ne parle qu\u2019à la suivante. Clique sur une case pour ouvrir le fichier.</p><div class="flow">' +
+      step('src/app/reminders/new.tsx', '1 · Écran', L.ecran.color, 'Le formulaire. Au clic, il appelle createReminder().') + '<span class="arrow">→</span>' +
+      step('src/use-cases/reminder-use-cases.ts', '2 · Cas d\u2019usage', L.usecase.color, 'Fabrique un identifiant, enregistre, planifie la notification, prévient la mascotte.') + '<span class="arrow">→</span>' +
+      step('src/repositories/reminder-repository.ts', '3 · Dépôt', L.depot.color, 'Écrit le SQL : INSERT INTO reminders…') + '<span class="arrow">→</span>' +
+      step('src/database/sqlite.ts', '4 · Base', L.base.color, 'Ouvre la base chiffrée et applique les migrations.') +
+      '</div><div class="flow">' +
+      step('src/domain/rules/reminder-rules.ts', 'À côté · Règles pures', L.regle.color, 'Calculs (prochaine occurrence, report) utilisés par le cas d\u2019usage.') + '<span class="arrow">·</span>' +
+      step('src/domain/entities/index.ts', 'À côté · Entités', L.regle.color, 'La forme d\u2019un Reminder, partagée par toutes les couches.') + '<span class="arrow">·</span>' +
+      step('src/services/reminder-notification-service.ts', 'À côté · Service', L.service.color, 'Met les notifications du téléphone à jour.') + '<span class="arrow">·</span>' +
+      step('src/services/mascot/mascot-event-bus.ts', 'À côté · Bus', L.service.color, '« Un rappel a été créé » : la mascotte et les vibrations réagissent.') +
+      '</div>' +
+      '<h3>Qui fait quoi</h3><table class="kids-table">' +
+      [['Front-end (écrans)', 'src/app/'], ['Front-end (morceaux d\u2019écran)', 'src/components/'], ['Grosses fonctionnalités (mascotte, lancement…)', 'src/features/'], ['Apparence (couleurs, thème)', 'src/constants/'], ['Styles des écrans', 'src/styles/'], ['Hooks (infos vivantes pour les écrans)', 'src/hooks/'], ['Actions de l\u2019utilisateur (back-end local)', 'src/use-cases/'], ['Calculs purs du métier', 'src/domain/'], ['SQL (back-end local)', 'src/repositories/'], ['Base de données', 'src/database/'], ['Téléphone : notifications, chiffrement, sauvegarde', 'src/services/'], ['Mémoire partagée entre écrans', 'src/store/'], ['Textes FR / EN', 'src/i18n/'], ['Tests automatiques', 'src/__tests__/'], ['Ressources (images, sons)', 'assets/'], ['Documentation', 'docs/']].map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td><button data-go="' + r[1] + '">' + r[1] + '</button></td></tr>'; }).join('') + '</table>' +
+      '<h3>Parcours conseillé pour apprendre (dans cet ordre)</h3><ol class="path">' +
+      [['package.json', 'la carte d\u2019identité : bibliothèques et commandes'], ['app.json', 'la configuration Expo'], ['index.ts', 'le point d\u2019entrée'], ['src/app/_layout.tsx', 'le démarrage de l\u2019app (lis seulement le commentaire du haut et la fonction RootLayout)'], ['src/app/(tabs)/_layout.tsx', 'la barre d\u2019onglets'], ['src/domain/entities/index.ts', 'la forme des données'], ['src/database/migrations.ts', 'les tables de la base (les 5 premières migrations)'], ['src/database/sqlite.ts', 'l\u2019ouverture de la base'], ['src/repositories/reminder-repository.ts', 'le SQL des rappels'], ['src/domain/rules/reminder-rules.ts', 'des calculs purs'], ['src/domain/rules/__tests__/reminder-rules.test.ts', 'comment on les teste'], ['src/use-cases/reminder-use-cases.ts', 'l\u2019action « créer un rappel »'], ['src/app/reminders/new.tsx', 'l\u2019écran qui déclenche tout'], ['src/app/reminders/index.tsx', 'la liste qui relit la base'], ['src/store/app-store.ts', 'la mémoire partagée'], ['src/constants/theme.ts', 'le design system'], ['src/components/ui/GlowCard.tsx', 'un composant réutilisable']].map(function (r) { return '<li><button data-go="' + esc(r[0]) + '">' + esc(r[0]) + '</button> — ' + esc(r[1]) + '</li>'; }).join('') + '</ol>' +
+      '<h3>Les familles de fichiers (couleurs)</h3><div class="legend">' +
+      Object.keys(L).map(function (k) { return '<div><i style="background:' + L[k].color + '"></i><span><b>' + esc(L[k].label) + '</b> · ' + (counts[k] || 0) + ' fichier' + ((counts[k] || 0) > 1 ? 's' : '') + '<br><span class="help">' + esc(L[k].help) + '</span></span></div>'; }).join('') +
+      '</div></div>';
+    $view.innerHTML = html;
+  }
+
+  $view.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-go]'); if (!b) return;
+    var p = b.getAttribute('data-go');
+    if (p === '') location.hash = ''; else go(p);
+  });
+
+  // ─── Coloration du code (simple, sans bibliothèque) ───
+  var KW = /^(import|from|export|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|interface|type|enum|async|await|try|catch|finally|throw|typeof|instanceof|in|of|as|void|null|undefined|true|false|this|readonly|public|private|protected|static|implements|keyof|yield|delete|satisfies)$/;
+  function tokenize(src, lang) {
+    var re;
+    if (lang === 'hash') re = /(#[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:[^'\n])*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$-]*)|([\s\S])/g;
+    else if (lang === 'md') re = /(^#{1,6} [^\n]*$)|(`[^`\n]*`)|(\*\*[^*\n]+\*\*)|([^\n`*#]+|[\s\S])/gm;
+    else re = /(\/\*[\s\S]*?\*\/|\/\/[^\n]*|<!--[\s\S]*?-->)|('(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$]*)|([\s\S])/g;
+    var out = [], m;
+    while ((m = re.exec(src))) {
+      if (lang === 'md') {
+        if (m[1]) out.push(['k', m[1]]); else if (m[2]) out.push(['s', m[2]]); else if (m[3]) out.push(['f', m[3]]); else out.push(['', m[0]]);
+        continue;
+      }
+      if (m[1]) out.push(['c', m[1]]);
+      else if (m[2]) out.push(['s', m[2]]);
+      else if (m[3]) out.push(['n', m[3]]);
+      else if (m[4]) {
+        var w = m[4], rest = src.slice(re.lastIndex, re.lastIndex + 1);
+        if (lang !== 'hash' && KW.test(w)) out.push([/^(import|from|export|default|return|if|else|for|while|switch|case|break|continue|try|catch|finally|throw|await|async)$/.test(w) ? 'ctl' : 'k', w]);
+        else if (rest === '(') out.push(['f', w]);
+        else if (/^[A-Z]/.test(w)) out.push(['t', w]);
+        else out.push(['', w]);
+      } else out.push(['', m[0]]);
+    }
+    return out;
+  }
+  function codeBlock(src, path) {
+    var ext = path.split('.').pop().toLowerCase();
+    var lang = /^(yml|yaml|ps1|sh)$/.test(ext) || /(^|\/)(\.gitignore|\.gitattributes|\.editorconfig|pre-commit)$/.test(path) ? 'hash' : ext === 'md' ? 'md' : 'c';
+    var tokens = src.length > 400000 ? [['', src]] : tokenize(src, lang);
+    var lines = [''];
+    tokens.forEach(function (t) {
+      var parts = t[1].split('\n');
+      parts.forEach(function (part, i) {
+        if (i > 0) lines.push('');
+        if (part) lines[lines.length - 1] += t[0] ? '<span class="tk-' + t[0] + '">' + esc(part) + '</span>' : esc(part);
+      });
+    });
+    if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+    var rows = lines.map(function (l, i) { return '<tr><td class="ln">' + (i + 1) + '</td><td>' + (l || ' ') + '</td></tr>'; }).join('');
+    return '<div class="code"><table>' + rows + '</table></div>';
+  }
+
+  drawTree();
+  show(decodeURIComponent(location.hash.slice(1)), false);
+})();
+</script>
+</body>
+</html>

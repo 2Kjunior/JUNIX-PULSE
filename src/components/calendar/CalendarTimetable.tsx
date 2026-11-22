@@ -25,7 +25,7 @@ import {
   TAB_BAR_TOTAL_HEIGHT,
 } from '@/constants/theme';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { CalendarActionModal } from './CalendarActionModal';
+import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { ThemePalette } from '@/constants/palettes';
@@ -390,12 +390,12 @@ export const CalendarTimetable = memo(function CalendarTimetable({
         })}
       </View>
 
-      {/* ─── Modal de sélection du type d'élément pour le créneau ────── */}
-      <CalendarActionModal
+      {/* ─── Que voulez-vous ajouter sur ce créneau ? ────────────────── */}
+      <NewItemChooser
         visible={selectedSlotHour !== null}
         onClose={() => setSelectedSlotHour(null)}
-        selectedDate={selectedDate}
-        slotHour={selectedSlotHour}
+        date={selectedDate}
+        hour={selectedSlotHour}
       />
     </ScrollView>
   );

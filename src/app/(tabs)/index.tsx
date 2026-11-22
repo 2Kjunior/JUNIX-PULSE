@@ -53,6 +53,8 @@ import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposa
 import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
 import { NowCard } from '@/components/today/NowCard';
+import { itemKindColor, itemKindLook } from '@/constants/item-kinds';
+import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { isDayOverloaded, nowQueue, tasksToLighten } from '@/domain/rules/now-rules';
 import { useNowActions } from '@/features/now/use-now-actions';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
@@ -92,6 +94,8 @@ export default function TodayScreen() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  // "Que voulez-vous ajouter ?", opened by the add bar
+  const [chooserOpen, setChooserOpen] = useState(false);
   const { message: timeMessage, dismiss: dismissTimeMessage } = useMascotTimeTrigger(displayName);
   const { preferences: mascotPreferences, settings: mascotSettings } = useMascotPreferences();
   // La proposition n'est montrée que si le budget d'attention de la mascotte le permet
@@ -480,7 +484,7 @@ export default function TodayScreen() {
         <TourTarget id="quickAdd">
         <TouchableOpacity
           style={styles.quickAddBar}
-          onPress={() => router.push('/capture')}
+          onPress={() => setChooserOpen(true)}
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel={t('home.quickAddA11y')}
@@ -607,32 +611,27 @@ export default function TodayScreen() {
                     router.push(`/tasks/${(item.raw as Task).id}`);
                   }
                 }}
-                accessibilityLabel={`${item.title}, ${item.type}`}
+                accessibilityLabel={`${item.title}, ${t(itemKindLook(item.type).labelKey)}${itemKindLook(item.type).withAlert ? `, ${t('itemFamily.withAlert')}` : ''}`}
               >
                 <View style={styles.timelineCard}>
                   <View style={styles.timelineTimeCol}>
-                    <Text
-                      style={[
-                        styles.timelineTimeText,
-                        {
-                          color:
-                            item.type === 'event'
-                              ? '#F59E0B'
-                              : item.type === 'reminder'
-                              ? palette.primary.default
-                              : palette.onSurface.variant,
-                        },
-                      ]}
-                    >
+                    <Text style={[styles.timelineTimeText, { color: itemKindColor(palette, item.type) }]}>
                       {item.time || t('home.timeline.today')}
                     </Text>
-                    <Text style={styles.timelineTypeTag}>
-                      {item.type === 'reminder'
-                        ? t('home.timeline.reminder')
-                        : item.type === 'event'
-                        ? t('home.timeline.event')
-                        : t('home.timeline.task')}
-                    </Text>
+                    {/* La famille, reconnaissable partout : son icône, sa couleur et son nom, et la cloche si ça sonne */}
+                    <View style={styles.timelineKind}>
+                      <Ionicons
+                        name={itemKindLook(item.type).icon}
+                        size={10}
+                        color={itemKindColor(palette, item.type)}
+                      />
+                      <Text style={[styles.timelineTypeTag, { color: itemKindColor(palette, item.type) }]}>
+                        {t(itemKindLook(item.type).labelKey)}
+                      </Text>
+                      {itemKindLook(item.type).withAlert && (
+                        <Ionicons name="notifications" size={9} color={itemKindColor(palette, item.type)} />
+                      )}
+                    </View>
                   </View>
 
                   <View style={styles.timelineDivider} />
@@ -680,7 +679,7 @@ export default function TodayScreen() {
             <GlowCard tone="neutral">
               <View style={styles.emptyContent}>
                 <Text style={styles.emptyText}>{t('home.timeline.empty')}</Text>
-                <TouchableOpacity onPress={() => router.push('/capture')}>
+                <TouchableOpacity onPress={() => setChooserOpen(true)}>
                   <Text style={styles.emptyAction}>{t('home.timeline.plan')}</Text>
                 </TouchableOpacity>
               </View>
@@ -737,6 +736,8 @@ export default function TodayScreen() {
           </View>
         )}
       </View>
+
+      <NewItemChooser visible={chooserOpen} onClose={() => setChooserOpen(false)} withCapture />
     </ScrollView>
   );
 }

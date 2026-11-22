@@ -43,7 +43,7 @@ import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionBu
 import { GlowCard } from '@/components/ui/GlowCard';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
-import { CalendarActionModal } from '@/components/calendar/CalendarActionModal';
+import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
 import { useDateLocale, useT } from '@/i18n';
@@ -608,15 +608,15 @@ export default function CalendarScreen() {
         }}
       />
 
-      {/* Modal / Action Sheet de sélection du type d'action */}
-      <CalendarActionModal
+      {/* Que voulez-vous ajouter ? Le même choix qu'à l'accueil, sur le jour et le créneau touchés */}
+      <NewItemChooser
         visible={showActionModal}
         onClose={() => {
           setShowActionModal(false);
           setSelectedSlotHour(null);
         }}
-        selectedDate={selectedDate}
-        slotHour={selectedSlotHour}
+        date={selectedDate}
+        hour={selectedSlotHour}
       />
     </View>
   );

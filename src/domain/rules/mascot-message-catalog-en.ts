@@ -73,8 +73,8 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Your home brings together reminders, tasks, schedule and loved ones.", "{name}, your home brings together reminders, tasks, schedule and loved ones."],
   ),
   TOUR_QUICK_ADD: entry(
-    ["Here you add a reminder, a task or a note in a few seconds.", "{name}, here you add a reminder, a task or a note in a few seconds."],
-    ["Add a reminder, a task or a note here.", "{name}, add a reminder, a task or a note here."],
+    ["Here you add a reminder, a task or an event in a few seconds.", "{name}, here you add a reminder, a task or an event in a few seconds."],
+    ["Add a reminder, a task or an event here.", "{name}, add a reminder, a task or an event here."],
   ),
   TOUR_TIMELINE: entry(
     ["Your daily timeline puts everything that matters today in order.", "{name}, your daily timeline puts everything that matters today in order."],

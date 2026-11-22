@@ -221,8 +221,8 @@ const fr = {
   'home.sanctuary': 'Sanctuaire',
   'home.peopleToContact': '1 à contacter',
   'home.peopleKeepTouch': 'Garder le lien',
-  'home.quickAddA11y': 'Créer un rappel ou une tâche',
-  'home.quickAdd': '+ Nouveau rappel, tâche ou note',
+  'home.quickAddA11y': 'Ajouter un rappel, une tâche ou un événement',
+  'home.quickAdd': '+ Rappel, tâche ou événement',
   'home.demo.badge': 'MODE DÉCOUVERTE',
   'home.demo.title': 'Prêt à explorer Junix Pulse\u00A0?',
   'home.demo.subtitle':
@@ -448,7 +448,7 @@ const fr = {
 
   // ─── Nouvelle tâche ───
   'taskNew.title': 'Nouvelle tâche',
-  'taskNew.subtitle': 'Action & Projet',
+  'taskNew.subtitle': 'Ça se coche une fois fait',
   'taskNew.create': 'Créer',
   'taskNew.creating': 'Création...',
   'taskNew.createA11y': 'Créer la tâche',
@@ -470,7 +470,7 @@ const fr = {
 
   // ─── Nouveau rappel ───
   'remNew.title': 'Nouveau rappel',
-  'remNew.subtitle': 'Intention & Moment',
+  'remNew.subtitle': 'Ça sonne à l’heure choisie',
   'remNew.create': 'Créer',
   'remNew.creating': 'Création...',
   'remNew.titlePlaceholder': 'Que devez-vous garder en tête ?',
@@ -737,8 +737,8 @@ const en: Record<MessageKey, string> = {
   'home.sanctuary': 'Sanctuary',
   'home.peopleToContact': '1 to reach out to',
   'home.peopleKeepTouch': 'Stay in touch',
-  'home.quickAddA11y': 'Create a reminder or a task',
-  'home.quickAdd': '+ New reminder, task or note',
+  'home.quickAddA11y': 'Add a reminder, a task or an event',
+  'home.quickAdd': '+ Reminder, task or event',
   'home.demo.badge': 'DISCOVERY MODE',
   'home.demo.title': 'Ready to explore Junix Pulse?',
   'home.demo.subtitle':
@@ -955,7 +955,7 @@ const en: Record<MessageKey, string> = {
   'form.dateFormat': 'MMMM d, yyyy',
 
   'taskNew.title': 'New task',
-  'taskNew.subtitle': 'Action & Project',
+  'taskNew.subtitle': 'Ticked off once done',
   'taskNew.create': 'Create',
   'taskNew.creating': 'Creating...',
   'taskNew.createA11y': 'Create the task',
@@ -976,7 +976,7 @@ const en: Record<MessageKey, string> = {
   'taskNew.hours2': '2 h+',
 
   'remNew.title': 'New reminder',
-  'remNew.subtitle': 'Intention & Moment',
+  'remNew.subtitle': 'It rings at the chosen time',
   'remNew.create': 'Create',
   'remNew.creating': 'Creating...',
   'remNew.titlePlaceholder': 'What do you need to keep in mind?',
