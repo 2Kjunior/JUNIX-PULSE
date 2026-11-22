@@ -1,6 +1,6 @@
 # ÉTUDE 001 — Clarifier, organiser et faire évoluer Junix Pulse
 
-Date : 22 novembre 2026 · Statut : **hiérarchie validée, ordre de N1 à confirmer** (section 10)
+Date : 22 novembre 2026 · Statut : **décisions arrêtées : voir la section 12, qui fait référence**
 
 Cette étude reprend tous les points de ton message, dit ce que le code fait **aujourd'hui**, propose **plusieurs approches** pour chacun, et une **hiérarchie** à valider. Le principe que tu as mis en avant (tout doit pouvoir évoluer sans casser) passe en premier, parce qu'il conditionne tout le reste.
 
@@ -376,3 +376,111 @@ Ma recommandation de la section 1 était « **1-A maintenant, qui prépare 1-B p
 4. **Formulaire À faire** unique, et le choix « Nouveau » à deux familles.
 5. **Onglet À faire** (fusion des onglets Rappels et Tâches) et cartes unifiées.
 6. **Logo A**.
+
+---
+
+## 12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point
+
+Cette section **remplace** les recommandations des sections précédentes là où elles diffèrent. C'est la référence pour la suite.
+
+### 12.1 Types (point 1) : 1-B, fait en partie
+
+Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leurs trois types. Étape 1 réalisée : [fiche 008](../fiches/FICHE-008-deux-familles.md).
+
+### 12.2 Formulaires (point 2) : 2-B, avec deux formulaires bien différenciés
+
+- **2-B** : les formulaires sont fabriqués à partir du **registre** (chaque famille déclare ses champs, un seul jeu de briques les dessine). Un champ ajouté ou retiré demain se fait dans le registre, sans toucher aux écrans.
+- **Mais deux formulaires distincts à l'œil**, pas un formulaire unique qui change de forme :
+  - **À faire** : couleur cyan, case à cocher dans l'en-tête, champs *Quoi* → *Quand* (jour, heure facultative) → **Alerte** (interrupteur, rappel à confirmer) → *Avec qui* → *Plus d'options* (sous-tâches, échéance, durée, étiquettes) ;
+  - **Moment** : couleur ambre, calendrier dans l'en-tête, champs *Quoi* → *Début et fin* → *Où* → **Partir … min avant** (seulement si un lieu est saisi) → *Avec qui* → *Type de moment* (anniversaire, deuil…) → *Plus d'options*.
+- La **dictée** (micro) dans le titre et les notes des deux formulaires.
+
+### 12.3 Gestes (point 3) : 3-A + 3-B + 3-C, et les faire découvrir sans submerger
+
+- **3-A** la carte s'entrouvre une fois pour montrer qu'on peut la glisser ; **3-B** un bouton « ⋯ » visible sur chaque carte ; **3-C** l'appui long.
+- **Conflit résolu** : l'appui long ouvre le **menu** dans les listes, et **soulève la carte** pour la déplacer dans le planning. Ce sont deux écrans différents, donc chaque geste a un seul sens à un endroit donné.
+- **Découverte progressive** (ta demande) : **jamais tout à l'arrivée**. Chaque astuce apparaît **une seule fois**, **au moment où elle sert**, présentée par Pulse dans une petite bulle :
+
+  | Quand | Astuce |
+  |---|---|
+  | La première fois qu'une liste a au moins deux cartes | « Glisse une carte pour la modifier ou la supprimer » (la carte s'entrouvre) |
+  | La première fois qu'on ouvre le planning avec au moins un élément | « Appuie longtemps sur une carte puis fais-la glisser pour changer son heure » |
+  | La première fois que la vue Mois s'affiche | « Fais glisser un élément sur un autre jour » |
+  | La première fois qu'on ajoute une personne à un élément | « Tu peux lui envoyer l'invitation » (voir 12.5) |
+
+  Jamais deux astuces le même jour ; une astuce fermée ne revient pas. Dans les Paramètres, **« Revoir les astuces »** les remet à zéro. Le guide de Pulse sait déjà ne montrer qu'une fois : on s'appuie dessus.
+
+### 12.4 Planning (point 4 et 10.4) : Jour · Semaine · Mois, glisser-déposer partout
+
+- Trois vues : **Jour** (grille des heures, bande « Sans heure » en haut), **Semaine**, **Mois** (points de couleur, toucher un jour ouvre la vue Jour).
+- **Glisser-déposer dans les trois vues** (11.1) : dans la vue Jour, l'heure bouge par **pas de 15 minutes** (on lâche à 19:00 ou 19:15, pas à 19:07) ; dans Semaine, le jour et l'heure ; dans Mois, le jour.
+- **Léger** : pas de nouvelle bibliothèque (gestes et animations sont déjà installés et tournent hors du fil principal, donc sans ralentir l'appli) ; seule la carte qui bouge est redessinée.
+- Découverte : astuce de 12.3.
+
+### 12.5 Partage (point 5 et 10.5) : hybride, par étapes, le plus léger possible
+
+- **Ordre** : 5-A (sans compte, gratuit) d'abord, 5-B (compte facultatif, synchronisation) ensuite, 5-C (espaces de travail, rôles) en dernier. Chaque étape réutilise la précédente.
+- **Ajouter une personne n'envoie rien tout seul.** C'est toi qui décides :
+  - après avoir ajouté une personne qui a un numéro ou un e-mail, l'élément propose un bouton **« Envoyer à Paul »** (SMS, WhatsApp, e-mail, QR, Bluetooth, Quick Share) ;
+  - un réglage, **désactivé au départ**, permet à ceux qui le veulent de se voir proposer l'envoi **dès** qu'ils ajoutent quelqu'un.
+- **Les deux côtés se relient automatiquement**, une fois l'invitation acceptée :
+  - **chez l'envoyeur** : la personne à qui tu envoies est déjà dans l'élément (tu l'as ajoutée), et passe à « invitée » puis « participe » quand elle accepte ;
+  - **chez le destinataire** : l'élément arrive avec **l'envoyeur comme personne liée**. Junix le reconnaît dans ses proches par son **numéro** ou son **e-mail** ; s'il ne le trouve pas, il propose « Ajouter Paul à tes proches ? ». Les autres personnes de l'élément sont proposées de la même façon, jamais ajoutées sans accord.
+- Les **réglages du partage** (nom affiché, envoi proposé, QR) iront dans les Paramètres (12.8).
+
+### 12.6 Notifications (point 6 et 10.6) : 6-A à 6-D, pour les trois types
+
+- **Les trois types notifient**, chacun avec ce qui lui est propre :
+  - **À faire avec alerte** : à l'heure, rappel à confirmer possible ;
+  - **À faire avec une échéance** : la veille et le jour même ;
+  - **Moment** : avant le début, et alerte de départ s'il y a un lieu.
+- **Hiérarchie** (6-B) : *Discret* · *Normal* · *Alarme*. Elle se règle selon plusieurs critères (ta demande) :
+  - **le type** et **le type de moment** (deuil sobre, anniversaire festif) ;
+  - **la priorité** (urgent monte d'un niveau) ;
+  - **le moment de la journée** (la nuit, tout descend d'un niveau sauf l'Alarme) ;
+  - **dans l'appli ou hors de l'appli** : appli ouverte, un petit son et un bandeau dans l'appli ; appli fermée, la notification Android avec son niveau.
+- **L'alarme** se fait **dans la notification**, comme l'appli Réveil du téléphone : notification qui reste, sonnerie qui continue, gros boutons **Arrêter** / **Plus tard**, et plein écran **seulement si** Android l'autorise (sinon la même chose en notification prioritaire).
+- **Les sons** (6-D) : sons de Junix d'abord, puis sonneries et musiques du téléphone, avec un son par niveau et par type de moment, réglables dans les Paramètres.
+
+### 12.7 Logo (point 7 et 10.3) : A · L'orbe, et la question du « J »
+
+- Retenu : **A · L'orbe** (anneau, liquide, battement, lien avec la mascotte).
+- Remarque de ton entourage : on ne voit pas le **J** de Junix dans l'icône. Deux possibilités, que je dessinerai au moment du logo pour que tu compares :
+  - **A1**, l'orbe telle quelle : le nom est sous l'icône, le J n'est pas nécessaire ;
+  - **A2**, l'orbe où **le battement se termine en crochet de J** (la ligne descend et se recourbe vers la gauche, comme un J). Le J apparaît sans ajouter de lettre.
+
+### 12.8 Les Paramètres à prévoir
+
+Tout ce qui se règle doit avoir sa place, **sans alourdir la page** (même principe que le sommaire actuel : une ligne par sujet) :
+
+| Sujet | Réglages |
+|---|---|
+| Notifications et sons | Niveau par défaut de chaque type, son de chaque niveau, sons par type de moment, heures calmes la nuit, alarme plein écran (si Android l'autorise) |
+| Astuces | « Revoir les astuces » |
+| Partage | Nom affiché dans les invitations, « Proposer l'envoi quand j'ajoute quelqu'un », lien d'installation |
+| Planning | Vue d'ouverture (Jour, Semaine ou Mois), premier jour de la semaine, pas du glisser (15 min par défaut) |
+| Types de moment | Liste des types (anniversaire, deuil…), avec leur couleur et leur son |
+
+Ces réglages arrivent **avec** la fonction qu'ils règlent, pas avant.
+
+### 12.9 L'exigence de qualité
+
+- **Devant l'utilisateur** : chaque ajout respecte le design existant (verre, palette, un seul dégradé par écran, pas d'emoji, cibles de 44 px, TalkBack, réduire les animations), en clair **et** en sombre, avec des sons cohérents.
+- **Derrière** : chaque ajout passe par le registre ; les migrations ajoutent sans effacer ; chaque règle a ses tests ; les sauvegardes restent compatibles. Ainsi, rien ne casse quand on ajoute, modifie ou retire une fonction.
+
+### 12.10 Nouvel ordre des priorités
+
+Ta remarque : ce que l'utilisateur voit **en premier**, c'est le lancement et le logo. On commence donc par là.
+
+| Ordre | Chantier | Niveau |
+|---|---|---|
+| 1 | **Logo A** (A1 ou A2 à choisir), icône Android, logo complet, **nouvelle animation de lancement** | N1 |
+| 2 | **Les Moments et les À faire notifient** (6-A), avec l'alerte de départ | N1 |
+| 3 | **Formulaires 2-B** : Moment puis À faire, dictée comprise | N1 |
+| 4 | **Onglet À faire** (fusion Rappels + Tâches), cartes unifiées, bouton « + À faire ou moment » | N1 |
+| 5 | **Hiérarchie des alertes et types de moment** (6-B, 6-C), et leurs réglages | N2 |
+| 6 | **Gestes découvrables** (12.3) | N2 |
+| 7 | **Partage 5-A** (12.5) | N2 |
+| 8 | **Planning Jour · Semaine · Mois** et glisser-déposer (12.4) | N3 |
+| 9 | **Sons et sonneries** (6-D), **alarme** (12.6) | N3 |
+| 10 | **Compte facultatif et synchronisation** (5-B), puis **espaces de travail** (5-C) | N4 |

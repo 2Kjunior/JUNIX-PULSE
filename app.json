@@ -15,7 +15,8 @@
       "package": "com.junix.pulse",
       "adaptiveIcon": {
         "backgroundColor": "#141317",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "allowBackup": false,
@@ -40,8 +41,11 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 160,
           "backgroundColor": "#FFFFFF",
           "dark": {
+            "image": "./assets/images/splash-icon.png",
             "backgroundColor": "#FFFFFF"
           }
         }
@@ -57,7 +61,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/notification-icon.png",
           "color": "#8B5CF6",
           "sounds": [
             "./assets/sounds/junix_pulse_notification.wav"

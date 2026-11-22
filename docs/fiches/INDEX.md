@@ -12,5 +12,6 @@ Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail
 | [006](FICHE-006-registre-des-types.md) | Le registre des types : une identité pour rappel, tâche et événement | 22 novembre 2026 | fait par une session précédente, non commité ; étendu par 008 |
 | 007 | (images `fiche-007-apres-choix` seulement : fiche jamais écrite) | 22 novembre 2026 | inachevée |
 | [008](FICHE-008-deux-familles.md) | Deux familles : « À faire » et « Moment » (1-B, étape 1) | 22 novembre 2026 | fait (vérifié sur le web, à tester sur téléphone) |
+| [009](FICHE-009-icones-logo-a1.md) | Les icônes du logo A1 (l'orbe) | 22 novembre 2026 | fait (à voir sur le téléphone après un nouvel APK) |
 
 Pour comprendre le rôle de chaque dossier et fichier : [l'explorateur du projet](../apprendre/explorateur-du-projet.html) (à ouvrir dans un navigateur ; le remettre à jour avec `node docs/apprendre/generer-explorateur.js`).

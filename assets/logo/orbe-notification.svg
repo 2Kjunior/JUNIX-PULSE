@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 96 96">
+  <!-- Icône de notification Android : silhouette blanche sur fond transparent -->
+  <g transform="translate(48 48) scale(0.5)">
+    <circle r="78" fill="none" stroke="#ffffff" stroke-width="16"/>
+    <path d="M-58 6 H-26 L-16 -26 L-2 34 L10 -6 L18 6 H58" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

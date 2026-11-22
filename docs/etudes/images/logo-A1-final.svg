@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#8B3DF0"/>
+      <stop offset="1" stop-color="#0AE8F0"/>
+    </linearGradient>
+    <linearGradient id="liquid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b58bff"/>
+      <stop offset="1" stop-color="#7fe9f2"/>
+    </linearGradient>
+    <clipPath id="orbClip"><circle cx="0" cy="0" r="62"/></clipPath>
+    <!-- La vague, limitée à l'intérieur de l'orbe : sert de forme et de découpe -->
+    <clipPath id="waveClip"><path d="M-70 18 Q-50 6 -30 18 T10 18 T50 18 T90 18 V80 H-70 Z"/></clipPath>
+    <path id="beat" d="M-58 6 H-26 L-16 -26 L-2 34 L10 -6 L18 6 H58"/>
+
+    <!-- 1. Fond sombre : la version principale -->
+    <g id="dark">
+      <circle r="78" fill="none" stroke="url(#g)" stroke-width="10"/>
+      <g clip-path="url(#orbClip)"><path d="M-70 18 Q-50 6 -30 18 T10 18 T50 18 T90 18 V80 H-70 Z" fill="url(#liquid)" opacity="0.9"/></g>
+      <use href="#beat" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- 2. Fond clair : battement violet foncé, détouré de blanc pour se détacher du liquide -->
+    <g id="light">
+      <circle r="78" fill="none" stroke="url(#g)" stroke-width="10"/>
+      <g clip-path="url(#orbClip)"><path d="M-70 18 Q-50 6 -30 18 T10 18 T50 18 T90 18 V80 H-70 Z" fill="url(#liquid)"/></g>
+      <use href="#beat" fill="none" stroke="#ffffff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+      <use href="#beat" fill="none" stroke="#3B2A78" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- 3. Une couleur : anneau, vague pleine, battement plein au-dessus et découpé dans la vague -->
+    <g id="mono">
+      <circle r="78" fill="none" stroke="#4A3780" stroke-width="12"/>
+      <g clip-path="url(#orbClip)"><path d="M-70 18 Q-50 6 -30 18 T10 18 T50 18 T90 18 V80 H-70 Z" fill="#4A3780"/></g>
+      <use href="#beat" fill="none" stroke="#4A3780" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <g clip-path="url(#waveClip)">
+        <g clip-path="url(#orbClip)">
+          <use href="#beat" fill="none" stroke="#E9DDFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- 4. Notification : silhouette blanche, sans vague (trop petite pour la lire) -->
+    <g id="notif">
+      <circle r="78" fill="none" stroke="#ffffff" stroke-width="16"/>
+      <use href="#beat" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </defs>
+  <rect width="900" height="700" fill="#ffffff"/>
+  <text x="450" y="38" font-size="22" font-weight="700" text-anchor="middle" fill="#141317">Logo A1 · L’orbe — version corrigée, dans tous ses usages</text>
+
+  <!-- 1 -->
+  <g transform="translate(40,80)">
+    <rect width="190" height="190" rx="42" fill="#141317"/>
+    <g transform="translate(95,95) scale(0.95)"><use href="#dark"/></g>
+    <text x="95" y="220" font-size="15" font-weight="700" text-anchor="middle" fill="#141317">① Fond sombre</text>
+    <text x="95" y="240" font-size="12" text-anchor="middle" fill="#444">icône principale</text>
+  </g>
+  <!-- 2 -->
+  <g transform="translate(250,80)">
+    <rect width="190" height="190" rx="42" fill="#FBF7F2" stroke="#ddd"/>
+    <g transform="translate(95,95) scale(0.95)"><use href="#light"/></g>
+    <text x="95" y="220" font-size="15" font-weight="700" text-anchor="middle" fill="#141317">② Fond clair</text>
+    <text x="95" y="240" font-size="12" text-anchor="middle" fill="#444">battement détouré de blanc</text>
+  </g>
+  <!-- 3 -->
+  <g transform="translate(460,80)">
+    <rect width="190" height="190" rx="42" fill="#E9DDFF"/>
+    <g transform="translate(95,95) scale(0.95)"><use href="#mono"/></g>
+    <text x="95" y="220" font-size="15" font-weight="700" text-anchor="middle" fill="#141317">③ Une couleur</text>
+    <text x="95" y="240" font-size="12" text-anchor="middle" fill="#444">vague pleine, battement découpé</text>
+  </g>
+  <!-- 4 -->
+  <g transform="translate(670,80)">
+    <rect width="190" height="190" rx="42" fill="#2B292D"/>
+    <g transform="translate(95,95) scale(0.95)"><use href="#notif"/></g>
+    <text x="95" y="220" font-size="15" font-weight="700" text-anchor="middle" fill="#141317">④ Notification</text>
+    <text x="95" y="240" font-size="12" text-anchor="middle" fill="#444">silhouette blanche</text>
+  </g>
+
+  <!-- Tailles réelles -->
+  <text x="40" y="380" font-size="15" font-weight="700" fill="#141317">En taille réelle sur un téléphone</text>
+  <g transform="translate(40,400)">
+    <rect width="56" height="56" rx="13" fill="#141317"/><g transform="translate(28,28) scale(0.28)"><use href="#dark"/></g>
+    <rect x="80" width="56" height="56" rx="13" fill="#FBF7F2" stroke="#ddd"/><g transform="translate(108,28) scale(0.28)"><use href="#light"/></g>
+    <rect x="160" width="56" height="56" rx="13" fill="#E9DDFF"/><g transform="translate(188,28) scale(0.28)"><use href="#mono"/></g>
+    <rect x="240" y="14" width="28" height="28" rx="6" fill="#2B292D"/><g transform="translate(254,28) scale(0.12)"><use href="#notif"/></g>
+    <text x="28" y="76" font-size="10" text-anchor="middle" fill="#555">sombre</text>
+    <text x="108" y="76" font-size="10" text-anchor="middle" fill="#555">clair</text>
+    <text x="188" y="76" font-size="10" text-anchor="middle" fill="#555">une couleur</text>
+    <text x="254" y="76" font-size="10" text-anchor="middle" fill="#555">notif.</text>
+  </g>
+
+  <!-- Écran de démarrage -->
+  <text x="470" y="380" font-size="15" font-weight="700" fill="#141317">Écran de démarrage (fond sombre, plus de flash blanc)</text>
+  <g transform="translate(560,400)">
+    <rect width="140" height="240" rx="20" fill="#141317" stroke="#444" stroke-width="2"/>
+    <g transform="translate(70,100) scale(0.42)"><use href="#dark"/></g>
+    <text x="70" y="160" font-size="15" font-weight="800" letter-spacing="2" text-anchor="middle" fill="#ffffff">JUNIX</text>
+    <text x="70" y="177" font-size="10" letter-spacing="4" text-anchor="middle" fill="#7fe9f2">PULSE</text>
+  </g>
+
+  <text x="450" y="680" font-size="12" text-anchor="middle" fill="#555">Illustration reconstituée : direction validée avant de fabriquer les fichiers d’icône.</text>
+</svg>
