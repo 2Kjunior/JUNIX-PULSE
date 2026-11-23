@@ -1,22 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1024 1024">
-  <!-- Écran de démarrage (fond clair) : battement violet foncé, détouré de blanc pour se détacher du liquide -->
-  <defs>
-    <linearGradient id="anneau" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#8B3DF0"/>
-      <stop offset="1" stop-color="#0AE8F0"/>
-    </linearGradient>
-    <linearGradient id="liquide" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#b58bff"/>
-      <stop offset="1" stop-color="#7fe9f2"/>
-    </linearGradient>
-    <clipPath id="interieur"><circle r="62"/></clipPath>
-  </defs>
-  <g transform="translate(512 512) scale(5.8)">
-    <circle r="78" fill="none" stroke="url(#anneau)" stroke-width="10"/>
-    <g clip-path="url(#interieur)">
-      <path d="M-70 18 Q-50 6 -30 18 T10 18 T50 18 T90 18 V80 H-70 Z" fill="url(#liquide)"/>
-    </g>
-    <path d="M-58 6 H-26 L-16 -26 L-2 34 L10 -6 L18 6 H58" fill="none" stroke="#ffffff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M-58 6 H-26 L-16 -26 L-2 34 L10 -6 L18 6 H58" fill="none" stroke="#3B2A78" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
+  <!-- Écran de démarrage du système : volontairement vide (transparent), posé sur le fond sombre #141317.
+       L'animation de lancement dessine ensuite l'orbe. Avec l'orbe ici, on le verrait apparaître,
+       disparaître, puis se redessiner. Voir FICHE-010. -->
 </svg>

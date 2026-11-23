@@ -25,7 +25,7 @@ import type { NotificationResponse } from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import { Appearance, AppState, LogBox, Platform, StyleSheet } from "react-native";
 import { GlassAlert, GlassAlertHost } from "@/components/feedback/GlassAlert";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -46,6 +46,8 @@ import { SettingsRepository } from "@/repositories/settings-repository";
 import { detectDeviceTimezone } from "@/services/device-timezone";
 import { applyLanguage } from "@/services/language-service";
 import { announceReminderArrived } from "@/services/mascot/mascot-announcers";
+import { getMascotPresence, setMascotSettings, subscribeMascotSettings } from "@/services/mascot/mascot-runtime";
+import { mascotSettingsFrom } from "@/services/mascot/mascot-settings-service";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
 import { notificationActionFor, notificationRoute } from "@/domain/rules/reminder-notification-rules";
 import { runReminderAction } from "@/services/notification-action-service";
@@ -158,6 +160,8 @@ export default function RootLayout() {
   const { isDark, mode, surface } = useTheme();
   const styles = useThemedStyles(makeRootLayoutStyles);
   const segments = useSegments();
+  // Followed live: the launch animation reads it when Pulse is about to wave
+  const mascotPresence = useSyncExternalStore(subscribeMascotSettings, getMascotPresence, getMascotPresence);
 
   const [fontsLoaded, fontError] = useFonts({
     "Inter-Regular": Inter_400Regular,
@@ -209,6 +213,8 @@ export default function RootLayout() {
         // 2. Lire les paramètres utilisateur
         const settings = await SettingsRepository.get();
         setOnboardingComplete(settings.onboardingCompleted);
+        // The mascot settings, applied now: the launch animation ends with Pulse waving only if the mascot is on
+        setMascotSettings(mascotSettingsFrom(settings));
         // La langue choisie, ou celle du téléphone sur « auto »
         applyLanguage(settings.language);
         setHapticsEnabled(settings.hapticsEnabled);
@@ -426,7 +432,11 @@ export default function RootLayout() {
   // Toujours au même emplacement (2e enfant) pour ne pas être remontée quand la base devient prête.
   const splashOverlay =
     splashPlaying && !splashFinished ? (
-      <SplashAnimation key={splashRun} onFinish={() => setSplashFinished(true)} />
+      <SplashAnimation
+        key={splashRun}
+        greet={dbReady && mascotPresence !== "off"}
+        onFinish={() => setSplashFinished(true)}
+      />
     ) : null;
 
   // Fonts pas encore prêtes ou DB en cours d'initialisation : splash natif ou animation seuls

@@ -31,7 +31,7 @@ describe('app icons', () => {
     expect(pngInfo(appJson.expo.web.favicon)).toMatchObject({ width: 48, height: 48 });
   });
 
-  it('gives notifications a transparent silhouette, and the launch screen the orb', () => {
+  it('gives notifications a transparent silhouette, and the launch screen a transparent image (the animation draws the orb)', () => {
     expect(pngInfo(pluginOptions('expo-notifications').icon as string)).toEqual({ width: 96, height: 96, alpha: true });
     const splash = pluginOptions('expo-splash-screen');
     expect(pngInfo(splash.image as string)).toMatchObject({ width: 1024, height: 1024, alpha: true });

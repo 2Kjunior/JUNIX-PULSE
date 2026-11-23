@@ -39,6 +39,7 @@ jest.mock('react-native-reanimated', () => {
     withRepeat: (anim) => anim,
     withSequence: (...anims) => anims[0],
     withDelay: (_delay, anim) => anim,
+    cancelAnimation: () => {},
     useReducedMotion: () => false,
     useFrameCallback: () => ({ setActive: () => {}, isActive: false, callbackId: -1 }),
     interpolateColor: (_value, _input, output) => output[0],

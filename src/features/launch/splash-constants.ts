@@ -1,113 +1,71 @@
 /**
- * Constantes de timing, dimensions, coordonnées, couleurs et courbes
- * pour le Splash Screen Junix Pulse (animation 4 secondes).
- * Source de vérité : docs/splash/junix-pulse-splash-reference.html
+ * The launch animation, in numbers: colours, sizes, the timeline and its curves.
+ * The orb itself is drawn from constants/orb-logo.
  */
 
-import { Easing } from "react-native-reanimated";
+import { Easing } from 'react-native-reanimated';
 
 export const SPLASH_COLORS = {
-  background: "#FFFFFF",
-  violet: "#8B3DF0",
-  cyan: "#0AE8F0",
-  text: "#1A1040",
-  ringStroke: 64,
-  rippleStroke: 6,
-  cardBorder: "rgba(255, 255, 255, 0.80)",
-  cardFallback: "rgba(255, 255, 255, 0.82)",
+  /** The dark surface of the app: the same as the system launch screen and the icon. */
+  background: '#141317',
+  glow: '#8B3DF0',
+  ripple: '#0AE8F0',
+  name: '#FFFFFF',
+  tagline: '#7FE9F2',
 } as const;
 
-export const SPLASH_COORDINATES = {
-  viewBox: {
-    minX: 62,
-    minY: -287,
-    width: 900,
-    height: 1600,
-  },
-  logoSize: 1024,
-  center: { x: 514, y: 447 },
-  ringRadius: 225,
-  innerRadius: 212,
-  innerWipe: {
-    x: 270,
-    y: 200,
-    width: 490,
-    height: 500,
-  },
-  textWipe: {
-    x: 170,
-    y: 690,
-    width: 690,
-    height: 140,
-  },
-  textRisePx: 26,
+export const SPLASH_LAYOUT = {
+  /** The orb's width on screen: 180 px for its 180 units. */
+  orbSize: 180,
+  /** The glow behind the orb. */
+  glowSize: 300,
+  /** The ripple leaves the ring and widens by this much. */
+  rippleSpread: 56,
+  nameGap: 28,
+  nameRise: 16,
 } as const;
+
+/** The double heartbeat: the orb's size at the end of each step, and how long the step lasts. */
+export const SPLASH_HEARTBEAT = [
+  { scale: 1.06, ms: 140 },
+  { scale: 1, ms: 140 },
+  { scale: 1.035, ms: 120 },
+  { scale: 1, ms: 220 },
+] as const;
 
 export const SPLASH_TIMINGS = {
-  // Durée totale d'animation
-  totalDurationMs: 4000,
-  // Timeout strict de sécurité (garde-fou)
-  safetyTimeoutMs: 4200,
-  // Mode accessibilité (mouvement réduit)
-  reducedMotionDurationMs: 800,
+  totalDurationMs: 4400,
+  // Safety net: the app opens even if an animation never reports its end
+  safetyTimeoutMs: 4800,
+  reducedMotionHoldMs: 800,
+  reducedMotionExitMs: 400,
 
-  // 1. Orbes (0s à 0.9s apparition, 0s à 4s dérive)
-  orbEntranceDurationMs: 900,
-  orb2DelayMs: 100,
-  orb3DelayMs: 200,
-  orbDriftDurationMs: 4000,
-
-  // 2. Verre liquide / Glassmorphism (0s à 0.95s goutte, 2.0s à 3.0s battement)
-  cardLiquidDurationMs: 950,
-  cardBeatDelayMs: 2000,
-  cardBeatDurationMs: 1000,
-  cardSheenDelayMs: 1950,
-  cardSheenDurationMs: 900,
-
-  // 3. Logo enter (0.1s à 1.4s)
-  enterDelayMs: 100,
-  enterDurationMs: 1300,
-
-  // 4. Anneau dégradé (0.15s à 1.4s)
+  glowDurationMs: 600,
   ringDelayMs: 150,
-  ringDurationMs: 1250,
-
-  // 5. Balayage intérieur (0.95s à 2.0s)
-  innerSweepDelayMs: 950,
-  innerSweepDurationMs: 1050,
-
-  // 6. Double battement symbole (2.0s à 3.0s)
-  beatDelayMs: 2000,
-  beatDurationMs: 1000,
-
-  // 7. Ondes / Ripples (2.0s et 2.28s)
-  ripple1DelayMs: 2000,
-  ripple2DelayMs: 2280,
-  rippleDurationMs: 1000,
-
-  // 8. Texte "JUNIX PULSE" (2.35s à 3.15s)
-  textDelayMs: 2350,
-  textDurationMs: 800,
-
-  // 9. Fondu de sortie (3.5s à 4.0s)
-  exitDelayMs: 3500,
+  ringDurationMs: 1000,
+  liquidDelayMs: 850,
+  liquidDurationMs: 1000,
+  beatDelayMs: 1750,
+  beatDurationMs: 550,
+  heartbeatDelayMs: 2300,
+  rippleDelayMs: 2300,
+  rippleDurationMs: 900,
+  nameDelayMs: 2300,
+  nameDurationMs: 700,
+  greetDelayMs: 3000,
+  greetDurationMs: 350,
+  exitDelayMs: 3900,
   exitDurationMs: 500,
 } as const;
 
-// Courbes d'animation strictement identiques aux cubic-bezier CSS de la référence
 export const SPLASH_EASINGS = {
-  // cubic-bezier(.2, .9, .25, 1) - Goutte liquide de verre
-  liquid: Easing.bezier(0.2, 0.9, 0.25, 1),
-  // cubic-bezier(.2, .8, .2, 1) - Logo enter et Text rise
-  enterAndRise: Easing.bezier(0.2, 0.8, 0.2, 1),
-  // cubic-bezier(.65, 0, .25, 1) - Tracé de l'anneau
+  // Slow start and end: the ring draws itself
   ringDraw: Easing.bezier(0.65, 0, 0.25, 1),
-  // cubic-bezier(.5, 0, .2, 1) - Balayages gauche -> droite
-  wipeSweep: Easing.bezier(0.5, 0, 0.2, 1),
-  // ease-in-out - Battements symbole et carte, dérive et reflet
+  // Quick rise that settles gently: the liquid
+  liquid: Easing.bezier(0.2, 0.9, 0.25, 1),
+  // The name rising
+  enterAndRise: Easing.bezier(0.2, 0.8, 0.2, 1),
   easeInOut: Easing.inOut(Easing.ease),
-  // ease-out - Orbes et ondes
   easeOut: Easing.out(Easing.ease),
-  // ease-in - Fondu de sortie global
   easeIn: Easing.in(Easing.ease),
 };
