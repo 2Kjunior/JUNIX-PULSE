@@ -74,6 +74,7 @@ docs(fiches): build the APK on the PC, and the Expo quota on the shared build sh
 | Animation saccadée | Calcul lourd sur le fil JavaScript | Mettre le calcul dans un `worklet`, utiliser des valeurs partagées |
 | `Cannot find name 'fs'` dans un test | Pas de types Node dans le projet | `declare const __dirname: string; const fs = require('fs');` (comme `app-icons.test.ts`) |
 | Le serveur web s'arrête au démarrage (`exited with code 3221225477`) ou Metro dit `Unable to deserialize cloned data` | Le cache de Metro est abîmé (souvent après un plantage du PC ou d'une compilation) | `npx expo start --web --clear` : vide le cache et le reconstruit (une minute de plus) |
+| Un bouton sort de l'écran ou un texte est coupé (« … ») sur le téléphone | Un titre sans limite de largeur, ou trop de choses dans un bouton | Méthode et détecteur de la fiche 016 (annexe L) ; remède : `flex: 1, minWidth: 0` sur le titre, `flexShrink: 0` sur les boutons, mots courts |
 | PowerShell affiche du rouge après un collage | Le résultat d'une commande a été recollé | Ne copier que la commande |
 | Le PC se met en veille pendant la compilation | Veille automatique | Relancer : Gradle reprend |
 

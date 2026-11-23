@@ -124,6 +124,9 @@ for (const [title, file] of [
   ['Annexe G — Fiche 011 complète (notifications des trois types)', 'docs/fiches/FICHE-011-notifications-trois-types.md'],
   ['Annexe H — Fiche 012 complète (formulaires À faire et Moment)', 'docs/fiches/FICHE-012-formulaires-a-faire-et-moment.md'],
   ['Annexe I — Fiche 013 complète (Dicter tout, Y aller)', 'docs/fiches/FICHE-013-dicter-tout-et-y-aller.md'],
+  ['Annexe J — Fiche 014 complète (formulaires ajustés, Dicter tout complet)', 'docs/fiches/FICHE-014-formulaires-ajustes-et-dicter-tout-complet.md'],
+  ['Annexe K — Fiche 015 complète (un seul onglet À faire)', 'docs/fiches/FICHE-015-onglet-a-faire-unique.md'],
+  ['Annexe L — Fiche 016 complète (revue des écrans à 360 px)', 'docs/fiches/FICHE-016-revue-ecrans-largeur-telephone.md'],
 ]) {
   const id = `annexe-${title.slice(7, 8)}`;
   toc.push({ level: 1, text: title, id });

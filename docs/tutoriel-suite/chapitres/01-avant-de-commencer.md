@@ -50,7 +50,17 @@ git status --short
 
 > [astuce] Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).
 
-## 2.2 ter Fait, testé, mais PAS encore enregistré : la fiche 013 (Dicter tout, Y aller)
+## 2.2 quater Après l'essai du 23 novembre sur le téléphone : fiches 014, 015, 016
+
+Tes retours (étude, section 14) ont donné trois fiches :
+
+- **014** (annexe J, enregistrée `3edca99`) : « Ajouter » toujours visible, « À faire » ouvre directement le formulaire, l'en-tête change avec l'alerte, petit micro pour les notes, voix dans l'ajout d'une personne, et **« Dicter tout » complet** (priorité, échéance, temps, « à confirmer », notes ; titre nettoyé ; ligne « Compris »).
+- **015** (annexe K, enregistrée et envoyée `7ccb568`) : **un seul onglet « À faire »** (filtre Tout · Avec alerte · Sans alerte, liste par moment, carte unique) ; barre du bas **Accueil · À faire · Planning · Proches**.
+- **016** (annexe L, **pas encore enregistrée**) : revue de tous les écrans à 360 px, avec une méthode pour la refaire seul (un petit détecteur à coller dans la console du navigateur).
+
+Tests : 1947. APK de test fabriqué juste après cette mise à jour.
+
+## 2.2 ter La fiche 013 (Dicter tout, Y aller), enregistrée (`3edca99`)
 
 La **fiche 013** (annexe I) : un bouton **« Dicter tout »** en haut des deux formulaires (une phrase remplit titre, jour, heure, alerte, personne, priorité, répétition ; pour un Moment aussi le lieu et la fin), et **« Y aller »** (itinéraire Google Maps) sur la page d'un moment qui a un lieu. 1936 tests. Les idées « applis de course » et « carte » sont notées pour la **version 2.0** (étude, section 13).
 
