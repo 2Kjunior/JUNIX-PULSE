@@ -634,5 +634,13 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_goal_habits_habit ON goal_habits(habit_id);
     `,
   },
+  {
+    version: 36,
+    name: 'add_habit_reminder_time',
+    sql: `
+      -- Une habitude peut sonner a une heure, au format HH:mm (fiche 019, etude 15.2).
+      ALTER TABLE habits ADD COLUMN reminder_time TEXT;
+    `,
+  },
 ];
 

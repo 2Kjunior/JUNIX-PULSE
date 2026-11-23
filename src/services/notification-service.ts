@@ -19,6 +19,7 @@ import {
 } from "@/domain/rules/reminder-notification-rules";
 import { Platform } from "react-native";
 import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
+import { HABIT_ACTION_DONE, HABIT_CATEGORY_ID } from "@/domain/rules/habit-notification-rules";
 import {
   notificationChannelFor,
   type NotificationChannelKind,
@@ -84,6 +85,16 @@ export interface ScheduleItemParams {
   identifier: string;
   itemType: "TASK" | "EVENT";
   itemId: string;
+  title: string;
+  body: string;
+  scheduledAt: Date;
+  level: NotificationLevel;
+  soundOn: boolean;
+}
+
+export interface ScheduleHabitParams {
+  identifier: string;
+  habitId: string;
   title: string;
   body: string;
   scheduledAt: Date;
@@ -210,6 +221,14 @@ export const NotificationService = {
             options: { opensAppToForeground: opensApp },
           },
         ]);
+        // A habit that rings (sheet 019): one button, "Fait", which ticks the habit of the day
+        await Notifications.setNotificationCategoryAsync(HABIT_CATEGORY_ID, [
+          {
+            identifier: HABIT_ACTION_DONE,
+            buttonTitle: t('notifAction.habitDone'),
+            options: { opensAppToForeground: opensApp },
+          },
+        ]);
       }
       if (Platform.OS === "android") {
         await Notifications.registerTaskAsync(REMINDER_ACTION_TASK).catch(() =>
@@ -304,6 +323,38 @@ export const NotificationService = {
       });
     } catch {
       logger.error("[NotificationService] Erreur lors de scheduleItem");
+      return null;
+    }
+  },
+
+  /**
+   * Plans the notification of a habit that rings (sheet 019), with its "Fait" button, on the
+   * channel of its level. Returns its identifier, or null when its time is past or planning failed.
+   */
+  async scheduleHabit(params: ScheduleHabitParams): Promise<string | null> {
+    if (!Notifications || params.scheduledAt <= new Date()) return null;
+    try {
+      return await Notifications.scheduleNotificationAsync({
+        identifier: params.identifier,
+        content: {
+          title: params.title,
+          body: params.body,
+          data: { type: "HABIT", habitId: params.habitId, level: params.level },
+          sound: params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,
+          categoryIdentifier: HABIT_CATEGORY_ID,
+          priority:
+            params.level === "discreet"
+              ? Notifications.AndroidNotificationPriority.LOW
+              : Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: params.scheduledAt,
+          channelId: Platform.OS === "android" ? channelIdFor(params.level, params.soundOn) : undefined,
+        } as import("expo-notifications").DateTriggerInput,
+      });
+    } catch {
+      logger.error("[NotificationService] Erreur lors de scheduleHabit");
       return null;
     }
   },

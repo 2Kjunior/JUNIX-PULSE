@@ -50,7 +50,7 @@ import { getMascotPresence, setMascotSettings, subscribeMascotSettings } from "@
 import { mascotSettingsFrom } from "@/services/mascot/mascot-settings-service";
 import { syncDailyRecapNotifications } from "@/services/daily-recap-service";
 import { notificationActionFor, notificationRoute } from "@/domain/rules/reminder-notification-rules";
-import { runReminderAction } from "@/services/notification-action-service";
+import { runHabitAction, runReminderAction } from "@/services/notification-action-service";
 import { setHapticsEnabled, startActionHaptics } from "@/services/haptic-service";
 import { subscribeMascotEvents } from "@/services/mascot/mascot-event-bus";
 import { refreshTodayWidget } from "@/widget/widget-task-handler";
@@ -127,6 +127,18 @@ async function openNotification(response: NotificationResponse, atLaunch = false
   if (action !== "open") {
     // On Android a button tap with the app closed went to the background task, already done
     if (atLaunch && Platform.OS === "android") return;
+    // "Fait" on a habit that rang (sheet 019)
+    if (action === "habitDone") {
+      if (typeof data?.habitId !== "string") return;
+      const outcome = await runHabitAction({
+        actionIdentifier: response.actionIdentifier,
+        notificationIdentifier: response.notification.request.identifier,
+        habitId: data.habitId,
+        date: response.notification.date,
+      });
+      if (outcome === "completed") useAppStore.getState().showSnackbar(tNow("notifAction.habitDoneSnack"));
+      return;
+    }
     if (typeof data?.reminderId !== "string") return;
     const outcome = await runReminderAction({
       actionIdentifier: response.actionIdentifier,

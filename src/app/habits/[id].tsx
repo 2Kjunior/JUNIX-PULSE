@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format, subDays, isSameDay } from 'date-fns';
 
 import { HabitUseCases, HabitStats } from '@/use-cases/habit-use-cases';
+import { HabitReminderField } from '@/features/habits/HabitReminderField';
 import { useAppStore } from '@/store/app-store';
 import {
   Spacing,
@@ -240,6 +241,17 @@ export default function HabitDetailScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+        </View>
+
+        {/* Me le rappeler (fiche 019) */}
+        <View style={{ marginBottom: Spacing.lg }}>
+          <HabitReminderField
+            value={stats.habit.reminderTime}
+            onChange={async value => {
+              await HabitUseCases.updateHabit({ id, reminderTime: value ?? '' });
+              loadData();
+            }}
+          />
         </View>
 
         {/* Actions (Pause / Reprise) */}

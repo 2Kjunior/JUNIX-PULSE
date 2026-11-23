@@ -8,6 +8,7 @@ import { RecurrenceRule, Reminder } from '../entities';
 import { translate } from '../../i18n/translate';
 import type { AppLanguage } from './language-rules';
 import { getNextOccurrence } from './reminder-rules';
+import { HABIT_ACTION_DONE } from './habit-notification-rules';
 import { DEFAULT_QUIET_HOURS, NotificationLevel, notificationLevelFor, QuietHours } from './notification-level-rules';
 
 export const MAX_RECURRING_OCCURRENCES = 14;
@@ -130,12 +131,13 @@ export const REMINDER_ACTION_SNOOZE_MINUTES = 60;
 /** Background task that receives the button taps on Android, even with the app closed. */
 export const REMINDER_ACTION_TASK = 'junix-pulse-reminder-action';
 
-export type ReminderNotificationAction = 'complete' | 'snooze' | 'open';
+export type ReminderNotificationAction = 'complete' | 'snooze' | 'habitDone' | 'open';
 
 /** What a response asks: a button of the notification, or a plain tap that opens the app. */
 export function notificationActionFor(actionIdentifier: string): ReminderNotificationAction {
   if (actionIdentifier === REMINDER_ACTION_COMPLETE) return 'complete';
   if (actionIdentifier === REMINDER_ACTION_SNOOZE) return 'snooze';
+  if (actionIdentifier === HABIT_ACTION_DONE) return 'habitDone';
   return 'open';
 }
 
@@ -145,6 +147,7 @@ export function notificationRoute(data: Record<string, unknown> | null | undefin
   // A deadline or a moment (sheet 011): its own screen
   if (data?.type === 'TASK' && typeof data.taskId === 'string') return `/tasks/${data.taskId}`;
   if (data?.type === 'EVENT' && typeof data.eventId === 'string') return `/events/${data.eventId}`;
+  if (data?.type === 'HABIT' && typeof data.habitId === 'string') return `/habits/${data.habitId}`;
   // The recap of the day opens the review of the day, where it is always there to read
   if (data?.type === 'DAILY_RECAP') return '/review?period=day';
   // A failed automatic backup: its settings, to pick the folder again or try now

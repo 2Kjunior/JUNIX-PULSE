@@ -55,7 +55,7 @@ const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   task_tags: ['task_id', 'tag_id'],
   reminder_tags: ['reminder_id', 'tag_id'],
   event_tags: ['event_id', 'tag_id'],
-  habits: ['id', 'title', 'description', 'frequency', 'target_days_per_week', 'status', 'color', 'created_at', 'updated_at', 'deleted_at'],
+  habits: ['id', 'title', 'description', 'frequency', 'target_days_per_week', 'status', 'color', 'reminder_time', 'created_at', 'updated_at', 'deleted_at'],
   habit_completions: ['id', 'habit_id', 'completed_date', 'created_at'],
   habit_pauses: ['id', 'habit_id', 'start_date', 'end_date', 'reason', 'created_at'],
   goals: ['id', 'title', 'description', 'status', 'deadline', 'created_at', 'updated_at', 'deleted_at'],

@@ -12,7 +12,7 @@ export type NotificationLevel = 'discreet' | 'normal' | 'alarm';
 export const NOTIFICATION_LEVELS: readonly NotificationLevel[] = ['discreet', 'normal', 'alarm'];
 
 /** What rings: a reminder, a deadline (the day before, the day itself), a moment (before it, time to leave). */
-export type NotificationMoment = 'reminder' | 'taskEve' | 'taskDay' | 'momentBefore' | 'momentLeave';
+export type NotificationMoment = 'reminder' | 'taskEve' | 'taskDay' | 'momentBefore' | 'momentLeave' | 'habit';
 
 /** The level of each moment before the criteria. The evening before a deadline only informs. */
 export const BASE_LEVELS: Readonly<Record<NotificationMoment, NotificationLevel>> = {
@@ -21,6 +21,7 @@ export const BASE_LEVELS: Readonly<Record<NotificationMoment, NotificationLevel>
   taskDay: 'normal',
   momentBefore: 'normal',
   momentLeave: 'normal',
+  habit: 'normal',
 };
 
 /** The night, in whole hours of the phone's clock. The same start and end: no night. */

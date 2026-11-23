@@ -15,6 +15,7 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { levelOf, quietHoursOf } from '@/domain/rules/notification-level-rules';
 import { NotificationService } from '@/services/notification-service';
 import { syncItemNotifications } from '@/services/item-notification-service';
+import { syncHabitNotifications } from '@/services/habit-notification-service';
 import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 
@@ -128,6 +129,7 @@ export function syncReminderNotifications(options: ReminderSyncOptions = {}): Pr
   queue = run;
   // The tasks and moments follow the same changes (settings, language, permission, launch)
   void syncItemNotifications({ force: options.force });
+  void syncHabitNotifications({ force: options.force });
   return run.then(report => {
     if (options.interactive && (report.failed > 0 || report.permissionDenied)) {
       listeners.forEach(listener => listener(report));

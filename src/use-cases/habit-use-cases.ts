@@ -12,6 +12,7 @@ import {
   isCompletedToday,
 } from '../domain/rules/habit-rules';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
+import { syncHabitNotifications } from '../services/habit-notification-service';
 
 export interface HabitStats {
   habit: Habit;
@@ -28,6 +29,8 @@ export interface CreateHabitParams {
   frequency: HabitFrequency;
   targetDaysPerWeek?: number;
   color?: string;
+  /** "HH:mm": the habit rings at this time (sheet 019). */
+  reminderTime?: string;
 }
 
 export interface UpdateHabitParams {
@@ -38,6 +41,8 @@ export interface UpdateHabitParams {
   targetDaysPerWeek?: number;
   status?: HabitStatus;
   color?: string;
+  /** "HH:mm", or "" to stop the habit ringing (sheet 019). */
+  reminderTime?: string;
 }
 
 /** Tells the mascot a habit was just checked, with the streak it now stands on. */
@@ -61,12 +66,14 @@ export const HabitUseCases = {
       targetDaysPerWeek: params.targetDaysPerWeek,
       status: 'ACTIVE',
       color: params.color,
+      reminderTime: params.reminderTime,
       createdAt: now,
       updatedAt: now,
     };
 
     await HabitRepository.create(habit);
     emitMascotEvent({ type: 'ITEM_CREATED' });
+    void syncHabitNotifications();
     return habit;
   },
 
@@ -76,6 +83,7 @@ export const HabitUseCases = {
       ...params,
       updatedAt: now,
     });
+    void syncHabitNotifications();
     return HabitRepository.findById(params.id);
   },
 
@@ -83,6 +91,7 @@ export const HabitUseCases = {
     const now = new Date().toISOString();
     await HabitRepository.delete(id, now);
     emitMascotEvent({ type: 'ITEM_DELETED' });
+    void syncHabitNotifications();
     return {
       undo: async () => {
         const undoNow = new Date().toISOString();
@@ -97,6 +106,7 @@ export const HabitUseCases = {
 
     if (isCompleted) {
       await HabitRepository.removeCompletion(habitId, targetDate);
+      void syncHabitNotifications();
       return false; // Désormais non complétée
     } else {
       const completion: HabitCompletion = {
@@ -107,6 +117,8 @@ export const HabitUseCases = {
       };
       await HabitRepository.addCompletion(completion);
       await announceHabitCompleted(habitId);
+      // Done today: today's ring is withdrawn, and a weekly target reached stops the week
+      void syncHabitNotifications();
       return true; // Désormais complétée
     }
   },
@@ -124,6 +136,7 @@ export const HabitUseCases = {
 
     await HabitRepository.addPause(pause);
     await HabitRepository.update({ id: habitId, status: 'PAUSED', updatedAt: now });
+    void syncHabitNotifications();
     return pause;
   },
 
@@ -140,6 +153,7 @@ export const HabitUseCases = {
 
     await HabitRepository.update({ id: habitId, status: 'ACTIVE', updatedAt: now });
     emitMascotEvent({ type: 'HABIT_RESUMED' });
+    void syncHabitNotifications();
   },
 
   async getHabitWithStats(habitId: string): Promise<HabitStats | null> {

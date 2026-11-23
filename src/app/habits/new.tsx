@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { HabitUseCases } from '@/use-cases/habit-use-cases';
+import { HabitReminderField } from '@/features/habits/HabitReminderField';
 import { HabitFrequency } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { Spacing, Radius, Typography } from '@/constants/theme';
@@ -41,6 +42,7 @@ export default function NewHabitScreen() {
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState<HabitFrequency>('DAILY');
   const [targetDaysPerWeek, setTargetDaysPerWeek] = useState(3);
+  const [reminderTime, setReminderTime] = useState<string | undefined>(undefined);
   const [color, setColor] = useState('primary');
   const [saving, setSaving] = useState(false);
   const [titleError, setTitleError] = useState('');
@@ -69,6 +71,7 @@ export default function NewHabitScreen() {
         frequency,
         targetDaysPerWeek: frequency === 'WEEKLY' ? targetDaysPerWeek : undefined,
         color,
+        reminderTime,
       });
 
       showSnackbar(t('habitNew.created', { title: title.trim() }));
@@ -230,6 +233,8 @@ export default function NewHabitScreen() {
               </View>
             </View>
           )}
+          {/* Me le rappeler (fiche 019) */}
+          <HabitReminderField value={reminderTime} onChange={setReminderTime} />
         </View>
 
         {/* Carte 3 : Thème Couleur */}

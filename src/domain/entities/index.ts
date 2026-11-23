@@ -183,6 +183,8 @@ export interface Habit {
   targetDaysPerWeek?: number;  // Pour WEEKLY : combien de fois par semaine
   status: HabitStatus;
   color?: string;              // Couleur personnalisée d'affichage
+  /** "HH:mm": the habit rings at this time on the days it is still due (sheet 019). */
+  reminderTime?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

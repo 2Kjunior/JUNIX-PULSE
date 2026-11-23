@@ -14,6 +14,7 @@ function rowToHabit(row: Record<string, unknown>): Habit {
     targetDaysPerWeek: (row.target_days_per_week as number | null) ?? undefined,
     status: row.status as Habit['status'],
     color: (row.color as string | null) ?? undefined,
+    reminderTime: (row.reminder_time as string | null) ?? undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     deletedAt: (row.deleted_at as string | null) ?? undefined,
@@ -44,8 +45,8 @@ export const HabitRepository = {
   async create(habit: Habit): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO habits (id, title, description, frequency, target_days_per_week, status, color, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO habits (id, title, description, frequency, target_days_per_week, status, color, reminder_time, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       habit.id,
       habit.title,
       habit.description ?? null,
@@ -53,6 +54,7 @@ export const HabitRepository = {
       habit.targetDaysPerWeek ?? null,
       habit.status,
       habit.color ?? null,
+      habit.reminderTime ?? null,
       habit.createdAt,
       habit.updatedAt
     );
@@ -69,6 +71,8 @@ export const HabitRepository = {
     if (params.targetDaysPerWeek !== undefined) { fields.push('target_days_per_week = ?'); values.push(params.targetDaysPerWeek ?? null); }
     if (params.status !== undefined) { fields.push('status = ?'); values.push(params.status); }
     if (params.color !== undefined) { fields.push('color = ?'); values.push(params.color ?? null); }
+    // An empty time removes the alarm of the habit
+    if (params.reminderTime !== undefined) { fields.push('reminder_time = ?'); values.push(params.reminderTime || null); }
 
     fields.push('updated_at = ?');
     values.push(params.updatedAt);
