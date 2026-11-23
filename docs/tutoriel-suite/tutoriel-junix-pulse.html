@@ -14,14 +14,14 @@
 <h1>JUNIX PULSE</h1>
 <div class="sous">LE TUTORIEL DE LA SUITE</div>
 <div class="info">Comment terminer, tester, publier et faire évoluer l'application, seul, étape par étape, action par action.<br><br>
-Version du <b>23 novembre 2026</b> · Branche <b>master</b> · Dernier commit <b>bdbb318</b> · 17 fichier(s) modifié(s) non enregistré(s)<br>
+Version du <b>23 novembre 2026</b> · Branche <b>master</b> · Dernier commit <b>55404ba</b> · 12 fichier(s) modifié(s) non enregistré(s)<br>
 Écrit pour être suivi comme une recette : ingrédients, ustensiles, quantités, puis chaque geste dans l'ordre.</div>
 </section>
 
-<section class="toc"><h1>Sommaire</h1><ul><li class="toc-1"><a href="#c0-0">Journal des mises à jour de ce document</a></li><li class="toc-1"><a href="#c1-0">1. Comment lire ce document</a></li><li class="toc-2"><a href="#c1-4">1.1 Les encadrés</a></li><li class="toc-2"><a href="#c1-9">1.2 Les blocs de commande</a></li><li class="toc-2"><a href="#c1-13">1.3 Les trois règles qui ne se discutent pas</a></li><li class="toc-1"><a href="#c1-16">2. Où en est le projet (23 novembre 2026)</a></li><li class="toc-2"><a href="#c1-17">2.1 Ce qui est fait et enregistré dans git</a></li><li class="toc-2"><a href="#c1-20">2.2 bis Fait, testé, mais PAS encore enregistré : la fiche 012 (formulaires)</a></li><li class="toc-2"><a href="#c1-22">2.2 La fiche 011 (notifications)</a></li><li class="toc-2"><a href="#c1-25">2.2 bis La fiche 010 (animation de lancement), enregistrée</a></li><li class="toc-2"><a href="#c1-33">2.3 L'APK du jour</a></li><li class="toc-2"><a href="#c1-38">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</a></li><li class="toc-1"><a href="#c1-43">3. La cuisine : les outils et leurs versions exactes</a></li><li class="toc-2"><a href="#c1-44">3.1 Les ustensiles (ce qui doit être installé)</a></li><li class="toc-2"><a href="#c1-47">3.2 Les ingrédients de base (les bibliothèques du projet)</a></li><li class="toc-2"><a href="#c1-51">3.3 Ouvrir le projet</a></li><li class="toc-1"><a href="#c1-61">4. Le plan de la maison : comment le code est rangé</a></li><li class="toc-2"><a href="#c1-62">4.1 Les étages</a></li><li class="toc-2"><a href="#c1-65">4.2 Les pièces les plus importantes</a></li><li class="toc-2"><a href="#c1-67">4.3 Le registre des types, en image</a></li><li class="toc-1"><a href="#c1-71">5. Les règles de la maison (à relire avant chaque recette)</a></li><li class="toc-1"><a href="#c2-0">6. Recette A — Installer l'APK sur le téléphone</a></li><li class="toc-2"><a href="#c2-2">6.1 Avant tout : sauvegarder les données de l'appli</a></li><li class="toc-2"><a href="#c2-5">6.2 Mettre le fichier sur le téléphone</a></li><li class="toc-2"><a href="#c2-9">6.3 Installer</a></li><li class="toc-2"><a href="#c2-11">6.4 Ce que tu dois voir avec cet APK</a></li><li class="toc-1"><a href="#c2-13">7. Recette B — Terminer la fiche 010 (la nouvelle animation de lancement)</a></li><li class="toc-2"><a href="#c2-17">7.1 Ce que fait la nouvelle animation</a></li><li class="toc-2"><a href="#c2-19">7.2 Les ingrédients, déjà en place</a></li><li class="toc-2"><a href="#c2-22">7.3 Étape 1 — Refabriquer l'image de démarrage</a></li><li class="toc-2"><a href="#c2-31">7.4 Étape 2 — Lancer les tests de la fiche</a></li><li class="toc-2"><a href="#c2-37">7.5 Étape 3 — Vérifier les types et le style du code</a></li><li class="toc-2"><a href="#c2-41">7.6 Étape 4 — Regarder l'animation sur le web</a></li><li class="toc-2"><a href="#c2-48">7.7 Étape 5 — Le compte rendu dans la fiche (concordance)</a></li><li class="toc-2"><a href="#c2-54">7.8 Étape 6 — Enregistrer (commit) sans rien emporter d'autre</a></li><li class="toc-2"><a href="#c2-63">7.9 Étape 7 — Envoyer sur GitHub (push)</a></li><li class="toc-1"><a href="#c2-66">8. Recette C — Fabriquer un APK sur le PC</a></li><li class="toc-2"><a href="#c2-69">8.1 Le schéma</a></li><li class="toc-2"><a href="#c2-71">8.2 Les gestes</a></li><li class="toc-2"><a href="#c2-85">8.3 Si ça échoue</a></li><li class="toc-1"><a href="#c3-0">9. La méthode pour chaque nouveau chantier</a></li><li class="toc-2"><a href="#c3-4">9.1 Recette de base : ajouter un texte dans les deux langues</a></li><li class="toc-2"><a href="#c3-10">9.2 Recette de base : ajouter une colonne à la base sans rien perdre</a></li><li class="toc-1"><a href="#c3-18">10. Recette D — Les notifications des trois types, avec trois niveaux</a></li><li class="toc-2"><a href="#c3-21">10.1 La décision (étude 12.6)</a></li><li class="toc-2"><a href="#c3-23">10.2 Le schéma</a></li><li class="toc-2"><a href="#c3-25">10.3 Étape 1 — La règle pure et son test</a></li><li class="toc-2"><a href="#c3-33">10.4 Étape 2 — Les canaux Android</a></li><li class="toc-2"><a href="#c3-42">10.5 Étape 3 — Les tâches et les moments</a></li><li class="toc-2"><a href="#c3-45">10.6 Étape 4 — Le choix dans les formulaires</a></li><li class="toc-2"><a href="#c3-47">10.7 Vérifier</a></li><li class="toc-1"><a href="#c3-49">11. Recette E — Les formulaires 2-B</a></li><li class="toc-2"><a href="#c3-52">11.1 La décision (étude 12.2)</a></li><li class="toc-2"><a href="#c3-55">11.2 Les gestes</a></li><li class="toc-1"><a href="#c3-58">12. Recette F — L'onglet « À faire » et le bouton « + À faire ou moment »</a></li><li class="toc-2"><a href="#c3-60">12.1 Le bouton : changement immédiat</a></li><li class="toc-2"><a href="#c3-71">12.2 L'onglet « À faire »</a></li><li class="toc-1"><a href="#c3-75">13. Recette G — La hiérarchie des alertes et les types d'événements</a></li><li class="toc-1"><a href="#c3-83">14. Recette H — Des gestes découvrables</a></li><li class="toc-1"><a href="#c3-87">15. Recette I — Le partage, étape 5-A</a></li><li class="toc-1"><a href="#c3-96">16. Recette J — Le planning : Jour, Semaine, Mois, et glisser-déposer</a></li><li class="toc-2"><a href="#c3-99">16.1 La règle la plus importante : arrondir au quart d'heure</a></li><li class="toc-2"><a href="#c3-104">16.2 Le glisser, geste par geste</a></li><li class="toc-1"><a href="#c3-106">17. Recette K — Les sons et l'alarme</a></li><li class="toc-1"><a href="#c3-111">18. Recette L — Le compte et la synchronisation (plus tard)</a></li><li class="toc-1"><a href="#c4-0">19. Travailler avec une IA (Claude, ou une autre) sans perdre le fil</a></li><li class="toc-1"><a href="#c4-4">20. Git : l'aide-mémoire</a></li><li class="toc-1"><a href="#c4-9">21. Les commandes de vérification, en un coup d'œil</a></li><li class="toc-1"><a href="#c4-11">22. Dépannage général</a></li><li class="toc-1"><a href="#c4-13">23. Lexique</a></li><li class="toc-1"><a href="#c4-15">24. Les fichiers fournis avec ce document</a></li><li class="toc-2"><a href="#c4-18">24.1 Les planches du logo</a></li><li class="toc-1"><a href="#c4-22">25. Mettre à jour ce document</a></li><li class="toc-2"><a href="#c4-25">25.1 Comment le document est fabriqué</a></li><li class="toc-2"><a href="#c4-28">25.2 La recette, geste par geste</a></li><li class="toc-2"><a href="#c4-38">25.3 Ce que le Markdown permet ici</a></li><li class="toc-2"><a href="#c4-42">25.4 Si ça ne marche pas</a></li><li class="toc-1"><a href="#annexe-0">Annexe A — Fiche 010 complète (animation de lancement)</a></li><li class="toc-2"><a href="#a0-1">1. Objectif</a></li><li class="toc-2"><a href="#a0-9">2. État de départ</a></li><li class="toc-2"><a href="#a0-11">3. Matériel</a></li><li class="toc-2"><a href="#a0-14">4. Hypothèses</a></li><li class="toc-2"><a href="#a0-16">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a0-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#a0-23">7. Étapes</a></li><li class="toc-2"><a href="#a0-105">8. Test final</a></li><li class="toc-2"><a href="#a0-111">9. Dépannage</a></li><li class="toc-2"><a href="#a0-113">10. Lexique</a></li><li class="toc-2"><a href="#a0-115">11. Et après</a></li><li class="toc-2"><a href="#a0-117">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-1">Annexe B — Fiche 003 complète (fabriquer l’APK sur le PC)</a></li><li class="toc-2"><a href="#a1-2">1. Objectif</a></li><li class="toc-2"><a href="#a1-5">2. État de départ</a></li><li class="toc-2"><a href="#a1-7">3. Matériel</a></li><li class="toc-2"><a href="#a1-9">4. Hypothèses</a></li><li class="toc-2"><a href="#a1-11">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a1-14">6. Sauvegarde</a></li><li class="toc-2"><a href="#a1-17">7. Étapes</a></li><li class="toc-2"><a href="#a1-60">8. Test final</a></li><li class="toc-2"><a href="#a1-62">9. Dépannage</a></li><li class="toc-2"><a href="#a1-64">10. Lexique</a></li><li class="toc-2"><a href="#a1-66">11. Et après</a></li><li class="toc-2"><a href="#a1-68">Compte rendu d'exécution (11 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-2">Annexe C — Fiche 009 complète (les icônes du logo)</a></li><li class="toc-2"><a href="#a2-1">1. Objectif</a></li><li class="toc-2"><a href="#a2-6">2. État de départ</a></li><li class="toc-2"><a href="#a2-8">3. Matériel</a></li><li class="toc-2"><a href="#a2-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a2-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a2-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a2-19">7. Étapes</a></li><li class="toc-2"><a href="#a2-79">8. Test final</a></li><li class="toc-2"><a href="#a2-84">9. Dépannage</a></li><li class="toc-2"><a href="#a2-86">10. Lexique</a></li><li class="toc-2"><a href="#a2-88">11. Et après</a></li><li class="toc-2"><a href="#a2-90">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-3">Annexe D — Fiche 008 complète (deux familles)</a></li><li class="toc-2"><a href="#a3-1">1. Objectif</a></li><li class="toc-2"><a href="#a3-7">2. État de départ</a></li><li class="toc-2"><a href="#a3-9">3. Matériel</a></li><li class="toc-2"><a href="#a3-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a3-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a3-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a3-20">7. Étapes</a></li><li class="toc-2"><a href="#a3-82">8. Test final</a></li><li class="toc-2"><a href="#a3-91">9. Dépannage</a></li><li class="toc-2"><a href="#a3-93">10. Lexique</a></li><li class="toc-2"><a href="#a3-95">11. Et après</a></li><li class="toc-2"><a href="#a3-98">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-4">Annexe E — Index des fiches</a></li><li class="toc-1"><a href="#annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</a></li><li class="toc-2"><a href="#e-0">12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point</a></li><li class="toc-1"><a href="#annexe-G">Annexe G — Fiche 011 complète (notifications des trois types)</a></li><li class="toc-2"><a href="#annexe-G-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-G-11">2. État de départ</a></li><li class="toc-2"><a href="#annexe-G-13">3. Matériel</a></li><li class="toc-2"><a href="#annexe-G-15">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-G-17">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-G-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-G-21">7. Étapes</a></li><li class="toc-2"><a href="#annexe-G-249">8. Test final</a></li><li class="toc-2"><a href="#annexe-G-255">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-G-257">10. Lexique</a></li><li class="toc-2"><a href="#annexe-G-259">11. Et après</a></li><li class="toc-2"><a href="#annexe-G-261">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-H">Annexe H — Fiche 012 complète (formulaires À faire et Moment)</a></li><li class="toc-2"><a href="#annexe-H-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-H-7">2. État de départ</a></li><li class="toc-2"><a href="#annexe-H-9">3. Matériel</a></li><li class="toc-2"><a href="#annexe-H-11">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-H-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-H-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-H-17">7. Étapes</a></li><li class="toc-2"><a href="#annexe-H-94">8. Test final</a></li><li class="toc-2"><a href="#annexe-H-100">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-H-102">10. Lexique</a></li><li class="toc-2"><a href="#annexe-H-104">11. Et après</a></li><li class="toc-2"><a href="#annexe-H-106">Compte rendu d'exécution (23 novembre 2026)</a></li></ul></section>
+<section class="toc"><h1>Sommaire</h1><ul><li class="toc-1"><a href="#c0-0">Journal des mises à jour de ce document</a></li><li class="toc-1"><a href="#c1-0">1. Comment lire ce document</a></li><li class="toc-2"><a href="#c1-4">1.1 Les encadrés</a></li><li class="toc-2"><a href="#c1-9">1.2 Les blocs de commande</a></li><li class="toc-2"><a href="#c1-13">1.3 Les trois règles qui ne se discutent pas</a></li><li class="toc-1"><a href="#c1-16">2. Où en est le projet (23 novembre 2026)</a></li><li class="toc-2"><a href="#c1-17">2.1 Ce qui est fait et enregistré dans git</a></li><li class="toc-2"><a href="#c1-20">2.2 ter Fait, testé, mais PAS encore enregistré : la fiche 013 (Dicter tout, Y aller)</a></li><li class="toc-2"><a href="#c1-22">2.2 bis La fiche 012 (formulaires), enregistrée (<code>e9587da</code>)</a></li><li class="toc-2"><a href="#c1-24">2.2 La fiche 011 (notifications)</a></li><li class="toc-2"><a href="#c1-27">2.2 bis La fiche 010 (animation de lancement), enregistrée</a></li><li class="toc-2"><a href="#c1-35">2.3 L'APK du jour</a></li><li class="toc-2"><a href="#c1-40">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</a></li><li class="toc-1"><a href="#c1-45">3. La cuisine : les outils et leurs versions exactes</a></li><li class="toc-2"><a href="#c1-46">3.1 Les ustensiles (ce qui doit être installé)</a></li><li class="toc-2"><a href="#c1-49">3.2 Les ingrédients de base (les bibliothèques du projet)</a></li><li class="toc-2"><a href="#c1-53">3.3 Ouvrir le projet</a></li><li class="toc-1"><a href="#c1-63">4. Le plan de la maison : comment le code est rangé</a></li><li class="toc-2"><a href="#c1-64">4.1 Les étages</a></li><li class="toc-2"><a href="#c1-67">4.2 Les pièces les plus importantes</a></li><li class="toc-2"><a href="#c1-69">4.3 Le registre des types, en image</a></li><li class="toc-1"><a href="#c1-73">5. Les règles de la maison (à relire avant chaque recette)</a></li><li class="toc-1"><a href="#c2-0">6. Recette A — Installer l'APK sur le téléphone</a></li><li class="toc-2"><a href="#c2-2">6.1 Avant tout : sauvegarder les données de l'appli</a></li><li class="toc-2"><a href="#c2-5">6.2 Mettre le fichier sur le téléphone</a></li><li class="toc-2"><a href="#c2-9">6.3 Installer</a></li><li class="toc-2"><a href="#c2-11">6.4 Ce que tu dois voir avec cet APK</a></li><li class="toc-1"><a href="#c2-13">7. Recette B — Terminer la fiche 010 (la nouvelle animation de lancement)</a></li><li class="toc-2"><a href="#c2-17">7.1 Ce que fait la nouvelle animation</a></li><li class="toc-2"><a href="#c2-19">7.2 Les ingrédients, déjà en place</a></li><li class="toc-2"><a href="#c2-22">7.3 Étape 1 — Refabriquer l'image de démarrage</a></li><li class="toc-2"><a href="#c2-31">7.4 Étape 2 — Lancer les tests de la fiche</a></li><li class="toc-2"><a href="#c2-37">7.5 Étape 3 — Vérifier les types et le style du code</a></li><li class="toc-2"><a href="#c2-41">7.6 Étape 4 — Regarder l'animation sur le web</a></li><li class="toc-2"><a href="#c2-48">7.7 Étape 5 — Le compte rendu dans la fiche (concordance)</a></li><li class="toc-2"><a href="#c2-54">7.8 Étape 6 — Enregistrer (commit) sans rien emporter d'autre</a></li><li class="toc-2"><a href="#c2-63">7.9 Étape 7 — Envoyer sur GitHub (push)</a></li><li class="toc-1"><a href="#c2-66">8. Recette C — Fabriquer un APK sur le PC</a></li><li class="toc-2"><a href="#c2-69">8.1 Le schéma</a></li><li class="toc-2"><a href="#c2-71">8.2 Les gestes</a></li><li class="toc-2"><a href="#c2-85">8.3 Si ça échoue</a></li><li class="toc-1"><a href="#c3-0">9. La méthode pour chaque nouveau chantier</a></li><li class="toc-2"><a href="#c3-4">9.1 Recette de base : ajouter un texte dans les deux langues</a></li><li class="toc-2"><a href="#c3-10">9.2 Recette de base : ajouter une colonne à la base sans rien perdre</a></li><li class="toc-1"><a href="#c3-18">10. Recette D — Les notifications des trois types, avec trois niveaux</a></li><li class="toc-2"><a href="#c3-21">10.1 La décision (étude 12.6)</a></li><li class="toc-2"><a href="#c3-23">10.2 Le schéma</a></li><li class="toc-2"><a href="#c3-25">10.3 Étape 1 — La règle pure et son test</a></li><li class="toc-2"><a href="#c3-33">10.4 Étape 2 — Les canaux Android</a></li><li class="toc-2"><a href="#c3-42">10.5 Étape 3 — Les tâches et les moments</a></li><li class="toc-2"><a href="#c3-45">10.6 Étape 4 — Le choix dans les formulaires</a></li><li class="toc-2"><a href="#c3-47">10.7 Vérifier</a></li><li class="toc-1"><a href="#c3-49">11. Recette E — Les formulaires 2-B</a></li><li class="toc-2"><a href="#c3-52">11.1 La décision (étude 12.2)</a></li><li class="toc-2"><a href="#c3-55">11.2 Les gestes</a></li><li class="toc-1"><a href="#c3-58">12. Recette F — L'onglet « À faire » et le bouton « + À faire ou moment »</a></li><li class="toc-2"><a href="#c3-60">12.1 Le bouton : changement immédiat</a></li><li class="toc-2"><a href="#c3-71">12.2 L'onglet « À faire »</a></li><li class="toc-1"><a href="#c3-75">13. Recette G — La hiérarchie des alertes et les types d'événements</a></li><li class="toc-1"><a href="#c3-83">14. Recette H — Des gestes découvrables</a></li><li class="toc-1"><a href="#c3-87">15. Recette I — Le partage, étape 5-A</a></li><li class="toc-1"><a href="#c3-96">16. Recette J — Le planning : Jour, Semaine, Mois, et glisser-déposer</a></li><li class="toc-2"><a href="#c3-99">16.1 La règle la plus importante : arrondir au quart d'heure</a></li><li class="toc-2"><a href="#c3-104">16.2 Le glisser, geste par geste</a></li><li class="toc-1"><a href="#c3-106">17. Recette K — Les sons et l'alarme</a></li><li class="toc-1"><a href="#c3-111">18. Recette L — Le compte et la synchronisation (plus tard)</a></li><li class="toc-1"><a href="#c4-0">19. Travailler avec une IA (Claude, ou une autre) sans perdre le fil</a></li><li class="toc-1"><a href="#c4-4">20. Git : l'aide-mémoire</a></li><li class="toc-1"><a href="#c4-9">21. Les commandes de vérification, en un coup d'œil</a></li><li class="toc-1"><a href="#c4-11">22. Dépannage général</a></li><li class="toc-1"><a href="#c4-13">23. Lexique</a></li><li class="toc-1"><a href="#c4-15">24. Les fichiers fournis avec ce document</a></li><li class="toc-2"><a href="#c4-18">24.1 Les planches du logo</a></li><li class="toc-1"><a href="#c4-22">25. Mettre à jour ce document</a></li><li class="toc-2"><a href="#c4-25">25.1 Comment le document est fabriqué</a></li><li class="toc-2"><a href="#c4-28">25.2 La recette, geste par geste</a></li><li class="toc-2"><a href="#c4-38">25.3 Ce que le Markdown permet ici</a></li><li class="toc-2"><a href="#c4-42">25.4 Si ça ne marche pas</a></li><li class="toc-1"><a href="#annexe-0">Annexe A — Fiche 010 complète (animation de lancement)</a></li><li class="toc-2"><a href="#a0-1">1. Objectif</a></li><li class="toc-2"><a href="#a0-9">2. État de départ</a></li><li class="toc-2"><a href="#a0-11">3. Matériel</a></li><li class="toc-2"><a href="#a0-14">4. Hypothèses</a></li><li class="toc-2"><a href="#a0-16">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a0-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#a0-23">7. Étapes</a></li><li class="toc-2"><a href="#a0-105">8. Test final</a></li><li class="toc-2"><a href="#a0-111">9. Dépannage</a></li><li class="toc-2"><a href="#a0-113">10. Lexique</a></li><li class="toc-2"><a href="#a0-115">11. Et après</a></li><li class="toc-2"><a href="#a0-117">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-1">Annexe B — Fiche 003 complète (fabriquer l’APK sur le PC)</a></li><li class="toc-2"><a href="#a1-2">1. Objectif</a></li><li class="toc-2"><a href="#a1-5">2. État de départ</a></li><li class="toc-2"><a href="#a1-7">3. Matériel</a></li><li class="toc-2"><a href="#a1-9">4. Hypothèses</a></li><li class="toc-2"><a href="#a1-11">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a1-14">6. Sauvegarde</a></li><li class="toc-2"><a href="#a1-17">7. Étapes</a></li><li class="toc-2"><a href="#a1-60">8. Test final</a></li><li class="toc-2"><a href="#a1-62">9. Dépannage</a></li><li class="toc-2"><a href="#a1-64">10. Lexique</a></li><li class="toc-2"><a href="#a1-66">11. Et après</a></li><li class="toc-2"><a href="#a1-68">Compte rendu d'exécution (11 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-2">Annexe C — Fiche 009 complète (les icônes du logo)</a></li><li class="toc-2"><a href="#a2-1">1. Objectif</a></li><li class="toc-2"><a href="#a2-6">2. État de départ</a></li><li class="toc-2"><a href="#a2-8">3. Matériel</a></li><li class="toc-2"><a href="#a2-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a2-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a2-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a2-19">7. Étapes</a></li><li class="toc-2"><a href="#a2-79">8. Test final</a></li><li class="toc-2"><a href="#a2-84">9. Dépannage</a></li><li class="toc-2"><a href="#a2-86">10. Lexique</a></li><li class="toc-2"><a href="#a2-88">11. Et après</a></li><li class="toc-2"><a href="#a2-90">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-3">Annexe D — Fiche 008 complète (deux familles)</a></li><li class="toc-2"><a href="#a3-1">1. Objectif</a></li><li class="toc-2"><a href="#a3-7">2. État de départ</a></li><li class="toc-2"><a href="#a3-9">3. Matériel</a></li><li class="toc-2"><a href="#a3-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a3-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a3-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a3-20">7. Étapes</a></li><li class="toc-2"><a href="#a3-82">8. Test final</a></li><li class="toc-2"><a href="#a3-91">9. Dépannage</a></li><li class="toc-2"><a href="#a3-93">10. Lexique</a></li><li class="toc-2"><a href="#a3-95">11. Et après</a></li><li class="toc-2"><a href="#a3-98">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-4">Annexe E — Index des fiches</a></li><li class="toc-1"><a href="#annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</a></li><li class="toc-2"><a href="#e-0">12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point</a></li><li class="toc-2"><a href="#e-27">13. Idées pour la version 2.0 (l'application est en 1.1.0)</a></li><li class="toc-1"><a href="#annexe-G">Annexe G — Fiche 011 complète (notifications des trois types)</a></li><li class="toc-2"><a href="#annexe-G-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-G-11">2. État de départ</a></li><li class="toc-2"><a href="#annexe-G-13">3. Matériel</a></li><li class="toc-2"><a href="#annexe-G-15">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-G-17">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-G-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-G-21">7. Étapes</a></li><li class="toc-2"><a href="#annexe-G-249">8. Test final</a></li><li class="toc-2"><a href="#annexe-G-255">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-G-257">10. Lexique</a></li><li class="toc-2"><a href="#annexe-G-259">11. Et après</a></li><li class="toc-2"><a href="#annexe-G-261">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-H">Annexe H — Fiche 012 complète (formulaires À faire et Moment)</a></li><li class="toc-2"><a href="#annexe-H-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-H-7">2. État de départ</a></li><li class="toc-2"><a href="#annexe-H-9">3. Matériel</a></li><li class="toc-2"><a href="#annexe-H-11">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-H-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-H-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-H-17">7. Étapes</a></li><li class="toc-2"><a href="#annexe-H-94">8. Test final</a></li><li class="toc-2"><a href="#annexe-H-100">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-H-102">10. Lexique</a></li><li class="toc-2"><a href="#annexe-H-104">11. Et après</a></li><li class="toc-2"><a href="#annexe-H-106">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-I">Annexe I — Fiche 013 complète (Dicter tout, Y aller)</a></li><li class="toc-2"><a href="#annexe-I-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-I-5">2. État de départ</a></li><li class="toc-2"><a href="#annexe-I-7">3. Matériel</a></li><li class="toc-2"><a href="#annexe-I-9">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-I-11">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-I-13">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-I-15">7. Étapes</a></li><li class="toc-2"><a href="#annexe-I-109">8. Test final</a></li><li class="toc-2"><a href="#annexe-I-114">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-I-116">10. Lexique</a></li><li class="toc-2"><a href="#annexe-I-118">11. Et après</a></li><li class="toc-2"><a href="#annexe-I-120">Compte rendu d'exécution (23 novembre 2026)</a></li></ul></section>
 <section class="chapitre"><h1 id="c0-0">Journal des mises à jour de ce document</h1>
 <p>Ce document <strong>vit avec le projet</strong> : à chaque étape terminée, on le met à jour (chapitre 25 : comment faire). La version et l'état du projet décrits sont imprimés sur la couverture, lus automatiquement dans git au moment de la fabrication du PDF.</p>
-<table><thead><tr><th>Date</th><th>Ce qui a changé dans le document</th><th>État du projet décrit</th></tr></thead><tbody><tr><td>23 novembre 2026 (soir)</td><td>Première version : état du projet, outils, plan du code, règles, recettes A à L, boîte à outils, annexes (fiches 003, 008, 009, 010, index, étude section 12)</td><td>Fiche 010 appliquée, pas encore testée</td></tr><tr><td>23 novembre 2026 (suite)</td><td>Fiche 010 terminée : chapitre 2.2 (vérifications faites), recette B (« commence à l'étape 6 », ce que les tests ont demandé), commande de commit avec <code>jest.setup.js</code>, feuille de route ; ajout de ce journal, de la version automatique sur la couverture, du chapitre 25 et de la commande qui refait aussi l'archive</td><td>Fiche 010 testée (13 + 1904 tests) et vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (nuit)</td><td>Recette C et annexe B (fiche 003) : nouveau dépannage « trois plantages à la fois » (mémoire), remède <code>--max-workers=4</code></td><td>Fiche 010 enregistrée (<code>1f9b1d8</code>) et envoyée sur GitHub ; APK avec la nouvelle animation en cours de fabrication</td></tr><tr><td>23 novembre 2026 (après-midi)</td><td>Chapitre 2 : commits à jour (tout est sur GitHub), fiche 011 en attente d'enregistrement, APK du jour avec la nouvelle animation ; recette D marquée « faite par la fiche 011 » ; fiche 011 ajoutée en annexe G ; dépannage du cache de Metro</td><td>Fiche 011 (notifications) appliquée et testée (1918 tests), vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (soir)</td><td>Chapitre 2 : fiche 012 en attente d'enregistrement ; recette E marquée « faite par la fiche 012 » ; fiche 012 ajoutée en annexe H</td><td>Fiches 011 et 012 enregistrées ou à enregistrer : 1926 tests ; formulaires vus sur le web ; rien de tout cela encore vu sur le téléphone</td></tr></tbody></table>
+<table><thead><tr><th>Date</th><th>Ce qui a changé dans le document</th><th>État du projet décrit</th></tr></thead><tbody><tr><td>23 novembre 2026 (soir)</td><td>Première version : état du projet, outils, plan du code, règles, recettes A à L, boîte à outils, annexes (fiches 003, 008, 009, 010, index, étude section 12)</td><td>Fiche 010 appliquée, pas encore testée</td></tr><tr><td>23 novembre 2026 (avant l'APK)</td><td>Chapitre 2 : fiche 013 ; fiche 013 ajoutée en annexe I. Mise à jour faite au « bon moment » (juste avant un APK), selon le skill <code>maj-tutoriel</code> créé ce jour</td><td>Fiches 011 et 012 sur GitHub ; fiche 013 testée (1936 tests), à enregistrer ; APK de test en fabrication</td></tr><tr><td>23 novembre 2026 (suite)</td><td>Fiche 010 terminée : chapitre 2.2 (vérifications faites), recette B (« commence à l'étape 6 », ce que les tests ont demandé), commande de commit avec <code>jest.setup.js</code>, feuille de route ; ajout de ce journal, de la version automatique sur la couverture, du chapitre 25 et de la commande qui refait aussi l'archive</td><td>Fiche 010 testée (13 + 1904 tests) et vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (nuit)</td><td>Recette C et annexe B (fiche 003) : nouveau dépannage « trois plantages à la fois » (mémoire), remède <code>--max-workers=4</code></td><td>Fiche 010 enregistrée (<code>1f9b1d8</code>) et envoyée sur GitHub ; APK avec la nouvelle animation en cours de fabrication</td></tr><tr><td>23 novembre 2026 (après-midi)</td><td>Chapitre 2 : commits à jour (tout est sur GitHub), fiche 011 en attente d'enregistrement, APK du jour avec la nouvelle animation ; recette D marquée « faite par la fiche 011 » ; fiche 011 ajoutée en annexe G ; dépannage du cache de Metro</td><td>Fiche 011 (notifications) appliquée et testée (1918 tests), vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (soir)</td><td>Chapitre 2 : fiche 012 en attente d'enregistrement ; recette E marquée « faite par la fiche 012 » ; fiche 012 ajoutée en annexe H</td><td>Fiches 011 et 012 enregistrées ou à enregistrer : 1926 tests ; formulaires vus sur le web ; rien de tout cela encore vu sur le téléphone</td></tr></tbody></table>
 <blockquote class="astuce"><p>Ajoute <strong>une ligne par mise à jour</strong>, la plus récente en bas. Écris ce qui a changé <strong>dans le document</strong> (colonne 2) et où en est le <strong>projet</strong> (colonne 3).</p></blockquote></section>
 <section class="chapitre"><h1 id="c1-0">1. Comment lire ce document</h1>
 <p>Ce document est un <strong>livre de recettes</strong>. Chaque chantier qui reste à faire sur Junix Pulse est écrit comme une recette de cuisine :</p>
@@ -44,12 +44,14 @@ git status --short</code></pre>
 <h2 id="c1-17">2.1 Ce qui est fait et enregistré dans git</h2>
 <table><thead><tr><th>Commit</th><th>Ce qu'il contient</th><th>Envoyé sur GitHub ?</th></tr></thead><tbody><tr><td><code>fe0d9f2</code></td><td>La carte de sauvegarde automatique, les premières fiches</td><td>oui</td></tr><tr><td><code>132bd3d</code></td><td>Fiche 003 : fabriquer l'APK sur le PC</td><td>oui</td></tr><tr><td><code>dc6cf03</code></td><td>Les deux familles « À faire » et « Moment », le choix « Nouveau », le registre des types, l'étude 001</td><td>oui</td></tr><tr><td><code>cda1910</code></td><td>Le logo A1 (l'orbe) : icône, icône à thème, icône de notification, image de démarrage</td><td>oui</td></tr><tr><td><code>1f9b1d8</code></td><td>Fiche 010 : l'animation de lancement autour de l'orbe, sur fond sombre, et <code>PulseLogo</code></td><td>oui</td></tr><tr><td><code>5e5f049</code></td><td>Ce tutoriel, ses outils et ses fichiers fournis</td><td>oui</td></tr></tbody></table>
 <blockquote class="astuce"><p>Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).</p></blockquote>
-<h2 id="c1-20">2.2 bis Fait, testé, mais PAS encore enregistré : la fiche 012 (formulaires)</h2>
+<h2 id="c1-20">2.2 ter Fait, testé, mais PAS encore enregistré : la fiche 013 (Dicter tout, Y aller)</h2>
+<p>La <strong>fiche 013</strong> (annexe I) : un bouton <strong>« Dicter tout »</strong> en haut des deux formulaires (une phrase remplit titre, jour, heure, alerte, personne, priorité, répétition ; pour un Moment aussi le lieu et la fin), et <strong>« Y aller »</strong> (itinéraire Google Maps) sur la page d'un moment qui a un lieu. 1936 tests. Les idées « applis de course » et « carte » sont notées pour la <strong>version 2.0</strong> (étude, section 13).</p>
+<h2 id="c1-22">2.2 bis La fiche 012 (formulaires), enregistrée (<code>e9587da</code>)</h2>
 <p>La <strong>fiche 012</strong> (annexe H) fait le chantier n° 3 : deux formulaires de création, <strong>« À faire »</strong> (cyan, avec l'interrupteur Alerte) et <strong>« Moment »</strong> (ambre, « Partir … min avant » seulement avec un lieu), construits à partir d'un registre (<code>src/constants/item-forms.ts</code>), avec la <strong>dictée</strong> dans le titre et les notes. La durée devient <strong>« Temps pour le faire »</strong> et règle le minuteur de Focus. Appliquée, testée (1926 tests), vue sur le web ; à enregistrer, puis à voir sur le téléphone.</p>
-<h2 id="c1-22">2.2 La fiche 011 (notifications)</h2>
+<h2 id="c1-24">2.2 La fiche 011 (notifications)</h2>
 <p>La <strong>fiche 011</strong> (annexe G) fait le chantier n° 2 : les notifications des trois types, avec trois niveaux et la nuit réglable. Elle est <strong>appliquée, testée (1918 tests) et vue sur le web</strong> (le réglage « Nuit plus calme »). Il reste à l'<strong>enregistrer</strong> (commit), puis à la voir sur le téléphone avec un nouvel APK (recette C). Le détail est dans le compte rendu en bas de la fiche.</p>
 <table><thead><tr><th>Fichiers de la fiche 011</th><th>État</th></tr></thead><tbody><tr><td>3 créés : <code>notification-level-rules.ts</code>, <code>item-notification-rules.ts</code>, <code>item-notification-service.ts</code></td><td>+ 2 fichiers de tests</td></tr><tr><td>15 modifiés : service de notifications, rappels, migration 34, réglages, sauvegarde, textes, tâches, moments, <code>_layout.tsx</code>, un ancien test</td><td>voir la carte de la fiche (section 5)</td></tr></tbody></table>
-<h2 id="c1-25">2.2 bis La fiche 010 (animation de lancement), enregistrée</h2>
+<h2 id="c1-27">2.2 bis La fiche 010 (animation de lancement), enregistrée</h2>
 <p>La fiche 010 est <strong>enregistrée</strong> (<code>1f9b1d8</code>) et sur GitHub. Ce qui suit décrit comment elle a été vérifiée.</p>
 <table><thead><tr><th>Fichier</th><th>État</th></tr></thead><tbody><tr><td><code>src/constants/orb-logo.ts</code></td><td>créé</td></tr><tr><td><code>src/components/ui/OrbMark.tsx</code></td><td>créé</td></tr><tr><td><code>src/components/ui/PulseLogo.tsx</code></td><td>remplacé</td></tr><tr><td><code>src/features/launch/splash-constants.ts</code></td><td>remplacé</td></tr><tr><td><code>src/features/launch/SplashAnimation.tsx</code></td><td>remplacé</td></tr><tr><td><code>src/app/_layout.tsx</code></td><td>modifié (5 endroits)</td></tr><tr><td><code>app.json</code></td><td>fond de démarrage passé à <code>#141317</code></td></tr><tr><td><code>assets/logo/orbe-demarrage.svg</code></td><td>remplacé (image vide)</td></tr><tr><td><code>assets/images/splash-icon.png</code></td><td>refabriquée (transparente)</td></tr><tr><td><code>src/__tests__/launch-orb.test.tsx</code></td><td>créé</td></tr><tr><td><code>src/__tests__/app-icons.test.ts</code></td><td>1 ligne modifiée</td></tr><tr><td><code>jest.setup.js</code></td><td>1 ligne ajoutée (<code>cancelAnimation</code>)</td></tr><tr><td><code>docs/fiches/FICHE-010-…md</code> et <code>INDEX.md</code></td><td>fiche corrigée, compte rendu écrit</td></tr></tbody></table>
 <p><strong>Les vérifications faites le 23 novembre 2026</strong> :</p>
@@ -77,12 +79,12 @@ git status --short</code></pre>
 <figcaption>Figure 1 bis — Ce que montre l'animation à 2,5 s sur le web (reconstitution fidèle de la capture du 23 novembre) : l'orbe battant, l'onde cyan, le nom.</figcaption>
 </figure>
 <blockquote class="note"><p>Si un jour tu dois tout annuler et repartir de l'état <code>cda1910</code>, la fiche 010 donne la commande à sa section 6 (Sauvegarde). Tu peux ensuite réappliquer la fiche avec l'outil <code>outils/appliquer-fiche-010.js</code> fourni avec ce document.</p></blockquote>
-<h2 id="c1-33">2.3 L'APK du jour</h2>
+<h2 id="c1-35">2.3 L'APK du jour</h2>
 <p>Le plus récent a été fabriqué le 23 novembre à 12 h 32 :</p>
 <ul><li><strong>Fichier</strong> : <code>C:\Users\simon\Desktop\junix-pulse-local-2026-11-23-lancement.apk</code> (61 Mo)</li><li><strong>Contient</strong> : le code du commit <code>5e5f049</code> : les deux familles, le nouveau logo partout, et la <strong>nouvelle animation de lancement</strong> sur fond sombre (fiche 010)</li><li><strong>Ne contient pas</strong> : les notifications des tâches et des moments (fiche 011, faite après). Il faudra un nouvel APK pour les voir.</li></ul>
 <p>L'ancien <code>junix-pulse-local-2026-11-23.apk</code> (sans la nouvelle animation) peut être supprimé.</p>
 <p>La recette A (chapitre 6) explique comment l'installer.</p>
-<h2 id="c1-38">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</h2>
+<h2 id="c1-40">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</h2>
 <p>C'est l'ordre décidé ensemble dans l'étude 001, section 12.10 (texte complet en annexe F) :</p>
 <figure>
 <svg width="680" height="330" viewBox="0 0 680 330" font-family="Segoe UI, Arial" font-size="12">
@@ -135,15 +137,15 @@ git status --short</code></pre>
 </figure>
 <table><thead><tr><th>N°</th><th>Chantier</th><th>Recette dans ce document</th><th>Difficulté</th></tr></thead><tbody><tr><td>1</td><td>Terminer l'animation de lancement</td><td>B</td><td>2</td></tr><tr><td>2</td><td>Notifications pour les trois types, niveaux Discret / Normal / Alarme</td><td>D</td><td>4</td></tr><tr><td>3</td><td>Formulaires 2-B (À faire cyan, Moment ambre)</td><td>E</td><td>3</td></tr><tr><td>4</td><td>Onglet « À faire », cartes unifiées, bouton « + À faire ou moment »</td><td>F</td><td>3</td></tr><tr><td>5</td><td>Hiérarchie des alertes, types d'événements</td><td>G</td><td>3</td></tr><tr><td>6</td><td>Gestes découvrables (astuces par Pulse)</td><td>H</td><td>2</td></tr><tr><td>7</td><td>Partage 5-A (lien, message, QR)</td><td>I</td><td>3</td></tr><tr><td>8</td><td>Planning Jour / Semaine / Mois, glisser-déposer</td><td>J</td><td>5</td></tr><tr><td>9</td><td>Sons et alarme</td><td>K</td><td>4</td></tr><tr><td>10</td><td>Compte et synchronisation</td><td>L</td><td>5 (plus tard)</td></tr></tbody></table>
 <div class="pb"></div>
-<h1 id="c1-43">3. La cuisine : les outils et leurs versions exactes</h1>
-<h2 id="c1-44">3.1 Les ustensiles (ce qui doit être installé)</h2>
+<h1 id="c1-45">3. La cuisine : les outils et leurs versions exactes</h1>
+<h2 id="c1-46">3.1 Les ustensiles (ce qui doit être installé)</h2>
 <table><thead><tr><th>Outil</th><th>Version utilisée</th><th>Où il est</th><th>Comment vérifier</th></tr></thead><tbody><tr><td>Windows</td><td>11 Famille</td><td>—</td><td>—</td></tr><tr><td>Node.js</td><td>celle installée (≥ 20)</td><td>dans le PATH</td><td><code>node --version</code></td></tr><tr><td>npm / npx</td><td>livré avec Node</td><td>dans le PATH</td><td><code>npx --version</code></td></tr><tr><td>Git</td><td>celle installée</td><td>dans le PATH</td><td><code>git --version</code></td></tr><tr><td>Android Studio</td><td>avec son Java intégré (JBR)</td><td><code>C:\Program Files\Android\Android Studio\jbr</code></td><td>le dossier existe</td></tr><tr><td>Android SDK</td><td>—</td><td><code>C:\Users\simon\AppData\Local\Android\Sdk</code></td><td>le dossier existe</td></tr><tr><td>NDK</td><td><strong>27.1.12297006</strong></td><td>dans le SDK, dossier <code>ndk</code></td><td>affiché au début de la compilation</td></tr><tr><td>CMake</td><td><strong>4.1.2</strong> (avec ninja 1.12.1)</td><td><code>...\Android\Sdk\cmake\4.1.2</code></td><td>le dossier existe</td></tr><tr><td>Kotlin</td><td>2.2.10 (géré par Gradle)</td><td>—</td><td>affiché au début de la compilation</td></tr><tr><td>Microsoft Edge</td><td>celui de Windows</td><td><code>C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe</code></td><td>sert à fabriquer les images et ce PDF</td></tr><tr><td>Un éditeur</td><td>VS Code conseillé</td><td>—</td><td>—</td></tr><tr><td>Un téléphone Android</td><td>ton second téléphone</td><td>câble USB ou envoi du fichier</td><td>Réglages › À propos</td></tr></tbody></table>
 <blockquote class="note"><p>Le réglage Windows <strong>chemins longs</strong> (<code>LongPathsEnabled = 1</code>) est déjà activé sur ton PC. Sans lui, la compilation Android échoue (<code>ninja: mkdir ... No such file or directory</code>). Si tu changes de PC, voir l'annexe B (fiche 003).</p></blockquote>
-<h2 id="c1-47">3.2 Les ingrédients de base (les bibliothèques du projet)</h2>
+<h2 id="c1-49">3.2 Les ingrédients de base (les bibliothèques du projet)</h2>
 <p>Ne rien installer de plus sans raison. Voici celles dont on se sert dans les recettes, toutes <strong>déjà présentes</strong> :</p>
 <table><thead><tr><th>Bibliothèque</th><th>À quoi elle sert dans Junix Pulse</th></tr></thead><tbody><tr><td><code>expo</code> (SDK 58) et <code>expo-router</code></td><td>L'application et ses écrans (un fichier dans <code>src/app</code> = un écran)</td></tr><tr><td><code>react-native</code> 0.88</td><td>Les composants de base (<code>View</code>, <code>Text</code>, <code>Pressable</code>)</td></tr><tr><td><code>react-native-reanimated</code></td><td>Les animations fluides (valeurs partagées, <code>withTiming</code>)</td></tr><tr><td><code>react-native-gesture-handler</code></td><td>Les gestes (glisser, appui long)</td></tr><tr><td><code>react-native-svg</code></td><td>Les dessins (logo, mascotte, graphiques)</td></tr><tr><td><code>expo-sqlite</code> + SQLCipher</td><td>La base de données chiffrée</td></tr><tr><td><code>expo-notifications</code></td><td>Les notifications et leurs canaux Android</td></tr><tr><td><code>expo-audio</code></td><td>Les sons (son de lancement, son des rappels)</td></tr><tr><td><code>zod</code></td><td>La vérification des sauvegardes importées</td></tr><tr><td><code>jest</code> + <code>react-test-renderer</code></td><td>Les tests automatiques</td></tr></tbody></table>
 <blockquote class="attention"><p>La règle du projet (fichier <code>AGENTS.md</code>) : <strong>Expo a changé</strong>. Avant d'écrire du code qui utilise Expo, lis la documentation de la version exacte : https://docs.expo.dev/versions/v58.0.0/ (pas celle de la dernière version, pas un vieux tuto).</p></blockquote>
-<h2 id="c1-51">3.3 Ouvrir le projet</h2>
+<h2 id="c1-53">3.3 Ouvrir le projet</h2>
 <ol><li>Ouvre <strong>PowerShell</strong> (touche Windows, tape <code>powershell</code>, Entrée).</li><li>Va dans le dossier du projet :</li></ol>
 <pre class="lang-powershell"><code>cd C:\Users\simon\Desktop\Projets\junix-pulse-glowcard</code></pre>
 <ol><li>Vérifie l'état :</li></ol>
@@ -154,8 +156,8 @@ git log --oneline -5</code></pre>
 <ol><li>Ouvre le dossier dans VS Code :</li></ol>
 <pre class="lang-powershell"><code>code .</code></pre>
 <div class="pb"></div>
-<h1 id="c1-61">4. Le plan de la maison : comment le code est rangé</h1>
-<h2 id="c1-62">4.1 Les étages</h2>
+<h1 id="c1-63">4. Le plan de la maison : comment le code est rangé</h1>
+<h2 id="c1-64">4.1 Les étages</h2>
 <p>Le code est rangé en <strong>couches</strong>, comme les étages d'une maison. Une couche n'utilise que celles <strong>en dessous</strong> d'elle. C'est ce qui permet d'ajouter ou d'enlever une fonction sans tout casser.</p>
 <figure>
 <svg width="660" height="400" viewBox="0 0 660 400" font-family="Segoe UI, Arial" font-size="12.5">
@@ -201,9 +203,9 @@ git log --oneline -5</code></pre>
 </svg>
 <figcaption>Figure 2 — Les couches du code. Une couche n'appelle que celles du dessous.</figcaption>
 </figure>
-<h2 id="c1-65">4.2 Les pièces les plus importantes</h2>
+<h2 id="c1-67">4.2 Les pièces les plus importantes</h2>
 <table><thead><tr><th>Fichier</th><th>Rôle</th><th>Quand tu le touches</th></tr></thead><tbody><tr><td><code>src/constants/item-kinds.ts</code></td><td><strong>Le registre des types</strong> : les deux familles (À faire, Moment), leurs couleurs, icônes, libellés</td><td>Pour ajouter un type ou une famille : <strong>un seul endroit</strong></td></tr><tr><td><code>src/i18n/messages.ts</code></td><td>Tous les textes, en français puis en anglais</td><td>À chaque texte affiché : toujours <strong>les deux langues</strong></td></tr><tr><td><code>src/database/migrations.ts</code></td><td>L'historique de la base (version 33 actuellement)</td><td>Pour une nouvelle colonne ou table : une <strong>nouvelle</strong> version, jamais modifier une ancienne</td></tr><tr><td><code>src/services/backup-service.ts</code></td><td>La sauvegarde et la restauration</td><td>Dès qu'une table ou une colonne est ajoutée</td></tr><tr><td><code>src/services/notification-service.ts</code></td><td>Les canaux Android et la programmation des notifications</td><td>Recettes D et K</td></tr><tr><td><code>src/app/_layout.tsx</code></td><td>Le démarrage : base, réglages, notifications, animation</td><td>Avec prudence</td></tr><tr><td><code>src/constants/theme.ts</code></td><td>Les couleurs et tailles (sombre <code>#141317</code>, violet, cyan)</td><td>Jamais de couleur « en dur » ailleurs</td></tr><tr><td><code>src/features/mascot/</code></td><td>Pulse, la mascotte</td><td>Recettes H et B</td></tr></tbody></table>
-<h2 id="c1-67">4.3 Le registre des types, en image</h2>
+<h2 id="c1-69">4.3 Le registre des types, en image</h2>
 <figure>
 <svg width="640" height="230" viewBox="0 0 640 230" font-family="Segoe UI, Arial" font-size="12.5">
   <rect x="220" y="10" width="200" height="50" rx="10" fill="#141317"/>
@@ -231,7 +233,7 @@ git log --oneline -5</code></pre>
 </figure>
 <blockquote class="note"><p><strong>Pourquoi c'est important</strong> : quand tu ajoutes plus tard un type (par exemple « Anniversaire » comme type de Moment), tu l'ajoutes <strong>dans le registre</strong>, et le choix « Nouveau », les cartes et les couleurs suivent tout seuls. C'est la règle « ajouter ou enlever sans casser ».</p></blockquote>
 <div class="pb"></div>
-<h1 id="c1-71">5. Les règles de la maison (à relire avant chaque recette)</h1>
+<h1 id="c1-73">5. Les règles de la maison (à relire avant chaque recette)</h1>
 <table><thead><tr><th>Règle</th><th>Pourquoi</th><th>Comment la respecter</th></tr></thead><tbody><tr><td>Fiche d'abord</td><td>Pouvoir refaire seul</td><td>Copier une fiche existante (ex. FICHE-010) et l'adapter</td></tr><tr><td>Commit par chemin</td><td>D'autres travaux vivent dans le même dossier</td><td><code>git commit -m "…" -- fichier1 fichier2</code> (voir chapitre 13)</td></tr><tr><td>Jamais <code>docs/motion/</code></td><td>Ce n'est pas notre travail</td><td>Ne jamais faire <code>git add .</code></td></tr><tr><td>Jamais <code>--no-verify</code></td><td>Les vérifications avant commit protègent</td><td>Si une vérification échoue, corriger la cause</td></tr><tr><td>Migrations additives</td><td>Ne jamais perdre les données</td><td>Nouvelle version dans <code>migrations.ts</code>, <code>ALTER TABLE … ADD COLUMN</code> avec une valeur par défaut</td></tr><tr><td>Pas d'apostrophe dans les commentaires SQL</td><td>Un test du projet le vérifie (elle casse la requête)</td><td>Écrire « de la » au lieu de « l'… » dans les <code>--</code> SQL</td></tr><tr><td>Sauvegarde à jour</td><td>Une restauration doit tout ramener</td><td>Toute nouvelle table : dans <code>backup-service.ts</code>, avec <code>.default([])</code> dans le schéma zod</td></tr><tr><td>Deux langues</td><td>L'appli est FR / EN</td><td>Chaque clé ajoutée dans le bloc FR <strong>et</strong> le bloc EN de <code>messages.ts</code></td></tr><tr><td>Pas d'emoji dans l'interface</td><td>Règle de design A.1</td><td>Utiliser les icônes (<code>Ionicons</code>)</td></tr><tr><td>Cibles de 44 px</td><td>Accessibilité</td><td><code>minHeight: 44</code> sur tout ce qui se touche</td></tr><tr><td><code>accessibilityLabel</code></td><td>Lecteurs d'écran</td><td>Sur chaque bouton qui n'a qu'une icône</td></tr><tr><td>Mouvement réduit</td><td>Accessibilité</td><td><code>useSafeReducedMotion()</code> dans toute animation</td></tr><tr><td>Clair <strong>et</strong> sombre</td><td>Les deux thèmes existent</td><td>Regarder chaque écran dans les deux</td></tr><tr><td>Un seul dégradé par écran</td><td>Sobriété</td><td>—</td></tr><tr><td>PIN et chiffrement intouchables</td><td>Sécurité</td><td>Ne jamais réduire le nombre d'essais, la dérivation de clé, ni stocker le PIN en clair</td></tr><tr><td>Pas de nouvelle dépendance sans raison</td><td>Poids, sécurité</td><td>Chercher d'abord dans ce qui est déjà installé</td></tr></tbody></table></section>
 <section class="chapitre"><h1 id="c2-0">6. Recette A — Installer l'APK sur le téléphone</h1>
 <div class="fiche-recette"><div><b>Temps</b>10 minutes</div><div><b>Difficulté</b>1 / 5</div><div><b>Ingrédients</b>le fichier .apk (62 Mo)</div><div><b>Ustensiles</b>câble USB ou Google Drive / WhatsApp</div></div>
@@ -2927,14 +2929,14 @@ npx eslint src</code></pre>
 <h2 id="a3-98">Compte rendu d'exécution (22 novembre 2026)</h2>
 <ul><li>Sauvegarde (section 6) : faite, les quatre fichiers sont dans <code>C:\Users\simon\Desktop\sauvegarde-fiche-008</code>.</li><li>Étapes 1 à 6 appliquées <strong>à partir des blocs de code de cette fiche</strong> (aucune différence possible entre la fiche et les fichiers).</li><li>Test final : <code>tsc</code> sans erreur, <code>Tests: 12 passed</code> (la première version de la fiche annonçait 11 : corrigé), <code>eslint</code> sans erreur, suite complète du projet relancée.</li><li>Vérifié dans l'aperçu web : le fil (« À FAIRE » cyan avec ou sans cloche, « MOMENT » ambre) et le choix « Nouveau » à deux familles.</li><li>Pas encore vérifié sur téléphone.</li></ul></section>
 <section class="annexe"><h1 id="annexe-4">Annexe E — Index des fiches</h1><p>Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail pour la refaire ou la terminer seul.</p>
-<table><thead><tr><th>N°</th><th>Titre</th><th>Date</th><th>Statut</th></tr></thead><tbody><tr><td><a href="FICHE-001-sauvegarde-auto.md">001</a></td><td>Nouveau design de la sauvegarde automatique</td><td>11 novembre 2026</td><td>fait (à tester sur téléphone)</td></tr><tr><td><a href="FICHE-002-commit-push-build.md">002</a></td><td>Enregistrer, envoyer sur GitHub et construire l'APK</td><td>11 novembre 2026</td><td>commit et push faits, build bloqué (quota Expo)</td></tr><tr><td><a href="FICHE-003-build-local-apk.md">003</a></td><td>Construire l'APK sur l'ordinateur (sans Expo)</td><td>11 novembre 2026</td><td>fait (APK sur le Bureau, à installer)</td></tr><tr><td><a href="FICHE-004-construire-junix-pulse-de-zero.html">004</a> (<a href="FICHE-004-construire-junix-pulse-de-zero.pdf">PDF</a>)</td><td>Construire Junix Pulse de zéro, de l'installation à l'app actuelle</td><td>12 novembre 2026</td><td>fait (code des phases 2 à 10 vérifié par TypeScript et Jest, pas encore refait sur un téléphone)</td></tr><tr><td><a href="FICHE-005-choisir-rappel-tache-evenement.md">005</a></td><td>Rendre claire la différence entre rappel, tâche et événement (choix « Nouveau » à trois types)</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; remplacé en partie par 008</td></tr><tr><td><a href="FICHE-006-registre-des-types.md">006</a></td><td>Le registre des types : une identité pour rappel, tâche et événement</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; étendu par 008</td></tr><tr><td>007</td><td>(images <code>fiche-007-apres-choix</code> seulement : fiche jamais écrite)</td><td>22 novembre 2026</td><td>inachevée</td></tr><tr><td><a href="FICHE-008-deux-familles.md">008</a></td><td>Deux familles : « À faire » et « Moment » (1-B, étape 1)</td><td>22 novembre 2026</td><td>fait (vérifié sur le web, à tester sur téléphone)</td></tr><tr><td><a href="FICHE-009-icones-logo-a1.md">009</a></td><td>Les icônes du logo A1 (l'orbe)</td><td>22 novembre 2026</td><td>fait (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-010-animation-lancement-orbe.md">010</a></td><td>L'animation de lancement autour de l'orbe, et le nouveau <code>PulseLogo</code></td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-011-notifications-trois-types.md">011</a></td><td>Les notifications des trois types, avec trois niveaux (Discret, Normal, Alarme) et la nuit réglable</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-012-formulaires-a-faire-et-moment.md">012</a></td><td>Les formulaires de création « À faire » (cyan) et « Moment » (ambre), avec la dictée ; « Temps pour le faire » règle Focus</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr></tbody></table>
+<table><thead><tr><th>N°</th><th>Titre</th><th>Date</th><th>Statut</th></tr></thead><tbody><tr><td><a href="FICHE-001-sauvegarde-auto.md">001</a></td><td>Nouveau design de la sauvegarde automatique</td><td>11 novembre 2026</td><td>fait (à tester sur téléphone)</td></tr><tr><td><a href="FICHE-002-commit-push-build.md">002</a></td><td>Enregistrer, envoyer sur GitHub et construire l'APK</td><td>11 novembre 2026</td><td>commit et push faits, build bloqué (quota Expo)</td></tr><tr><td><a href="FICHE-003-build-local-apk.md">003</a></td><td>Construire l'APK sur l'ordinateur (sans Expo)</td><td>11 novembre 2026</td><td>fait (APK sur le Bureau, à installer)</td></tr><tr><td><a href="FICHE-004-construire-junix-pulse-de-zero.html">004</a> (<a href="FICHE-004-construire-junix-pulse-de-zero.pdf">PDF</a>)</td><td>Construire Junix Pulse de zéro, de l'installation à l'app actuelle</td><td>12 novembre 2026</td><td>fait (code des phases 2 à 10 vérifié par TypeScript et Jest, pas encore refait sur un téléphone)</td></tr><tr><td><a href="FICHE-005-choisir-rappel-tache-evenement.md">005</a></td><td>Rendre claire la différence entre rappel, tâche et événement (choix « Nouveau » à trois types)</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; remplacé en partie par 008</td></tr><tr><td><a href="FICHE-006-registre-des-types.md">006</a></td><td>Le registre des types : une identité pour rappel, tâche et événement</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; étendu par 008</td></tr><tr><td>007</td><td>(images <code>fiche-007-apres-choix</code> seulement : fiche jamais écrite)</td><td>22 novembre 2026</td><td>inachevée</td></tr><tr><td><a href="FICHE-008-deux-familles.md">008</a></td><td>Deux familles : « À faire » et « Moment » (1-B, étape 1)</td><td>22 novembre 2026</td><td>fait (vérifié sur le web, à tester sur téléphone)</td></tr><tr><td><a href="FICHE-009-icones-logo-a1.md">009</a></td><td>Les icônes du logo A1 (l'orbe)</td><td>22 novembre 2026</td><td>fait (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-010-animation-lancement-orbe.md">010</a></td><td>L'animation de lancement autour de l'orbe, et le nouveau <code>PulseLogo</code></td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-011-notifications-trois-types.md">011</a></td><td>Les notifications des trois types, avec trois niveaux (Discret, Normal, Alarme) et la nuit réglable</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-012-formulaires-a-faire-et-moment.md">012</a></td><td>Les formulaires de création « À faire » (cyan) et « Moment » (ambre), avec la dictée ; « Temps pour le faire » règle Focus</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-013-dicter-tout-et-y-aller.md">013</a></td><td>« Dicter tout » remplit les formulaires d'une phrase ; « Y aller » ouvre l'itinéraire vers le lieu d'un moment</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone)</td></tr></tbody></table>
 <p>Pour comprendre le rôle de chaque dossier et fichier : <a href="../apprendre/explorateur-du-projet.html">l'explorateur du projet</a> (à ouvrir dans un navigateur ; le remettre à jour avec <code>node docs/apprendre/generer-explorateur.js</code>).</p></section>
 <section class="annexe"><h1 id="annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</h1><h2 id="e-0">12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point</h2>
 <p>Cette section <strong>remplace</strong> les recommandations des sections précédentes là où elles diffèrent. C'est la référence pour la suite.</p>
 <h3 id="e-2">12.1 Types (point 1) : 1-B, fait en partie</h3>
 <p>Deux familles à l'écran, <strong>À faire</strong> et <strong>Moment</strong> ; les données gardent leurs trois types. Étape 1 réalisée : <a href="../fiches/FICHE-008-deux-familles.md">fiche 008</a>.</p>
 <h3 id="e-4">12.2 Formulaires (point 2) : 2-B, avec deux formulaires bien différenciés</h3>
-<ul><li><strong>2-B</strong> : les formulaires sont fabriqués à partir du <strong>registre</strong> (chaque famille déclare ses champs, un seul jeu de briques les dessine). Un champ ajouté ou retiré demain se fait dans le registre, sans toucher aux écrans.</li><li><strong>Mais deux formulaires distincts à l'œil</strong>, pas un formulaire unique qui change de forme :</li><li><strong>À faire</strong> : couleur cyan, case à cocher dans l'en-tête, champs <em>Quoi</em> → <em>Quand</em> (jour, heure facultative) → <strong>Alerte</strong> (interrupteur, rappel à confirmer) → <em>Avec qui</em> → <em>Plus d'options</em> (sous-tâches, échéance, durée, étiquettes) ;</li><li><strong>Moment</strong> : couleur ambre, calendrier dans l'en-tête, champs <em>Quoi</em> → <em>Début et fin</em> → <em>Où</em> → <strong>Partir … min avant</strong> (seulement si un lieu est saisi) → <em>Avec qui</em> → <em>Type de moment</em> (anniversaire, deuil…) → <em>Plus d'options</em>.</li><li>La <strong>dictée</strong> (micro) dans le titre et les notes des deux formulaires.</li><li><strong>Précisions du 23 novembre 2026</strong> (avant la fiche 012) :</li><li><strong>étendue</strong> : la fiche 012 fait les deux formulaires de <strong>création</strong> ; les écrans de modification suivent dans la fiche d'après, avec les mêmes briques ;</li><li><strong>la priorité</strong> se place <strong>sous l'Alerte</strong> (c'est là qu'elle change quelque chose : Urgente = Alarme), et dans Plus d'options quand il n'y a pas d'alerte ;</li><li><strong>les options des rappels</strong> (répétition, rappel à confirmer, action comme « Appeler ») n'apparaissent que <strong>sous l'interrupteur Alerte</strong> ;</li><li><strong>la durée</strong> (« combien de temps pour y arriver ») : elle ne servait à rien (seulement une étiquette « 30 min » sur les cartes), d'où l'incompréhension. Elle devient <strong>« Temps pour le faire »</strong>, cachée dans Plus d'options, avec une phrase qui dit à quoi elle sert : <strong>lancer une session Focus depuis la tâche règle le minuteur sur ce temps</strong>. Tout doit rester cohérent avec ce qui existe déjà (cartes, Planning, Focus, anciennes tâches qui ont déjà une durée).</li></ul>
+<ul><li><strong>2-B</strong> : les formulaires sont fabriqués à partir du <strong>registre</strong> (chaque famille déclare ses champs, un seul jeu de briques les dessine). Un champ ajouté ou retiré demain se fait dans le registre, sans toucher aux écrans.</li><li><strong>Mais deux formulaires distincts à l'œil</strong>, pas un formulaire unique qui change de forme :</li><li><strong>À faire</strong> : couleur cyan, case à cocher dans l'en-tête, champs <em>Quoi</em> → <em>Quand</em> (jour, heure facultative) → <strong>Alerte</strong> (interrupteur, rappel à confirmer) → <em>Avec qui</em> → <em>Plus d'options</em> (sous-tâches, échéance, durée, étiquettes) ;</li><li><strong>Moment</strong> : couleur ambre, calendrier dans l'en-tête, champs <em>Quoi</em> → <em>Début et fin</em> → <em>Où</em> → <strong>Partir … min avant</strong> (seulement si un lieu est saisi) → <em>Avec qui</em> → <em>Type de moment</em> (anniversaire, deuil…) → <em>Plus d'options</em>.</li><li>La <strong>dictée</strong> (micro) dans le titre et les notes des deux formulaires.</li><li><strong>Précisions du 23 novembre 2026</strong> (avant la fiche 012) :</li><li><strong>étendue</strong> : la fiche 012 fait les deux formulaires de <strong>création</strong> ; les écrans de modification suivent dans la fiche d'après, avec les mêmes briques ;</li><li><strong>la priorité</strong> se place <strong>sous l'Alerte</strong> (c'est là qu'elle change quelque chose : Urgente = Alarme), et dans Plus d'options quand il n'y a pas d'alerte ;</li><li><strong>les options des rappels</strong> (répétition, rappel à confirmer, action comme « Appeler ») n'apparaissent que <strong>sous l'interrupteur Alerte</strong> ;</li><li><strong>la voix pour tout remplir</strong> (décidé le 23 novembre, avant l'APK de test) : un bouton <strong>« Dicter tout »</strong> en haut des deux formulaires ; une phrase remplit les champs (titre, jour, heure, personne, priorité, répétition ; pour un Moment, aussi le <strong>lieu</strong> et la <strong>fin</strong>). Fiche 013 ;</li><li><strong>le lieu</strong> : pas de carte dans l'appli (Google Places demande une clé payante) ; sur un moment qui a un lieu, deux boutons gratuits : <strong>« Ouvrir dans Maps »</strong> et <strong>« Y aller »</strong> (itinéraire Google Maps). Fiche 013 ;</li><li><strong>la durée</strong> (« combien de temps pour y arriver ») : elle ne servait à rien (seulement une étiquette « 30 min » sur les cartes), d'où l'incompréhension. Elle devient <strong>« Temps pour le faire »</strong>, cachée dans Plus d'options, avec une phrase qui dit à quoi elle sert : <strong>lancer une session Focus depuis la tâche règle le minuteur sur ce temps</strong>. Tout doit rester cohérent avec ce qui existe déjà (cartes, Planning, Focus, anciennes tâches qui ont déjà une durée).</li></ul>
 <h3 id="e-6">12.3 Gestes (point 3) : 3-A + 3-B + 3-C, et les faire découvrir sans submerger</h3>
 <ul><li><strong>3-A</strong> la carte s'entrouvre une fois pour montrer qu'on peut la glisser ; <strong>3-B</strong> un bouton « ⋯ » visible sur chaque carte ; <strong>3-C</strong> l'appui long.</li><li><strong>Conflit résolu</strong> : l'appui long ouvre le <strong>menu</strong> dans les listes, et <strong>soulève la carte</strong> pour la déplacer dans le planning. Ce sont deux écrans différents, donc chaque geste a un seul sens à un endroit donné.</li><li><strong>Découverte progressive</strong> (ta demande) : <strong>jamais tout à l'arrivée</strong>. Chaque astuce apparaît <strong>une seule fois</strong>, <strong>au moment où elle sert</strong>, présentée par Pulse dans une petite bulle :</li></ul>
 <p>  | Quand | Astuce |   |---|---|   | La première fois qu'une liste a au moins deux cartes | « Glisse une carte pour la modifier ou la supprimer » (la carte s'entrouvre) |   | La première fois qu'on ouvre le planning avec au moins un élément | « Appuie longtemps sur une carte puis fais-la glisser pour changer son heure » |   | La première fois que la vue Mois s'affiche | « Fais glisser un élément sur un autre jour » |   | La première fois qu'on ajoute une personne à un élément | « Tu peux lui envoyer l'invitation » (voir 12.5) |</p>
@@ -2955,7 +2957,15 @@ npx eslint src</code></pre>
 <ul><li><strong>Devant l'utilisateur</strong> : chaque ajout respecte le design existant (verre, palette, un seul dégradé par écran, pas d'emoji, cibles de 44 px, TalkBack, réduire les animations), en clair <strong>et</strong> en sombre, avec des sons cohérents.</li><li><strong>Derrière</strong> : chaque ajout passe par le registre ; les migrations ajoutent sans effacer ; chaque règle a ses tests ; les sauvegardes restent compatibles. Ainsi, rien ne casse quand on ajoute, modifie ou retire une fonction.</li></ul>
 <h3 id="e-24">12.10 Nouvel ordre des priorités</h3>
 <p>Ta remarque : ce que l'utilisateur voit <strong>en premier</strong>, c'est le lancement et le logo. On commence donc par là.</p>
-<table><thead><tr><th>Ordre</th><th>Chantier</th><th>Niveau</th></tr></thead><tbody><tr><td>1</td><td><strong>Logo A</strong> (A1 ou A2 à choisir), icône Android, logo complet, <strong>nouvelle animation de lancement</strong></td><td>N1</td></tr><tr><td>2</td><td><strong>Les Moments et les À faire notifient</strong> (6-A), avec l'alerte de départ</td><td>N1</td></tr><tr><td>3</td><td><strong>Formulaires 2-B</strong> : Moment puis À faire, dictée comprise</td><td>N1</td></tr><tr><td>4</td><td><strong>Onglet À faire</strong> (fusion Rappels + Tâches), cartes unifiées, bouton « + À faire ou moment »</td><td>N1</td></tr><tr><td>5</td><td><strong>Hiérarchie des alertes et types de moment</strong> (6-B, 6-C), et leurs réglages</td><td>N2</td></tr><tr><td>6</td><td><strong>Gestes découvrables</strong> (12.3)</td><td>N2</td></tr><tr><td>7</td><td><strong>Partage 5-A</strong> (12.5)</td><td>N2</td></tr><tr><td>8</td><td><strong>Planning Jour · Semaine · Mois</strong> et glisser-déposer (12.4)</td><td>N3</td></tr><tr><td>9</td><td><strong>Sons et sonneries</strong> (6-D), <strong>alarme</strong> (12.6)</td><td>N3</td></tr><tr><td>10</td><td><strong>Compte facultatif et synchronisation</strong> (5-B), puis <strong>espaces de travail</strong> (5-C)</td><td>N4</td></tr></tbody></table></section>
+<table><thead><tr><th>Ordre</th><th>Chantier</th><th>Niveau</th></tr></thead><tbody><tr><td>1</td><td><strong>Logo A</strong> (A1 ou A2 à choisir), icône Android, logo complet, <strong>nouvelle animation de lancement</strong></td><td>N1</td></tr><tr><td>2</td><td><strong>Les Moments et les À faire notifient</strong> (6-A), avec l'alerte de départ</td><td>N1</td></tr><tr><td>3</td><td><strong>Formulaires 2-B</strong> : Moment puis À faire, dictée comprise</td><td>N1</td></tr><tr><td>4</td><td><strong>Onglet À faire</strong> (fusion Rappels + Tâches), cartes unifiées, bouton « + À faire ou moment »</td><td>N1</td></tr><tr><td>5</td><td><strong>Hiérarchie des alertes et types de moment</strong> (6-B, 6-C), et leurs réglages</td><td>N2</td></tr><tr><td>6</td><td><strong>Gestes découvrables</strong> (12.3)</td><td>N2</td></tr><tr><td>7</td><td><strong>Partage 5-A</strong> (12.5)</td><td>N2</td></tr><tr><td>8</td><td><strong>Planning Jour · Semaine · Mois</strong> et glisser-déposer (12.4)</td><td>N3</td></tr><tr><td>9</td><td><strong>Sons et sonneries</strong> (6-D), <strong>alarme</strong> (12.6)</td><td>N3</td></tr><tr><td>10</td><td><strong>Compte facultatif et synchronisation</strong> (5-B), puis <strong>espaces de travail</strong> (5-C)</td><td>N4</td></tr></tbody></table>
+<h2 id="e-27">13. Idées pour la version 2.0 (l'application est en 1.1.0)</h2>
+<p>Notées pour plus tard, <strong>rien à coder maintenant</strong> (décision du 23 novembre 2026).</p>
+<h3 id="e-29">13.1 Aller à un moment en course (Uber, Yango, inDrive…)</h3>
+<p>L'idée : depuis un moment qui a un lieu, ouvrir une appli de course avec la destination déjà remplie, pour qui n'a pas de voiture.</p>
+<table><thead><tr><th>Appli</th><th>Faisable ?</th><th>Comment</th></tr></thead><tbody><tr><td><strong>Google Maps</strong></td><td><strong>oui</strong> (fait en 1.x, fiche 013)</td><td>« Y aller » ouvre l'itinéraire ; Maps propose déjà transports, marche et taxis</td></tr><tr><td><strong>Uber</strong></td><td><strong>oui</strong></td><td>Un lien public (<code>m.uber.com/ul/?action=setPickup&amp;dropoff[formatted_address]=…</code>) ouvre Uber avec la destination remplie</td></tr><tr><td><strong>Yango</strong></td><td><strong>à vérifier</strong></td><td>Semble demander les coordonnées GPS (latitude, longitude), pas l'adresse : il faudrait d'abord transformer l'adresse en coordonnées</td></tr><tr><td><strong>inDrive</strong></td><td><strong>non connu</strong></td><td>Pas de lien public connu pour préremplir la destination</td></tr></tbody></table>
+<p>Règles si on le fait : l'appli <strong>ne commande jamais</strong> la course elle-même (la personne confirme et paie dans l'appli de course) ; aucune donnée envoyée à ces services en dehors de l'adresse de destination, au moment où la personne touche le bouton.</p>
+<h3 id="e-33">13.2 Choisir le lieu sur une carte</h3>
+<p>Choisir un lieu sur une carte dans l'appli, ou avec des suggestions d'adresses, demande Google Places (clé payante) ou un service équivalent. Alternative gratuite à étudier : <strong>partager un lieu depuis Google Maps vers Junix Pulse</strong> (bouton Partager de Maps), qui demande une configuration Android de « partage entrant ».</p></section>
 <section class="annexe"><h1 id="annexe-G">Annexe G — Fiche 011 complète (notifications des trois types)</h1><p>Projet : <strong>Junix Pulse</strong> · Date : 23 novembre 2026 · Suite de : <a href="FICHE-010-animation-lancement-orbe.md">FICHE 010</a> · Étude : <a href="../etudes/ETUDE-001-clarifier-et-faire-evoluer.md">ÉTUDE 001</a>, section 12.6 (avec les précisions du 23 novembre) et 12.10 (chantier n° 2)</p>
 <h2 id="annexe-G-1">1. Objectif</h2>
 <p>Aujourd'hui, seuls les <strong>rappels</strong> notifient, et toujours de la même façon. Après cette fiche :</p>
@@ -5433,4 +5443,542 @@ npx eslint src/constants/item-forms.ts src/components/create/form/FormBricks.tsx
 <ol><li>Les écrans de <strong>modification</strong> (tâche, rappel, moment) avec les mêmes briques.</li><li>Le chantier n° 4 (12.10) : l'onglet « À faire » et le bouton « + À faire ou moment ».</li><li>Au chantier n° 5 : le champ « Type de moment » dans le registre (<code>ITEM_FORMS.moment</code>).</li></ol>
 <h2 id="annexe-H-106">Compte rendu d'exécution (23 novembre 2026)</h2>
 <ul><li>Décisions prises avant d'écrire et notées dans l'étude 001, section 12.2 : création d'abord ; priorité sous l'Alerte ; options des rappels sous l'Alerte ; la durée devient « Temps pour le faire », reliée au minuteur de Focus (elle ne servait à rien, d'où l'incompréhension : seulement une étiquette « 30 min » sur les cartes).</li><li>Code lu avant d'écrire : les trois anciens formulaires en entier, la dictée de la saisie rapide (<code>use-dictation.ts</code>), les routes du choix « Nouveau », Focus et son lancement depuis une tâche.</li><li>Étapes 1 à 8 appliquées <strong>à partir des blocs de cette fiche</strong> (<code>docs/tutoriel-suite/outils/appliquer-fiche-012.js</code>) : toutes les modifications trouvées une seule fois.</li><li>Tests : <code>Tests: 8 passed</code> (nouveau fichier) ; toute la suite <code>Test Suites: 89 passed</code>, <code>Tests: 1926 passed</code> ; <code>tsc</code> et <code>eslint</code> sans erreur, du premier coup.</li><li><strong>Vu sur le web</strong> : « À faire » en cyan, sections dans l'ordre de l'étude ; l'Alerte activée fait disparaître « Sans date », choisit Aujourd'hui, montre l'heure, la priorité avec son explication, l'action, la répétition et « à confirmer » ; « Moment » en ambre ; « Partir … min avant » n'apparaît qu'après avoir écrit un lieu.</li><li><strong>Deux écarts corrigés après les avoir vus à l'écran</strong> (la fiche décrit maintenant la version corrigée) :</li><li>le titre de l'action reprenait un vieux texte jargonneux (« Sphère d'Intention &amp; Action ») : nouveau texte <code>itemForm.action</code> « Ce que tu feras » / « What you will do » ;</li><li>« Début » et « Fin » n'affichaient que la date : ils affichent l'heure puis la date (« 14:00 · 23 nov. 2026 »), comme l'ancien formulaire.</li><li>Les 8 fichiers créés ou remplacés ont été comparés à leurs blocs : identiques.</li><li><strong>Pas vérifié</strong> : le thème clair des deux formulaires, le minuteur de Focus réglé par une vraie tâche (couvert par le test de <code>focusMinutesForTask</code>), l'enregistrement réel d'une tâche, d'un rappel et d'un moment (mêmes fonctions qu'avant : <code>createTask</code>, <code>createReminder</code>, <code>createEvent</code>), et la dictée (Android seulement). À voir sur le téléphone avec un nouvel APK. Rien n'est encore enregistré dans git.</li></ul></section>
+<section class="annexe"><h1 id="annexe-I">Annexe I — Fiche 013 complète (Dicter tout, Y aller)</h1><p>Projet : <strong>Junix Pulse</strong> · Date : 23 novembre 2026 · Suite de : <a href="FICHE-012-formulaires-a-faire-et-moment.md">FICHE 012</a> · Étude : <a href="../etudes/ETUDE-001-clarifier-et-faire-evoluer.md">ÉTUDE 001</a>, section 12.2 (précisions du 23 novembre) et section 13 (idées 2.0)</p>
+<h2 id="annexe-I-1">1. Objectif</h2>
+<ol><li>En haut des deux formulaires de création, un bouton <strong>« Dicter tout »</strong> : on dit <strong>une phrase</strong>, elle remplit les champs.</li><li><strong>À faire</strong> : « Appeler Paul demain à 18 h » → titre, demain, <strong>alerte à 18 h</strong>, action « Appeler », Paul. « Acheter du pain » → titre seul, sans date ni alerte. « Médicaments tous les jours à 8 h » → alerte répétée chaque jour. « urgent » → priorité Urgente.</li><li><strong>Moment</strong> : « Dîner chez Léa samedi à 19 h pendant 2 h » → titre, samedi 19 h - 21 h, <strong>lieu « Chez Léa »</strong>. Aussi « jusqu'à 23 h », « à la mairie », « au restaurant », et en anglais « at the office », « for 30 minutes », « until 6 pm ».</li><li>Sur la page d'un moment qui a un lieu, sous « Ouvrir dans Maps » (qui existait déjà), un bouton <strong>« Y aller »</strong> : l'itinéraire dans Google Maps, qui propose transports, marche, voiture et taxis.</li></ol>
+<p>La phrase est analysée par <strong>la même règle que la saisie rapide</strong> (<code>capture-rules.ts</code>, inchangée) ; une petite règle en plus (<code>form-dictation-rules.ts</code>) décide de l'alerte et trouve le lieu et la fin. La voix reste sur le téléphone (dictée sur l'appareil, sans Internet). Le micro de chaque champ reste là pour corriger un champ seul.</p>
+<p><strong>Pas dans cette fiche</strong> : choisir le lieu sur une carte (clé Google payante) et les applis de course (idées 2.0, étude section 13).</p>
+<h2 id="annexe-I-5">2. État de départ</h2>
+<table><thead><tr><th>À vérifier</th><th>Comment</th><th>Résultat attendu</th></tr></thead><tbody><tr><td>La fiche 012 est enregistrée</td><td><code>git log --oneline -3</code></td><td><code>feat(forms): …</code> présent</td></tr><tr><td>Tout passe</td><td><code>npx jest</code></td><td><code>Tests: 1926 passed</code></td></tr></tbody></table>
+<h2 id="annexe-I-7">3. Matériel</h2>
+<p>Aucune bibliothèque ajoutée.</p>
+<h2 id="annexe-I-9">4. Hypothèses</h2>
+<ul><li>Comme la saisie rapide, le <strong>titre est la phrase entière</strong> (« Appeler Paul demain à 18 h ») : on peut le raccourcir à la main. Retirer les mots de date de la phrase risquerait de couper un vrai titre.</li><li><strong>L'alerte</strong> s'active seulement si une <strong>heure</strong> est dite (« 18 h », « 8:30 », « ce soir », « dans 2 heures ») ou une <strong>répétition</strong> (« tous les jours ») ; sans heure, une chose à faire reste sans alerte.</li><li><strong>Le jour</strong> n'est rempli que s'il est dit (ou s'il y a une alerte) ; « Acheter du pain » reste « Sans date ».</li><li><strong>Le lieu</strong> est reconnu après « chez », « à la », « à l' », « au », « aux » (et « at » en anglais), jusqu'au premier mot de jour, d'heure ou de durée, ou jusqu'à la ponctuation.</li><li><strong>La fin</strong> : « pendant 2 h », « pendant 1h30 », « pendant 45 min », « jusqu'à 23 h », « for 30 minutes », « until 6 pm » ; sinon une heure après le début ; une fin avant le début est ignorée.</li><li>Le bouton « Dicter tout » ne s'affiche que là où la dictée existe (Android), comme le micro de la saisie rapide.</li><li>« Y aller » envoie l'adresse du lieu à Google Maps <strong>seulement quand la personne touche le bouton</strong>, comme « Ouvrir dans Maps ».</li></ul>
+<h2 id="annexe-I-11">5. Carte de l'intervention</h2>
+<table><thead><tr><th>Fichier</th><th>Action</th><th>Rôle</th></tr></thead><tbody><tr><td><code>src/domain/rules/form-dictation-rules.ts</code></td><td><strong>créé</strong></td><td>Une phrase → les champs d'un « À faire » ou d'un « Moment »</td></tr><tr><td><code>src/domain/rules/maps-links.ts</code></td><td><strong>créé</strong></td><td>Les deux liens Google Maps (ouvrir, itinéraire)</td></tr><tr><td><code>src/components/create/form/FormBricks.tsx</code></td><td>modifié</td><td>La brique <code>DictateAll</code></td></tr><tr><td><code>src/features/create/TodoForm.tsx</code></td><td>modifié</td><td>« Dicter tout » remplit le formulaire À faire</td></tr><tr><td><code>src/features/create/MomentForm.tsx</code></td><td>modifié</td><td>« Dicter tout » remplit le formulaire Moment</td></tr><tr><td><code>src/app/events/[id].tsx</code></td><td>modifié</td><td>Le bouton « Y aller »</td></tr><tr><td><code>src/i18n/messages-rest-fr.ts</code> et <code>-en.ts</code></td><td>modifiés</td><td>8 textes chacun</td></tr><tr><td><code>src/domain/rules/__tests__/form-dictation-rules.test.ts</code></td><td><strong>créé</strong></td><td>10 tests</td></tr></tbody></table>
+<h2 id="annexe-I-13">6. Sauvegarde</h2>
+<p>Aucune donnée ni base touchée. Pour annuler avant le commit : <code>git restore</code> des fichiers modifiés, suppression des fichiers créés.</p>
+<h2 id="annexe-I-15">7. Étapes</h2>
+<h3 id="annexe-I-16">Étape 1 — Une phrase → les champs</h3>
+<p>Créer <code>src/domain/rules/form-dictation-rules.ts</code> :</p>
+<div class="bloc">Bloc : dictation-rules</div>
+<pre class="lang-ts"><code>/**
+ * "Dictate everything" in the create forms (sheet 013): one spoken sentence fills the fields.
+ * It reuses the analysis of the quick capture (capture-rules) and adds what the forms need:
+ * whether the todo rings, and for a moment its place ("chez Léa", "à la mairie", "at the office")
+ * and its end ("pendant 2 h", "jusqu'à 23 h", "for 30 minutes", "until 6 pm"). Pure: tested alone.
+ */
+
+import { format } from 'date-fns';
+
+import type { ActionType, Person, ReminderPriority } from '../entities';
+import { parseQuickCapture, type CaptureLanguage } from './capture-rules';
+
+/** A moment without a said end lasts one hour. */
+export const DEFAULT_MOMENT_MINUTES = 60;
+
+export type FormRecurrence = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+export interface TodoFill {
+  title: string;
+  /** 'YYYY-MM-DD', or undefined when no day is said and nothing rings. */
+  day?: string;
+  alert: boolean;
+  time: { hour: number; minute: number };
+  priority: ReminderPriority;
+  actionType: ActionType;
+  personId?: string;
+  recurrence?: FormRecurrence;
+}
+
+export interface MomentFill {
+  title: string;
+  start: Date;
+  end: Date;
+  place?: string;
+  personId?: string;
+}
+
+/** An hour of the day is said: "18h", "8:30", "7pm", "ce soir", "dans 2 heures"… */
+const CLOCK_TIME =
+  /\b\d{1,2}\s*(?:h|:)\s*\d{0,2}(?!\d)|\b\d{1,2}\s*(?:am|pm)\b|\b(?:ce soir|ce matin|cet après-midi|à midi|a midi|tonight|this morning|this evening|at noon)\b|\b(?:dans|in)\s+\d+\s*(?:minutes?|mins?|heures?|h|hours?)\b/i;
+
+/** Today is said, so "Today" is chosen even without an alert. */
+const TODAY_WORDS = /\b(?:aujourd'hui|aujourd’hui|ce soir|ce matin|cet après-midi|today|tonight)\b/i;
+
+/** Where a place stops: a day, an hour, a length, or a punctuation mark. */
+const PLACE_END = String.raw`(?=\s+(?:demain|après-demain|apres-demain|aujourd|ce\s+(?:soir|matin|midi|week)|cet\s|cette\s|le\s+\d|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|à\s+\d|a\s+\d|vers\s+\d|de\s+\d|pendant|durant|jusqu|dans\s+\d|tous|toutes|tomorrow|today|tonight|this\s|on\s|at\s+\d|from\s+\d|for\s+\d|until|next|every|in\s+\d|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\s*[,.;!?]|\s*$)`;
+
+const PLACE_PATTERNS: readonly RegExp[] = [
+  new RegExp(String.raw`\b(chez\s+[^,.;!?]+?)` + PLACE_END, 'i'),
+  new RegExp(String.raw`(?:^|\s)(?:à|a)\s+((?:la\s+|l['’])[^\d,.;!?][^,.;!?]*?)` + PLACE_END, 'i'),
+  new RegExp(String.raw`(?:^|\s)((?:au|aux)\s+[^\d,.;!?][^,.;!?]*?)` + PLACE_END, 'i'),
+  new RegExp(String.raw`\bat\s+(?!noon\b|midnight\b|night\b)((?:the\s+)?[^\d,.;!?][^,.;!?]*?)` + PLACE_END, 'i'),
+];
+
+/** The place said in a sentence, with a capital letter, or undefined. */
+export function placeOf(sentence: string): string | undefined {
+  for (const pattern of PLACE_PATTERNS) {
+    const match = pattern.exec(sentence);
+    const place = match?.[1]?.trim();
+    if (place) return place.charAt(0).toUpperCase() + place.slice(1);
+  }
+  return undefined;
+}
+
+/** The end of a moment: a length or an end hour said, else one hour after the start. */
+export function endOf(sentence: string, start: Date): Date {
+  const lower = sentence.toLowerCase();
+  const length = /\b(?:pendant|durant|for)\s+(\d+)\s*(h|heures?|hours?|hrs?|min|mins|minutes?)\s*(\d{1,2})?\b/.exec(lower);
+  if (length) {
+    const amount = Number(length[1]);
+    const minutes = length[2].startsWith('h') ? amount * 60 + Number(length[3] ?? 0) : amount;
+    if (minutes &gt; 0) return new Date(start.getTime() + minutes * 60000);
+  }
+  const untilFr = /\bjusqu['’]?\s*(?:à|a)\s+(\d{1,2})\s*(?:h|:)\s*(\d{2})?/.exec(lower);
+  const untilEn = /\buntil\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/.exec(lower);
+  const until = untilFr ?? untilEn;
+  if (until) {
+    let hour = Number(until[1]);
+    if (untilEn &amp;&amp; until === untilEn &amp;&amp; until[3] === 'pm' &amp;&amp; hour &lt; 12) hour += 12;
+    const end = new Date(start);
+    end.setHours(hour, Number(until[2] ?? 0), 0, 0);
+    if (end &gt; start) return end;
+  }
+  return new Date(start.getTime() + DEFAULT_MOMENT_MINUTES * 60000);
+}
+
+function formRecurrence(type?: string): FormRecurrence | undefined {
+  return type === 'DAILY' || type === 'WEEKLY' || type === 'MONTHLY' ? type : undefined;
+}
+
+function clockOf(time: string): { hour: number; minute: number } {
+  const [hour, minute] = time.split(':').map(Number);
+  return { hour: hour || 0, minute: minute || 0 };
+}
+
+export function todoFromSentence(
+  sentence: string,
+  persons: readonly Person[],
+  now: Date,
+  language: CaptureLanguage = 'fr'
+): TodoFill {
+  const parsed = parseQuickCapture(sentence, [...persons], now, language);
+  const recurrence = formRecurrence(parsed.recurrence?.type);
+  const alert = CLOCK_TIME.test(sentence) || Boolean(recurrence);
+  const day = format(parsed.targetDate, 'yyyy-MM-dd');
+  const daySaid = day !== format(now, 'yyyy-MM-dd') || TODAY_WORDS.test(sentence);
+  return {
+    title: parsed.cleanTitle,
+    day: alert || daySaid ? day : undefined,
+    alert,
+    time: clockOf(parsed.targetTime),
+    priority: parsed.priority,
+    actionType: parsed.actionType,
+    personId: parsed.targetPerson?.id,
+    recurrence,
+  };
+}
+
+export function momentFromSentence(
+  sentence: string,
+  persons: readonly Person[],
+  now: Date,
+  language: CaptureLanguage = 'fr'
+): MomentFill {
+  const parsed = parseQuickCapture(sentence, [...persons], now, language);
+  const { hour, minute } = clockOf(parsed.targetTime);
+  const start = new Date(parsed.targetDate);
+  start.setHours(hour, minute, 0, 0);
+  return {
+    title: parsed.cleanTitle,
+    start,
+    end: endOf(sentence, start),
+    place: placeOf(sentence),
+    personId: parsed.targetPerson?.id,
+  };
+}</code></pre>
+<table><thead><tr><th>Passage</th><th>Ce qu'il fait</th></tr></thead><tbody><tr><td><code>parseQuickCapture(…)</code></td><td>La règle de la saisie rapide, <strong>inchangée</strong> : jour, heure, personne, action, priorité, répétition</td></tr><tr><td><code>CLOCK_TIME</code></td><td>Une heure est-elle dite ? Sinon pas d'alerte (« Réviser vendredi » reste une tâche du vendredi)</td></tr><tr><td><code>TODAY_WORDS</code> / <code>daySaid</code></td><td>Le jour n'est rempli que s'il est dit ; sinon « Sans date »</td></tr><tr><td><code>PLACE_END</code></td><td>Où s'arrête un lieu : un mot de jour, d'heure, de durée, ou la ponctuation</td></tr><tr><td><code>PLACE_PATTERNS</code></td><td>« chez … », « à la … », « à l'… », « au … », « aux … », « at … » (pas « at noon »)</td></tr><tr><td><code>endOf</code></td><td>« pendant 2 h », « 1h30 », « 45 min », « jusqu'à 23 h », « until 6 pm » ; sinon une heure ; une fin avant le début est ignorée</td></tr></tbody></table>
+<h3 id="annexe-I-21">Étape 2 — Les deux liens Google Maps</h3>
+<p>Créer <code>src/domain/rules/maps-links.ts</code> :</p>
+<div class="bloc">Bloc : maps-links</div>
+<pre class="lang-ts"><code>/**
+ * The two Google Maps links of a place (sheets 013): open it, or the route to it. They work on
+ * the phone (Maps app) and on the web, with no key. The address leaves the phone only when the
+ * person taps the button.
+ */
+
+const MAPS = 'https://www.google.com/maps';
+
+export function mapsSearchUrl(place: string): string {
+  return `${MAPS}/search/?api=1&amp;query=${encodeURIComponent(place.trim())}`;
+}
+
+/** The route from where the phone is, Maps offering transit, walking, car and taxis. */
+export function mapsDirectionsUrl(place: string): string {
+  return `${MAPS}/dir/?api=1&amp;destination=${encodeURIComponent(place.trim())}`;
+}</code></pre>
+<h3 id="annexe-I-25">Étape 3 — La brique « Dicter tout »</h3>
+<p>Dans <code>src/components/create/form/FormBricks.tsx</code>, juste avant « More options » :</p>
+<div class="bloc">Bloc : bricks-avant</div>
+<pre class="lang-tsx"><code>/** "More options": folded at first, so the form stays short. */</code></pre>
+<div class="bloc">Bloc : bricks-apres</div>
+<pre class="lang-tsx"><code>/**
+ * "Dictate everything" (sheet 013): one sentence fills the form. The sentence heard is shown and
+ * handed to the form at each new result, as the phone refines it while one speaks. Shown where
+ * dictation exists (Android), like the microphone of the quick capture.
+ */
+export function DictateAll({
+  accent,
+  example,
+  onSentence,
+}: {
+  accent: string;
+  example: string;
+  onSentence: (sentence: string) =&gt; void;
+}) {
+  const t = useT();
+  const language = useLanguage();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const { showSnackbar } = useAppStore();
+  const mineRef = useRef(false);
+  const onSentenceRef = useRef(onSentence);
+  const [heard, setHeard] = useState('');
+
+  useEffect(() =&gt; {
+    onSentenceRef.current = onSentence;
+  }, [onSentence]);
+
+  const onText = useCallback((sentence: string) =&gt; {
+    if (!mineRef.current) return;
+    setHeard(sentence);
+    onSentenceRef.current(sentence);
+  }, []);
+  const onProblem = useCallback(
+    (problem: DictationProblem) =&gt; {
+      if (mineRef.current) showSnackbar(t(DICTATION_PROBLEM_KEYS[problem]));
+    },
+    [showSnackbar, t]
+  );
+  const dictation = useDictation(language, onText, onProblem);
+
+  useEffect(() =&gt; {
+    if (!dictation.listening) mineRef.current = false;
+  }, [dictation.listening]);
+
+  if (!dictation.available) return null;
+
+  return (
+    &lt;View style={[formStyles.cardGroup, { borderWidth: 1, borderColor: `${accent}55` }]}&gt;
+      &lt;TouchableOpacity
+        onPress={() =&gt; {
+          if (!dictation.listening) mineRef.current = true;
+          void dictation.toggle();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={t(dictation.listening ? 'capture.dictation.stop' : 'itemForm.dictateAll')}
+        testID="form-dictate-all"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 48 }}
+      &gt;
+        &lt;View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: Radius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: dictation.listening ? palette.error.default : `${accent}22`,
+          }}
+        &gt;
+          &lt;Ionicons name={dictation.listening ? 'stop' : 'mic'} size={20} color={dictation.listening ? palette.onSurface.primary : accent} /&gt;
+        &lt;/View&gt;
+        &lt;View style={{ flex: 1 }}&gt;
+          &lt;Text style={[formStyles.fieldLabel, { color: accent }]}&gt;
+            {t(dictation.listening ? 'itemForm.dictateListening' : 'itemForm.dictateAll')}
+          &lt;/Text&gt;
+          &lt;Text style={formStyles.fieldSub}&gt;{heard ? t('itemForm.dictateHeard', { sentence: heard }) : example}&lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/TouchableOpacity&gt;
+    &lt;/View&gt;
+  );
+}
+
+/** "More options": folded at first, so the form stays short. */</code></pre>
+<table><thead><tr><th>Passage</th><th>Ce qu'il fait</th></tr></thead><tbody><tr><td><code>mineRef</code></td><td>Comme les micros des champs : seul ce bouton garde ce qu'on dit après l'avoir touché</td></tr><tr><td><code>onSentenceRef</code></td><td>Garde la dernière fonction du formulaire sans réabonner le micro à chaque affichage</td></tr><tr><td><code>heard</code></td><td>Montre la phrase entendue, pour que la personne voie ce qui a été compris</td></tr><tr><td><code>if (!dictation.available) return null</code></td><td>Pas de bouton là où la dictée n'existe pas (web, iPhone)</td></tr></tbody></table>
+<h3 id="annexe-I-32">Étape 4 — « Dicter tout » dans le formulaire À faire</h3>
+<p>Six remplacements dans <code>src/features/create/TodoForm.tsx</code>.</p>
+<div class="bloc">Bloc : todo-1-avant</div>
+<pre class="lang-tsx"><code>import React, { useState } from 'react';</code></pre>
+<div class="bloc">Bloc : todo-1-apres</div>
+<pre class="lang-tsx"><code>import React, { useEffect, useState } from 'react';</code></pre>
+<div class="bloc">Bloc : todo-2-avant</div>
+<pre class="lang-tsx"><code>  ChoiceChips,
+  DictatedInput,
+  FieldLabel,</code></pre>
+<div class="bloc">Bloc : todo-2-apres</div>
+<pre class="lang-tsx"><code>  ChoiceChips,
+  DictateAll,
+  DictatedInput,
+  FieldLabel,</code></pre>
+<div class="bloc">Bloc : todo-3-avant</div>
+<pre class="lang-tsx"><code>import type { Reminder, ReminderPriority } from '@/domain/entities';</code></pre>
+<div class="bloc">Bloc : todo-3-apres</div>
+<pre class="lang-tsx"><code>import type { Person, Reminder, ReminderPriority } from '@/domain/entities';
+import { todoFromSentence } from '@/domain/rules/form-dictation-rules';</code></pre>
+<div class="bloc">Bloc : todo-4-avant</div>
+<pre class="lang-tsx"><code>import { SettingsRepository } from '@/repositories/settings-repository';</code></pre>
+<div class="bloc">Bloc : todo-4-apres</div>
+<pre class="lang-tsx"><code>import { PersonRepository } from '@/repositories/person-repository';
+import { SettingsRepository } from '@/repositories/settings-repository';</code></pre>
+<div class="bloc">Bloc : todo-5-avant</div>
+<pre class="lang-tsx"><code>  const [saving, setSaving] = useState(false);
+
+  const customDay</code></pre>
+<div class="bloc">Bloc : todo-5-apres</div>
+<pre class="lang-tsx"><code>  const [saving, setSaving] = useState(false);
+  // The people, so that "Appeler Paul" in a dictated sentence finds Paul
+  const [persons, setPersons] = useState&lt;Person[]&gt;([]);
+
+  useEffect(() =&gt; {
+    PersonRepository.findAll()
+      .then(setPersons)
+      .catch(() =&gt; {});
+  }, []);
+
+  // "Dictate everything" (sheet 013): the sentence fills the fields it speaks of
+  const applySentence = (sentence: string) =&gt; {
+    const fill = todoFromSentence(sentence, persons, new Date(), language);
+    setTitle(fill.title);
+    if (fill.title) setTitleError('');
+    setDay(fill.day);
+    setAlert(fill.alert);
+    setAlertTime(fill.time);
+    setPriority(fill.priority);
+    setActionType(fill.actionType);
+    setRepeat(Boolean(fill.recurrence));
+    if (fill.recurrence) setRecurrence(fill.recurrence);
+    const personId = fill.personId;
+    if (personId) setPersonIds(ids =&gt; (ids.includes(personId) ? ids : [personId, ...ids]));
+  };
+
+  const customDay</code></pre>
+<div class="bloc">Bloc : todo-6-avant</div>
+<pre class="lang-tsx"><code>      {visibleSections('todo', { alert }).map(section =&gt; (</code></pre>
+<div class="bloc">Bloc : todo-6-apres</div>
+<pre class="lang-tsx"><code>      &lt;DictateAll accent={accent} example={t('itemForm.dictateTodoExample')} onSentence={applySentence} /&gt;
+      {visibleSections('todo', { alert }).map(section =&gt; (</code></pre>
+<h3 id="annexe-I-58">Étape 5 — « Dicter tout » dans le formulaire Moment</h3>
+<p>Six remplacements dans <code>src/features/create/MomentForm.tsx</code>.</p>
+<div class="bloc">Bloc : moment-1-avant</div>
+<pre class="lang-tsx"><code>import React, { useState } from 'react';</code></pre>
+<div class="bloc">Bloc : moment-1-apres</div>
+<pre class="lang-tsx"><code>import React, { useEffect, useState } from 'react';</code></pre>
+<div class="bloc">Bloc : moment-2-avant</div>
+<pre class="lang-tsx"><code>  ChoiceChips,
+  DictatedInput,
+  FieldLabel,</code></pre>
+<div class="bloc">Bloc : moment-2-apres</div>
+<pre class="lang-tsx"><code>  ChoiceChips,
+  DictateAll,
+  DictatedInput,
+  FieldLabel,</code></pre>
+<div class="bloc">Bloc : moment-3-avant</div>
+<pre class="lang-tsx"><code>import type { EventType } from '@/domain/entities';</code></pre>
+<div class="bloc">Bloc : moment-3-apres</div>
+<pre class="lang-tsx"><code>import type { EventType, Person } from '@/domain/entities';
+import { momentFromSentence } from '@/domain/rules/form-dictation-rules';</code></pre>
+<div class="bloc">Bloc : moment-4-avant</div>
+<pre class="lang-tsx"><code>import { useAppStore } from '@/store/app-store';</code></pre>
+<div class="bloc">Bloc : moment-4-apres</div>
+<pre class="lang-tsx"><code>import { PersonRepository } from '@/repositories/person-repository';
+import { useAppStore } from '@/store/app-store';</code></pre>
+<div class="bloc">Bloc : moment-5-avant</div>
+<pre class="lang-tsx"><code>  const [saving, setSaving] = useState(false);
+
+  const place = location.trim();</code></pre>
+<div class="bloc">Bloc : moment-5-apres</div>
+<pre class="lang-tsx"><code>  const [saving, setSaving] = useState(false);
+  // The people, so that "avec Paul" in a dictated sentence finds Paul
+  const [persons, setPersons] = useState&lt;Person[]&gt;([]);
+
+  useEffect(() =&gt; {
+    PersonRepository.findAll()
+      .then(setPersons)
+      .catch(() =&gt; {});
+  }, []);
+
+  // "Dictate everything" (sheet 013): title, start, end, place and person from one sentence
+  const applySentence = (sentence: string) =&gt; {
+    const fill = momentFromSentence(sentence, persons, new Date(), language);
+    setTitle(fill.title);
+    if (fill.title) setTitleError('');
+    setStartAt(fill.start);
+    setEndAt(fill.end);
+    if (fill.place) setLocation(fill.place);
+    const personId = fill.personId;
+    if (personId) setPersonIds(ids =&gt; (ids.includes(personId) ? ids : [personId, ...ids]));
+  };
+
+  const place = location.trim();</code></pre>
+<div class="bloc">Bloc : moment-6-avant</div>
+<pre class="lang-tsx"><code>      {visibleSections('moment', { place }).map(section =&gt; (</code></pre>
+<div class="bloc">Bloc : moment-6-apres</div>
+<pre class="lang-tsx"><code>      &lt;DictateAll accent={accent} example={t('itemForm.dictateMomentExample')} onSentence={applySentence} /&gt;
+      {visibleSections('moment', { place }).map(section =&gt; (</code></pre>
+<h3 id="annexe-I-84">Étape 6 — « Y aller » sur la page d'un moment</h3>
+<p>Dans <code>src/app/events/[id].tsx</code> :</p>
+<div class="bloc">Bloc : event-1-avant</div>
+<pre class="lang-tsx"><code>import { useDateLocale, useT } from '@/i18n';</code></pre>
+<div class="bloc">Bloc : event-1-apres</div>
+<pre class="lang-tsx"><code>import { useDateLocale, useT } from '@/i18n';
+import { mapsDirectionsUrl } from '@/domain/rules/maps-links';</code></pre>
+<div class="bloc">Bloc : event-2-avant</div>
+<pre class="lang-tsx"><code>                &lt;Text style={styles.linkSub}&gt;{t('eventDetail.openMaps')}&lt;/Text&gt;
+              &lt;/View&gt;
+            &lt;/TouchableOpacity&gt;
+          )}</code></pre>
+<div class="bloc">Bloc : event-2-apres</div>
+<pre class="lang-tsx"><code>                &lt;Text style={styles.linkSub}&gt;{t('eventDetail.openMaps')}&lt;/Text&gt;
+              &lt;/View&gt;
+            &lt;/TouchableOpacity&gt;
+          )}
+
+          {/* Y aller (fiche 013) : l'itinéraire dans Google Maps, qui propose transports, marche et taxis */}
+          {!!event.location &amp;&amp; (
+            &lt;TouchableOpacity
+              style={styles.infoRow}
+              onPress={() =&gt; Linking.openURL(mapsDirectionsUrl(event.location!))}
+              accessibilityRole="button"
+              accessibilityLabel={t('eventDetail.goThereA11y', { place: event.location })}
+              testID="event-go-there"
+            &gt;
+              &lt;Ionicons name="navigate-outline" size={20} color={theme.primary.default} /&gt;
+              &lt;View style={{ flex: 1 }}&gt;
+                &lt;Text style={styles.infoTitle}&gt;{t('eventDetail.goThere')}&lt;/Text&gt;
+                &lt;Text style={styles.linkSub}&gt;{t('eventDetail.goThereSub')}&lt;/Text&gt;
+              &lt;/View&gt;
+            &lt;/TouchableOpacity&gt;
+          )}</code></pre>
+<h3 id="annexe-I-94">Étape 7 — Les textes</h3>
+<p>Dans <code>src/i18n/messages-rest-fr.ts</code> :</p>
+<div class="bloc">Bloc : fr-avant</div>
+<pre class="lang-ts"><code>  'itemForm.availability': "Pendant ce moment",</code></pre>
+<div class="bloc">Bloc : fr-apres</div>
+<pre class="lang-ts"><code>  'itemForm.availability': "Pendant ce moment",
+  'itemForm.dictateAll': "Dicter tout",
+  'itemForm.dictateListening': "J'écoute… touche pour arrêter",
+  'itemForm.dictateHeard': "« {sentence} »",
+  'itemForm.dictateTodoExample': "Une phrase remplit tout. Ex. : « Appeler Paul demain à 18 h »",
+  'itemForm.dictateMomentExample': "Une phrase remplit tout. Ex. : « Dîner chez Léa samedi à 19 h pendant 2 h »",
+  'eventDetail.goThere': "Y aller",
+  'eventDetail.goThereSub': "Itinéraire dans Google Maps ↗",
+  'eventDetail.goThereA11y': "Itinéraire vers {place} dans Google Maps",</code></pre>
+<p>Dans <code>src/i18n/messages-rest-en.ts</code> :</p>
+<div class="bloc">Bloc : en-avant</div>
+<pre class="lang-ts"><code>  'itemForm.availability': "During this moment",</code></pre>
+<div class="bloc">Bloc : en-apres</div>
+<pre class="lang-ts"><code>  'itemForm.availability': "During this moment",
+  'itemForm.dictateAll': "Dictate everything",
+  'itemForm.dictateListening': "Listening… tap to stop",
+  'itemForm.dictateHeard': "“{sentence}”",
+  'itemForm.dictateTodoExample': "One sentence fills it all. E.g. “Call Paul tomorrow at 6 pm”",
+  'itemForm.dictateMomentExample': "One sentence fills it all. E.g. “Dinner at Lea's on Saturday at 7 pm for 2 hours”",
+  'eventDetail.goThere': "Go there",
+  'eventDetail.goThereSub': "Route in Google Maps ↗",
+  'eventDetail.goThereA11y': "Route to {place} in Google Maps",</code></pre>
+<h3 id="annexe-I-105">Étape 8 — Les tests</h3>
+<p>Créer <code>src/domain/rules/__tests__/form-dictation-rules.test.ts</code> :</p>
+<div class="bloc">Bloc : test</div>
+<pre class="lang-ts"><code>import type { Person } from '../../entities';
+import { endOf, momentFromSentence, placeOf, todoFromSentence } from '../form-dictation-rules';
+import { mapsDirectionsUrl, mapsSearchUrl } from '../maps-links';
+
+/** Monday 23 November 2026, 10:00. */
+const now = new Date(2026, 10, 23, 10, 0);
+const paul = { id: 'p1', displayName: 'Paul' } as Person;
+const ymd = (date: Date) =&gt; [date.getFullYear(), date.getMonth() + 1, date.getDate()];
+
+describe('dictating a todo', () =&gt; {
+  it('fills the day, the alert, the action and the person of "Appeler Paul demain à 18h"', () =&gt; {
+    const fill = todoFromSentence('Appeler Paul demain à 18h', [paul], now);
+    expect(fill).toMatchObject({ day: '2026-11-24', alert: true, time: { hour: 18, minute: 0 }, actionType: 'CALL', personId: 'p1' });
+    expect(fill.title).toBe('Appeler Paul demain à 18h');
+  });
+
+  it('leaves a thing without a day nor an hour as it is', () =&gt; {
+    const fill = todoFromSentence('Acheter du pain', [], now);
+    expect(fill).toMatchObject({ title: 'Acheter du pain', day: undefined, alert: false });
+  });
+
+  it('keeps a day said without an hour, without an alert', () =&gt; {
+    const fill = todoFromSentence('Réviser le dossier vendredi', [], now);
+    expect(fill.alert).toBe(false);
+    expect(fill.day).toBe('2026-11-27');
+  });
+
+  it('repeats and rings for "tous les jours à 8h", and hears "urgent"', () =&gt; {
+    const fill = todoFromSentence('Prendre mes médicaments tous les jours à 8h, urgent', [], now);
+    expect(fill).toMatchObject({ alert: true, recurrence: 'DAILY', time: { hour: 8, minute: 0 }, priority: 'URGENT' });
+  });
+});
+
+describe('dictating a moment', () =&gt; {
+  it('finds the place, the start and the end of "Dîner chez Léa samedi à 19h pendant 2h"', () =&gt; {
+    const fill = momentFromSentence('Dîner chez Léa samedi à 19h pendant 2h', [], now);
+    expect(fill.place).toBe('Chez Léa');
+    expect([...ymd(fill.start), fill.start.getHours()]).toEqual([2026, 11, 28, 19]);
+    expect([fill.end.getHours(), fill.end.getMinutes()]).toEqual([21, 0]);
+  });
+
+  it('reads "à la mairie" and "jusqu\'à 11h30"', () =&gt; {
+    const fill = momentFromSentence('Réunion à la mairie demain à 10h jusqu’à 11h30', [], now);
+    expect(fill.place).toBe('La mairie');
+    expect([fill.end.getHours(), fill.end.getMinutes()]).toEqual([11, 30]);
+  });
+
+  it('lasts one hour without a said end, and has no place when none is said', () =&gt; {
+    const fill = momentFromSentence('Anniversaire de Marc le 12 décembre à 20h', [], now);
+    expect(fill.place).toBeUndefined();
+    expect(fill.end.getTime() - fill.start.getTime()).toBe(60 * 60000);
+  });
+
+  it('understands English places and lengths', () =&gt; {
+    expect(placeOf('Meeting at the office tomorrow at 9am')).toBe('The office');
+    expect(placeOf('Lunch at noon')).toBeUndefined();
+    const start = new Date(2026, 10, 24, 9, 0);
+    expect(endOf('Meeting for 30 minutes', start).getMinutes()).toBe(30);
+    expect(endOf('Party until 11 pm', new Date(2026, 10, 24, 20, 0)).getHours()).toBe(23);
+  });
+
+  it('ignores an end before the start, and reads 1h30', () =&gt; {
+    const start = new Date(2026, 10, 24, 10, 0);
+    expect(endOf('Cours jusqu’à 8h', start).getHours()).toBe(11);
+    const long = endOf('Cours pendant 1h30', start);
+    expect([long.getHours(), long.getMinutes()]).toEqual([11, 30]);
+  });
+});
+
+describe('Google Maps links', () =&gt; {
+  it('opens a place, or the route to it', () =&gt; {
+    expect(mapsSearchUrl(' 12 rue des Lilas ')).toBe('https://www.google.com/maps/search/?api=1&amp;query=12%20rue%20des%20Lilas');
+    expect(mapsDirectionsUrl('Chez Léa')).toBe('https://www.google.com/maps/dir/?api=1&amp;destination=Chez%20L%C3%A9a');
+  });
+});</code></pre>
+<h2 id="annexe-I-109">8. Test final</h2>
+<pre class="lang-bash"><code>npx jest src/domain/rules/__tests__/form-dictation-rules.test.ts
+npx jest
+npx tsc --noEmit
+npx eslint src/domain/rules/form-dictation-rules.ts src/domain/rules/maps-links.ts src/components/create/form src/features/create "src/app/events/[id].tsx"</code></pre>
+<p>Résultat attendu : <code>Tests: 10 passed</code> pour le nouveau fichier ; toute la suite passe ; <code>tsc</code> et <code>eslint</code> n'affichent rien.</p>
+<p><strong>Sur le web</strong> : la page d'un moment avec un lieu montre « Ouvrir dans Maps » et <strong>« Y aller »</strong> (qui ouvre l'itinéraire). « Dicter tout » n'apparaît pas sur le web (dictée seulement sur Android).</p>
+<p><strong>Sur le téléphone</strong> : dans « À faire », toucher « Dicter tout », dire « Appeler Paul demain à 18 h » : titre, Demain, Alerte à 18:00, Appeler, Paul. Dans « Moment » : « Dîner chez Léa samedi à 19 h pendant 2 h ».</p>
+<h2 id="annexe-I-114">9. Dépannage</h2>
+<table><thead><tr><th>Symptôme</th><th>Cause</th><th>Remède</th></tr></thead><tbody><tr><td>« Dicter tout » absent</td><td>Web ou iPhone, ou téléphone sans reconnaissance hors ligne</td><td>Sur Android, le bouton est là ; s'il dit « non disponible », télécharger la langue hors ligne (le téléphone le propose)</td></tr><tr><td>Le lieu prend aussi l'heure (« chez Léa à 19h » donne « Chez Léa à 19h »)</td><td>Un mot d'arrêt manque dans <code>PLACE_END</code></td><td>Ajouter le mot dans la liste, et un test</td></tr><tr><td>Une phrase sans heure active l'alerte</td><td><code>CLOCK_TIME</code> reconnaît trop</td><td>Ajouter la phrase aux tests, resserrer le motif</td></tr><tr><td>La personne n'est pas reconnue</td><td>Le nom dit n'est pas celui de la fiche de la personne</td><td>Dire le prénom tel qu'il est écrit dans Proches</td></tr></tbody></table>
+<h2 id="annexe-I-116">10. Lexique</h2>
+<ul><li><strong>Analyse de phrase</strong> : retrouver dans une phrase les morceaux utiles (jour, heure, lieu…) avec des motifs (expressions régulières).</li><li><strong>Motif</strong> (expression régulière) : une description de forme de texte, comme « deux chiffres suivis de h ».</li><li><strong>Lien profond / universel</strong> : une adresse web qui ouvre directement une appli (Maps) sur le bon écran.</li></ul>
+<h2 id="annexe-I-118">11. Et après</h2>
+<ol><li>Un APK pour tout essayer sur le téléphone (fiches 011, 012, 013).</li><li>Les écrans de modification avec les mêmes briques.</li><li>Version 2.0 : les applis de course, choisir un lieu sur une carte (étude, section 13).</li></ol>
+<h2 id="annexe-I-120">Compte rendu d'exécution (23 novembre 2026)</h2>
+<ul><li>Décisions prises avant d'écrire (23 novembre) : « Dicter tout » dans les deux formulaires ; pour le lieu, des boutons Maps gratuits plutôt qu'une carte (clé payante) ; les applis de course notées pour la version 2.0 (étude, section 13).</li><li>Code lu avant d'écrire : l'analyse de phrase de la saisie rapide (<code>parseQuickCapture</code> : elle garde la phrase entière comme titre et ne dit pas si une heure a été prononcée, d'où la petite règle en plus) ; la page d'un moment, qui avait <strong>déjà</strong> « Ouvrir dans Maps » : seul « Y aller » manquait.</li><li>Étapes 1 à 8 appliquées <strong>à partir des blocs de cette fiche</strong> (<code>docs/tutoriel-suite/outils/appliquer-fiche-013.js</code>) : toutes les modifications trouvées une seule fois.</li><li>Tests : <code>Tests: 10 passed</code> du premier coup ; toute la suite <code>Test Suites: 90 passed</code>, <code>Tests: 1936 passed</code> ; <code>tsc</code> et <code>eslint</code> sans erreur.</li><li><strong>Pas vérifié</strong> : « Dicter tout » (n'existe que sur Android : à essayer sur le téléphone), et « Y aller » à l'écran (pas regardé sur le web, pour économiser ; c'est le même type de lien que « Ouvrir dans Maps », qui marche déjà). Rien n'est encore enregistré dans git.</li></ul></section>
 </body></html>

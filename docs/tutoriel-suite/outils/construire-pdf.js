@@ -123,6 +123,7 @@ annexes.push(`<section class="annexe"><h1 id="annexe-etude">Annexe F — Étude 
 for (const [title, file] of [
   ['Annexe G — Fiche 011 complète (notifications des trois types)', 'docs/fiches/FICHE-011-notifications-trois-types.md'],
   ['Annexe H — Fiche 012 complète (formulaires À faire et Moment)', 'docs/fiches/FICHE-012-formulaires-a-faire-et-moment.md'],
+  ['Annexe I — Fiche 013 complète (Dicter tout, Y aller)', 'docs/fiches/FICHE-013-dicter-tout-et-y-aller.md'],
 ]) {
   const id = `annexe-${title.slice(7, 8)}`;
   toc.push({ level: 1, text: title, id });

@@ -50,7 +50,11 @@ git status --short
 
 > [astuce] Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).
 
-## 2.2 bis Fait, testé, mais PAS encore enregistré : la fiche 012 (formulaires)
+## 2.2 ter Fait, testé, mais PAS encore enregistré : la fiche 013 (Dicter tout, Y aller)
+
+La **fiche 013** (annexe I) : un bouton **« Dicter tout »** en haut des deux formulaires (une phrase remplit titre, jour, heure, alerte, personne, priorité, répétition ; pour un Moment aussi le lieu et la fin), et **« Y aller »** (itinéraire Google Maps) sur la page d'un moment qui a un lieu. 1936 tests. Les idées « applis de course » et « carte » sont notées pour la **version 2.0** (étude, section 13).
+
+## 2.2 bis La fiche 012 (formulaires), enregistrée (`e9587da`)
 
 La **fiche 012** (annexe H) fait le chantier n° 3 : deux formulaires de création, **« À faire »** (cyan, avec l'interrupteur Alerte) et **« Moment »** (ambre, « Partir … min avant » seulement avec un lieu), construits à partir d'un registre (`src/constants/item-forms.ts`), avec la **dictée** dans le titre et les notes. La durée devient **« Temps pour le faire »** et règle le minuteur de Focus. Appliquée, testée (1926 tests), vue sur le web ; à enregistrer, puis à voir sur le téléphone.
 
