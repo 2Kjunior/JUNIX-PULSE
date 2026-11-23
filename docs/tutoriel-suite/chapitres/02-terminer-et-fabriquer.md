@@ -306,6 +306,7 @@ cp app/build/outputs/apk/release/app-release.apk "/c/Users/simon/Desktop/junix-p
 | `SDK location not found` | Étape 2 oubliée (`local.properties`) |
 | `ninja: error: mkdir(...): No such file or directory` | Chemins longs désactivés : voir annexe B |
 | `Compatibility with CMake < 3.5 has been removed` | Oubli de `CMAKE_POLICY_VERSION_MINIMUM=3.5` |
+| Trois plantages à la fois : `Gradle Worker Daemon`, `0xC0000005`, `clang … signal` | Mémoire insuffisante (12 Go pour 12 compilations en parallèle) : fermer les autres applis, `./gradlew --stop`, puis relancer avec `--max-workers=4` à la fin de la commande (vécu le 23 novembre 2026) |
 | `JAVA_HOME is set to an invalid directory` | Vérifier que le dossier `jbr` existe |
 | La compilation s'arrête sans erreur (fenêtre fermée, PC en veille) | Relancer la même commande : Gradle reprend là où il en était |
 | Quota Expo (EAS) épuisé | C'est pourquoi on compile sur le PC ; le quota gratuit revient le 1er décembre 2026 |

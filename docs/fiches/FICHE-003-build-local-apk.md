@@ -214,6 +214,7 @@ Copy-Item app\build\outputs\apk\release\app-release.apk "$env:USERPROFILE\Deskto
 | `ninja: error: mkdir(CMakeFiles/…): No such file or directory` ou `Filename longer than 260 characters` | Windows limite les chemins à 260 caractères | Faites l'étape 2 (lecteur `J:`) et lancez la fabrication depuis `J:\android` |
 | `Failed to install the following SDK components` | Une pièce du SDK manque et sa licence n'est pas acceptée | Ouvrez Android Studio › SDK Manager, installez la pièce indiquée |
 | `Compatibility with CMake < 3.5 has been removed from CMake.` | CMake 4 refuse un module qui annonce une très vieille version minimale | Ajoutez `CMAKE_POLICY_VERSION_MINIMUM=3.5` à la commande de l'étape 2 c (c'est déjà dans la commande donnée) |
+| Plusieurs plantages en même temps : `Failed to run Gradle Worker Daemon`, `createBundleReleaseJsAndAssets` avec `-1073741819 (NTSTATUS 0xC0000005)`, `clang frontend command failed due to signal` | Le PC manque de mémoire : avec 12 processeurs et 12 Go de mémoire, Gradle lance jusqu'à 12 compilations à la fois (surtout après un `prebuild --clean`, qui oblige à tout recompiler) | Fermez les autres applications, puis `./gradlew --stop` et relancez la commande de l'étape 2 c en ajoutant `--max-workers=4` à la fin. Ce qui était déjà compilé est gardé |
 | Sur le téléphone : « Application non installée » | L'ancienne version (clé Expo) est encore là | Désinstallez-la (étape 5) |
 | `BUILD FAILED` avec `OutOfMemoryError` | Pas assez de mémoire pour Gradle | Fermez les autres logiciels et relancez |
 

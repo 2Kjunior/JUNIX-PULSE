@@ -43,14 +43,25 @@ git status --short
 |---|---|---|
 | `fe0d9f2` | La carte de sauvegarde automatique, les premières fiches | oui |
 | `132bd3d` | Fiche 003 : fabriquer l'APK sur le PC | oui |
-| `dc6cf03` | Les deux familles « À faire » et « Moment », le choix « Nouveau », le registre des types, l'étude 001 | **non** |
-| `cda1910` | Le logo A1 (l'orbe) : icône, icône à thème, icône de notification, image de démarrage | **non** |
+| `dc6cf03` | Les deux familles « À faire » et « Moment », le choix « Nouveau », le registre des types, l'étude 001 | oui |
+| `cda1910` | Le logo A1 (l'orbe) : icône, icône à thème, icône de notification, image de démarrage | oui |
+| `1f9b1d8` | Fiche 010 : l'animation de lancement autour de l'orbe, sur fond sombre, et `PulseLogo` | oui |
+| `5e5f049` | Ce tutoriel, ses outils et ses fichiers fournis | oui |
 
-> [attention] Les deux derniers commits sont **seulement sur ton PC**. Si le disque lâche, ils sont perdus. Recette B, étape 9 : comment les envoyer sur GitHub (`git push`).
+> [astuce] Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).
 
-## 2.2 Fait, testé, mais PAS encore enregistré : la fiche 010
+## 2.2 Fait, testé, mais PAS encore enregistré : la fiche 011 (notifications)
 
-La fiche 010 (la nouvelle animation de lancement autour de l'orbe, et le nouveau `PulseLogo`) est **appliquée, testée et vue sur le web**. Il ne reste qu'à l'**enregistrer** (commit, recette B étape 6), à l'envoyer sur GitHub (étape 7), puis à la voir sur le téléphone (recette C).
+La **fiche 011** (annexe G) fait le chantier n° 2 : les notifications des trois types, avec trois niveaux et la nuit réglable. Elle est **appliquée, testée (1918 tests) et vue sur le web** (le réglage « Nuit plus calme »). Il reste à l'**enregistrer** (commit), puis à la voir sur le téléphone avec un nouvel APK (recette C). Le détail est dans le compte rendu en bas de la fiche.
+
+| Fichiers de la fiche 011 | État |
+|---|---|
+| 3 créés : `notification-level-rules.ts`, `item-notification-rules.ts`, `item-notification-service.ts` | + 2 fichiers de tests |
+| 15 modifiés : service de notifications, rappels, migration 34, réglages, sauvegarde, textes, tâches, moments, `_layout.tsx`, un ancien test | voir la carte de la fiche (section 5) |
+
+## 2.2 bis La fiche 010 (animation de lancement), enregistrée
+
+La fiche 010 est **enregistrée** (`1f9b1d8`) et sur GitHub. Ce qui suit décrit comment elle a été vérifiée.
 
 | Fichier | État |
 |---|---|
@@ -107,11 +118,13 @@ Trois corrections ont été nécessaires pendant les tests ; elles sont décrite
 
 ## 2.3 L'APK du jour
 
-Un APK a été fabriqué le 23 novembre à 00 h 30 :
+Le plus récent a été fabriqué le 23 novembre à 12 h 32 :
 
-- **Fichier** : `C:\Users\simon\Desktop\junix-pulse-local-2026-11-23.apk` (62 Mo)
-- **Contient** : le code du commit `cda1910` : les deux familles, et le nouveau logo partout (icône, icône à thème, notification, image de démarrage)
-- **Ne contient pas** : la nouvelle animation de lancement (fiche 010). Au lancement, tu verras donc encore l'ancienne animation sur fond blanc.
+- **Fichier** : `C:\Users\simon\Desktop\junix-pulse-local-2026-11-23-lancement.apk` (61 Mo)
+- **Contient** : le code du commit `5e5f049` : les deux familles, le nouveau logo partout, et la **nouvelle animation de lancement** sur fond sombre (fiche 010)
+- **Ne contient pas** : les notifications des tâches et des moments (fiche 011, faite après). Il faudra un nouvel APK pour les voir.
+
+L'ancien `junix-pulse-local-2026-11-23.apk` (sans la nouvelle animation) peut être supprimé.
 
 La recette A (chapitre 6) explique comment l'installer.
 
@@ -126,7 +139,7 @@ C'est l'ordre décidé ensemble dans l'étude 001, section 12.10 (texte complet 
   <g>
     <circle cx="40" cy="153" r="16" fill="#2e9e57"/><text x="40" y="158" text-anchor="middle" fill="#fff" font-weight="700">1</text>
     <text x="40" y="120" text-anchor="middle" font-weight="700">Logo +</text><text x="40" y="135" text-anchor="middle">lancement</text>
-    <text x="40" y="190" text-anchor="middle" fill="#2e9e57">icônes : fait</text><text x="40" y="205" text-anchor="middle" fill="#B45309">anim : testée, à enregistrer</text>
+    <text x="40" y="190" text-anchor="middle" fill="#2e9e57">icônes : fait</text><text x="40" y="205" text-anchor="middle" fill="#2e9e57">anim : faite</text>
   </g>
   <g>
     <circle cx="110" cy="153" r="16" fill="#3B2A78"/><text x="110" y="158" text-anchor="middle" fill="#fff" font-weight="700">2</text>

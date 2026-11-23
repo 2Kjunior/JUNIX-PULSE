@@ -75,6 +75,8 @@ Test final : le test des migrations du dossier `src/database/__tests__` doit pas
 
 <div class="fiche-recette"><div><b>Temps</b>2 à 3 jours</div><div><b>Difficulté</b>4 / 5</div><div><b>Ingrédients</b>notification-service.ts, reminder-notification-service.ts, une règle, une migration</div><div><b>Ustensiles</b>expo-notifications (déjà là)</div></div>
 
+> [astuce] **Fait le 23 novembre 2026 par la fiche 011** (annexe G), après quatre décisions prises ensemble : nuit 22 h - 7 h réglable, échéances la veille 18 h et le jour 9 h, moments 15 min avant, sons et alarme continue reportés au chantier n° 9. **La fiche 011 est la version qui marche** : elle diffère sur des détails du plan ci-dessous (les niveaux dépendent du moment, de l'urgence et de la nuit ; le critère « type de moment » attend la recette G). Cette recette reste comme explication de la démarche.
+
 ## 10.1 La décision (étude 12.6)
 
 - Les notifications existent pour **les trois types** : rappels (déjà fait), **tâches** avec une échéance, **moments** (événements) avec un début.
