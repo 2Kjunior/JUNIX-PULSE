@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="610" viewBox="0 0 960 610" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#8B3DF0"/>
+      <stop offset="1" stop-color="#0AE8F0"/>
+    </linearGradient>
+    <linearGradient id="liquid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b58bff"/>
+      <stop offset="1" stop-color="#7fe9f2"/>
+    </linearGradient>
+    <clipPath id="orbClip"><circle cx="0" cy="0" r="62"/></clipPath>
+    <g id="orb">
+      <circle r="78" fill="none" stroke="url(#g)" stroke-width="10"/>
+      <g clip-path="url(#orbClip)">
+        <path d="M-70 18 Q-50 6 -30 18 T10 18 T50 18 T90 18 V80 H-70 Z" fill="url(#liquid)" opacity="0.9"/>
+      </g>
+      <path d="M-58 6 H-26 L-16 -26 L-2 34 L10 -6 L18 6 H58" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </defs>
+  <rect width="960" height="560" fill="#ffffff"/>
+  <text x="480" y="38" font-size="22" font-weight="700" text-anchor="middle" fill="#141317">Logo A · L’orbe — où le nom « Junix Pulse » apparaît</text>
+
+  <!-- 1. Icône : sans texte -->
+  <g transform="translate(40,70)">
+    <rect width="200" height="200" rx="44" fill="#141317"/>
+    <g transform="translate(100,100) scale(0.75)"><use href="#orb"/></g>
+    <text x="100" y="236" font-size="15" font-weight="700" text-anchor="middle" fill="#141317">① Icône du téléphone</text>
+    <text x="100" y="256" font-size="12" text-anchor="middle" fill="#444">Sans texte : Android écrit</text>
+    <text x="100" y="272" font-size="12" text-anchor="middle" fill="#444">« Junix Pulse » dessous</text>
+  </g>
+
+  <!-- 2. Logo horizontal : orbe + nom -->
+  <g transform="translate(290,70)">
+    <rect width="620" height="200" rx="24" fill="#141317"/>
+    <g transform="translate(110,100) scale(0.72)"><use href="#orb"/></g>
+    <text x="200" y="96" font-size="54" font-weight="800" letter-spacing="6" fill="#ffffff">JUNIX</text>
+    <text x="202" y="140" font-size="30" font-weight="400" letter-spacing="14" fill="url(#g)">PULSE</text>
+    <text x="310" y="236" font-size="15" font-weight="700" text-anchor="middle" fill="#141317">② Logo complet (orbe + nom)</text>
+    <text x="310" y="256" font-size="12" text-anchor="middle" fill="#444">Écran de lancement, accueil de l’onboarding, Play Store,</text>
+    <text x="310" y="272" font-size="12" text-anchor="middle" fill="#444">page web de partage, documents</text>
+  </g>
+
+  <!-- 3. Écran de lancement -->
+  <g transform="translate(40,370)">
+    <rect width="120" height="210" rx="18" fill="#141317" stroke="#444" stroke-width="2"/>
+    <g transform="translate(60,88) scale(0.34)"><use href="#orb"/></g>
+    <text x="60" y="140" font-size="14" font-weight="800" letter-spacing="2" text-anchor="middle" fill="#ffffff">JUNIX</text>
+    <text x="60" y="156" font-size="9" letter-spacing="4" text-anchor="middle" fill="#7fe9f2">PULSE</text>
+    <text x="200" y="40" font-size="15" font-weight="700" fill="#141317">③ Écran de lancement animé</text>
+    <text x="200" y="64" font-size="13" fill="#444">1. L’anneau se dessine.</text>
+    <text x="200" y="84" font-size="13" fill="#444">2. Le liquide monte dans l’orbe.</text>
+    <text x="200" y="104" font-size="13" fill="#444">3. Le battement traverse l’orbe (le « pulse »).</text>
+    <text x="200" y="124" font-size="13" fill="#444">4. « JUNIX PULSE » apparaît dessous.</text>
+    <text x="200" y="144" font-size="13" fill="#444">5. L’orbe se transforme en Pulse, la mascotte, qui salue.</text>
+    <text x="200" y="174" font-size="12" fill="#666">Animations coupées si « réduire les animations » est activé : image fixe.</text>
+  </g>
+
+  <text x="480" y="598" font-size="12" text-anchor="middle" fill="#555">Illustration reconstituée : esquisse de direction, pas le fichier final.</text>
+</svg>
