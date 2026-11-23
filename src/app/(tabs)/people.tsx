@@ -21,6 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { SettingsButton } from '@/components/ui/HeaderIconButton';
 
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person } from '@/domain/entities';
@@ -94,13 +95,7 @@ export default function PeopleScreen() {
           <Text style={styles.subtitle}>{t('people.subtitle')}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.settingsBtn}
-          onPress={() => router.push('/settings')}
-          accessibilityLabel={t('common.settings')}
-        >
-          <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
-        </TouchableOpacity>
+        <SettingsButton />
       </View>
 
       {/* ─── Segmented Control R-09 ────────────────────────────────────────────── */}

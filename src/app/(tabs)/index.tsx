@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { format, isToday, isPast } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
+import { HeaderIconButton, SettingsButton } from '@/components/ui/HeaderIconButton';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
@@ -359,27 +360,9 @@ export default function TodayScreen() {
             <Text style={styles.date}>{dateLabel}</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => router.push('/sanctum')}
-              accessibilityLabel={t('home.a11y.sanctum')}
-            >
-              <Ionicons name="lock-closed-outline" size={19} color={palette.onSurface.variant} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => router.push('/search')}
-              accessibilityLabel={t('home.a11y.search')}
-            >
-              <Ionicons name="search-outline" size={20} color={palette.onSurface.variant} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => router.push('/settings')}
-              accessibilityLabel={t('home.a11y.settings')}
-            >
-              <Ionicons name="settings-outline" size={20} color={palette.onSurface.variant} />
-            </TouchableOpacity>
+            <HeaderIconButton icon="lock-closed-outline" label={t('home.a11y.sanctum')} onPress={() => router.push('/sanctum')} />
+            <HeaderIconButton icon="search-outline" label={t('home.a11y.search')} onPress={() => router.push('/search')} />
+            <SettingsButton />
           </View>
         </View>
 

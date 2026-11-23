@@ -534,3 +534,39 @@ Ce que tu as vu sur le téléphone, et ce qui est décidé (tout validé le 23 n
 | « Et bien d'autres » problèmes d'affichage | **Revue de tous les écrans** à la largeur d'un téléphone (360 px), correction de ce qui déborde | 016 |
 
 Rappel des règles de base, toujours en vigueur : registres et briques pour qu'un autre développeur ajoute ou retire sans casser ; migrations additives ; deux langues ; accessibilité (44 px, libellés) ; clair et sombre ; une fiche par changement, testée, avant l'APK.
+
+## 15. Comprendre l'application, et relier habitudes, objectifs, tâches et rappels (23 novembre 2026)
+
+### 15.1 Les 5 choses, une phrase chacune (le vocabulaire de référence)
+
+| Chose | Ce que c'est | Exemple | Comment ça finit |
+|---|---|---|---|
+| **Tâche** | Une chose à faire, **sans heure** (au plus un jour ou une échéance). Peut avoir des sous-tâches | « Préparer le dossier » | On la coche |
+| **Rappel** | Une chose à faire **à une heure précise** : le téléphone sonne | « Prendre mon médicament à 8 h » | On le coche |
+| **Moment** | Quelque chose qui **a lieu**, avec un début et une fin ; occupe le Planning | « Dîner chez Léa samedi 19 h-21 h » | Il ne se coche pas : il se passe |
+| **Habitude** | Une chose qu'on **refait régulièrement** (tous les jours, 3 fois par semaine) | « Sport 3 fois par semaine » | On la coche à chaque fois ; l'appli compte la série |
+| **Objectif** | Un **but avec une date** | « Déménager avant mars » | Il avance avec ses tâches et ses habitudes |
+
+Tâche et Rappel forment la famille **« À faire »** (l'onglet, la couleur cyan) ; **leur seule différence est l'heure qui sonne**. On garde les mots **Tâche** et **Rappel** partout (filtre de l'onglet, en-tête du formulaire, Accueil).
+
+### 15.2 Décisions
+
+| Sujet | Décision |
+|---|---|
+| Objectif ← habitudes | Un objectif avance avec ses **tâches et ses habitudes** (nouveau lien) |
+| Habitude qui sonne | Une habitude peut avoir une **heure** ; sa notification a **« Fait »**, qui coche l'habitude du jour |
+| Pulse propose | Un rappel répété, ou une tâche faite souvent, fait proposer **« En faire une habitude ? »** (on peut refuser) |
+| Accès | Une **carte « Habitudes et objectifs »** sur l'Accueil ouvre une page **« Progrès »** (filtre Habitudes · Objectifs) ; la barre du bas reste à 4 onglets |
+| Liste à cocher d'un rappel | Les sous-tâches sont **seulement pour les tâches** : la liste n'apparaît plus sur un rappel (les données restent) |
+| Paramètres | Le **même bouton** (engrenage, en haut à droite, même taille) sur Accueil, À faire, Planning et Proches |
+| Comprendre l'appli | L'appli doit **s'expliquer d'elle-même** : refaire l'**onboarding** (plus simple, à jour, l'essentiel pour bien démarrer), puis la **visite de l'Accueil** et les **astuces de première visite** des autres écrans, au design actuel. Une page « Comprendre » (15.1 en images) peut exister en plus, dans les Réglages |
+
+### 15.3 Ordre de travail
+
+1. **Fiche 017 — Cohérence** : bouton Paramètres commun sur les 4 onglets ; mots Tâche et Rappel (filtre « Tout · Rappels · Tâches », en-tête du formulaire) ; plus de liste à cocher sur un rappel ; bouton de l'Accueil « + À faire ou moment ».
+2. **Fiche 018 — Progrès** : carte de l'Accueil et page Progrès ; lien objectif ← habitudes.
+3. **Fiche 019 — Habitude qui sonne**.
+4. **Fiche 020 — Pulse propose « En faire une habitude ? »**.
+5. **Fiche 021 — Onboarding, visite de l'Accueil et astuces**, refaits au design actuel (en dernier, pour qu'ils décrivent l'appli terminée) ; page « Comprendre » dans les Réglages.
+
+Puis la suite de la feuille de route 12.10 (types de moments, gestes, partage, planning, sons).

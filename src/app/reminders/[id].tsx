@@ -29,6 +29,7 @@ import {
   SnoozeInput,
 } from '@/use-cases/reminder-use-cases';
 import { Reminder, ReminderChecklistItem, Person, type Tag } from '@/domain/entities';
+import { KINDS_WITH_SUBTASKS } from '@/constants/item-kinds';
 import { TagChip } from '@/components/tags/TagChip';
 import { TagRepository } from '@/repositories/tag-repository';
 import { tagsOf } from '@/domain/rules/tag-rules';
@@ -350,7 +351,7 @@ export default function ReminderDetailScreen() {
         ) : null}
 
         {/* ─── Checklist / Sous-éléments ──────────────────────────────────────── */}
-        {checklist.length > 0 && (
+        {KINDS_WITH_SUBTASKS.includes('reminder') && checklist.length > 0 && (
           <GlowCard tone="neutral">
           <View style={styles.checklistCardInner}>
             <View style={styles.notesHeader}>

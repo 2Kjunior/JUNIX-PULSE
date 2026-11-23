@@ -8,13 +8,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { addHours } from 'date-fns';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState, ErrorState, LoadingState } from '@/components/feedback/States';
 import { TagFilterRow } from '@/components/tags/TagFilterRow';
 import { TodoRow } from '@/components/todo/TodoRow';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
+import { HeaderIconButton, SettingsButton } from '@/components/ui/HeaderIconButton';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { SwipeableItem, makeStandardRightActions, type SwipeAction } from '@/components/ui/SwipeableItem';
 import { itemFamilyColor } from '@/constants/item-kinds';
@@ -188,14 +189,13 @@ export function TodoTabScreen() {
             {t('todoTab.subtitle', { count: counts.all })}
           </Text>
         </View>
-        <TouchableOpacity
+        <HeaderIconButton
+          icon="timer-outline"
+          label={t('todoTab.focusA11y')}
           onPress={() => router.push('/focus' as never)}
-          accessibilityRole="button"
-          accessibilityLabel={t('todoTab.focusA11y')}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Ionicons name="timer-outline" size={22} color={palette.tertiary.default} />
-        </TouchableOpacity>
+          color={palette.tertiary.default}
+        />
+        <SettingsButton />
       </View>
 
       <PillTopBar<TodoFilter>

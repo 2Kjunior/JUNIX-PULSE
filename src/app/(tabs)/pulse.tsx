@@ -26,6 +26,7 @@ import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { SettingsButton } from '@/components/ui/HeaderIconButton';
 
 import {
   Spacing,
@@ -233,14 +234,7 @@ export default function PulseScreen() {
           <Text style={styles.subtitle}>{t('pulse.subtitle')}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.settingsBtn}
-          onPress={() => router.push('/settings')}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.settings')}
-        >
-          <Ionicons name="settings-outline" size={20} color={theme.onSurface.variant} />
-        </TouchableOpacity>
+        <SettingsButton />
       </View>
 
       <ScrollView

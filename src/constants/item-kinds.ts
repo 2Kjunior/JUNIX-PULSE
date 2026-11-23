@@ -66,6 +66,12 @@ export interface ItemKindDefinition {
   hasTimeRange: boolean;
 }
 
+/**
+ * The kinds that hold a list of subtasks (study 001, 15.2): the task only. A reminder differs
+ * from a task by its hour alone; the lists written before stay in the data.
+ */
+export const KINDS_WITH_SUBTASKS: readonly ItemKind[] = ['task'];
+
 export const ITEM_KIND_DEFINITIONS: Readonly<Record<ItemKind, ItemKindDefinition>> = {
   reminder: {
     kind: 'reminder',

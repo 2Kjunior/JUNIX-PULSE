@@ -20,5 +20,6 @@ Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail
 | [014](FICHE-014-formulaires-ajustes-et-dicter-tout-complet.md) | Formulaires ajustés après l'essai (Ajouter toujours visible, À faire direct, en-tête selon l'alerte, petit micro) et « Dicter tout » complet ; voix dans l'ajout d'une personne | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
 | [015](FICHE-015-onglet-a-faire-unique.md) | Un seul onglet « À faire » (filtre Tout · Avec alerte · Sans alerte, liste par moment, carte unique) ; barre du bas Accueil · À faire · Planning · Proches | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
 | [016](FICHE-016-revue-ecrans-largeur-telephone.md) | Revue de tous les écrans à la largeur d'un téléphone (360 px) et corrections (Planning, bouton d'À faire, barre de filtre) | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
+| [017](FICHE-017-coherence-parametres-et-mots.md) | Cohérence : un seul bouton Paramètres sur tous les onglets, les mots Tâche et Rappel partout, plus de liste sur un rappel, « + À faire ou moment » | 23 novembre 2026 | fait et testé (à voir à l'écran) |
 
 Pour comprendre le rôle de chaque dossier et fichier : [l'explorateur du projet](../apprendre/explorateur-du-projet.html) (à ouvrir dans un navigateur ; le remettre à jour avec `node docs/apprendre/generer-explorateur.js`).

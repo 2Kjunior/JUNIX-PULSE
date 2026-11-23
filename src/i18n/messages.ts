@@ -221,8 +221,8 @@ const fr = {
   'home.sanctuary': 'Sanctuaire',
   'home.peopleToContact': '1 à contacter',
   'home.peopleKeepTouch': 'Garder le lien',
-  'home.quickAddA11y': 'Ajouter un rappel, une tâche ou un événement',
-  'home.quickAdd': '+ Rappel, tâche ou événement',
+  'home.quickAddA11y': 'Ajouter une chose à faire ou un moment',
+  'home.quickAdd': '+ À faire ou moment',
   'home.demo.badge': 'MODE DÉCOUVERTE',
   'home.demo.title': 'Prêt à explorer Junix Pulse\u00A0?',
   'home.demo.subtitle':
@@ -737,8 +737,8 @@ const en: Record<MessageKey, string> = {
   'home.sanctuary': 'Sanctuary',
   'home.peopleToContact': '1 to reach out to',
   'home.peopleKeepTouch': 'Stay in touch',
-  'home.quickAddA11y': 'Add a reminder, a task or an event',
-  'home.quickAdd': '+ Reminder, task or event',
+  'home.quickAddA11y': 'Add a to-do or a moment',
+  'home.quickAdd': '+ To-do or moment',
   'home.demo.badge': 'DISCOVERY MODE',
   'home.demo.title': 'Ready to explore Junix Pulse?',
   'home.demo.subtitle':
