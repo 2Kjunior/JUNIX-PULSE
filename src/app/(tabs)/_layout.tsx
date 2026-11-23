@@ -52,17 +52,12 @@ const TABS: TabConfig[] = [
     icon: "home-outline",
     iconFocused: "home",
   },
-  {
-    name: "reminders",
-    titleKey: "tab.reminders",
-    icon: "notifications-outline",
-    iconFocused: "notifications",
-  },
+  // One tab for reminders and tasks (sheet 015): the route "reminders" stays, out of the bar
   {
     name: "tasks",
-    titleKey: "tab.tasks",
-    icon: "checkmark-circle-outline",
-    iconFocused: "checkmark-circle",
+    titleKey: "tab.todo",
+    icon: "checkbox-outline",
+    iconFocused: "checkbox",
   },
   {
     name: "calendar",
@@ -230,7 +225,8 @@ function CustomTabBar({ state, navigateToTab }: CustomTabBarProps) {
               <TabItem
                 key={tab.name}
                 tab={tab}
-                focused={state.index === index}
+                // By name, not by place: the bar no longer shows every route (sheet 015)
+                focused={state.routes[state.index]?.name === tab.name}
                 onPress={() => {
                   if (route) {
                     navigateToTab(route.key);

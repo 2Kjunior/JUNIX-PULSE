@@ -182,7 +182,8 @@ export function suggestionDestination(suggestion: {
     case 'GOAL_APPROACHING':
       return suggestion.targetId ? `/goals/${suggestion.targetId}` : '/goals';
     case 'WELCOME_BACK':
-      return '/(tabs)/reminders';
+      // The single "To do" tab (sheet 015), on what rings
+      return '/(tabs)/tasks?filter=alert';
     default:
       return null;
   }

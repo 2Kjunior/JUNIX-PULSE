@@ -124,7 +124,11 @@ const makePillTopBarStyles = (theme: ThemePalette) =>
       }),
     },
     tabItem: {
-      flex: 1,
+      // Each pill takes its natural width and shares what is left: a long label gets more room
+      // than "Tout", instead of being cut on a phone (sheet 015)
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 'auto',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

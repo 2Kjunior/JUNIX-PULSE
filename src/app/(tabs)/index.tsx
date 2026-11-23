@@ -389,7 +389,7 @@ export default function TodayScreen() {
           {/* Pilier 1 : Rappels */}
           <TouchableOpacity
             style={styles.waveCard}
-            onPress={() => router.push('/(tabs)/reminders' as any)}
+            onPress={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'alert' } } as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel={t('home.remindersA11y', { count: dueTodayReminders.length })}
@@ -412,7 +412,7 @@ export default function TodayScreen() {
           {/* Pilier 2 : Tâches */}
           <TouchableOpacity
             style={styles.waveCard}
-            onPress={() => router.push('/(tabs)/tasks' as any)}
+            onPress={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'noAlert' } } as any)}
             activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel={t('home.tasksA11y', { count: openTasksCount })}
