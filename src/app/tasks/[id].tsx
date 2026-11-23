@@ -301,7 +301,7 @@ export default function TaskDetailScreen() {
             onPress={() =>
               router.push({
                 pathname: '/focus' as any,
-                params: { taskId: task.id, taskTitle: task.title },
+                params: { taskId: task.id, taskTitle: task.title, minutes: String(task.estimatedMinutes ?? '') },
               })
             }
             accessibilityRole="button"

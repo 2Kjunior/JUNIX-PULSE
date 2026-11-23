@@ -394,6 +394,11 @@ Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leu
   - **À faire** : couleur cyan, case à cocher dans l'en-tête, champs *Quoi* → *Quand* (jour, heure facultative) → **Alerte** (interrupteur, rappel à confirmer) → *Avec qui* → *Plus d'options* (sous-tâches, échéance, durée, étiquettes) ;
   - **Moment** : couleur ambre, calendrier dans l'en-tête, champs *Quoi* → *Début et fin* → *Où* → **Partir … min avant** (seulement si un lieu est saisi) → *Avec qui* → *Type de moment* (anniversaire, deuil…) → *Plus d'options*.
 - La **dictée** (micro) dans le titre et les notes des deux formulaires.
+- **Précisions du 23 novembre 2026** (avant la fiche 012) :
+  - **étendue** : la fiche 012 fait les deux formulaires de **création** ; les écrans de modification suivent dans la fiche d'après, avec les mêmes briques ;
+  - **la priorité** se place **sous l'Alerte** (c'est là qu'elle change quelque chose : Urgente = Alarme), et dans Plus d'options quand il n'y a pas d'alerte ;
+  - **les options des rappels** (répétition, rappel à confirmer, action comme « Appeler ») n'apparaissent que **sous l'interrupteur Alerte** ;
+  - **la durée** (« combien de temps pour y arriver ») : elle ne servait à rien (seulement une étiquette « 30 min » sur les cartes), d'où l'incompréhension. Elle devient **« Temps pour le faire »**, cachée dans Plus d'options, avec une phrase qui dit à quoi elle sert : **lancer une session Focus depuis la tâche règle le minuteur sur ce temps**. Tout doit rester cohérent avec ce qui existe déjà (cartes, Planning, Focus, anciennes tâches qui ont déjà une durée).
 
 ### 12.3 Gestes (point 3) : 3-A + 3-B + 3-C, et les faire découvrir sans submerger
 

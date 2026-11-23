@@ -31,6 +31,24 @@ export interface FocusSession {
 /**
  * Initialise une session de focus dans un état prêt (idle).
  */
+/**
+ * The timer of a session started from a task (sheet 012): its "time to do it", kept between 1 and
+ * 120 minutes, or the default 25 minutes when it has none. A time that is not a preset is custom.
+ */
+export function focusMinutesForTask(estimatedMinutes?: number | null): {
+  durationMinutes: number;
+  selectionMode: FocusSelectionMode;
+} {
+  if (!estimatedMinutes || !Number.isFinite(estimatedMinutes) || estimatedMinutes <= 0) {
+    return { durationMinutes: DEFAULT_FOCUS_MINUTES, selectionMode: 'preset' };
+  }
+  const minutes = Math.min(MAX_FOCUS_MINUTES, Math.max(MIN_FOCUS_MINUTES, Math.round(estimatedMinutes)));
+  return {
+    durationMinutes: minutes,
+    selectionMode: (FOCUS_PRESETS as readonly number[]).includes(minutes) ? 'preset' : 'custom',
+  };
+}
+
 export function createFocusSession(params?: {
   durationMinutes?: number;
   selectionMode?: FocusSelectionMode;

@@ -35,6 +35,7 @@ import {
   syncFocusSessionWithClock,
   formatRemainingTime,
   calculateFocusProgress,
+  focusMinutesForTask,
 } from '@/domain/rules/focus-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -61,11 +62,12 @@ export default function FocusScreen() {
   const styles = useThemedStyles(makeFocusStyles);
   const { showSnackbar } = useAppStore();
 
-  const params = useLocalSearchParams<{ taskId?: string; taskTitle?: string }>();
+  const params = useLocalSearchParams<{ taskId?: string; taskTitle?: string; minutes?: string }>();
 
   const [session, setSession] = useState<FocusSession>(() =>
     createFocusSession({
-      durationMinutes: 25,
+      // From a task: its "time to do it" (sheet 012), otherwise 25 minutes
+      ...focusMinutesForTask(Number(params.minutes)),
       taskId: params.taskId,
       taskTitle: params.taskTitle,
     })
