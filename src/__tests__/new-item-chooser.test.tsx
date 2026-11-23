@@ -65,12 +65,11 @@ describe('the chooser', () => {
     expect(shown).not.toContain('Sans alerte');
   });
 
-  it('opens something to do on its two ways, each opening its form', () => {
+  it('opens the To do form directly: its alert is chosen in the form (sheet 014)', () => {
     const renderer = render({});
     press(renderer, 'new-item-todo');
-    expect(texts(renderer)).toEqual(expect.arrayContaining(['Sans alerte', 'Avec une alerte à une heure']));
-    press(renderer, 'new-item-reminder');
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/reminders/new', params: {} });
+    expect(texts(renderer)).not.toContain('Sans alerte');
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/tasks/new', params: {} });
   });
 
   it('offers the quick capture first from the home screen', () => {

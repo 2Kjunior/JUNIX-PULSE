@@ -7,12 +7,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { addDays, addWeeks, format, startOfWeek } from 'date-fns';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import {
   ChoiceChips,
+  DictateAll,
   DictatedInput,
   FieldLabel,
   FormSection,
@@ -37,11 +38,13 @@ import {
 } from '@/constants/item-forms';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Radius, Spacing } from '@/constants/theme';
-import type { Reminder, ReminderPriority } from '@/domain/entities';
+import type { Person, Reminder, ReminderPriority } from '@/domain/entities';
+import { todoFromSentence } from '@/domain/rules/form-dictation-rules';
 import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
+import { PersonRepository } from '@/repositories/person-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { makeFormStyles } from '@/styles/common/form-styles';
@@ -119,6 +122,54 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [picker, setPicker] = useState<'day' | 'time' | null>(null);
   const [saving, setSaving] = useState(false);
+  // The people, so that "Appeler Paul" in a dictated sentence finds Paul
+  const [persons, setPersons] = useState<Person[]>([]);
+
+  useEffect(() => {
+    PersonRepository.findAll()
+      .then(setPersons)
+      .catch(() => {});
+  }, []);
+
+  // "Dictate everything" (sheets 013 and 014): the sentence fills and touches every field it
+  // speaks of; "Compris" lists them so the person checks before adding
+  const [understood, setUnderstood] = useState<string[]>([]);
+  const applySentence = (sentence: string) => {
+    const fill = todoFromSentence(sentence, persons, new Date(), language);
+    setTitle(fill.title);
+    if (fill.title) setTitleError('');
+    setDay(fill.day);
+    setAlert(fill.alert);
+    setAlertTime(fill.time);
+    setPriority(fill.priority);
+    setActionType(fill.actionType);
+    setRepeat(Boolean(fill.recurrence));
+    if (fill.recurrence) setRecurrence(fill.recurrence);
+    setConfirm(fill.confirm);
+    if (fill.dueDate) setDueDate(fill.dueDate);
+    if (fill.estimatedMinutes) setEstimatedMinutes(fill.estimatedMinutes);
+    if (fill.notes) setNotes(fill.notes);
+    const personId = fill.personId;
+    if (personId) setPersonIds(ids => (ids.includes(personId) ? ids : [personId, ...ids]));
+    const shortDay = (ymd: string) => format(new Date(`${ymd}T12:00:00`), 'EEE d MMM', { locale: dateLocale });
+    const priorityKey = PRIORITIES.find(option => option.value === fill.priority)?.labelKey;
+    const actionKey = ACTIONS.find(option => option.value === fill.actionType)?.labelKey;
+    const recurrenceKey = RECURRENCES.find(option => option.value === fill.recurrence)?.labelKey;
+    setUnderstood(
+      [
+        fill.day ? shortDay(fill.day) : '',
+        fill.alert ? `${pad(fill.time.hour)}:${pad(fill.time.minute)}` : '',
+        fill.priority !== 'NORMAL' && priorityKey ? t(priorityKey) : '',
+        fill.actionType !== 'NONE' && actionKey ? t(actionKey) : '',
+        recurrenceKey ? t(recurrenceKey) : '',
+        fill.confirm ? t('confirmReminder.label') : '',
+        fill.dueDate ? t('itemForm.understoodDeadline', { date: shortDay(fill.dueDate) }) : '',
+        fill.estimatedMinutes ? durationLabel(fill.estimatedMinutes) : '',
+        persons.find(person => person.id === personId)?.displayName ?? '',
+        fill.notes ? t('itemForm.understoodNote') : '',
+      ].filter(Boolean)
+    );
+  };
 
   const customDay = day && ![today, tomorrow, nextMonday].includes(day) ? day : undefined;
   const dayChoice = day === undefined ? 'none' : customDay ? 'pick' : day;
@@ -305,6 +356,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
               multiline
               maxLength={500}
               testID="todo-notes"
+              small
             />
           </FormSection>
         );
@@ -397,13 +449,21 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   return (
     <FormShell
       family="todo"
-      title={t('itemForm.todo.title')}
-      subtitle={t('itemForm.todo.subtitle')}
+      // The header says whether it will ring (sheet 014)
+      icon={alert ? 'notifications' : undefined}
+      title={t(alert ? 'itemForm.todo.titleAlert' : 'itemForm.todo.title')}
+      subtitle={t(alert ? 'itemForm.todo.subtitleAlert' : 'itemForm.todo.subtitle')}
       saveLabel={t('itemForm.todo.submit')}
       saving={saving}
       onSave={handleSave}
       testID="todo-form"
     >
+      <DictateAll
+        accent={accent}
+        example={t('itemForm.dictateTodoExample')}
+        onSentence={applySentence}
+        understood={understood}
+      />
       {visibleSections('todo', { alert }).map(section => (
         <React.Fragment key={section}>{renderSection(section)}</React.Fragment>
       ))}

@@ -7,12 +7,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { addHours, format } from 'date-fns';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import {
   ChoiceChips,
+  DictateAll,
   DictatedInput,
   FieldLabel,
   FormSection,
@@ -33,10 +34,12 @@ import {
 } from '@/constants/item-forms';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Spacing } from '@/constants/theme';
-import type { EventType } from '@/domain/entities';
+import type { EventType, Person } from '@/domain/entities';
+import { momentFromSentence } from '@/domain/rules/form-dictation-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useDateLocale, useLanguage, useT } from '@/i18n';
+import { PersonRepository } from '@/repositories/person-repository';
 import { useAppStore } from '@/store/app-store';
 import { makeFormStyles } from '@/styles/common/form-styles';
 import { EventUseCases } from '@/use-cases/event-use-cases';
@@ -78,6 +81,37 @@ export function MomentForm({ defaultDate, defaultHour, personId }: MomentFormPro
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [picker, setPicker] = useState<'start' | 'end' | null>(null);
   const [saving, setSaving] = useState(false);
+  // The people, so that "avec Paul" in a dictated sentence finds Paul
+  const [persons, setPersons] = useState<Person[]>([]);
+
+  useEffect(() => {
+    PersonRepository.findAll()
+      .then(setPersons)
+      .catch(() => {});
+  }, []);
+
+  // "Dictate everything" (sheets 013 and 014): title, start, end, place, person and notes from one
+  // sentence; "Compris" lists them so the person checks before adding
+  const [understood, setUnderstood] = useState<string[]>([]);
+  const applySentence = (sentence: string) => {
+    const fill = momentFromSentence(sentence, persons, new Date(), language);
+    setTitle(fill.title);
+    if (fill.title) setTitleError('');
+    setStartAt(fill.start);
+    setEndAt(fill.end);
+    if (fill.place) setLocation(fill.place);
+    if (fill.notes) setNotes(fill.notes);
+    const personId = fill.personId;
+    if (personId) setPersonIds(ids => (ids.includes(personId) ? ids : [personId, ...ids]));
+    setUnderstood(
+      [
+        `${format(fill.start, 'EEE d MMM HH:mm', { locale: dateLocale })} – ${format(fill.end, 'HH:mm')}`,
+        fill.place ?? '',
+        persons.find(person => person.id === personId)?.displayName ?? '',
+        fill.notes ? t('itemForm.understoodNote') : '',
+      ].filter(Boolean)
+    );
+  };
 
   const place = location.trim();
 
@@ -183,6 +217,7 @@ export function MomentForm({ defaultDate, defaultHour, personId }: MomentFormPro
               multiline
               maxLength={500}
               testID="moment-notes"
+              small
             />
           </FormSection>
         );
@@ -242,6 +277,12 @@ export function MomentForm({ defaultDate, defaultHour, personId }: MomentFormPro
       onSave={handleSave}
       testID="moment-form"
     >
+      <DictateAll
+        accent={accent}
+        example={t('itemForm.dictateMomentExample')}
+        onSentence={applySentence}
+        understood={understood}
+      />
       {visibleSections('moment', { place }).map(section => (
         <React.Fragment key={section}>{renderSection(section)}</React.Fragment>
       ))}

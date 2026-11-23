@@ -32,6 +32,7 @@ import { TagRepository } from '@/repositories/tag-repository';
 import { PersonRepository } from '@/repositories/person-repository';
 import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
+import { mapsDirectionsUrl } from '@/domain/rules/maps-links';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -245,6 +246,23 @@ export default function EventDetailScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoTitle}>{event.location}</Text>
                 <Text style={styles.linkSub}>{t('eventDetail.openMaps')}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Y aller (fiche 013) : l'itinéraire dans Google Maps, qui propose transports, marche et taxis */}
+          {!!event.location && (
+            <TouchableOpacity
+              style={styles.infoRow}
+              onPress={() => Linking.openURL(mapsDirectionsUrl(event.location!))}
+              accessibilityRole="button"
+              accessibilityLabel={t('eventDetail.goThereA11y', { place: event.location })}
+              testID="event-go-there"
+            >
+              <Ionicons name="navigate-outline" size={20} color={theme.primary.default} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoTitle}>{t('eventDetail.goThere')}</Text>
+                <Text style={styles.linkSub}>{t('eventDetail.goThereSub')}</Text>
               </View>
             </TouchableOpacity>
           )}

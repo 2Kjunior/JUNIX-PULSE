@@ -398,6 +398,8 @@ Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leu
   - **étendue** : la fiche 012 fait les deux formulaires de **création** ; les écrans de modification suivent dans la fiche d'après, avec les mêmes briques ;
   - **la priorité** se place **sous l'Alerte** (c'est là qu'elle change quelque chose : Urgente = Alarme), et dans Plus d'options quand il n'y a pas d'alerte ;
   - **les options des rappels** (répétition, rappel à confirmer, action comme « Appeler ») n'apparaissent que **sous l'interrupteur Alerte** ;
+  - **la voix pour tout remplir** (décidé le 23 novembre, avant l'APK de test) : un bouton **« Dicter tout »** en haut des deux formulaires ; une phrase remplit les champs (titre, jour, heure, personne, priorité, répétition ; pour un Moment, aussi le **lieu** et la **fin**). Fiche 013 ;
+  - **le lieu** : pas de carte dans l'appli (Google Places demande une clé payante) ; sur un moment qui a un lieu, deux boutons gratuits : **« Ouvrir dans Maps »** et **« Y aller »** (itinéraire Google Maps). Fiche 013 ;
   - **la durée** (« combien de temps pour y arriver ») : elle ne servait à rien (seulement une étiquette « 30 min » sur les cartes), d'où l'incompréhension. Elle devient **« Temps pour le faire »**, cachée dans Plus d'options, avec une phrase qui dit à quoi elle sert : **lancer une session Focus depuis la tâche règle le minuteur sur ce temps**. Tout doit rester cohérent avec ce qui existe déjà (cartes, Planning, Focus, anciennes tâches qui ont déjà une durée).
 
 ### 12.3 Gestes (point 3) : 3-A + 3-B + 3-C, et les faire découvrir sans submerger
@@ -494,3 +496,41 @@ Ta remarque : ce que l'utilisateur voit **en premier**, c'est le lancement et le
 | 8 | **Planning Jour · Semaine · Mois** et glisser-déposer (12.4) | N3 |
 | 9 | **Sons et sonneries** (6-D), **alarme** (12.6) | N3 |
 | 10 | **Compte facultatif et synchronisation** (5-B), puis **espaces de travail** (5-C) | N4 |
+
+## 13. Idées pour la version 2.0 (l'application est en 1.1.0)
+
+Notées pour plus tard, **rien à coder maintenant** (décision du 23 novembre 2026).
+
+### 13.1 Aller à un moment en course (Uber, Yango, inDrive…)
+
+L'idée : depuis un moment qui a un lieu, ouvrir une appli de course avec la destination déjà remplie, pour qui n'a pas de voiture.
+
+| Appli | Faisable ? | Comment |
+|---|---|---|
+| **Google Maps** | **oui** (fait en 1.x, fiche 013) | « Y aller » ouvre l'itinéraire ; Maps propose déjà transports, marche et taxis |
+| **Uber** | **oui** | Un lien public (`m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=…`) ouvre Uber avec la destination remplie |
+| **Yango** | **à vérifier** | Semble demander les coordonnées GPS (latitude, longitude), pas l'adresse : il faudrait d'abord transformer l'adresse en coordonnées |
+| **inDrive** | **non connu** | Pas de lien public connu pour préremplir la destination |
+
+Règles si on le fait : l'appli **ne commande jamais** la course elle-même (la personne confirme et paie dans l'appli de course) ; aucune donnée envoyée à ces services en dehors de l'adresse de destination, au moment où la personne touche le bouton.
+
+### 13.2 Choisir le lieu sur une carte
+
+Choisir un lieu sur une carte dans l'appli, ou avec des suggestions d'adresses, demande Google Places (clé payante) ou un service équivalent. Alternative gratuite à étudier : **partager un lieu depuis Google Maps vers Junix Pulse** (bouton Partager de Maps), qui demande une configuration Android de « partage entrant ».
+
+## 14. Retours après l'APK du 23 novembre (fiches 011 à 013) et décisions
+
+Ce que tu as vu sur le téléphone, et ce qui est décidé (tout validé le 23 novembre) :
+
+| Problème vu | Décision | Fiche |
+|---|---|---|
+| Le bouton **« Ajouter »** des formulaires est caché par le long sous-titre | L'en-tête ne laisse jamais un texte pousser les boutons (corrigé dans le style commun, pour tous les écrans) | 014 |
+| « À faire » ouvre un petit menu (Sans alerte / Avec une alerte) qui mène au **même** formulaire | « À faire » ouvre **directement** le formulaire ; l'interrupteur Alerte décide ; l'en-tête **change** avec l'alerte (case à cocher sans alerte, **cloche** et « Avec alerte » avec) | 014 |
+| Le micro des notes est aussi gros que celui du titre | Micro **plus petit** pour les notes, partout | 014 |
+| « Dicter tout » doit comprendre **tout** ce qui est dit et toucher tous les bons choix | Comprend aussi : la **priorité** (« priorité max », « très urgent », « pas pressé »…), l'**échéance** (« à rendre avant vendredi »), le **temps pour le faire** (« ça prend 30 min »), le **rappel à confirmer** (« insiste », « à confirmer »), les **notes** (« note : … ») ; le titre est nettoyé de ce qui a été compris ; une ligne **« Compris : … »** montre ce qui a été rempli. La personne vérifie, complète, puis touche Ajouter. Les personnes dites sont reconnues si leur nom est celui de la fiche (sinon on l'ajoute à la main) | 014 |
+| Le formulaire d'ajout d'une **personne** n'a pas de voix | Micro sur le **nom** et les **notes** ; pas de « Dicter tout » (un nom et un numéro dictés se trompent trop souvent) | 014 |
+| Deux onglets **Rappels** et **Tâches** pour la même chose | **Un seul onglet « À faire »**, filtre en haut **Tout · Avec alerte · Sans alerte**, liste rangée **par moment** (En retard, Aujourd'hui, Demain, Plus tard, Sans date, Fait), cloche sur celles qui sonnent ; les étiquettes restent en filtre (chantier n° 4) | 015 |
+| L'ordre de la barre du bas | **Accueil · À faire · Planning · Proches** : d'abord la vue d'ensemble, puis quoi faire, puis quand (le calendrier), puis avec qui | 015 |
+| « Et bien d'autres » problèmes d'affichage | **Revue de tous les écrans** à la largeur d'un téléphone (360 px), correction de ce qui déborde | 016 |
+
+Rappel des règles de base, toujours en vigueur : registres et briques pour qu'un autre développeur ajoute ou retire sans casser ; migrations additives ; deux langues ; accessibilité (44 px, libellés) ; clair et sombre ; une fiche par changement, testée, avant l'APK.

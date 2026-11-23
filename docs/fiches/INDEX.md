@@ -16,5 +16,7 @@ Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail
 | [010](FICHE-010-animation-lancement-orbe.md) | L'animation de lancement autour de l'orbe, et le nouveau `PulseLogo` | 23 novembre 2026 | fait et testé (à voir sur le téléphone après un nouvel APK) |
 | [011](FICHE-011-notifications-trois-types.md) | Les notifications des trois types, avec trois niveaux (Discret, Normal, Alarme) et la nuit réglable | 23 novembre 2026 | fait et testé (à voir sur le téléphone après un nouvel APK) |
 | [012](FICHE-012-formulaires-a-faire-et-moment.md) | Les formulaires de création « À faire » (cyan) et « Moment » (ambre), avec la dictée ; « Temps pour le faire » règle Focus | 23 novembre 2026 | fait et testé (à voir sur le téléphone après un nouvel APK) |
+| [013](FICHE-013-dicter-tout-et-y-aller.md) | « Dicter tout » remplit les formulaires d'une phrase ; « Y aller » ouvre l'itinéraire vers le lieu d'un moment | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
+| [014](FICHE-014-formulaires-ajustes-et-dicter-tout-complet.md) | Formulaires ajustés après l'essai (Ajouter toujours visible, À faire direct, en-tête selon l'alerte, petit micro) et « Dicter tout » complet ; voix dans l'ajout d'une personne | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
 
 Pour comprendre le rôle de chaque dossier et fichier : [l'explorateur du projet](../apprendre/explorateur-du-projet.html) (à ouvrir dans un navigateur ; le remettre à jour avec `node docs/apprendre/generer-explorateur.js`).

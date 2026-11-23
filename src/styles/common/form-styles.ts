@@ -43,9 +43,14 @@ export function makeFormStyles(theme: ThemePalette) {
     },
     toolbarBtn: {
       minWidth: 70,
+      // The buttons keep their size: a long title never pushes them off a narrow screen
+      flexShrink: 0,
     },
     toolbarCenter: {
+      flex: 1,
+      minWidth: 0,
       alignItems: 'center',
+      paddingHorizontal: Spacing.xs,
     },
     toolbarTitle: {
       ...Typography.titleLarge,

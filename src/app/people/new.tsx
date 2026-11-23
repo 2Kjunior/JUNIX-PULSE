@@ -29,6 +29,7 @@ import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
+import { DictatedInput } from '@/components/create/form/FormBricks';
 import { PersonTimeFields, PersonTimeValue } from '@/components/people/PersonTimeFields';
 import { MessageKey, useDateLocale, useLanguage, useT } from '@/i18n';
 
@@ -241,16 +242,17 @@ export default function NewPersonScreen() {
         {/* Nom complet */}
         <View style={styles.field}>
           <Text style={styles.label}>{t('personNew.nameLabel')}</Text>
-          <TextInput
-            style={[styles.input, !!nameError && styles.inputError]}
+          <DictatedInput
+            inputStyle={[styles.input, !!nameError && styles.inputError]}
             value={displayName}
-            onChangeText={t => {
-              setDisplayName(t);
+            onChangeText={text => {
+              setDisplayName(text);
               if (nameError) setNameError('');
             }}
+            accent={palette.primary.default}
             placeholder={t('personNew.namePlaceholder')}
-            placeholderTextColor={palette.onSurface.disabled}
             autoFocus
+            testID="person-name"
           />
           {!!nameError && <Text style={styles.errorText}>{nameError}</Text>}
         </View>
@@ -358,15 +360,17 @@ export default function NewPersonScreen() {
         {/* Notes */}
         <View style={styles.field}>
           <Text style={styles.label}>{t('personNew.notesLabel')}</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
+          <DictatedInput
+            inputStyle={[styles.input, styles.multilineInput]}
             value={notes}
             onChangeText={setNotes}
+            accent={palette.primary.default}
             placeholder={t('personNew.notesPlaceholder')}
-            placeholderTextColor={palette.onSurface.disabled}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
+            small
+            testID="person-notes"
           />
         </View>
 

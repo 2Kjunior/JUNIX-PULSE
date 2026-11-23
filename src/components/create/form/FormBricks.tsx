@@ -43,6 +43,7 @@ const DICTATION_PROBLEM_KEYS = {
 /** The frame of a form: its bar (Cancel, the family, Add), a coloured line, the page and the big button. */
 export function FormShell({
   family,
+  icon,
   title,
   subtitle,
   saveLabel,
@@ -52,6 +53,8 @@ export function FormShell({
   children,
 }: {
   family: ItemFamily;
+  /** Another icon than the family's, for instance a bell for a todo with an alert. */
+  icon?: IconName;
   title: string;
   subtitle: string;
   saveLabel: string;
@@ -84,11 +87,15 @@ export function FormShell({
           <Text style={formStyles.toolbarCancel}>{t('form.cancel')}</Text>
         </TouchableOpacity>
         <View style={formStyles.toolbarCenter}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Ionicons name={ITEM_FAMILY_DEFINITIONS[family].icon} size={18} color={accent} />
-            <Text style={[formStyles.toolbarTitle, { color: accent }]}>{title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: '100%' }}>
+            <Ionicons name={icon ?? ITEM_FAMILY_DEFINITIONS[family].icon} size={18} color={accent} />
+            <Text style={[formStyles.toolbarTitle, { color: accent, flexShrink: 1 }]} numberOfLines={1}>
+              {title}
+            </Text>
           </View>
-          <Text style={formStyles.toolbarSubtitle}>{subtitle}</Text>
+          <Text style={formStyles.toolbarSubtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
         </View>
         <TouchableOpacity
           style={formStyles.toolbarBtn}
@@ -189,6 +196,7 @@ export function DictatedInput({
   accent,
   inputStyle,
   testID,
+  small = false,
   ...input
 }: Omit<TextInputProps, 'value' | 'onChangeText' | 'style'> & {
   value: string;
@@ -196,6 +204,8 @@ export function DictatedInput({
   accent: string;
   inputStyle?: StyleProp<TextStyle>;
   testID?: string;
+  /** A smaller microphone, for a secondary field such as the notes. */
+  small?: boolean;
 }) {
   const t = useT();
   const language = useLanguage();
@@ -223,6 +233,9 @@ export function DictatedInput({
     if (!dictation.listening) mineRef.current = false;
   }, [dictation.listening]);
 
+  // A smaller microphone for the notes than for the title; the touch area stays 44 px
+  const micSize = small ? 32 : 44;
+
   const toggle = () => {
     if (!dictation.listening) {
       baseRef.current = value.trim();
@@ -247,9 +260,10 @@ export function DictatedInput({
           accessibilityRole="button"
           accessibilityLabel={t(dictation.listening ? 'capture.dictation.stop' : 'capture.dictation.start')}
           testID={testID ? `${testID}-mic` : undefined}
+          hitSlop={small ? 6 : 0}
           style={{
-            width: 44,
-            height: 44,
+            width: micSize,
+            height: micSize,
             borderRadius: Radius.full,
             alignItems: 'center',
             justifyContent: 'center',
@@ -260,7 +274,7 @@ export function DictatedInput({
         >
           <Ionicons
             name={dictation.listening ? 'stop' : 'mic-outline'}
-            size={18}
+            size={small ? 15 : 18}
             color={dictation.listening ? palette.onSurface.primary : accent}
           />
         </TouchableOpacity>
@@ -347,6 +361,95 @@ export function SwitchRow({
         accessibilityLabel={label}
         testID={testID}
       />
+    </View>
+  );
+}
+
+/**
+ * "Dictate everything" (sheet 013): one sentence fills the form. The sentence heard is shown and
+ * handed to the form at each new result, as the phone refines it while one speaks. Shown where
+ * dictation exists (Android), like the microphone of the quick capture.
+ */
+export function DictateAll({
+  accent,
+  example,
+  onSentence,
+  understood = [],
+}: {
+  accent: string;
+  example: string;
+  onSentence: (sentence: string) => void;
+  /** What the sentence filled in, shown so the person checks it before adding (sheet 014). */
+  understood?: readonly string[];
+}) {
+  const t = useT();
+  const language = useLanguage();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const { showSnackbar } = useAppStore();
+  const mineRef = useRef(false);
+  const onSentenceRef = useRef(onSentence);
+  const [heard, setHeard] = useState('');
+
+  useEffect(() => {
+    onSentenceRef.current = onSentence;
+  }, [onSentence]);
+
+  const onText = useCallback((sentence: string) => {
+    if (!mineRef.current) return;
+    setHeard(sentence);
+    onSentenceRef.current(sentence);
+  }, []);
+  const onProblem = useCallback(
+    (problem: DictationProblem) => {
+      if (mineRef.current) showSnackbar(t(DICTATION_PROBLEM_KEYS[problem]));
+    },
+    [showSnackbar, t]
+  );
+  const dictation = useDictation(language, onText, onProblem);
+
+  useEffect(() => {
+    if (!dictation.listening) mineRef.current = false;
+  }, [dictation.listening]);
+
+  if (!dictation.available) return null;
+
+  return (
+    <View style={[formStyles.cardGroup, { borderWidth: 1, borderColor: `${accent}55` }]}>
+      <TouchableOpacity
+        onPress={() => {
+          if (!dictation.listening) mineRef.current = true;
+          void dictation.toggle();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={t(dictation.listening ? 'capture.dictation.stop' : 'itemForm.dictateAll')}
+        testID="form-dictate-all"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 48 }}
+      >
+        <View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: Radius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: dictation.listening ? palette.error.default : `${accent}22`,
+          }}
+        >
+          <Ionicons name={dictation.listening ? 'stop' : 'mic'} size={20} color={dictation.listening ? palette.onSurface.primary : accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[formStyles.fieldLabel, { color: accent }]}>
+            {t(dictation.listening ? 'itemForm.dictateListening' : 'itemForm.dictateAll')}
+          </Text>
+          <Text style={formStyles.fieldSub}>{heard ? t('itemForm.dictateHeard', { sentence: heard }) : example}</Text>
+          {understood.length > 0 ? (
+            <Text style={[formStyles.fieldSub, { color: accent, fontWeight: '600' }]} testID="form-understood">
+              {t('itemForm.understood', { items: understood.join(' · ') })}
+            </Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
     </View>
   );
 }

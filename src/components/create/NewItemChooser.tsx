@@ -9,7 +9,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,10 +46,7 @@ const CHOICES: readonly Choice[] = [
 ];
 
 /** The two ways of something to do, each opening its form. */
-const TODO_WAYS: readonly { kind: 'task' | 'reminder'; icon: keyof typeof Ionicons.glyphMap; title: MessageKey; desc: MessageKey }[] = [
-  { kind: 'task', icon: 'checkbox-outline', title: 'create.todo.noAlert', desc: 'create.todo.noAlertDesc' },
-  { kind: 'reminder', icon: 'notifications-outline', title: 'create.todo.withAlert', desc: 'create.todo.withAlertDesc' },
-];
+// One form per family (sheet 014): a todo chooses its alert in its form, no more in this sheet
 
 export function NewItemChooser({ visible, onClose, date = null, hour = null, withCapture = false }: NewItemChooserProps) {
   const t = useT();
@@ -58,11 +54,7 @@ export function NewItemChooser({ visible, onClose, date = null, hour = null, wit
   const insets = useSafeAreaInsets();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeNewItemChooserStyles);
-  // "Something to do" opened on its two ways
-  const [todoOpen, setTodoOpen] = useState(false);
-
   const close = () => {
-    setTodoOpen(false);
     onClose();
   };
 
@@ -78,7 +70,6 @@ export function NewItemChooser({ visible, onClose, date = null, hour = null, wit
       ? t('calendarAction.slotOf', { hour: String(hour).padStart(2, '0') })
       : t('calendarAction.addToPlanning');
 
-  const todoColor = itemFamilyColor(palette, 'todo');
 
   return (
     <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={close}>
@@ -127,10 +118,9 @@ export function NewItemChooser({ visible, onClose, date = null, hour = null, wit
             return (
               <View key={choice.family}>
                 <TouchableOpacity
-                  style={[styles.choice, isTodo && todoOpen && styles.choiceOpen]}
-                  onPress={() => (isTodo ? setTodoOpen(current => !current) : open('event'))}
+                  style={styles.choice}
+                  onPress={() => open(isTodo ? 'task' : 'event')}
                   accessibilityRole="button"
-                  accessibilityState={isTodo ? { expanded: todoOpen } : undefined}
                   accessibilityLabel={`${t(choice.question)}, ${t(family.labelKey)}. ${t(choice.rule)}`}
                   testID={`new-item-${choice.family}`}
                 >
@@ -145,33 +135,8 @@ export function NewItemChooser({ visible, onClose, date = null, hour = null, wit
                     <Text style={styles.rule}>{t(choice.rule)}</Text>
                     <Text style={styles.example}>{t(choice.example)}</Text>
                   </View>
-                  {isTodo && (
-                    <Ionicons name={todoOpen ? 'chevron-up' : 'chevron-down'} size={18} color={palette.onSurface.variant} />
-                  )}
+                  <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
                 </TouchableOpacity>
-
-                {/* Something to do: without or with an alert, each opening its form */}
-                {isTodo && todoOpen && (
-                  <View style={styles.ways}>
-                    {TODO_WAYS.map(way => (
-                      <TouchableOpacity
-                        key={way.kind}
-                        style={styles.way}
-                        onPress={() => open(way.kind)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${t(way.title)}. ${t(way.desc)}`}
-                        testID={`new-item-${way.kind}`}
-                      >
-                        <Ionicons name={way.icon} size={18} color={todoColor} />
-                        <View style={styles.choiceText}>
-                          <Text style={styles.wayTitle}>{t(way.title)}</Text>
-                          <Text style={styles.rule}>{t(way.desc)}</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={16} color={palette.onSurface.variant} />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
               </View>
             );
           })}
