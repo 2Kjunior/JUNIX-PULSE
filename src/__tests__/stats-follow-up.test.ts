@@ -26,6 +26,8 @@ jest.mock('@/repositories/goal-repository', () => ({
     getAssociatedTasks: jest.fn(),
     update: jest.fn(async () => {}),
     findGoalIdsForTask: jest.fn(async () => ['g1']),
+    // Since sheet 018: a goal may have habits; none here
+    getAssociatedHabitIds: jest.fn(async () => []),
   },
 }));
 jest.mock('@/services/mascot/mascot-event-bus', () => ({ emitMascotEvent: jest.fn() }));

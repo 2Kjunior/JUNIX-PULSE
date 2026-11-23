@@ -36,7 +36,7 @@ import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionBu
 import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
 import { useT } from '@/i18n';
 
-export default function GoalsListScreen() {
+export default function GoalsListScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useT();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
@@ -110,18 +110,20 @@ export default function GoalsListScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          accessibilityLabel={t('common.back')}
-        >
-          <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('goals.title')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      {/* Header: hidden inside the Progrès page, which has its own (sheet 018) */}
+      {!embedded && (
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            accessibilityLabel={t('common.back')}
+          >
+            <Ionicons name="arrow-back" size={24} color={palette.onSurface.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('goals.title')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 88 }]}

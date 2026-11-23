@@ -618,5 +618,21 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN quiet_hours_end INTEGER NOT NULL DEFAULT 7;
     `,
   },
+  {
+    version: 35,
+    name: 'add_goal_habits',
+    sql: `
+      -- Un objectif avance aussi avec ses habitudes (fiche 018, etude 15.2).
+      CREATE TABLE IF NOT EXISTS goal_habits (
+        goal_id TEXT NOT NULL,
+        habit_id TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        PRIMARY KEY (goal_id, habit_id),
+        FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE,
+        FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_goal_habits_habit ON goal_habits(habit_id);
+    `,
+  },
 ];
 

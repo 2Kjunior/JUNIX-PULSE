@@ -25,6 +25,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { format, isToday, isPast } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import { HeaderIconButton, SettingsButton } from '@/components/ui/HeaderIconButton';
+import { ProgressCard } from '@/features/progress/ProgressCard';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { ReminderRepository } from '@/repositories/reminder-repository';
@@ -670,12 +671,17 @@ export default function TodayScreen() {
           )}
         </View>
 
+        {/* Habitudes et objectifs (fiche 018) : toujours visibles, ils ouvrent Progrès */}
+        <View style={styles.sectionBlock}>
+          <ProgressCard />
+        </View>
+
         {/* ─── 6. Habitudes du jour (Routines & Streaks) ───────────────────── */}
         {habits.length > 0 && (
           <View style={styles.sectionBlock}>
             <View style={styles.subHeader}>
               <Text style={styles.subTitle}>{t('home.habits.title', { count: habits.length })}</Text>
-              <TouchableOpacity onPress={() => router.push('/habits')}>
+              <TouchableOpacity onPress={() => router.push('/progress' as never)}>
                 <Text style={styles.subAction}>{t('home.habits.seeAll')}</Text>
               </TouchableOpacity>
             </View>

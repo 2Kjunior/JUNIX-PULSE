@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 
 import { GoalUseCases, GoalDetails } from '@/use-cases/goal-use-cases';
+import { GoalHabitsSection } from '@/features/goals/GoalHabitsSection';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { TaskRepository } from '@/repositories/task-repository';
 import { Task } from '@/domain/entities';
@@ -321,6 +322,9 @@ export default function GoalDetailScreen() {
             ))
           )}
         </View>
+
+        {/* Habitudes liées (fiche 018) : l'objectif avance aussi avec elles */}
+        <GoalHabitsSection goalId={id} linked={details.associatedHabits} onChange={loadData} />
       </ScrollView>
     </View>
   );

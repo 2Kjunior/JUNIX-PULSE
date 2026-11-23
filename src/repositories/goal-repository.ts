@@ -117,6 +117,33 @@ export const GoalRepository = {
     );
   },
 
+  // ── Association Habitudes ↔ Objectifs (fiche 018) ───────────────────────────
+
+  async linkHabit(goalId: string, habitId: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `INSERT OR IGNORE INTO goal_habits (goal_id, habit_id, added_at) VALUES (?, ?, ?)`,
+      goalId,
+      habitId,
+      new Date().toISOString()
+    );
+  },
+
+  async unlinkHabit(goalId: string, habitId: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync('DELETE FROM goal_habits WHERE goal_id = ? AND habit_id = ?', goalId, habitId);
+  },
+
+  /** The habits linked to a goal, in the order they were linked. */
+  async getAssociatedHabitIds(goalId: string): Promise<string[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{ habit_id: string }>(
+      'SELECT habit_id FROM goal_habits WHERE goal_id = ? ORDER BY added_at ASC',
+      goalId
+    );
+    return rows.map(row => row.habit_id);
+  },
+
   /** The goals a task belongs to. */
   async findGoalIdsForTask(taskId: string): Promise<string[]> {
     const db = await getDatabase();
