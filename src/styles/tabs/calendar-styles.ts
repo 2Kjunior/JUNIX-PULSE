@@ -30,6 +30,9 @@ export function makeCalendarStyles(theme: ThemePalette) {
     },
     headerTitleCol: {
       gap: 2,
+      // The title takes what the buttons leave: on a phone they are never pushed out (sheet 016)
+      flex: 1,
+      minWidth: 0,
     },
     title: {
       ...Typography.headlineLarge,
@@ -48,6 +51,7 @@ export function makeCalendarStyles(theme: ThemePalette) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.xs,
+      flexShrink: 0,
     },
     todayBtn: {
       paddingHorizontal: Spacing.sm + 2,

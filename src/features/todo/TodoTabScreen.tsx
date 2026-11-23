@@ -272,7 +272,12 @@ export function TodoTabScreen() {
         )}
       </ScrollView>
 
-      <GlassFloatingActionButton label={t('todoTab.add')} icon="add" onPress={() => router.push(addPath as never)} />
+      <GlassFloatingActionButton
+        label={t('itemForm.save')}
+        accessibilityLabel={t('todoTab.add')}
+        icon="add"
+        onPress={() => router.push(addPath as never)}
+      />
     </View>
   );
 }

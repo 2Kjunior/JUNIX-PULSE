@@ -232,7 +232,7 @@ export default function CalendarScreen() {
       <View style={styles.header}>
         <View style={styles.headerTitleCol}>
           <Text style={styles.title}>{t('tab.calendar')}</Text>
-          <Text style={styles.subtitle}>
+          <Text style={styles.subtitle} numberOfLines={2}>
             {viewMode === 'week'
               ? weekLabel
               : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
@@ -296,17 +296,14 @@ export default function CalendarScreen() {
             key: 'agenda',
             label: t('calendar.view.agenda'),
             count: events.length + reminders.length + tasks.length,
-            icon: 'list-outline',
           },
           {
             key: 'timetable',
             label: t('calendar.view.day'),
-            icon: 'time-outline',
           },
           {
             key: 'week',
             label: t('calendar.view.week'),
-            icon: 'grid-outline',
           },
         ]}
         activeTab={viewMode}

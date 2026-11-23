@@ -63,6 +63,7 @@ export function PillTopBar<T extends string = string>({
               activeOpacity={0.75}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
+              aria-selected={isActive}
               accessibilityLabel={`${tab.label}${tab.count !== undefined ? `, ${tab.count}` : ''}`}
             >
               {tab.icon && (
