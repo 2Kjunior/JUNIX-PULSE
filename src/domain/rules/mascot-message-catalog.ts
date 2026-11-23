@@ -232,6 +232,12 @@ export const MASCOT_MESSAGES = {
     ["« {title} » traîne depuis {days} jours. On s'en occupe ?", "{name}, « {title} » traîne depuis {days} jours. On s'en occupe ?"],
     ["« {title} » est en attente depuis {days} jours. La planifier ?", "{name}, « {title} » est en attente depuis {days} jours. La planifier ?"],
   ),
+  MAKE_HABIT: entry(
+    ["Tu fais souvent « {title} ». On en fait une habitude ?", "{name}, tu fais souvent « {title} ». On en fait une habitude ?"],
+    ["« {title} » revient souvent. En faire une habitude ?", "{name}, « {title} » revient souvent. En faire une habitude ?"],
+    ["Vous faites souvent « {title} ». On en fait une habitude ?", "{name}, vous faites souvent « {title} ». On en fait une habitude ?"],
+    ["« {title} » revient souvent. En faire une habitude ?", "{name}, « {title} » revient souvent. En faire une habitude ?"],
+  ),
   WELCOME_BACK: entry(
     ["Contente de te revoir ! {count} {count|rappel t'attend|rappels t'attendent}.", "Contente de te revoir, {name} ! {count} {count|rappel t'attend|rappels t'attendent}."],
     ["Bon retour. {count} {count|rappel t'attend|rappels t'attendent}.", "Bon retour, {name}. {count} {count|rappel t'attend|rappels t'attendent}."],

@@ -83,10 +83,11 @@ describe('maxProposalsPerDay', () => {
 });
 
 describe('proposal families', () => {
-  it('covers the twelve proposals as in the brief', () => {
+  // The twelve of the brief, and P13 "make it a habit" (sheet 020)
+  it('covers the proposals of the brief and the ones added since', () => {
     expect(PROPOSAL_FAMILIES).toEqual({
       P1: 'contacts', P4: 'contacts',
-      P3: 'habitsGoals', P10: 'habitsGoals',
+      P3: 'habitsGoals', P10: 'habitsGoals', P13: 'habitsGoals',
       P2: 'tasksPlanning', P5: 'tasksPlanning', P6: 'tasksPlanning', P7: 'tasksPlanning', P11: 'tasksPlanning',
       P8: 'always', P9: 'always', P12: 'always',
     });

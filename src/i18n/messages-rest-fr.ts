@@ -966,6 +966,8 @@ export const REST_FR = {
   'suggestionText.overloaded.text': '{count} éléments sont prévus demain.',
   'suggestionText.lingering.title': '« {title} » traîne depuis {days} jours',
   'suggestionText.lingering.text': 'Cette tâche attend dans votre Inbox sans date. Voulez-vous la planifier ?',
+  'suggestionText.makeHabit.title': 'Faire de « {title} » une habitude',
+  'suggestionText.makeHabit.text': "Ça revient souvent. Une habitude se coche à chaque fois, peut sonner à son heure et fait avancer tes objectifs.",
   'suggestionText.welcomeBack.title': 'Content de vous revoir',
   'suggestionText.welcomeBack.text': '{count} rappels vous attendent.',
   // ─── Notifications ───

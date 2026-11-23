@@ -79,7 +79,9 @@ export const MAX_PROPOSALS_PER_DAY = { normal: 3, rare: 1 } as const;
 
 export type MascotProposalId =
   | 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6'
-  | 'P7' | 'P8' | 'P9' | 'P10' | 'P11' | 'P12';
+  | 'P7' | 'P8' | 'P9' | 'P10' | 'P11' | 'P12'
+  // P13: "make it a habit" (sheet 020)
+  | 'P13';
 
 /** `always` families are governed elsewhere: P8 and P9 by their own switch, P12 by `proposalsEnabled`. */
 export type MascotProposalFamily = 'contacts' | 'habitsGoals' | 'tasksPlanning' | 'always';
@@ -97,6 +99,8 @@ export const PROPOSAL_FAMILIES: Record<MascotProposalId, MascotProposalFamily> =
   P10: 'habitsGoals',
   P11: 'tasksPlanning',
   P12: 'always',
+  // Make it a habit (sheet 020): follows the habits and goals setting
+  P13: 'habitsGoals',
 };
 
 /**

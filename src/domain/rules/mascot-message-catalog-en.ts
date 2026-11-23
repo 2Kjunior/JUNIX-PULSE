@@ -154,6 +154,10 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["“{title}” has been lingering for {days} days. Shall we deal with it?", "{name}, “{title}” has been lingering for {days} days. Shall we deal with it?"],
     ["“{title}” has been pending for {days} days. Schedule it?", "{name}, “{title}” has been pending for {days} days. Schedule it?"],
   ),
+  MAKE_HABIT: entry(
+    ["You often do “{title}”. Shall we make it a habit?", "{name}, you often do “{title}”. Shall we make it a habit?"],
+    ["“{title}” comes back often. Make it a habit?", "{name}, “{title}” comes back often. Make it a habit?"],
+  ),
   WELCOME_BACK: entry(
     ["Good to see you again! {count} {count|reminder is|reminders are} waiting for you.", "Good to see you again, {name}! {count} {count|reminder is|reminders are} waiting for you."],
     ["Welcome back. {count} {count|reminder is|reminders are} waiting for you.", "Welcome back, {name}. {count} {count|reminder is|reminders are} waiting for you."],

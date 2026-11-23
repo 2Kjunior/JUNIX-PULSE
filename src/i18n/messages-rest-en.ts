@@ -968,6 +968,8 @@ export const REST_EN: Record<keyof typeof REST_FR, string> = {
   'suggestionText.overloaded.text': '{count} items are planned for tomorrow.',
   'suggestionText.lingering.title': '“{title}” has been lingering for {days} days',
   'suggestionText.lingering.text': 'This task has been waiting in your Inbox without a date. Do you want to schedule it?',
+  'suggestionText.makeHabit.title': 'Make “{title}” a habit',
+  'suggestionText.makeHabit.text': 'It comes back often. A habit is ticked each time, can ring at its time and moves your goals forward.',
   'suggestionText.welcomeBack.title': 'Good to see you again',
   'suggestionText.welcomeBack.text': '{count} reminders are waiting for you.',
   // ─── Notifications ───

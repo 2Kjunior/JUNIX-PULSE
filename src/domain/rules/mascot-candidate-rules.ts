@@ -13,6 +13,7 @@ import { addDays, differenceInCalendarDays, parseISO, startOfDay } from 'date-fn
 import { EventType, SuggestionType, TaskStatus } from '../enums';
 import { daysSinceLastInteraction, isPersonForgotten } from './person-rules';
 import { formatFrenchTime } from './mascot-suggestion-rules';
+import { makeHabitCandidates, type DoneTaskFact, type RepeatedReminderFact } from './habit-candidate-rules';
 
 // ─── Thresholds (decisions 3 to 6 of the reference document) ─────────────────────────────────
 
@@ -90,6 +91,12 @@ export interface CandidateFacts {
   daysSinceLastOpen: number | null;
   /** Reminders that are due or missed and still wait for the user. */
   waitingReminderCount: number;
+  /** Reminders that repeat every day or week, for "make it a habit" (sheet 020). */
+  repeatedReminders?: readonly RepeatedReminderFact[];
+  /** Tasks done lately, for "make it a habit" (sheet 020). */
+  recentDoneTasks?: readonly DoneTaskFact[];
+  /** The titles of the habits that exist: nothing already a habit is proposed. */
+  habitTitles?: readonly string[];
 }
 
 export interface SuggestionCandidate {
@@ -317,6 +324,16 @@ export function buildSuggestionCandidates(facts: CandidateFacts): SuggestionCand
       expiresAt: endOfToday(now),
     });
   }
+
+  // P13: what comes back often, made a habit (sheet 020)
+  candidates.push(
+    ...makeHabitCandidates({
+      now: facts.now,
+      repeatedReminders: facts.repeatedReminders,
+      recentDoneTasks: facts.recentDoneTasks,
+      habitTitles: facts.habitTitles,
+    })
+  );
 
   return candidates;
 }

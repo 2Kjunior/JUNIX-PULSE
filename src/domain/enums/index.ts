@@ -74,7 +74,8 @@ export type SuggestionType =
   | 'PLANNING_CONFLICT'      // Conflit emploi du temps / événement
   | 'GOAL_APPROACHING'       // Échéance d'un objectif proche
   | 'LINGERING_TASK'         // Tâche de l'Inbox qui traîne depuis longtemps
-  | 'WELCOME_BACK';          // Retour après quelques jours d'absence
+  | 'WELCOME_BACK'           // Retour après quelques jours d'absence
+  | 'MAKE_HABIT';            // Rappel répété ou tâche faite souvent → en faire une habitude (fiche 020)
 
 // ─── Réglages de la mascotte ─────────────────────────────────────────────────
 

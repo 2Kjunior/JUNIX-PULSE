@@ -60,5 +60,7 @@ export function suggestionTexts(
       return { title: t('suggestionText.lingering.title', p), explanation: t('suggestionText.lingering.text') };
     case 'WELCOME_BACK':
       return { title: t('suggestionText.welcomeBack.title'), explanation: t('suggestionText.welcomeBack.text', p) };
+    case 'MAKE_HABIT':
+      return { title: t('suggestionText.makeHabit.title', p), explanation: t('suggestionText.makeHabit.text') };
   }
 }

@@ -23,5 +23,6 @@ Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail
 | [017](FICHE-017-coherence-parametres-et-mots.md) | Cohérence : un seul bouton Paramètres sur tous les onglets, les mots Tâche et Rappel partout, plus de liste sur un rappel, « + À faire ou moment » | 23 novembre 2026 | fait et testé (à voir à l'écran) |
 | [018](FICHE-018-progres-habitudes-et-objectifs.md) | « Progrès » : carte de l'Accueil, page Habitudes · Objectifs, un objectif avance avec ses habitudes (migration 35) | 23 novembre 2026 | fait et testé (à voir à l'écran) |
 | [019](FICHE-019-habitude-qui-sonne.md) | Une habitude qui sonne à une heure, et « Fait » dans la notification qui la coche (migration 36) | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
+| [020](FICHE-020-pulse-propose-une-habitude.md) | Pulse propose « En faire une habitude ? » pour un rappel répété ou une tâche faite souvent | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
 
 Pour comprendre le rôle de chaque dossier et fichier : [l'explorateur du projet](../apprendre/explorateur-du-projet.html) (à ouvrir dans un navigateur ; le remettre à jour avec `node docs/apprendre/generer-explorateur.js`).

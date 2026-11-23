@@ -24,6 +24,7 @@ const PROPOSAL_BY_TYPE: Record<SuggestionType, MascotProposalId> = {
   GOAL_APPROACHING: 'P10',
   LINGERING_TASK: 'P11',
   WELCOME_BACK: 'P12',
+  MAKE_HABIT: 'P13',
 };
 
 const MESSAGE_BY_TYPE: Record<SuggestionType, MascotMessageId> = {
@@ -37,6 +38,7 @@ const MESSAGE_BY_TYPE: Record<SuggestionType, MascotMessageId> = {
   GOAL_APPROACHING: 'GOAL_APPROACHING',
   LINGERING_TASK: 'LINGERING_TASK',
   WELCOME_BACK: 'WELCOME_BACK',
+  MAKE_HABIT: 'MAKE_HABIT',
 };
 
 /** Mood of the small mascot shown with a proposal: it follows the type, never alarms. */
@@ -51,6 +53,7 @@ const MOOD_BY_TYPE: Record<SuggestionType, MascotMood> = {
   GOAL_APPROACHING: 'calm',
   LINGERING_TASK: 'calm',
   WELCOME_BACK: 'happy',
+  MAKE_HABIT: 'happy',
 };
 
 /** Parameters each message needs, with the type each one must have. */
@@ -65,6 +68,7 @@ const REQUIRED_PARAMS: Record<SuggestionType, Readonly<Record<string, 'string' |
   GOAL_APPROACHING: { goal: 'string', days: 'number', percent: 'number' },
   LINGERING_TASK: { title: 'string', days: 'number' },
   WELCOME_BACK: { count: 'number' },
+  MAKE_HABIT: { title: 'string' },
 };
 
 export interface SuggestionLike {

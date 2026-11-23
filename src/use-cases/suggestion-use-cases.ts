@@ -20,7 +20,7 @@ import { PersonUseCases } from './person-use-cases';
 import { HabitUseCases } from './habit-use-cases';
 import { GoalUseCases } from './goal-use-cases';
 import { TaskUseCases } from './task-use-cases';
-import { createReminder, snoozeReminder } from './reminder-use-cases';
+import { createReminder, deleteReminder, snoozeReminder } from './reminder-use-cases';
 import { Suggestion } from '../domain/entities';
 import {
   buildSuggestionCandidates,
@@ -86,6 +86,23 @@ async function loadCandidateFacts(now: Date): Promise<LoadedFacts> {
   const tomorrowReminders = activeReminders.filter(r => format(new Date(r.scheduledAt), 'yyyy-MM-dd') === tomorrow);
   const waitingReminders = activeReminders.filter(r => r.status === 'MISSED' || r.status === 'TRIGGERED');
 
+  // "Make it a habit" (sheet 020): the reminders that repeat, and the tasks done
+  const repeatedReminders: { id: string; title: string; time: string; frequency: 'DAILY' | 'WEEKLY' }[] = [];
+  for (const reminder of activeReminders) {
+    const ruleId = reminder.recurrenceRuleId;
+    if (!ruleId) continue;
+    const rule = await safe(() => ReminderRepository.findRecurrenceRule(ruleId), null);
+    if (rule?.type === 'DAILY' || rule?.type === 'WEEKLY') {
+      repeatedReminders.push({
+        id: reminder.id,
+        title: reminder.title,
+        time: format(new Date(reminder.scheduledAt), 'HH:mm'),
+        frequency: rule.type,
+      });
+    }
+  }
+  const allTasks = await safe(() => TaskRepository.findAll(), []);
+
   const facts: CandidateFacts = {
     now,
     endOfDayHour: settings?.endOfDayHour ?? DEFAULT_END_OF_DAY_HOUR,
@@ -113,6 +130,11 @@ async function loadCandidateFacts(now: Date): Promise<LoadedFacts> {
     })),
     daysSinceLastOpen: SessionManager.getDaysSinceLastOpen(now.getTime()),
     waitingReminderCount: waitingReminders.length,
+    repeatedReminders,
+    recentDoneTasks: allTasks
+      .filter(task => task.status === 'COMPLETED' && task.completedAt)
+      .map(task => ({ id: task.id, title: task.title, completedAt: task.completedAt as string })),
+    habitTitles: habits.map(item => item.habit.title),
   };
 
   return { facts, complete };
@@ -196,6 +218,22 @@ export const SuggestionUseCases = {
         }
       } else if (sugg.type === 'LINGERING_TASK' && sugg.targetId) {
         await TaskUseCases.rescheduleTasks([sugg.targetId], format(addDays(new Date(), 1), 'yyyy-MM-dd'));
+      } else if (sugg.type === 'MAKE_HABIT') {
+        // "Make it a habit" (sheet 020): the habit is created, ringing at the time of the reminder
+        const data = readProposedData(sugg);
+        if (typeof data.title === 'string') {
+          await HabitUseCases.createHabit({
+            title: data.title,
+            frequency: data.frequency === 'DAILY' ? 'DAILY' : 'WEEKLY',
+            targetDaysPerWeek: typeof data.targetDaysPerWeek === 'number' ? data.targetDaysPerWeek : undefined,
+            reminderTime: typeof data.time === 'string' ? data.time : undefined,
+          });
+          // The habit now rings at the same time: the repeated reminder would ring twice
+          if (data.source === 'reminder' && typeof data.reminderId === 'string') {
+            const reminder = await ReminderRepository.findById(data.reminderId);
+            if (reminder) await deleteReminder(reminder);
+          }
+        }
       } else if (sugg.type === 'BIRTHDAY_REMINDER') {
         const data = readProposedData(sugg);
         // Le jour même, accepter ouvre la fiche (voir suggestionDestination) : pas de rappel à créer
