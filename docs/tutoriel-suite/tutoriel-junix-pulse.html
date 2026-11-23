@@ -14,14 +14,14 @@
 <h1>JUNIX PULSE</h1>
 <div class="sous">LE TUTORIEL DE LA SUITE</div>
 <div class="info">Comment terminer, tester, publier et faire évoluer l'application, seul, étape par étape, action par action.<br><br>
-Version du <b>23 novembre 2026</b> · Branche <b>master</b> · Dernier commit <b>5e5f049</b> · 23 fichier(s) modifié(s) non enregistré(s)<br>
+Version du <b>23 novembre 2026</b> · Branche <b>master</b> · Dernier commit <b>bdbb318</b> · 17 fichier(s) modifié(s) non enregistré(s)<br>
 Écrit pour être suivi comme une recette : ingrédients, ustensiles, quantités, puis chaque geste dans l'ordre.</div>
 </section>
 
-<section class="toc"><h1>Sommaire</h1><ul><li class="toc-1"><a href="#c0-0">Journal des mises à jour de ce document</a></li><li class="toc-1"><a href="#c1-0">1. Comment lire ce document</a></li><li class="toc-2"><a href="#c1-4">1.1 Les encadrés</a></li><li class="toc-2"><a href="#c1-9">1.2 Les blocs de commande</a></li><li class="toc-2"><a href="#c1-13">1.3 Les trois règles qui ne se discutent pas</a></li><li class="toc-1"><a href="#c1-16">2. Où en est le projet (23 novembre 2026)</a></li><li class="toc-2"><a href="#c1-17">2.1 Ce qui est fait et enregistré dans git</a></li><li class="toc-2"><a href="#c1-20">2.2 Fait, testé, mais PAS encore enregistré : la fiche 011 (notifications)</a></li><li class="toc-2"><a href="#c1-23">2.2 bis La fiche 010 (animation de lancement), enregistrée</a></li><li class="toc-2"><a href="#c1-31">2.3 L'APK du jour</a></li><li class="toc-2"><a href="#c1-36">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</a></li><li class="toc-1"><a href="#c1-41">3. La cuisine : les outils et leurs versions exactes</a></li><li class="toc-2"><a href="#c1-42">3.1 Les ustensiles (ce qui doit être installé)</a></li><li class="toc-2"><a href="#c1-45">3.2 Les ingrédients de base (les bibliothèques du projet)</a></li><li class="toc-2"><a href="#c1-49">3.3 Ouvrir le projet</a></li><li class="toc-1"><a href="#c1-59">4. Le plan de la maison : comment le code est rangé</a></li><li class="toc-2"><a href="#c1-60">4.1 Les étages</a></li><li class="toc-2"><a href="#c1-63">4.2 Les pièces les plus importantes</a></li><li class="toc-2"><a href="#c1-65">4.3 Le registre des types, en image</a></li><li class="toc-1"><a href="#c1-69">5. Les règles de la maison (à relire avant chaque recette)</a></li><li class="toc-1"><a href="#c2-0">6. Recette A — Installer l'APK sur le téléphone</a></li><li class="toc-2"><a href="#c2-2">6.1 Avant tout : sauvegarder les données de l'appli</a></li><li class="toc-2"><a href="#c2-5">6.2 Mettre le fichier sur le téléphone</a></li><li class="toc-2"><a href="#c2-9">6.3 Installer</a></li><li class="toc-2"><a href="#c2-11">6.4 Ce que tu dois voir avec cet APK</a></li><li class="toc-1"><a href="#c2-13">7. Recette B — Terminer la fiche 010 (la nouvelle animation de lancement)</a></li><li class="toc-2"><a href="#c2-17">7.1 Ce que fait la nouvelle animation</a></li><li class="toc-2"><a href="#c2-19">7.2 Les ingrédients, déjà en place</a></li><li class="toc-2"><a href="#c2-22">7.3 Étape 1 — Refabriquer l'image de démarrage</a></li><li class="toc-2"><a href="#c2-31">7.4 Étape 2 — Lancer les tests de la fiche</a></li><li class="toc-2"><a href="#c2-37">7.5 Étape 3 — Vérifier les types et le style du code</a></li><li class="toc-2"><a href="#c2-41">7.6 Étape 4 — Regarder l'animation sur le web</a></li><li class="toc-2"><a href="#c2-48">7.7 Étape 5 — Le compte rendu dans la fiche (concordance)</a></li><li class="toc-2"><a href="#c2-54">7.8 Étape 6 — Enregistrer (commit) sans rien emporter d'autre</a></li><li class="toc-2"><a href="#c2-63">7.9 Étape 7 — Envoyer sur GitHub (push)</a></li><li class="toc-1"><a href="#c2-66">8. Recette C — Fabriquer un APK sur le PC</a></li><li class="toc-2"><a href="#c2-69">8.1 Le schéma</a></li><li class="toc-2"><a href="#c2-71">8.2 Les gestes</a></li><li class="toc-2"><a href="#c2-85">8.3 Si ça échoue</a></li><li class="toc-1"><a href="#c3-0">9. La méthode pour chaque nouveau chantier</a></li><li class="toc-2"><a href="#c3-4">9.1 Recette de base : ajouter un texte dans les deux langues</a></li><li class="toc-2"><a href="#c3-10">9.2 Recette de base : ajouter une colonne à la base sans rien perdre</a></li><li class="toc-1"><a href="#c3-18">10. Recette D — Les notifications des trois types, avec trois niveaux</a></li><li class="toc-2"><a href="#c3-21">10.1 La décision (étude 12.6)</a></li><li class="toc-2"><a href="#c3-23">10.2 Le schéma</a></li><li class="toc-2"><a href="#c3-25">10.3 Étape 1 — La règle pure et son test</a></li><li class="toc-2"><a href="#c3-33">10.4 Étape 2 — Les canaux Android</a></li><li class="toc-2"><a href="#c3-42">10.5 Étape 3 — Les tâches et les moments</a></li><li class="toc-2"><a href="#c3-45">10.6 Étape 4 — Le choix dans les formulaires</a></li><li class="toc-2"><a href="#c3-47">10.7 Vérifier</a></li><li class="toc-1"><a href="#c3-49">11. Recette E — Les formulaires 2-B</a></li><li class="toc-2"><a href="#c3-51">11.1 La décision (étude 12.2)</a></li><li class="toc-2"><a href="#c3-54">11.2 Les gestes</a></li><li class="toc-1"><a href="#c3-57">12. Recette F — L'onglet « À faire » et le bouton « + À faire ou moment »</a></li><li class="toc-2"><a href="#c3-59">12.1 Le bouton : changement immédiat</a></li><li class="toc-2"><a href="#c3-70">12.2 L'onglet « À faire »</a></li><li class="toc-1"><a href="#c3-74">13. Recette G — La hiérarchie des alertes et les types d'événements</a></li><li class="toc-1"><a href="#c3-82">14. Recette H — Des gestes découvrables</a></li><li class="toc-1"><a href="#c3-86">15. Recette I — Le partage, étape 5-A</a></li><li class="toc-1"><a href="#c3-95">16. Recette J — Le planning : Jour, Semaine, Mois, et glisser-déposer</a></li><li class="toc-2"><a href="#c3-98">16.1 La règle la plus importante : arrondir au quart d'heure</a></li><li class="toc-2"><a href="#c3-103">16.2 Le glisser, geste par geste</a></li><li class="toc-1"><a href="#c3-105">17. Recette K — Les sons et l'alarme</a></li><li class="toc-1"><a href="#c3-110">18. Recette L — Le compte et la synchronisation (plus tard)</a></li><li class="toc-1"><a href="#c4-0">19. Travailler avec une IA (Claude, ou une autre) sans perdre le fil</a></li><li class="toc-1"><a href="#c4-4">20. Git : l'aide-mémoire</a></li><li class="toc-1"><a href="#c4-9">21. Les commandes de vérification, en un coup d'œil</a></li><li class="toc-1"><a href="#c4-11">22. Dépannage général</a></li><li class="toc-1"><a href="#c4-13">23. Lexique</a></li><li class="toc-1"><a href="#c4-15">24. Les fichiers fournis avec ce document</a></li><li class="toc-2"><a href="#c4-18">24.1 Les planches du logo</a></li><li class="toc-1"><a href="#c4-22">25. Mettre à jour ce document</a></li><li class="toc-2"><a href="#c4-25">25.1 Comment le document est fabriqué</a></li><li class="toc-2"><a href="#c4-28">25.2 La recette, geste par geste</a></li><li class="toc-2"><a href="#c4-38">25.3 Ce que le Markdown permet ici</a></li><li class="toc-2"><a href="#c4-42">25.4 Si ça ne marche pas</a></li><li class="toc-1"><a href="#annexe-0">Annexe A — Fiche 010 complète (animation de lancement)</a></li><li class="toc-2"><a href="#a0-1">1. Objectif</a></li><li class="toc-2"><a href="#a0-9">2. État de départ</a></li><li class="toc-2"><a href="#a0-11">3. Matériel</a></li><li class="toc-2"><a href="#a0-14">4. Hypothèses</a></li><li class="toc-2"><a href="#a0-16">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a0-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#a0-23">7. Étapes</a></li><li class="toc-2"><a href="#a0-105">8. Test final</a></li><li class="toc-2"><a href="#a0-111">9. Dépannage</a></li><li class="toc-2"><a href="#a0-113">10. Lexique</a></li><li class="toc-2"><a href="#a0-115">11. Et après</a></li><li class="toc-2"><a href="#a0-117">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-1">Annexe B — Fiche 003 complète (fabriquer l’APK sur le PC)</a></li><li class="toc-2"><a href="#a1-2">1. Objectif</a></li><li class="toc-2"><a href="#a1-5">2. État de départ</a></li><li class="toc-2"><a href="#a1-7">3. Matériel</a></li><li class="toc-2"><a href="#a1-9">4. Hypothèses</a></li><li class="toc-2"><a href="#a1-11">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a1-14">6. Sauvegarde</a></li><li class="toc-2"><a href="#a1-17">7. Étapes</a></li><li class="toc-2"><a href="#a1-60">8. Test final</a></li><li class="toc-2"><a href="#a1-62">9. Dépannage</a></li><li class="toc-2"><a href="#a1-64">10. Lexique</a></li><li class="toc-2"><a href="#a1-66">11. Et après</a></li><li class="toc-2"><a href="#a1-68">Compte rendu d'exécution (11 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-2">Annexe C — Fiche 009 complète (les icônes du logo)</a></li><li class="toc-2"><a href="#a2-1">1. Objectif</a></li><li class="toc-2"><a href="#a2-6">2. État de départ</a></li><li class="toc-2"><a href="#a2-8">3. Matériel</a></li><li class="toc-2"><a href="#a2-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a2-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a2-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a2-19">7. Étapes</a></li><li class="toc-2"><a href="#a2-79">8. Test final</a></li><li class="toc-2"><a href="#a2-84">9. Dépannage</a></li><li class="toc-2"><a href="#a2-86">10. Lexique</a></li><li class="toc-2"><a href="#a2-88">11. Et après</a></li><li class="toc-2"><a href="#a2-90">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-3">Annexe D — Fiche 008 complète (deux familles)</a></li><li class="toc-2"><a href="#a3-1">1. Objectif</a></li><li class="toc-2"><a href="#a3-7">2. État de départ</a></li><li class="toc-2"><a href="#a3-9">3. Matériel</a></li><li class="toc-2"><a href="#a3-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a3-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a3-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a3-20">7. Étapes</a></li><li class="toc-2"><a href="#a3-82">8. Test final</a></li><li class="toc-2"><a href="#a3-91">9. Dépannage</a></li><li class="toc-2"><a href="#a3-93">10. Lexique</a></li><li class="toc-2"><a href="#a3-95">11. Et après</a></li><li class="toc-2"><a href="#a3-98">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-4">Annexe E — Index des fiches</a></li><li class="toc-1"><a href="#annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</a></li><li class="toc-2"><a href="#e-0">12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point</a></li><li class="toc-1"><a href="#annexe-G">Annexe G — Fiche 011 complète (notifications des trois types)</a></li><li class="toc-2"><a href="#annexe-G-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-G-11">2. État de départ</a></li><li class="toc-2"><a href="#annexe-G-13">3. Matériel</a></li><li class="toc-2"><a href="#annexe-G-15">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-G-17">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-G-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-G-21">7. Étapes</a></li><li class="toc-2"><a href="#annexe-G-249">8. Test final</a></li><li class="toc-2"><a href="#annexe-G-255">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-G-257">10. Lexique</a></li><li class="toc-2"><a href="#annexe-G-259">11. Et après</a></li><li class="toc-2"><a href="#annexe-G-261">Compte rendu d'exécution (23 novembre 2026)</a></li></ul></section>
+<section class="toc"><h1>Sommaire</h1><ul><li class="toc-1"><a href="#c0-0">Journal des mises à jour de ce document</a></li><li class="toc-1"><a href="#c1-0">1. Comment lire ce document</a></li><li class="toc-2"><a href="#c1-4">1.1 Les encadrés</a></li><li class="toc-2"><a href="#c1-9">1.2 Les blocs de commande</a></li><li class="toc-2"><a href="#c1-13">1.3 Les trois règles qui ne se discutent pas</a></li><li class="toc-1"><a href="#c1-16">2. Où en est le projet (23 novembre 2026)</a></li><li class="toc-2"><a href="#c1-17">2.1 Ce qui est fait et enregistré dans git</a></li><li class="toc-2"><a href="#c1-20">2.2 bis Fait, testé, mais PAS encore enregistré : la fiche 012 (formulaires)</a></li><li class="toc-2"><a href="#c1-22">2.2 La fiche 011 (notifications)</a></li><li class="toc-2"><a href="#c1-25">2.2 bis La fiche 010 (animation de lancement), enregistrée</a></li><li class="toc-2"><a href="#c1-33">2.3 L'APK du jour</a></li><li class="toc-2"><a href="#c1-38">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</a></li><li class="toc-1"><a href="#c1-43">3. La cuisine : les outils et leurs versions exactes</a></li><li class="toc-2"><a href="#c1-44">3.1 Les ustensiles (ce qui doit être installé)</a></li><li class="toc-2"><a href="#c1-47">3.2 Les ingrédients de base (les bibliothèques du projet)</a></li><li class="toc-2"><a href="#c1-51">3.3 Ouvrir le projet</a></li><li class="toc-1"><a href="#c1-61">4. Le plan de la maison : comment le code est rangé</a></li><li class="toc-2"><a href="#c1-62">4.1 Les étages</a></li><li class="toc-2"><a href="#c1-65">4.2 Les pièces les plus importantes</a></li><li class="toc-2"><a href="#c1-67">4.3 Le registre des types, en image</a></li><li class="toc-1"><a href="#c1-71">5. Les règles de la maison (à relire avant chaque recette)</a></li><li class="toc-1"><a href="#c2-0">6. Recette A — Installer l'APK sur le téléphone</a></li><li class="toc-2"><a href="#c2-2">6.1 Avant tout : sauvegarder les données de l'appli</a></li><li class="toc-2"><a href="#c2-5">6.2 Mettre le fichier sur le téléphone</a></li><li class="toc-2"><a href="#c2-9">6.3 Installer</a></li><li class="toc-2"><a href="#c2-11">6.4 Ce que tu dois voir avec cet APK</a></li><li class="toc-1"><a href="#c2-13">7. Recette B — Terminer la fiche 010 (la nouvelle animation de lancement)</a></li><li class="toc-2"><a href="#c2-17">7.1 Ce que fait la nouvelle animation</a></li><li class="toc-2"><a href="#c2-19">7.2 Les ingrédients, déjà en place</a></li><li class="toc-2"><a href="#c2-22">7.3 Étape 1 — Refabriquer l'image de démarrage</a></li><li class="toc-2"><a href="#c2-31">7.4 Étape 2 — Lancer les tests de la fiche</a></li><li class="toc-2"><a href="#c2-37">7.5 Étape 3 — Vérifier les types et le style du code</a></li><li class="toc-2"><a href="#c2-41">7.6 Étape 4 — Regarder l'animation sur le web</a></li><li class="toc-2"><a href="#c2-48">7.7 Étape 5 — Le compte rendu dans la fiche (concordance)</a></li><li class="toc-2"><a href="#c2-54">7.8 Étape 6 — Enregistrer (commit) sans rien emporter d'autre</a></li><li class="toc-2"><a href="#c2-63">7.9 Étape 7 — Envoyer sur GitHub (push)</a></li><li class="toc-1"><a href="#c2-66">8. Recette C — Fabriquer un APK sur le PC</a></li><li class="toc-2"><a href="#c2-69">8.1 Le schéma</a></li><li class="toc-2"><a href="#c2-71">8.2 Les gestes</a></li><li class="toc-2"><a href="#c2-85">8.3 Si ça échoue</a></li><li class="toc-1"><a href="#c3-0">9. La méthode pour chaque nouveau chantier</a></li><li class="toc-2"><a href="#c3-4">9.1 Recette de base : ajouter un texte dans les deux langues</a></li><li class="toc-2"><a href="#c3-10">9.2 Recette de base : ajouter une colonne à la base sans rien perdre</a></li><li class="toc-1"><a href="#c3-18">10. Recette D — Les notifications des trois types, avec trois niveaux</a></li><li class="toc-2"><a href="#c3-21">10.1 La décision (étude 12.6)</a></li><li class="toc-2"><a href="#c3-23">10.2 Le schéma</a></li><li class="toc-2"><a href="#c3-25">10.3 Étape 1 — La règle pure et son test</a></li><li class="toc-2"><a href="#c3-33">10.4 Étape 2 — Les canaux Android</a></li><li class="toc-2"><a href="#c3-42">10.5 Étape 3 — Les tâches et les moments</a></li><li class="toc-2"><a href="#c3-45">10.6 Étape 4 — Le choix dans les formulaires</a></li><li class="toc-2"><a href="#c3-47">10.7 Vérifier</a></li><li class="toc-1"><a href="#c3-49">11. Recette E — Les formulaires 2-B</a></li><li class="toc-2"><a href="#c3-52">11.1 La décision (étude 12.2)</a></li><li class="toc-2"><a href="#c3-55">11.2 Les gestes</a></li><li class="toc-1"><a href="#c3-58">12. Recette F — L'onglet « À faire » et le bouton « + À faire ou moment »</a></li><li class="toc-2"><a href="#c3-60">12.1 Le bouton : changement immédiat</a></li><li class="toc-2"><a href="#c3-71">12.2 L'onglet « À faire »</a></li><li class="toc-1"><a href="#c3-75">13. Recette G — La hiérarchie des alertes et les types d'événements</a></li><li class="toc-1"><a href="#c3-83">14. Recette H — Des gestes découvrables</a></li><li class="toc-1"><a href="#c3-87">15. Recette I — Le partage, étape 5-A</a></li><li class="toc-1"><a href="#c3-96">16. Recette J — Le planning : Jour, Semaine, Mois, et glisser-déposer</a></li><li class="toc-2"><a href="#c3-99">16.1 La règle la plus importante : arrondir au quart d'heure</a></li><li class="toc-2"><a href="#c3-104">16.2 Le glisser, geste par geste</a></li><li class="toc-1"><a href="#c3-106">17. Recette K — Les sons et l'alarme</a></li><li class="toc-1"><a href="#c3-111">18. Recette L — Le compte et la synchronisation (plus tard)</a></li><li class="toc-1"><a href="#c4-0">19. Travailler avec une IA (Claude, ou une autre) sans perdre le fil</a></li><li class="toc-1"><a href="#c4-4">20. Git : l'aide-mémoire</a></li><li class="toc-1"><a href="#c4-9">21. Les commandes de vérification, en un coup d'œil</a></li><li class="toc-1"><a href="#c4-11">22. Dépannage général</a></li><li class="toc-1"><a href="#c4-13">23. Lexique</a></li><li class="toc-1"><a href="#c4-15">24. Les fichiers fournis avec ce document</a></li><li class="toc-2"><a href="#c4-18">24.1 Les planches du logo</a></li><li class="toc-1"><a href="#c4-22">25. Mettre à jour ce document</a></li><li class="toc-2"><a href="#c4-25">25.1 Comment le document est fabriqué</a></li><li class="toc-2"><a href="#c4-28">25.2 La recette, geste par geste</a></li><li class="toc-2"><a href="#c4-38">25.3 Ce que le Markdown permet ici</a></li><li class="toc-2"><a href="#c4-42">25.4 Si ça ne marche pas</a></li><li class="toc-1"><a href="#annexe-0">Annexe A — Fiche 010 complète (animation de lancement)</a></li><li class="toc-2"><a href="#a0-1">1. Objectif</a></li><li class="toc-2"><a href="#a0-9">2. État de départ</a></li><li class="toc-2"><a href="#a0-11">3. Matériel</a></li><li class="toc-2"><a href="#a0-14">4. Hypothèses</a></li><li class="toc-2"><a href="#a0-16">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a0-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#a0-23">7. Étapes</a></li><li class="toc-2"><a href="#a0-105">8. Test final</a></li><li class="toc-2"><a href="#a0-111">9. Dépannage</a></li><li class="toc-2"><a href="#a0-113">10. Lexique</a></li><li class="toc-2"><a href="#a0-115">11. Et après</a></li><li class="toc-2"><a href="#a0-117">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-1">Annexe B — Fiche 003 complète (fabriquer l’APK sur le PC)</a></li><li class="toc-2"><a href="#a1-2">1. Objectif</a></li><li class="toc-2"><a href="#a1-5">2. État de départ</a></li><li class="toc-2"><a href="#a1-7">3. Matériel</a></li><li class="toc-2"><a href="#a1-9">4. Hypothèses</a></li><li class="toc-2"><a href="#a1-11">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a1-14">6. Sauvegarde</a></li><li class="toc-2"><a href="#a1-17">7. Étapes</a></li><li class="toc-2"><a href="#a1-60">8. Test final</a></li><li class="toc-2"><a href="#a1-62">9. Dépannage</a></li><li class="toc-2"><a href="#a1-64">10. Lexique</a></li><li class="toc-2"><a href="#a1-66">11. Et après</a></li><li class="toc-2"><a href="#a1-68">Compte rendu d'exécution (11 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-2">Annexe C — Fiche 009 complète (les icônes du logo)</a></li><li class="toc-2"><a href="#a2-1">1. Objectif</a></li><li class="toc-2"><a href="#a2-6">2. État de départ</a></li><li class="toc-2"><a href="#a2-8">3. Matériel</a></li><li class="toc-2"><a href="#a2-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a2-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a2-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a2-19">7. Étapes</a></li><li class="toc-2"><a href="#a2-79">8. Test final</a></li><li class="toc-2"><a href="#a2-84">9. Dépannage</a></li><li class="toc-2"><a href="#a2-86">10. Lexique</a></li><li class="toc-2"><a href="#a2-88">11. Et après</a></li><li class="toc-2"><a href="#a2-90">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-3">Annexe D — Fiche 008 complète (deux familles)</a></li><li class="toc-2"><a href="#a3-1">1. Objectif</a></li><li class="toc-2"><a href="#a3-7">2. État de départ</a></li><li class="toc-2"><a href="#a3-9">3. Matériel</a></li><li class="toc-2"><a href="#a3-11">4. Hypothèses</a></li><li class="toc-2"><a href="#a3-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#a3-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#a3-20">7. Étapes</a></li><li class="toc-2"><a href="#a3-82">8. Test final</a></li><li class="toc-2"><a href="#a3-91">9. Dépannage</a></li><li class="toc-2"><a href="#a3-93">10. Lexique</a></li><li class="toc-2"><a href="#a3-95">11. Et après</a></li><li class="toc-2"><a href="#a3-98">Compte rendu d'exécution (22 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-4">Annexe E — Index des fiches</a></li><li class="toc-1"><a href="#annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</a></li><li class="toc-2"><a href="#e-0">12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point</a></li><li class="toc-1"><a href="#annexe-G">Annexe G — Fiche 011 complète (notifications des trois types)</a></li><li class="toc-2"><a href="#annexe-G-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-G-11">2. État de départ</a></li><li class="toc-2"><a href="#annexe-G-13">3. Matériel</a></li><li class="toc-2"><a href="#annexe-G-15">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-G-17">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-G-19">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-G-21">7. Étapes</a></li><li class="toc-2"><a href="#annexe-G-249">8. Test final</a></li><li class="toc-2"><a href="#annexe-G-255">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-G-257">10. Lexique</a></li><li class="toc-2"><a href="#annexe-G-259">11. Et après</a></li><li class="toc-2"><a href="#annexe-G-261">Compte rendu d'exécution (23 novembre 2026)</a></li><li class="toc-1"><a href="#annexe-H">Annexe H — Fiche 012 complète (formulaires À faire et Moment)</a></li><li class="toc-2"><a href="#annexe-H-1">1. Objectif</a></li><li class="toc-2"><a href="#annexe-H-7">2. État de départ</a></li><li class="toc-2"><a href="#annexe-H-9">3. Matériel</a></li><li class="toc-2"><a href="#annexe-H-11">4. Hypothèses</a></li><li class="toc-2"><a href="#annexe-H-13">5. Carte de l'intervention</a></li><li class="toc-2"><a href="#annexe-H-15">6. Sauvegarde</a></li><li class="toc-2"><a href="#annexe-H-17">7. Étapes</a></li><li class="toc-2"><a href="#annexe-H-94">8. Test final</a></li><li class="toc-2"><a href="#annexe-H-100">9. Dépannage</a></li><li class="toc-2"><a href="#annexe-H-102">10. Lexique</a></li><li class="toc-2"><a href="#annexe-H-104">11. Et après</a></li><li class="toc-2"><a href="#annexe-H-106">Compte rendu d'exécution (23 novembre 2026)</a></li></ul></section>
 <section class="chapitre"><h1 id="c0-0">Journal des mises à jour de ce document</h1>
 <p>Ce document <strong>vit avec le projet</strong> : à chaque étape terminée, on le met à jour (chapitre 25 : comment faire). La version et l'état du projet décrits sont imprimés sur la couverture, lus automatiquement dans git au moment de la fabrication du PDF.</p>
-<table><thead><tr><th>Date</th><th>Ce qui a changé dans le document</th><th>État du projet décrit</th></tr></thead><tbody><tr><td>23 novembre 2026 (soir)</td><td>Première version : état du projet, outils, plan du code, règles, recettes A à L, boîte à outils, annexes (fiches 003, 008, 009, 010, index, étude section 12)</td><td>Fiche 010 appliquée, pas encore testée</td></tr><tr><td>23 novembre 2026 (suite)</td><td>Fiche 010 terminée : chapitre 2.2 (vérifications faites), recette B (« commence à l'étape 6 », ce que les tests ont demandé), commande de commit avec <code>jest.setup.js</code>, feuille de route ; ajout de ce journal, de la version automatique sur la couverture, du chapitre 25 et de la commande qui refait aussi l'archive</td><td>Fiche 010 testée (13 + 1904 tests) et vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (nuit)</td><td>Recette C et annexe B (fiche 003) : nouveau dépannage « trois plantages à la fois » (mémoire), remède <code>--max-workers=4</code></td><td>Fiche 010 enregistrée (<code>1f9b1d8</code>) et envoyée sur GitHub ; APK avec la nouvelle animation en cours de fabrication</td></tr><tr><td>23 novembre 2026 (après-midi)</td><td>Chapitre 2 : commits à jour (tout est sur GitHub), fiche 011 en attente d'enregistrement, APK du jour avec la nouvelle animation ; recette D marquée « faite par la fiche 011 » ; fiche 011 ajoutée en annexe G ; dépannage du cache de Metro</td><td>Fiche 011 (notifications) appliquée et testée (1918 tests), vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr></tbody></table>
+<table><thead><tr><th>Date</th><th>Ce qui a changé dans le document</th><th>État du projet décrit</th></tr></thead><tbody><tr><td>23 novembre 2026 (soir)</td><td>Première version : état du projet, outils, plan du code, règles, recettes A à L, boîte à outils, annexes (fiches 003, 008, 009, 010, index, étude section 12)</td><td>Fiche 010 appliquée, pas encore testée</td></tr><tr><td>23 novembre 2026 (suite)</td><td>Fiche 010 terminée : chapitre 2.2 (vérifications faites), recette B (« commence à l'étape 6 », ce que les tests ont demandé), commande de commit avec <code>jest.setup.js</code>, feuille de route ; ajout de ce journal, de la version automatique sur la couverture, du chapitre 25 et de la commande qui refait aussi l'archive</td><td>Fiche 010 testée (13 + 1904 tests) et vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (nuit)</td><td>Recette C et annexe B (fiche 003) : nouveau dépannage « trois plantages à la fois » (mémoire), remède <code>--max-workers=4</code></td><td>Fiche 010 enregistrée (<code>1f9b1d8</code>) et envoyée sur GitHub ; APK avec la nouvelle animation en cours de fabrication</td></tr><tr><td>23 novembre 2026 (après-midi)</td><td>Chapitre 2 : commits à jour (tout est sur GitHub), fiche 011 en attente d'enregistrement, APK du jour avec la nouvelle animation ; recette D marquée « faite par la fiche 011 » ; fiche 011 ajoutée en annexe G ; dépannage du cache de Metro</td><td>Fiche 011 (notifications) appliquée et testée (1918 tests), vue sur le web ; pas encore enregistrée ni vue sur le téléphone</td></tr><tr><td>23 novembre 2026 (soir)</td><td>Chapitre 2 : fiche 012 en attente d'enregistrement ; recette E marquée « faite par la fiche 012 » ; fiche 012 ajoutée en annexe H</td><td>Fiches 011 et 012 enregistrées ou à enregistrer : 1926 tests ; formulaires vus sur le web ; rien de tout cela encore vu sur le téléphone</td></tr></tbody></table>
 <blockquote class="astuce"><p>Ajoute <strong>une ligne par mise à jour</strong>, la plus récente en bas. Écris ce qui a changé <strong>dans le document</strong> (colonne 2) et où en est le <strong>projet</strong> (colonne 3).</p></blockquote></section>
 <section class="chapitre"><h1 id="c1-0">1. Comment lire ce document</h1>
 <p>Ce document est un <strong>livre de recettes</strong>. Chaque chantier qui reste à faire sur Junix Pulse est écrit comme une recette de cuisine :</p>
@@ -44,10 +44,12 @@ git status --short</code></pre>
 <h2 id="c1-17">2.1 Ce qui est fait et enregistré dans git</h2>
 <table><thead><tr><th>Commit</th><th>Ce qu'il contient</th><th>Envoyé sur GitHub ?</th></tr></thead><tbody><tr><td><code>fe0d9f2</code></td><td>La carte de sauvegarde automatique, les premières fiches</td><td>oui</td></tr><tr><td><code>132bd3d</code></td><td>Fiche 003 : fabriquer l'APK sur le PC</td><td>oui</td></tr><tr><td><code>dc6cf03</code></td><td>Les deux familles « À faire » et « Moment », le choix « Nouveau », le registre des types, l'étude 001</td><td>oui</td></tr><tr><td><code>cda1910</code></td><td>Le logo A1 (l'orbe) : icône, icône à thème, icône de notification, image de démarrage</td><td>oui</td></tr><tr><td><code>1f9b1d8</code></td><td>Fiche 010 : l'animation de lancement autour de l'orbe, sur fond sombre, et <code>PulseLogo</code></td><td>oui</td></tr><tr><td><code>5e5f049</code></td><td>Ce tutoriel, ses outils et ses fichiers fournis</td><td>oui</td></tr></tbody></table>
 <blockquote class="astuce"><p>Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).</p></blockquote>
-<h2 id="c1-20">2.2 Fait, testé, mais PAS encore enregistré : la fiche 011 (notifications)</h2>
+<h2 id="c1-20">2.2 bis Fait, testé, mais PAS encore enregistré : la fiche 012 (formulaires)</h2>
+<p>La <strong>fiche 012</strong> (annexe H) fait le chantier n° 3 : deux formulaires de création, <strong>« À faire »</strong> (cyan, avec l'interrupteur Alerte) et <strong>« Moment »</strong> (ambre, « Partir … min avant » seulement avec un lieu), construits à partir d'un registre (<code>src/constants/item-forms.ts</code>), avec la <strong>dictée</strong> dans le titre et les notes. La durée devient <strong>« Temps pour le faire »</strong> et règle le minuteur de Focus. Appliquée, testée (1926 tests), vue sur le web ; à enregistrer, puis à voir sur le téléphone.</p>
+<h2 id="c1-22">2.2 La fiche 011 (notifications)</h2>
 <p>La <strong>fiche 011</strong> (annexe G) fait le chantier n° 2 : les notifications des trois types, avec trois niveaux et la nuit réglable. Elle est <strong>appliquée, testée (1918 tests) et vue sur le web</strong> (le réglage « Nuit plus calme »). Il reste à l'<strong>enregistrer</strong> (commit), puis à la voir sur le téléphone avec un nouvel APK (recette C). Le détail est dans le compte rendu en bas de la fiche.</p>
 <table><thead><tr><th>Fichiers de la fiche 011</th><th>État</th></tr></thead><tbody><tr><td>3 créés : <code>notification-level-rules.ts</code>, <code>item-notification-rules.ts</code>, <code>item-notification-service.ts</code></td><td>+ 2 fichiers de tests</td></tr><tr><td>15 modifiés : service de notifications, rappels, migration 34, réglages, sauvegarde, textes, tâches, moments, <code>_layout.tsx</code>, un ancien test</td><td>voir la carte de la fiche (section 5)</td></tr></tbody></table>
-<h2 id="c1-23">2.2 bis La fiche 010 (animation de lancement), enregistrée</h2>
+<h2 id="c1-25">2.2 bis La fiche 010 (animation de lancement), enregistrée</h2>
 <p>La fiche 010 est <strong>enregistrée</strong> (<code>1f9b1d8</code>) et sur GitHub. Ce qui suit décrit comment elle a été vérifiée.</p>
 <table><thead><tr><th>Fichier</th><th>État</th></tr></thead><tbody><tr><td><code>src/constants/orb-logo.ts</code></td><td>créé</td></tr><tr><td><code>src/components/ui/OrbMark.tsx</code></td><td>créé</td></tr><tr><td><code>src/components/ui/PulseLogo.tsx</code></td><td>remplacé</td></tr><tr><td><code>src/features/launch/splash-constants.ts</code></td><td>remplacé</td></tr><tr><td><code>src/features/launch/SplashAnimation.tsx</code></td><td>remplacé</td></tr><tr><td><code>src/app/_layout.tsx</code></td><td>modifié (5 endroits)</td></tr><tr><td><code>app.json</code></td><td>fond de démarrage passé à <code>#141317</code></td></tr><tr><td><code>assets/logo/orbe-demarrage.svg</code></td><td>remplacé (image vide)</td></tr><tr><td><code>assets/images/splash-icon.png</code></td><td>refabriquée (transparente)</td></tr><tr><td><code>src/__tests__/launch-orb.test.tsx</code></td><td>créé</td></tr><tr><td><code>src/__tests__/app-icons.test.ts</code></td><td>1 ligne modifiée</td></tr><tr><td><code>jest.setup.js</code></td><td>1 ligne ajoutée (<code>cancelAnimation</code>)</td></tr><tr><td><code>docs/fiches/FICHE-010-…md</code> et <code>INDEX.md</code></td><td>fiche corrigée, compte rendu écrit</td></tr></tbody></table>
 <p><strong>Les vérifications faites le 23 novembre 2026</strong> :</p>
@@ -75,12 +77,12 @@ git status --short</code></pre>
 <figcaption>Figure 1 bis — Ce que montre l'animation à 2,5 s sur le web (reconstitution fidèle de la capture du 23 novembre) : l'orbe battant, l'onde cyan, le nom.</figcaption>
 </figure>
 <blockquote class="note"><p>Si un jour tu dois tout annuler et repartir de l'état <code>cda1910</code>, la fiche 010 donne la commande à sa section 6 (Sauvegarde). Tu peux ensuite réappliquer la fiche avec l'outil <code>outils/appliquer-fiche-010.js</code> fourni avec ce document.</p></blockquote>
-<h2 id="c1-31">2.3 L'APK du jour</h2>
+<h2 id="c1-33">2.3 L'APK du jour</h2>
 <p>Le plus récent a été fabriqué le 23 novembre à 12 h 32 :</p>
 <ul><li><strong>Fichier</strong> : <code>C:\Users\simon\Desktop\junix-pulse-local-2026-11-23-lancement.apk</code> (61 Mo)</li><li><strong>Contient</strong> : le code du commit <code>5e5f049</code> : les deux familles, le nouveau logo partout, et la <strong>nouvelle animation de lancement</strong> sur fond sombre (fiche 010)</li><li><strong>Ne contient pas</strong> : les notifications des tâches et des moments (fiche 011, faite après). Il faudra un nouvel APK pour les voir.</li></ul>
 <p>L'ancien <code>junix-pulse-local-2026-11-23.apk</code> (sans la nouvelle animation) peut être supprimé.</p>
 <p>La recette A (chapitre 6) explique comment l'installer.</p>
-<h2 id="c1-36">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</h2>
+<h2 id="c1-38">2.4 La feuille de route : ce qui reste à faire, dans l'ordre</h2>
 <p>C'est l'ordre décidé ensemble dans l'étude 001, section 12.10 (texte complet en annexe F) :</p>
 <figure>
 <svg width="680" height="330" viewBox="0 0 680 330" font-family="Segoe UI, Arial" font-size="12">
@@ -133,15 +135,15 @@ git status --short</code></pre>
 </figure>
 <table><thead><tr><th>N°</th><th>Chantier</th><th>Recette dans ce document</th><th>Difficulté</th></tr></thead><tbody><tr><td>1</td><td>Terminer l'animation de lancement</td><td>B</td><td>2</td></tr><tr><td>2</td><td>Notifications pour les trois types, niveaux Discret / Normal / Alarme</td><td>D</td><td>4</td></tr><tr><td>3</td><td>Formulaires 2-B (À faire cyan, Moment ambre)</td><td>E</td><td>3</td></tr><tr><td>4</td><td>Onglet « À faire », cartes unifiées, bouton « + À faire ou moment »</td><td>F</td><td>3</td></tr><tr><td>5</td><td>Hiérarchie des alertes, types d'événements</td><td>G</td><td>3</td></tr><tr><td>6</td><td>Gestes découvrables (astuces par Pulse)</td><td>H</td><td>2</td></tr><tr><td>7</td><td>Partage 5-A (lien, message, QR)</td><td>I</td><td>3</td></tr><tr><td>8</td><td>Planning Jour / Semaine / Mois, glisser-déposer</td><td>J</td><td>5</td></tr><tr><td>9</td><td>Sons et alarme</td><td>K</td><td>4</td></tr><tr><td>10</td><td>Compte et synchronisation</td><td>L</td><td>5 (plus tard)</td></tr></tbody></table>
 <div class="pb"></div>
-<h1 id="c1-41">3. La cuisine : les outils et leurs versions exactes</h1>
-<h2 id="c1-42">3.1 Les ustensiles (ce qui doit être installé)</h2>
+<h1 id="c1-43">3. La cuisine : les outils et leurs versions exactes</h1>
+<h2 id="c1-44">3.1 Les ustensiles (ce qui doit être installé)</h2>
 <table><thead><tr><th>Outil</th><th>Version utilisée</th><th>Où il est</th><th>Comment vérifier</th></tr></thead><tbody><tr><td>Windows</td><td>11 Famille</td><td>—</td><td>—</td></tr><tr><td>Node.js</td><td>celle installée (≥ 20)</td><td>dans le PATH</td><td><code>node --version</code></td></tr><tr><td>npm / npx</td><td>livré avec Node</td><td>dans le PATH</td><td><code>npx --version</code></td></tr><tr><td>Git</td><td>celle installée</td><td>dans le PATH</td><td><code>git --version</code></td></tr><tr><td>Android Studio</td><td>avec son Java intégré (JBR)</td><td><code>C:\Program Files\Android\Android Studio\jbr</code></td><td>le dossier existe</td></tr><tr><td>Android SDK</td><td>—</td><td><code>C:\Users\simon\AppData\Local\Android\Sdk</code></td><td>le dossier existe</td></tr><tr><td>NDK</td><td><strong>27.1.12297006</strong></td><td>dans le SDK, dossier <code>ndk</code></td><td>affiché au début de la compilation</td></tr><tr><td>CMake</td><td><strong>4.1.2</strong> (avec ninja 1.12.1)</td><td><code>...\Android\Sdk\cmake\4.1.2</code></td><td>le dossier existe</td></tr><tr><td>Kotlin</td><td>2.2.10 (géré par Gradle)</td><td>—</td><td>affiché au début de la compilation</td></tr><tr><td>Microsoft Edge</td><td>celui de Windows</td><td><code>C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe</code></td><td>sert à fabriquer les images et ce PDF</td></tr><tr><td>Un éditeur</td><td>VS Code conseillé</td><td>—</td><td>—</td></tr><tr><td>Un téléphone Android</td><td>ton second téléphone</td><td>câble USB ou envoi du fichier</td><td>Réglages › À propos</td></tr></tbody></table>
 <blockquote class="note"><p>Le réglage Windows <strong>chemins longs</strong> (<code>LongPathsEnabled = 1</code>) est déjà activé sur ton PC. Sans lui, la compilation Android échoue (<code>ninja: mkdir ... No such file or directory</code>). Si tu changes de PC, voir l'annexe B (fiche 003).</p></blockquote>
-<h2 id="c1-45">3.2 Les ingrédients de base (les bibliothèques du projet)</h2>
+<h2 id="c1-47">3.2 Les ingrédients de base (les bibliothèques du projet)</h2>
 <p>Ne rien installer de plus sans raison. Voici celles dont on se sert dans les recettes, toutes <strong>déjà présentes</strong> :</p>
 <table><thead><tr><th>Bibliothèque</th><th>À quoi elle sert dans Junix Pulse</th></tr></thead><tbody><tr><td><code>expo</code> (SDK 58) et <code>expo-router</code></td><td>L'application et ses écrans (un fichier dans <code>src/app</code> = un écran)</td></tr><tr><td><code>react-native</code> 0.88</td><td>Les composants de base (<code>View</code>, <code>Text</code>, <code>Pressable</code>)</td></tr><tr><td><code>react-native-reanimated</code></td><td>Les animations fluides (valeurs partagées, <code>withTiming</code>)</td></tr><tr><td><code>react-native-gesture-handler</code></td><td>Les gestes (glisser, appui long)</td></tr><tr><td><code>react-native-svg</code></td><td>Les dessins (logo, mascotte, graphiques)</td></tr><tr><td><code>expo-sqlite</code> + SQLCipher</td><td>La base de données chiffrée</td></tr><tr><td><code>expo-notifications</code></td><td>Les notifications et leurs canaux Android</td></tr><tr><td><code>expo-audio</code></td><td>Les sons (son de lancement, son des rappels)</td></tr><tr><td><code>zod</code></td><td>La vérification des sauvegardes importées</td></tr><tr><td><code>jest</code> + <code>react-test-renderer</code></td><td>Les tests automatiques</td></tr></tbody></table>
 <blockquote class="attention"><p>La règle du projet (fichier <code>AGENTS.md</code>) : <strong>Expo a changé</strong>. Avant d'écrire du code qui utilise Expo, lis la documentation de la version exacte : https://docs.expo.dev/versions/v58.0.0/ (pas celle de la dernière version, pas un vieux tuto).</p></blockquote>
-<h2 id="c1-49">3.3 Ouvrir le projet</h2>
+<h2 id="c1-51">3.3 Ouvrir le projet</h2>
 <ol><li>Ouvre <strong>PowerShell</strong> (touche Windows, tape <code>powershell</code>, Entrée).</li><li>Va dans le dossier du projet :</li></ol>
 <pre class="lang-powershell"><code>cd C:\Users\simon\Desktop\Projets\junix-pulse-glowcard</code></pre>
 <ol><li>Vérifie l'état :</li></ol>
@@ -152,8 +154,8 @@ git log --oneline -5</code></pre>
 <ol><li>Ouvre le dossier dans VS Code :</li></ol>
 <pre class="lang-powershell"><code>code .</code></pre>
 <div class="pb"></div>
-<h1 id="c1-59">4. Le plan de la maison : comment le code est rangé</h1>
-<h2 id="c1-60">4.1 Les étages</h2>
+<h1 id="c1-61">4. Le plan de la maison : comment le code est rangé</h1>
+<h2 id="c1-62">4.1 Les étages</h2>
 <p>Le code est rangé en <strong>couches</strong>, comme les étages d'une maison. Une couche n'utilise que celles <strong>en dessous</strong> d'elle. C'est ce qui permet d'ajouter ou d'enlever une fonction sans tout casser.</p>
 <figure>
 <svg width="660" height="400" viewBox="0 0 660 400" font-family="Segoe UI, Arial" font-size="12.5">
@@ -199,9 +201,9 @@ git log --oneline -5</code></pre>
 </svg>
 <figcaption>Figure 2 — Les couches du code. Une couche n'appelle que celles du dessous.</figcaption>
 </figure>
-<h2 id="c1-63">4.2 Les pièces les plus importantes</h2>
+<h2 id="c1-65">4.2 Les pièces les plus importantes</h2>
 <table><thead><tr><th>Fichier</th><th>Rôle</th><th>Quand tu le touches</th></tr></thead><tbody><tr><td><code>src/constants/item-kinds.ts</code></td><td><strong>Le registre des types</strong> : les deux familles (À faire, Moment), leurs couleurs, icônes, libellés</td><td>Pour ajouter un type ou une famille : <strong>un seul endroit</strong></td></tr><tr><td><code>src/i18n/messages.ts</code></td><td>Tous les textes, en français puis en anglais</td><td>À chaque texte affiché : toujours <strong>les deux langues</strong></td></tr><tr><td><code>src/database/migrations.ts</code></td><td>L'historique de la base (version 33 actuellement)</td><td>Pour une nouvelle colonne ou table : une <strong>nouvelle</strong> version, jamais modifier une ancienne</td></tr><tr><td><code>src/services/backup-service.ts</code></td><td>La sauvegarde et la restauration</td><td>Dès qu'une table ou une colonne est ajoutée</td></tr><tr><td><code>src/services/notification-service.ts</code></td><td>Les canaux Android et la programmation des notifications</td><td>Recettes D et K</td></tr><tr><td><code>src/app/_layout.tsx</code></td><td>Le démarrage : base, réglages, notifications, animation</td><td>Avec prudence</td></tr><tr><td><code>src/constants/theme.ts</code></td><td>Les couleurs et tailles (sombre <code>#141317</code>, violet, cyan)</td><td>Jamais de couleur « en dur » ailleurs</td></tr><tr><td><code>src/features/mascot/</code></td><td>Pulse, la mascotte</td><td>Recettes H et B</td></tr></tbody></table>
-<h2 id="c1-65">4.3 Le registre des types, en image</h2>
+<h2 id="c1-67">4.3 Le registre des types, en image</h2>
 <figure>
 <svg width="640" height="230" viewBox="0 0 640 230" font-family="Segoe UI, Arial" font-size="12.5">
   <rect x="220" y="10" width="200" height="50" rx="10" fill="#141317"/>
@@ -229,7 +231,7 @@ git log --oneline -5</code></pre>
 </figure>
 <blockquote class="note"><p><strong>Pourquoi c'est important</strong> : quand tu ajoutes plus tard un type (par exemple « Anniversaire » comme type de Moment), tu l'ajoutes <strong>dans le registre</strong>, et le choix « Nouveau », les cartes et les couleurs suivent tout seuls. C'est la règle « ajouter ou enlever sans casser ».</p></blockquote>
 <div class="pb"></div>
-<h1 id="c1-69">5. Les règles de la maison (à relire avant chaque recette)</h1>
+<h1 id="c1-71">5. Les règles de la maison (à relire avant chaque recette)</h1>
 <table><thead><tr><th>Règle</th><th>Pourquoi</th><th>Comment la respecter</th></tr></thead><tbody><tr><td>Fiche d'abord</td><td>Pouvoir refaire seul</td><td>Copier une fiche existante (ex. FICHE-010) et l'adapter</td></tr><tr><td>Commit par chemin</td><td>D'autres travaux vivent dans le même dossier</td><td><code>git commit -m "…" -- fichier1 fichier2</code> (voir chapitre 13)</td></tr><tr><td>Jamais <code>docs/motion/</code></td><td>Ce n'est pas notre travail</td><td>Ne jamais faire <code>git add .</code></td></tr><tr><td>Jamais <code>--no-verify</code></td><td>Les vérifications avant commit protègent</td><td>Si une vérification échoue, corriger la cause</td></tr><tr><td>Migrations additives</td><td>Ne jamais perdre les données</td><td>Nouvelle version dans <code>migrations.ts</code>, <code>ALTER TABLE … ADD COLUMN</code> avec une valeur par défaut</td></tr><tr><td>Pas d'apostrophe dans les commentaires SQL</td><td>Un test du projet le vérifie (elle casse la requête)</td><td>Écrire « de la » au lieu de « l'… » dans les <code>--</code> SQL</td></tr><tr><td>Sauvegarde à jour</td><td>Une restauration doit tout ramener</td><td>Toute nouvelle table : dans <code>backup-service.ts</code>, avec <code>.default([])</code> dans le schéma zod</td></tr><tr><td>Deux langues</td><td>L'appli est FR / EN</td><td>Chaque clé ajoutée dans le bloc FR <strong>et</strong> le bloc EN de <code>messages.ts</code></td></tr><tr><td>Pas d'emoji dans l'interface</td><td>Règle de design A.1</td><td>Utiliser les icônes (<code>Ionicons</code>)</td></tr><tr><td>Cibles de 44 px</td><td>Accessibilité</td><td><code>minHeight: 44</code> sur tout ce qui se touche</td></tr><tr><td><code>accessibilityLabel</code></td><td>Lecteurs d'écran</td><td>Sur chaque bouton qui n'a qu'une icône</td></tr><tr><td>Mouvement réduit</td><td>Accessibilité</td><td><code>useSafeReducedMotion()</code> dans toute animation</td></tr><tr><td>Clair <strong>et</strong> sombre</td><td>Les deux thèmes existent</td><td>Regarder chaque écran dans les deux</td></tr><tr><td>Un seul dégradé par écran</td><td>Sobriété</td><td>—</td></tr><tr><td>PIN et chiffrement intouchables</td><td>Sécurité</td><td>Ne jamais réduire le nombre d'essais, la dérivation de clé, ni stocker le PIN en clair</td></tr><tr><td>Pas de nouvelle dépendance sans raison</td><td>Poids, sécurité</td><td>Chercher d'abord dans ce qui est déjà installé</td></tr></tbody></table></section>
 <section class="chapitre"><h1 id="c2-0">6. Recette A — Installer l'APK sur le téléphone</h1>
 <div class="fiche-recette"><div><b>Temps</b>10 minutes</div><div><b>Difficulté</b>1 / 5</div><div><b>Ingrédients</b>le fichier .apk (62 Mo)</div><div><b>Ustensiles</b>câble USB ou Google Drive / WhatsApp</div></div>
@@ -517,15 +519,16 @@ describe('notificationLevelFor', () =&gt; {
 <table><thead><tr><th>Test</th><th>Comment</th><th>Attendu</th></tr></thead><tbody><tr><td>Règle</td><td><code>npx jest notification-level</code></td><td>4 tests réussis</td></tr><tr><td>Rappel normal</td><td>Créer un rappel dans 2 min, téléphone verrouillé</td><td>Son + vibration habituels</td></tr><tr><td>Tâche discrète</td><td>Une tâche à échéance dans 2 min</td><td>Notification silencieuse</td></tr><tr><td>Alarme</td><td>Un rappel marqué Alarme</td><td>Vibration longue, son ; visible sur l'écran verrouillé</td></tr><tr><td>Ne pas déranger</td><td>Activer « Ne pas déranger »</td><td>L'alarme ne passe <strong>pas</strong> (sauf si l'utilisateur l'autorise)</td></tr></tbody></table>
 <h1 id="c3-49">11. Recette E — Les formulaires 2-B</h1>
 <div class="fiche-recette"><div><b>Temps</b>2 jours</div><div><b>Difficulté</b>3 / 5</div><div><b>Ingrédients</b>src/app/reminders/new, tasks/new, events/new, item-kinds.ts</div><div><b>Ustensiles</b>composants existants (GlowCard, champs)</div></div>
-<h2 id="c3-51">11.1 La décision (étude 12.2)</h2>
+<blockquote class="astuce"><p><strong>Fait le 23 novembre 2026 par la fiche 012</strong> (annexe H), pour les écrans de <strong>création</strong>, après quatre décisions prises ensemble (création d'abord, priorité et options des rappels sous l'Alerte, durée renommée « Temps pour le faire » et reliée à Focus). <strong>La fiche 012 est la version qui marche</strong> ; les écrans de <strong>modification</strong> restent à faire avec les mêmes briques (<code>FormBricks.tsx</code>).</p></blockquote>
+<h2 id="c3-52">11.1 La décision (étude 12.2)</h2>
 <p>Deux formulaires <strong>bien différents à l'œil</strong>, construits depuis le registre :</p>
 <table><thead><tr><th></th><th>Formulaire <strong>À faire</strong></th><th>Formulaire <strong>Moment</strong></th></tr></thead><tbody><tr><td>Couleur</td><td>Cyan <code>#7BD0FF</code> (sombre) / <code>#0E7490</code> (clair)</td><td>Ambre <code>#F5B942</code> / <code>#B45309</code></td></tr><tr><td>Icône</td><td><code>checkbox-outline</code></td><td><code>calendar-outline</code></td></tr><tr><td>Champs</td><td>Titre, <strong>interrupteur « Alerte »</strong> (si activé : date et heure), note, personnes, étiquettes</td><td>Titre, <strong>début et fin</strong>, <strong>lieu</strong>, « Partir … min avant » (<strong>seulement si un lieu</strong>), type d'événement, personnes</td></tr><tr><td>Dictée</td><td>Oui (micro)</td><td>Oui (micro)</td></tr><tr><td>À enlever</td><td>« Combien de temps pour y arriver » (jugé absurde)</td><td>—</td></tr></tbody></table>
-<h2 id="c3-54">11.2 Les gestes</h2>
+<h2 id="c3-55">11.2 Les gestes</h2>
 <ol><li>Ouvre <code>src/app/tasks/new.tsx</code>, <code>src/app/reminders/new.tsx</code> et <code>src/app/events/new.tsx</code>. Note ce qu'ils ont <strong>en commun</strong> (titre, note, personnes, étiquettes, dictée).</li><li>Crée <code>src/components/create/ItemFormHeader.tsx</code> : un en-tête qui prend <code>family</code> et affiche l'icône, la couleur et le titre venant de <code>ITEM_FAMILY_DEFINITIONS</code> et <code>itemFamilyColor(family, isDark)</code>. Les deux formulaires l'utilisent : ainsi, changer une couleur dans le registre change les formulaires.</li><li><strong>Fusion À faire</strong> : dans <code>tasks/new.tsx</code>, ajoute l'interrupteur « Alerte à une heure ». S'il est activé, l'enregistrement crée un <strong>rappel</strong> (<code>reminder</code>) ; sinon une <strong>tâche</strong> (<code>task</code>). Le choix « Nouveau » (<code>NewItemChooser.tsx</code>) a déjà les deux entrées <code>new-item-task</code> et <code>new-item-reminder</code> : elles peuvent ouvrir le même formulaire avec l'interrupteur pré-réglé (<code>?alert=1</code>).</li><li><strong>Moment</strong> : dans <code>events/new.tsx</code>, n'affiche le champ « Partir … min avant » que si <code>location.trim() !== ''</code>.</li><li>Enlève le champ « combien de temps pour y arriver » : <strong>ne supprime pas la colonne</strong> de la base (règle des migrations), cache seulement le champ.</li><li>Ajoute les textes (<code>create.todo.alertSwitch</code>, <code>create.moment.leaveBefore</code>…) en FR et EN.</li><li>Les tests : un test par formulaire qui vérifie que le champ « Partir avant » est caché sans lieu, et que l'interrupteur crée le bon type.</li></ol>
 <blockquote class="astuce"><p>Garde les <code>testID</code> existants (<code>new-item-todo</code>, <code>new-item-moment</code>…) : des tests s'en servent.</p></blockquote>
-<h1 id="c3-57">12. Recette F — L'onglet « À faire » et le bouton « + À faire ou moment »</h1>
+<h1 id="c3-58">12. Recette F — L'onglet « À faire » et le bouton « + À faire ou moment »</h1>
 <div class="fiche-recette"><div><b>Temps</b>15 min (bouton) · 1 à 2 jours (onglet)</div><div><b>Difficulté</b>1 puis 3 / 5</div><div><b>Ingrédients</b>messages.ts, (tabs)/_layout.tsx, tasks.tsx, reminders.tsx</div><div><b>Ustensiles</b>—</div></div>
-<h2 id="c3-59">12.1 Le bouton : changement immédiat</h2>
+<h2 id="c3-60">12.1 Le bouton : changement immédiat</h2>
 <p>Le bouton de l'accueil dit encore « + Rappel, tâche ou événement ». Ouvre <code>src/i18n/messages.ts</code> :</p>
 <p><strong>Ligne 224-225 (français)</strong> — avant :</p>
 <pre class="lang-ts"><code>  'home.quickAddA11y': 'Ajouter un rappel, une tâche ou un événement',
@@ -540,11 +543,11 @@ describe('notificationLevelFor', () =&gt; {
 <pre class="lang-ts"><code>  'home.quickAddA11y': 'Add a to-do or a moment',
   'home.quickAdd': '+ To-do or moment',</code></pre>
 <p>Vérifie : <code>npx jest</code> (un test peut chercher l'ancien texte : mets-le à jour), puis regarde l'accueil sur le web.</p>
-<h2 id="c3-70">12.2 L'onglet « À faire »</h2>
+<h2 id="c3-71">12.2 L'onglet « À faire »</h2>
 <p>Aujourd'hui, la barre d'onglets (<code>src/app/(tabs)/_layout.tsx</code>) a des onglets séparés <code>reminders</code> et <code>tasks</code>. La décision 1-B : un seul onglet <strong>À faire</strong> qui montre les deux, avec la cloche sur ceux qui sonnent.</p>
 <ol><li>Lis <code>src/app/(tabs)/_layout.tsx</code> : chaque <code>&lt;Tabs.Screen name="…" /&gt;</code> est un onglet.</li><li>Dans <code>src/app/(tabs)/tasks.tsx</code>, ajoute la liste des rappels <strong>sous</strong> (ou mêlée à) celle des tâches, triées par heure. Utilise <code>itemKindLook(kind)</code> pour l'icône et la cloche (comme le fil de l'accueil, <code>src/app/(tabs)/index.tsx</code>).</li><li>Renomme le libellé de l'onglet <code>tasks</code> en <code>itemFamily.todo</code> (« À faire »).</li><li><strong>Cache</strong> l'onglet <code>reminders</code> sans supprimer le fichier : <code>&lt;Tabs.Screen name="reminders" options={{ href: null }} /&gt;</code>. Les liens profonds (<code>/reminders/&lt;id&gt;</code>) continuent de marcher.</li><li>Les cartes : une seule forme de carte pour les deux (GlowCard avec la couleur de la famille) ; une case à cocher ; la cloche si <code>withAlert</code>.</li></ol>
 <blockquote class="attention"><p>Les notifications de rappel ouvrent <code>/reminders/&lt;id&gt;</code> : ne supprime pas ces écrans.</p></blockquote>
-<h1 id="c3-74">13. Recette G — La hiérarchie des alertes et les types d'événements</h1>
+<h1 id="c3-75">13. Recette G — La hiérarchie des alertes et les types d'événements</h1>
 <div class="fiche-recette"><div><b>Temps</b>1 jour</div><div><b>Difficulté</b>3 / 5</div><div><b>Ingrédients</b>item-kinds.ts (ou un nouveau event-types.ts), migration</div><div><b>Ustensiles</b>Ionicons</div></div>
 <p>Ton message : « des types d'événements (anniversaire, enterrement…) ». Comme pour les familles, on fait un <strong>registre</strong>, pour pouvoir en ajouter ou en retirer sans rien casser.</p>
 <p>Crée <code>src/constants/event-types.ts</code> :</p>
@@ -583,11 +586,11 @@ export function eventTypeDefinition(type: string | null | undefined): EventTypeD
 <p>Puis :</p>
 <ol><li><strong>Données</strong> : migration <code>ALTER TABLE events ADD COLUMN event_type TEXT NOT NULL DEFAULT 'general';</code> (recette 9.2), plus le dépôt et la sauvegarde.</li><li><strong>Textes</strong> : les clés <code>eventType.general</code> … <code>eventType.funeral</code> en FR (Général, Anniversaire, Réunion, Rendez-vous médical, Voyage, Examen, Fête, Obsèques) et EN.</li><li><strong>Formulaire Moment</strong> : une rangée de puces (icône + libellé) pour choisir le type.</li><li><strong>Niveau</strong> : dans <code>notificationLevelFor</code>, remplace l'ensemble <code>LOUD_EVENT_TYPES</code> par <code>eventTypeDefinition(input.eventType).defaultLevel</code> (et mets à jour le test).</li><li><strong>Mascotte</strong> : un type <code>sober</code> ne doit jamais déclencher l'humeur « fête ». Cherche <code>'party'</code> dans <code>src/domain/rules/mascot-mood-rules.ts</code> et ajoute la condition.</li><li><strong>Test</strong> : <code>eventTypeDefinition('inconnu')</code> renvoie <code>general</code> (un ancien type supprimé ne casse rien).</li></ol>
 <blockquote class="note"><p>Les icônes <code>Ionicons</code> : vérifie que chaque nom existe dans la version du projet (une icône inconnue s'affiche en point d'interrogation). La liste est sur le site <code>icons.expo.fyi</code>.</p></blockquote>
-<h1 id="c3-82">14. Recette H — Des gestes découvrables</h1>
+<h1 id="c3-83">14. Recette H — Des gestes découvrables</h1>
 <div class="fiche-recette"><div><b>Temps</b>1 jour</div><div><b>Difficulté</b>2 / 5</div><div><b>Ingrédients</b>FirstVisitTip.tsx, mascot-tour-rules.ts, réglages</div><div><b>Ustensiles</b>la mascotte</div></div>
 <p>La décision (12.3) : les gestes (glisser pour cocher, appui long = menu dans les listes, glisser dans le planning) étaient comme des « œufs de Pâques ». On les fait découvrir <strong>une astuce à la fois</strong>, par Pulse, au bon moment, et on peut les revoir dans les réglages.</p>
 <ol><li>Lis <code>src/features/mascot/FirstVisitTip.tsx</code> et <code>src/domain/rules/mascot-tour-rules.ts</code> : le mécanisme d'astuce au premier passage existe déjà.</li><li>Crée <code>src/domain/rules/gesture-tip-rules.ts</code> : une liste ordonnée d'astuces <code>{ id, screen, condition }</code>, et une fonction <code>nextGestureTip(seenIds, screen, context)</code> qui renvoie <strong>une seule</strong> astuce non vue, adaptée à l'écran, ou <code>null</code>. Exemple de condition : l'astuce « glisser pour cocher » seulement si la liste a au moins une tâche.</li><li>Teste la règle : jamais deux astuces à la fois ; une astuce vue ne revient pas ; <code>null</code> quand tout est vu.</li><li>Enregistre les astuces vues dans les réglages (migration : <code>seen_gesture_tips TEXT NOT NULL DEFAULT ''</code>, liste séparée par des virgules).</li><li>Dans les réglages : un bouton <strong>« Revoir les astuces »</strong> qui vide cette liste.</li><li>Respecte la présence de la mascotte : si elle est désactivée, l'astuce s'affiche dans une simple bulle (<code>MascotBubble</code> avec <code>solid</code>), sans Pulse.</li></ol>
-<h1 id="c3-86">15. Recette I — Le partage, étape 5-A</h1>
+<h1 id="c3-87">15. Recette I — Le partage, étape 5-A</h1>
 <div class="fiche-recette"><div><b>Temps</b>1 à 2 jours</div><div><b>Difficulté</b>3 / 5</div><div><b>Ingrédients</b>une règle de mise en forme, l'écran détail</div><div><b>Ustensiles</b>`Share` de React Native (déjà là), aucune dépendance</div></div>
 <p>La décision (12.5) : partage <strong>hybride</strong>, par étapes, <strong>gratuit</strong>. Étape 5-A = partager <strong>un message lisible</strong> (WhatsApp, SMS, e-mail, Bluetooth : tout ce que le téléphone propose), sans compte.</p>
 <blockquote class="danger"><p>On n'envoie <strong>jamais</strong> rien tout seul quand on ajoute une personne. Le partage se fait toujours par un bouton, par exemple <strong>« Envoyer à Paul »</strong>.</p></blockquote>
@@ -600,10 +603,10 @@ Partagé avec Junix Pulse</code></pre>
 <pre class="lang-ts"><code>import { Share } from 'react-native';
 await Share.share({ message: shareTextFor(event, language) });</code></pre>
 <ol><li>Si l'élément a des personnes avec un téléphone : un bouton <strong>« Envoyer à Paul »</strong> qui ouvre directement le SMS : <code>Linking.openURL('sms:' + phone + '?body=' + encodeURIComponent(text))</code> (vérifier la forme exacte de l'adresse <code>sms:</code> sur Android).</li><li>Plus tard, 5-B (un fichier <code>.junix</code> que l'autre appli importe) et 5-C (compte et synchro, recette L).</li></ol>
-<h1 id="c3-95">16. Recette J — Le planning : Jour, Semaine, Mois, et glisser-déposer</h1>
+<h1 id="c3-96">16. Recette J — Le planning : Jour, Semaine, Mois, et glisser-déposer</h1>
 <div class="fiche-recette"><div><b>Temps</b>4 à 6 jours</div><div><b>Difficulté</b>5 / 5</div><div><b>Ingrédients</b>(tabs)/calendar.tsx, une règle de grille</div><div><b>Ustensiles</b>gesture-handler + reanimated (déjà là)</div></div>
 <p>La décision (12.4) : trois vues <strong>Jour · Semaine · Mois</strong> (l'Agenda et la Journée faisaient doublon), glisser-déposer <strong>dans les trois</strong>, par pas de <strong>15 minutes</strong>.</p>
-<h2 id="c3-98">16.1 La règle la plus importante : arrondir au quart d'heure</h2>
+<h2 id="c3-99">16.1 La règle la plus importante : arrondir au quart d'heure</h2>
 <p>Tout le glisser-déposer repose sur un calcul simple : « l'élément a été lâché à telle hauteur, quelle heure est-ce ? ». Écris-le <strong>à part</strong>, testé, avant toute animation. Crée <code>src/domain/rules/planning-grid-rules.ts</code> :</p>
 <pre class="lang-ts"><code>/** The planning grid: from a position on screen to a time, in steps of 15 minutes. */
 
@@ -647,14 +650,14 @@ describe('planning grid', () =&gt; {
     expect(moved.end.getTime() - moved.start.getTime()).toBe(3 * 3600000);
   });
 });</code></pre>
-<h2 id="c3-103">16.2 Le glisser, geste par geste</h2>
+<h2 id="c3-104">16.2 Le glisser, geste par geste</h2>
 <ol><li>Dans la vue Jour, chaque carte est enveloppée dans un <code>GestureDetector</code> avec <code>Gesture.Pan().activateAfterLongPress(350)</code> : on <strong>appuie longtemps</strong>, puis on glisse (sinon le défilement de la page serait gêné).</li><li>Pendant le glisser, une valeur partagée <code>translateY</code> suit le doigt ; la carte s'affiche à <code>snapMinutes</code> près (elle « saute » de quart d'heure en quart d'heure), avec une petite vibration à chaque saut (<code>haptic-service.ts</code>).</li><li>Au lâcher (<code>onEnd</code>), on appelle en JS (<code>runOnJS</code>) la mise à jour : <code>movedRange(...)</code>, puis le dépôt (<code>event-repository</code> ou <code>task-repository</code>), puis la resynchronisation des notifications (recette D).</li><li><strong>Annuler</strong> : une barre « Déplacé à 19:30 — Annuler » (le <code>Snackbar</code> existe déjà) qui remet l'ancienne heure.</li><li>Semaine : même chose en horizontal (changer de jour) <strong>et</strong> vertical (changer d'heure). Mois : glisser change seulement <strong>le jour</strong>, l'heure est gardée.</li><li>Accessibilité : le glisser est impossible pour certains ; garde toujours le menu « Déplacer… » de l'appui long, qui ouvre un choix de date et d'heure.</li></ol>
-<h1 id="c3-105">17. Recette K — Les sons et l'alarme</h1>
+<h1 id="c3-106">17. Recette K — Les sons et l'alarme</h1>
 <div class="fiche-recette"><div><b>Temps</b>2 jours</div><div><b>Difficulté</b>4 / 5</div><div><b>Ingrédients</b>src/services/sound/, canaux de la recette D</div><div><b>Ustensiles</b>expo-audio</div></div>
 <p>La décision (12.6) : une <strong>hiérarchie</strong> de sons et d'images ; une alarme « comme l'appli Horloge », mais <strong>à l'intérieur de la notification</strong>.</p>
 <ol><li>Lis <code>src/services/sound/NotificationSoundService.ts</code> et <code>notification-sound-constants.ts</code> : le son de l'appli au premier plan.</li><li><strong>Au premier plan</strong> (appli ouverte) : un son par niveau (discret = aucun, normal = le son actuel, alarme = un son plus long, répété 3 fois au plus, arrêté par un toucher).</li><li><strong>En arrière-plan</strong> : le son est celui du <strong>canal</strong> (recette D). Pour un son personnalisé : le fichier dans <code>assets/sounds/</code>, déclaré dans le module <code>expo-notifications</code> de <code>app.json</code> (option <code>sounds</code>), puis <code>sound: 'nom-du-fichier.wav'</code> dans le canal. Il faut un prebuild (recette C).</li><li><strong>Les sonneries et musiques du téléphone</strong> (ton souhait) : Android ne laisse pas une appli lire librement les sonneries système depuis JavaScript sans module natif. Solution simple et sûre : l'utilisateur choisit le son <strong>du canal</strong> dans les réglages Android (bouton « Choisir le son de l'alarme » qui ouvre ces réglages avec <code>Linking.openSettings()</code>).</li><li><strong>Plein écran</strong> : la notification « plein écran » (comme un appel) demande la permission Android <code>USE_FULL_SCREEN_INTENT</code>, que Google limite aux applis d'alarme et d'appel. <strong>Ne la demande pas</strong> sans être sûr que Junix Pulse y a droit (règles du Play Store). L'alarme de la recette D (importance maximale, visible sur l'écran verrouillé) est le bon compromis.</li></ol>
 <blockquote class="danger"><p>Ne contourne jamais les restrictions de sécurité Android (Ne pas déranger, alarmes exactes, plein écran). Le projet a déjà <code>src/features/reminders/offer-exact-alarms.ts</code>, qui <strong>demande</strong> poliment la permission des alarmes exactes : c'est le modèle à suivre.</p></blockquote>
-<h1 id="c3-110">18. Recette L — Le compte et la synchronisation (plus tard)</h1>
+<h1 id="c3-111">18. Recette L — Le compte et la synchronisation (plus tard)</h1>
 <div class="fiche-recette"><div><b>Temps</b>plusieurs semaines</div><div><b>Difficulté</b>5 / 5</div><div><b>Ingrédients</b>un serveur</div><div><b>Ustensiles</b>à choisir</div></div>
 <p>C'est le dernier chantier, volontairement. Avant d'écrire une ligne, une <strong>étude</strong> (comme l'étude 001) doit trancher :</p>
 <table><thead><tr><th>Question</th><th>Options</th><th>Coût</th></tr></thead><tbody><tr><td>Où vivent les données partagées ?</td><td>Supabase (gratuit jusqu'à un certain volume), Firebase, ton propre serveur</td><td>Gratuit au début, payant si l'appli grandit</td></tr><tr><td>Le chiffrement</td><td>De bout en bout (le serveur ne lit rien) ou non</td><td>De bout en bout = plus de travail, mais cohérent avec le Sanctuaire</td></tr><tr><td>Le compte</td><td>Adresse e-mail, téléphone, ou lien magique</td><td>—</td></tr><tr><td>Les conflits</td><td>Deux personnes modifient le même moment</td><td>Règle « le dernier gagne » + historique</td></tr><tr><td>Les rôles (organisations)</td><td>Propriétaire, éditeur, lecteur</td><td>—</td></tr></tbody></table>
@@ -2924,14 +2927,14 @@ npx eslint src</code></pre>
 <h2 id="a3-98">Compte rendu d'exécution (22 novembre 2026)</h2>
 <ul><li>Sauvegarde (section 6) : faite, les quatre fichiers sont dans <code>C:\Users\simon\Desktop\sauvegarde-fiche-008</code>.</li><li>Étapes 1 à 6 appliquées <strong>à partir des blocs de code de cette fiche</strong> (aucune différence possible entre la fiche et les fichiers).</li><li>Test final : <code>tsc</code> sans erreur, <code>Tests: 12 passed</code> (la première version de la fiche annonçait 11 : corrigé), <code>eslint</code> sans erreur, suite complète du projet relancée.</li><li>Vérifié dans l'aperçu web : le fil (« À FAIRE » cyan avec ou sans cloche, « MOMENT » ambre) et le choix « Nouveau » à deux familles.</li><li>Pas encore vérifié sur téléphone.</li></ul></section>
 <section class="annexe"><h1 id="annexe-4">Annexe E — Index des fiches</h1><p>Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail pour la refaire ou la terminer seul.</p>
-<table><thead><tr><th>N°</th><th>Titre</th><th>Date</th><th>Statut</th></tr></thead><tbody><tr><td><a href="FICHE-001-sauvegarde-auto.md">001</a></td><td>Nouveau design de la sauvegarde automatique</td><td>11 novembre 2026</td><td>fait (à tester sur téléphone)</td></tr><tr><td><a href="FICHE-002-commit-push-build.md">002</a></td><td>Enregistrer, envoyer sur GitHub et construire l'APK</td><td>11 novembre 2026</td><td>commit et push faits, build bloqué (quota Expo)</td></tr><tr><td><a href="FICHE-003-build-local-apk.md">003</a></td><td>Construire l'APK sur l'ordinateur (sans Expo)</td><td>11 novembre 2026</td><td>fait (APK sur le Bureau, à installer)</td></tr><tr><td><a href="FICHE-004-construire-junix-pulse-de-zero.html">004</a> (<a href="FICHE-004-construire-junix-pulse-de-zero.pdf">PDF</a>)</td><td>Construire Junix Pulse de zéro, de l'installation à l'app actuelle</td><td>12 novembre 2026</td><td>fait (code des phases 2 à 10 vérifié par TypeScript et Jest, pas encore refait sur un téléphone)</td></tr><tr><td><a href="FICHE-005-choisir-rappel-tache-evenement.md">005</a></td><td>Rendre claire la différence entre rappel, tâche et événement (choix « Nouveau » à trois types)</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; remplacé en partie par 008</td></tr><tr><td><a href="FICHE-006-registre-des-types.md">006</a></td><td>Le registre des types : une identité pour rappel, tâche et événement</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; étendu par 008</td></tr><tr><td>007</td><td>(images <code>fiche-007-apres-choix</code> seulement : fiche jamais écrite)</td><td>22 novembre 2026</td><td>inachevée</td></tr><tr><td><a href="FICHE-008-deux-familles.md">008</a></td><td>Deux familles : « À faire » et « Moment » (1-B, étape 1)</td><td>22 novembre 2026</td><td>fait (vérifié sur le web, à tester sur téléphone)</td></tr><tr><td><a href="FICHE-009-icones-logo-a1.md">009</a></td><td>Les icônes du logo A1 (l'orbe)</td><td>22 novembre 2026</td><td>fait (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-010-animation-lancement-orbe.md">010</a></td><td>L'animation de lancement autour de l'orbe, et le nouveau <code>PulseLogo</code></td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-011-notifications-trois-types.md">011</a></td><td>Les notifications des trois types, avec trois niveaux (Discret, Normal, Alarme) et la nuit réglable</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr></tbody></table>
+<table><thead><tr><th>N°</th><th>Titre</th><th>Date</th><th>Statut</th></tr></thead><tbody><tr><td><a href="FICHE-001-sauvegarde-auto.md">001</a></td><td>Nouveau design de la sauvegarde automatique</td><td>11 novembre 2026</td><td>fait (à tester sur téléphone)</td></tr><tr><td><a href="FICHE-002-commit-push-build.md">002</a></td><td>Enregistrer, envoyer sur GitHub et construire l'APK</td><td>11 novembre 2026</td><td>commit et push faits, build bloqué (quota Expo)</td></tr><tr><td><a href="FICHE-003-build-local-apk.md">003</a></td><td>Construire l'APK sur l'ordinateur (sans Expo)</td><td>11 novembre 2026</td><td>fait (APK sur le Bureau, à installer)</td></tr><tr><td><a href="FICHE-004-construire-junix-pulse-de-zero.html">004</a> (<a href="FICHE-004-construire-junix-pulse-de-zero.pdf">PDF</a>)</td><td>Construire Junix Pulse de zéro, de l'installation à l'app actuelle</td><td>12 novembre 2026</td><td>fait (code des phases 2 à 10 vérifié par TypeScript et Jest, pas encore refait sur un téléphone)</td></tr><tr><td><a href="FICHE-005-choisir-rappel-tache-evenement.md">005</a></td><td>Rendre claire la différence entre rappel, tâche et événement (choix « Nouveau » à trois types)</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; remplacé en partie par 008</td></tr><tr><td><a href="FICHE-006-registre-des-types.md">006</a></td><td>Le registre des types : une identité pour rappel, tâche et événement</td><td>22 novembre 2026</td><td>fait par une session précédente, non commité ; étendu par 008</td></tr><tr><td>007</td><td>(images <code>fiche-007-apres-choix</code> seulement : fiche jamais écrite)</td><td>22 novembre 2026</td><td>inachevée</td></tr><tr><td><a href="FICHE-008-deux-familles.md">008</a></td><td>Deux familles : « À faire » et « Moment » (1-B, étape 1)</td><td>22 novembre 2026</td><td>fait (vérifié sur le web, à tester sur téléphone)</td></tr><tr><td><a href="FICHE-009-icones-logo-a1.md">009</a></td><td>Les icônes du logo A1 (l'orbe)</td><td>22 novembre 2026</td><td>fait (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-010-animation-lancement-orbe.md">010</a></td><td>L'animation de lancement autour de l'orbe, et le nouveau <code>PulseLogo</code></td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-011-notifications-trois-types.md">011</a></td><td>Les notifications des trois types, avec trois niveaux (Discret, Normal, Alarme) et la nuit réglable</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr><tr><td><a href="FICHE-012-formulaires-a-faire-et-moment.md">012</a></td><td>Les formulaires de création « À faire » (cyan) et « Moment » (ambre), avec la dictée ; « Temps pour le faire » règle Focus</td><td>23 novembre 2026</td><td>fait et testé (à voir sur le téléphone après un nouvel APK)</td></tr></tbody></table>
 <p>Pour comprendre le rôle de chaque dossier et fichier : <a href="../apprendre/explorateur-du-projet.html">l'explorateur du projet</a> (à ouvrir dans un navigateur ; le remettre à jour avec <code>node docs/apprendre/generer-explorateur.js</code>).</p></section>
 <section class="annexe"><h1 id="annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</h1><h2 id="e-0">12. Décisions du 22 novembre (soir) : ce qui est retenu, point par point</h2>
 <p>Cette section <strong>remplace</strong> les recommandations des sections précédentes là où elles diffèrent. C'est la référence pour la suite.</p>
 <h3 id="e-2">12.1 Types (point 1) : 1-B, fait en partie</h3>
 <p>Deux familles à l'écran, <strong>À faire</strong> et <strong>Moment</strong> ; les données gardent leurs trois types. Étape 1 réalisée : <a href="../fiches/FICHE-008-deux-familles.md">fiche 008</a>.</p>
 <h3 id="e-4">12.2 Formulaires (point 2) : 2-B, avec deux formulaires bien différenciés</h3>
-<ul><li><strong>2-B</strong> : les formulaires sont fabriqués à partir du <strong>registre</strong> (chaque famille déclare ses champs, un seul jeu de briques les dessine). Un champ ajouté ou retiré demain se fait dans le registre, sans toucher aux écrans.</li><li><strong>Mais deux formulaires distincts à l'œil</strong>, pas un formulaire unique qui change de forme :</li><li><strong>À faire</strong> : couleur cyan, case à cocher dans l'en-tête, champs <em>Quoi</em> → <em>Quand</em> (jour, heure facultative) → <strong>Alerte</strong> (interrupteur, rappel à confirmer) → <em>Avec qui</em> → <em>Plus d'options</em> (sous-tâches, échéance, durée, étiquettes) ;</li><li><strong>Moment</strong> : couleur ambre, calendrier dans l'en-tête, champs <em>Quoi</em> → <em>Début et fin</em> → <em>Où</em> → <strong>Partir … min avant</strong> (seulement si un lieu est saisi) → <em>Avec qui</em> → <em>Type de moment</em> (anniversaire, deuil…) → <em>Plus d'options</em>.</li><li>La <strong>dictée</strong> (micro) dans le titre et les notes des deux formulaires.</li></ul>
+<ul><li><strong>2-B</strong> : les formulaires sont fabriqués à partir du <strong>registre</strong> (chaque famille déclare ses champs, un seul jeu de briques les dessine). Un champ ajouté ou retiré demain se fait dans le registre, sans toucher aux écrans.</li><li><strong>Mais deux formulaires distincts à l'œil</strong>, pas un formulaire unique qui change de forme :</li><li><strong>À faire</strong> : couleur cyan, case à cocher dans l'en-tête, champs <em>Quoi</em> → <em>Quand</em> (jour, heure facultative) → <strong>Alerte</strong> (interrupteur, rappel à confirmer) → <em>Avec qui</em> → <em>Plus d'options</em> (sous-tâches, échéance, durée, étiquettes) ;</li><li><strong>Moment</strong> : couleur ambre, calendrier dans l'en-tête, champs <em>Quoi</em> → <em>Début et fin</em> → <em>Où</em> → <strong>Partir … min avant</strong> (seulement si un lieu est saisi) → <em>Avec qui</em> → <em>Type de moment</em> (anniversaire, deuil…) → <em>Plus d'options</em>.</li><li>La <strong>dictée</strong> (micro) dans le titre et les notes des deux formulaires.</li><li><strong>Précisions du 23 novembre 2026</strong> (avant la fiche 012) :</li><li><strong>étendue</strong> : la fiche 012 fait les deux formulaires de <strong>création</strong> ; les écrans de modification suivent dans la fiche d'après, avec les mêmes briques ;</li><li><strong>la priorité</strong> se place <strong>sous l'Alerte</strong> (c'est là qu'elle change quelque chose : Urgente = Alarme), et dans Plus d'options quand il n'y a pas d'alerte ;</li><li><strong>les options des rappels</strong> (répétition, rappel à confirmer, action comme « Appeler ») n'apparaissent que <strong>sous l'interrupteur Alerte</strong> ;</li><li><strong>la durée</strong> (« combien de temps pour y arriver ») : elle ne servait à rien (seulement une étiquette « 30 min » sur les cartes), d'où l'incompréhension. Elle devient <strong>« Temps pour le faire »</strong>, cachée dans Plus d'options, avec une phrase qui dit à quoi elle sert : <strong>lancer une session Focus depuis la tâche règle le minuteur sur ce temps</strong>. Tout doit rester cohérent avec ce qui existe déjà (cartes, Planning, Focus, anciennes tâches qui ont déjà une durée).</li></ul>
 <h3 id="e-6">12.3 Gestes (point 3) : 3-A + 3-B + 3-C, et les faire découvrir sans submerger</h3>
 <ul><li><strong>3-A</strong> la carte s'entrouvre une fois pour montrer qu'on peut la glisser ; <strong>3-B</strong> un bouton « ⋯ » visible sur chaque carte ; <strong>3-C</strong> l'appui long.</li><li><strong>Conflit résolu</strong> : l'appui long ouvre le <strong>menu</strong> dans les listes, et <strong>soulève la carte</strong> pour la déplacer dans le planning. Ce sont deux écrans différents, donc chaque geste a un seul sens à un endroit donné.</li><li><strong>Découverte progressive</strong> (ta demande) : <strong>jamais tout à l'arrivée</strong>. Chaque astuce apparaît <strong>une seule fois</strong>, <strong>au moment où elle sert</strong>, présentée par Pulse dans une petite bulle :</li></ul>
 <p>  | Quand | Astuce |   |---|---|   | La première fois qu'une liste a au moins deux cartes | « Glisse une carte pour la modifier ou la supprimer » (la carte s'entrouvre) |   | La première fois qu'on ouvre le planning avec au moins un élément | « Appuie longtemps sur une carte puis fais-la glisser pour changer son heure » |   | La première fois que la vue Mois s'affiche | « Fais glisser un élément sur un autre jour » |   | La première fois qu'on ajoute une personne à un élément | « Tu peux lui envoyer l'invitation » (voir 12.5) |</p>
@@ -3995,4 +3998,1439 @@ npx eslint src/domain/rules/notification-level-rules.ts src/domain/rules/item-no
 <ol><li>Voir sur le téléphone (nouvel APK, fiche 003).</li><li>Le chantier n° 3 de l'étude (12.10) : les formulaires 2-B.</li><li>Au chantier n° 5 (types de moments) : ajouter le critère « type de moment » dans <code>notificationLevelFor</code>.</li><li>Au chantier n° 9 : les sons au choix et l'alarme qui sonne en continu, avec Arrêter et Plus tard.</li></ol>
 <h2 id="annexe-G-261">Compte rendu d'exécution (23 novembre 2026)</h2>
 <ul><li>Décisions prises avant d'écrire (les quatre réponses du 23 novembre) et notées dans l'étude 001, section 12.6 : nuit 22 h - 7 h réglable, échéances la veille 18 h et le jour 9 h, moments 15 min avant, découpage « niveaux et trois types d'abord ».</li><li>Code lu avant d'écrire : <code>notification-service.ts</code>, <code>reminder-notification-service.ts</code>, <code>reminder-notification-rules.ts</code>, les entités, les cas d'usage des tâches et des moments, les réglages, la sauvegarde. Le champ « Partir … min avant » existait déjà (<code>travelBufferMinutes</code>).</li><li>Étapes 1 à 12 appliquées <strong>à partir des blocs de cette fiche</strong> (<code>docs/tutoriel-suite/outils/appliquer-fiche-011.js</code>) : les 47 remplacements ont été trouvés une seule fois chacun.</li><li>Tests : les deux nouveaux fichiers <code>Tests: 13 passed</code> ; <code>tsc --noEmit</code> sans erreur (les options des canaux existent bien dans cette version d'Expo) ; eslint sans erreur sur les fichiers touchés.</li><li><strong>Écart corrigé</strong> : <code>src/__tests__/coloured-tags.test.ts</code> exigeait que la migration 33 soit la dernière ; remplacé par ce qu'il protège vraiment (33 juste après 32, versions dans l'ordre), ajouté à l'étape 7a. Ensuite toute la suite : <code>Test Suites: 88 passed</code>, <code>Tests: 1918 passed</code>.</li><li><strong>Vu sur le web</strong> : Réglages › Notifications montre « Nuit plus calme », Début 21/22/23 h et Fin 6/7/8 h, 22 h et 7 h choisis par défaut ; 23 h choisi puis la page rechargée : 23 h est resté (la migration 34 a tourné, le réglage est bien écrit et relu) ; remis à 22 h ensuite. Aucune erreur dans la console.</li><li>Incident sans lien avec la fiche : le serveur web s'est arrêté au démarrage (<code>0xC0000005</code>) ; le cache de Metro était abîmé (« Unable to deserialize cloned data »). Relancé avec <code>npx expo start --web --clear</code>, il a marché.</li><li><strong>Pas encore vu sur le téléphone</strong> (les notifications locales n'existent pas sur le web) : il faut un nouvel APK (fiche 003). Rien n'est encore enregistré dans git.</li></ul></section>
+<section class="annexe"><h1 id="annexe-H">Annexe H — Fiche 012 complète (formulaires À faire et Moment)</h1><p>Projet : <strong>Junix Pulse</strong> · Date : 23 novembre 2026 · Suite de : <a href="FICHE-011-notifications-trois-types.md">FICHE 011</a> · Étude : <a href="../etudes/ETUDE-001-clarifier-et-faire-evoluer.md">ÉTUDE 001</a>, section 12.2 (avec les précisions du 23 novembre) et 12.10 (chantier n° 3)</p>
+<h2 id="annexe-H-1">1. Objectif</h2>
+<p>Aujourd'hui, trois formulaires différents (tâche, rappel, événement), longs, avec des sections dans un ordre qui ne suit pas la pensée (« priorité » avant « quand », « durée estimée » incompréhensible). Après cette fiche, <strong>deux formulaires de création</strong>, construits avec les mêmes briques mais <strong>bien différents à l'œil</strong> :</p>
+<table><thead><tr><th></th><th><strong>À faire</strong> (cyan, case à cocher)</th><th><strong>Moment</strong> (ambre, calendrier)</th></tr></thead><tbody><tr><td>1</td><td><strong>Quoi</strong> : titre et notes, avec <strong>micro</strong></td><td><strong>Quoi</strong> : titre et notes, avec <strong>micro</strong></td></tr><tr><td>2</td><td><strong>Quand</strong> : Sans date, Aujourd'hui, Demain, Lundi prochain, une date</td><td><strong>Début et fin</strong></td></tr><tr><td>3</td><td><strong>Alerte</strong> : un interrupteur ; activé : l'heure, la <strong>priorité</strong> (« Urgente » sonne comme une alarme), l'action (Appeler…), la répétition, le rappel à confirmer</td><td><strong>Où</strong> : le lieu</td></tr><tr><td>4</td><td><strong>Avec qui</strong></td><td><strong>Partir … min avant</strong> : <strong>seulement si un lieu est saisi</strong></td></tr><tr><td>5</td><td><strong>Plus d'options</strong> (replié) : priorité (sans alerte), échéance, <strong>Temps pour le faire</strong>, sous-tâches, étiquettes</td><td><strong>Avec qui</strong></td></tr><tr><td>6</td><td></td><td><strong>Plus d'options</strong> (replié) : occupé ou libre, étiquettes</td></tr></tbody></table>
+<ul><li>Enregistrée <strong>sans alerte</strong>, une chose « À faire » est une <strong>tâche</strong> ; <strong>avec</strong> une alerte, un <strong>rappel</strong>. Les données ne changent pas (les trois types restent, voir <code>item-kinds.ts</code>).</li><li>La <strong>durée</strong> devient <strong>« Temps pour le faire »</strong>, cachée dans Plus d'options, avec une phrase qui dit à quoi elle sert : <strong>lancer Focus depuis la tâche règle le minuteur sur ce temps</strong> (avant : toujours 25 min).</li><li>Les <strong>routes ne changent pas</strong> : <code>/tasks/new</code> ouvre « À faire » sans alerte, <code>/reminders/new</code> ouvre « À faire » avec l'alerte, <code>/events/new</code> ouvre « Moment ». Le choix « Nouveau », le Planning, les fiches des personnes continuent de marcher sans être touchés.</li></ul>
+<p><strong>Pour que rien ne casse demain</strong> : l'ordre des sections et le contenu de « Plus d'options » sont <strong>déclarés dans un registre</strong> (<code>src/constants/item-forms.ts</code>). Ajouter ou retirer un champ (par exemple le « type de moment » du chantier n° 5) : une ligne dans le registre, et sa brique.</p>
+<p><strong>Pas dans cette fiche</strong> (décidé le 23 novembre) : les écrans de <strong>modification</strong> (fiche suivante, avec les mêmes briques) ; le type de moment (chantier n° 5).</p>
+<h2 id="annexe-H-7">2. État de départ</h2>
+<table><thead><tr><th>À vérifier</th><th>Comment</th><th>Résultat attendu</th></tr></thead><tbody><tr><td>La fiche 011 est enregistrée</td><td><code>git log --oneline -3</code></td><td><code>feat(notifications): …</code> présent</td></tr><tr><td>Tout passe</td><td><code>npx jest</code></td><td><code>Tests: 1918 passed</code></td></tr></tbody></table>
+<h2 id="annexe-H-9">3. Matériel</h2>
+<p>Aucune bibliothèque ajoutée. La dictée réutilise <code>src/features/capture/use-dictation.ts</code> (celle de la saisie rapide) : reconnaissance <strong>sur le téléphone seulement</strong>, rien ne part sur Internet. Le micro ne s'affiche que sur Android (comme dans la saisie rapide).</p>
+<h2 id="annexe-H-11">4. Hypothèses</h2>
+<ul><li>Les deux champs dictés d'un même formulaire écoutent le même micro du téléphone : chaque champ ne garde que ce qui a été dicté <strong>après un appui sur son propre micro</strong>.</li><li>Avec l'alerte, les champs propres aux tâches (échéance, temps pour le faire, sous-tâches) sont <strong>cachés</strong> : un rappel ne les a pas. S'ils avaient été remplis avant d'activer l'alerte, ils ne sont pas enregistrés.</li><li>Un moment sans lieu n'a pas de « Partir … min avant » : si le lieu est effacé, le temps de trajet est enregistré à 0.</li><li>Les anciens styles (<code>src/styles/reminders/new-reminder-styles.ts</code>) ne servent plus aux écrans de création ; on les garde (l'écran de modification d'un rappel peut s'en servir), sans rien supprimer.</li></ul>
+<h2 id="annexe-H-13">5. Carte de l'intervention</h2>
+<table><thead><tr><th>Fichier</th><th>Action</th><th>Rôle</th></tr></thead><tbody><tr><td><code>src/constants/item-forms.ts</code></td><td><strong>créé</strong></td><td>Le registre des formulaires et ses petites règles</td></tr><tr><td><code>src/components/create/form/FormBricks.tsx</code></td><td><strong>créé</strong></td><td>Les briques : cadre, section, champ dicté, choix, interrupteur, Plus d'options</td></tr><tr><td><code>src/features/create/TodoForm.tsx</code></td><td><strong>créé</strong></td><td>Le formulaire « À faire »</td></tr><tr><td><code>src/features/create/MomentForm.tsx</code></td><td><strong>créé</strong></td><td>Le formulaire « Moment »</td></tr><tr><td><code>src/app/tasks/new.tsx</code>, <code>reminders/new.tsx</code>, <code>events/new.tsx</code></td><td>remplacés</td><td>Chaque route ouvre le bon formulaire</td></tr><tr><td><code>src/domain/rules/focus-rules.ts</code></td><td>modifié</td><td><code>focusMinutesForTask</code> : le minuteur d'une session lancée depuis une tâche</td></tr><tr><td><code>src/app/focus.tsx</code></td><td>modifié</td><td>Le minuteur prend le temps de la tâche</td></tr><tr><td><code>src/app/tasks/[id].tsx</code></td><td>modifié</td><td>Passe le temps de la tâche à Focus</td></tr><tr><td><code>src/i18n/messages.ts</code></td><td>modifié</td><td>« Durée estimée » devient « Temps pour le faire »</td></tr><tr><td><code>src/i18n/messages-rest-fr.ts</code> et <code>-en.ts</code></td><td>modifiés</td><td>31 textes en français et en anglais</td></tr><tr><td><code>src/__tests__/item-forms.test.ts</code></td><td><strong>créé</strong></td><td>8 tests</td></tr></tbody></table>
+<h2 id="annexe-H-15">6. Sauvegarde</h2>
+<p>Aucune donnée ni base touchée : seulement des écrans. Pour annuler avant le commit : <code>git restore</code> des fichiers modifiés et suppression des fichiers créés.</p>
+<h2 id="annexe-H-17">7. Étapes</h2>
+<h3 id="annexe-H-18">Étape 1 — Le registre des formulaires</h3>
+<p>Créer <code>src/constants/item-forms.ts</code> :</p>
+<div class="bloc">Bloc : forms-registry</div>
+<pre class="lang-ts"><code>/**
+ * The create forms of the two families (study 001, 12.2 "2-B"; sheet 012): each family declares
+ * its sections, in order, and the fields folded under "More options". One set of bricks draws
+ * them, so a field added or removed tomorrow is a line here and its brick, not every screen.
+ */
+
+import type { ItemFamily } from './item-kinds';
+
+export type FormSectionId = 'what' | 'when' | 'alert' | 'slot' | 'where' | 'leave' | 'who' | 'more';
+export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability';
+
+export interface ItemFormDefinition {
+  sections: readonly FormSectionId[];
+  more: readonly MoreFieldId[];
+}
+
+export const ITEM_FORMS: Readonly&lt;Record&lt;ItemFamily, ItemFormDefinition&gt;&gt; = {
+  todo: {
+    sections: ['what', 'when', 'alert', 'who', 'more'],
+    more: ['priority', 'deadline', 'duration', 'subtasks', 'tags'],
+  },
+  moment: {
+    sections: ['what', 'slot', 'where', 'leave', 'who', 'more'],
+    more: ['availability', 'tags'],
+  },
+};
+
+/** "Time to do it", in minutes; none at first. */
+export const TODO_DURATION_OPTIONS: readonly (number | undefined)[] = [undefined, 15, 30, 45, 60, 120];
+/** "Leave … min before", in minutes; 0 is no reminder to leave. */
+export const LEAVE_OPTIONS: readonly number[] = [0, 15, 30, 45, 60];
+
+export interface FormState {
+  alert?: boolean;
+  place?: string;
+}
+
+/**
+ * With an alert, a todo is saved as a reminder: the priority moves under the alert, and what a
+ * reminder does not have (deadline, time to do it, subtasks) is not offered.
+ */
+const HIDDEN_WITH_ALERT: readonly MoreFieldId[] = ['priority', 'deadline', 'duration', 'subtasks'];
+
+/** The sections to draw, in order: "Leave … min before" only once a place is written. */
+export function visibleSections(family: ItemFamily, state: FormState = {}): FormSectionId[] {
+  return ITEM_FORMS[family].sections.filter(section =&gt; section !== 'leave' || (state.place ?? '').trim() !== '');
+}
+
+/** The fields under "More options". */
+export function visibleMoreFields(family: ItemFamily, state: FormState = {}): MoreFieldId[] {
+  return ITEM_FORMS[family].more.filter(field =&gt; !(family === 'todo' &amp;&amp; state.alert &amp;&amp; HIDDEN_WITH_ALERT.includes(field)));
+}
+
+/** The day of a 'YYYY-MM-DD…' route parameter, or undefined. */
+export function dayParam(value?: string): string | undefined {
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value ?? '');
+  return match ? match[1] : undefined;
+}
+
+/** The hour of a route parameter (0 to 23), or undefined. */
+export function hourParam(value?: string): number | undefined {
+  if (value === undefined || value === '') return undefined;
+  const hour = Number(value);
+  return Number.isInteger(hour) &amp;&amp; hour &gt;= 0 &amp;&amp; hour &lt;= 23 ? hour : undefined;
+}
+
+/** When the alert of a todo rings: its day (today when none) at the chosen time, on the phone's clock. */
+export function alertMoment(day: string | undefined, time: { hour: number; minute: number }, now: Date): Date {
+  const parts = dayParam(day)?.split('-').map(Number);
+  const [year, month, date] = parts ?? [now.getFullYear(), now.getMonth() + 1, now.getDate()];
+  return new Date(year, month - 1, date, time.hour, time.minute, 0, 0);
+}</code></pre>
+<table><thead><tr><th>Passage</th><th>Ce qu'il fait</th></tr></thead><tbody><tr><td><code>ITEM_FORMS</code></td><td><strong>L'ordre</strong> des sections de chaque formulaire et le contenu de « Plus d'options ». Les écrans parcourent ces listes</td></tr><tr><td><code>HIDDEN_WITH_ALERT</code></td><td>Avec l'alerte, on fabrique un rappel : la priorité monte sous l'alerte, l'échéance, le temps et les sous-tâches disparaissent</td></tr><tr><td><code>visibleSections</code></td><td>« Partir … min avant » n'apparaît qu'avec un lieu</td></tr><tr><td><code>dayParam</code>, <code>hourParam</code></td><td>Lisent proprement le jour et l'heure reçus d'un créneau du Planning ou d'une autre page</td></tr><tr><td><code>alertMoment</code></td><td>L'heure exacte de l'alerte : le jour choisi (aujourd'hui sinon) à l'heure choisie</td></tr></tbody></table>
+<h3 id="annexe-H-23">Étape 2 — Les briques</h3>
+<p>Créer <code>src/components/create/form/FormBricks.tsx</code> :</p>
+<div class="bloc">Bloc : bricks</div>
+<pre class="lang-tsx"><code>/**
+ * The bricks of the create forms (sheet 012): the frame, a section, a text field with dictation,
+ * a row of choices, a switch and the "More options" fold. Each brick takes the colour of its
+ * family, so the two forms look different while built from the same pieces.
+ */
+
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type TextInputProps,
+  type TextStyle,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ITEM_FAMILY_DEFINITIONS, itemFamilyColor, type ItemFamily } from '@/constants/item-kinds';
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import { useDictation, type DictationProblem } from '@/features/capture/use-dictation';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useLanguage, useT } from '@/i18n';
+import { useAppStore } from '@/store/app-store';
+import { makeFormStyles } from '@/styles/common/form-styles';
+
+export type IconName = keyof typeof Ionicons.glyphMap;
+
+const DICTATION_PROBLEM_KEYS = {
+  permission: 'capture.dictation.permission',
+  language: 'capture.dictation.language',
+  failed: 'capture.dictation.failed',
+  unsupported: 'capture.dictation.unsupported',
+} as const;
+
+/** The frame of a form: its bar (Cancel, the family, Add), a coloured line, the page and the big button. */
+export function FormShell({
+  family,
+  title,
+  subtitle,
+  saveLabel,
+  saving,
+  onSave,
+  testID,
+  children,
+}: {
+  family: ItemFamily;
+  title: string;
+  subtitle: string;
+  saveLabel: string;
+  saving: boolean;
+  onSave: () =&gt; void;
+  testID?: string;
+  children: ReactNode;
+}) {
+  const t = useT();
+  const insets = useSafeAreaInsets();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const accent = itemFamilyColor(palette, family);
+  // Dark text on the light cyan and amber of the dark theme, white on the deep ones of the light theme
+  const onAccent = palette.mode === 'light' ? '#FFFFFF' : '#141317';
+
+  return (
+    &lt;KeyboardAvoidingView
+      style={[formStyles.container, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      testID={testID}
+    &gt;
+      &lt;View style={formStyles.toolbar}&gt;
+        &lt;TouchableOpacity
+          style={formStyles.toolbarBtn}
+          onPress={() =&gt; router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t('form.cancel')}
+        &gt;
+          &lt;Text style={formStyles.toolbarCancel}&gt;{t('form.cancel')}&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+        &lt;View style={formStyles.toolbarCenter}&gt;
+          &lt;View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}&gt;
+            &lt;Ionicons name={ITEM_FAMILY_DEFINITIONS[family].icon} size={18} color={accent} /&gt;
+            &lt;Text style={[formStyles.toolbarTitle, { color: accent }]}&gt;{title}&lt;/Text&gt;
+          &lt;/View&gt;
+          &lt;Text style={formStyles.toolbarSubtitle}&gt;{subtitle}&lt;/Text&gt;
+        &lt;/View&gt;
+        &lt;TouchableOpacity
+          style={formStyles.toolbarBtn}
+          onPress={onSave}
+          disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={saveLabel}
+        &gt;
+          &lt;Text style={[formStyles.toolbarSave, { color: accent }, saving &amp;&amp; formStyles.toolbarSaveDisabled]}&gt;
+            {saving ? t('itemForm.saving') : t('itemForm.save')}
+          &lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+      &lt;/View&gt;
+      &lt;View style={{ height: 3, backgroundColor: accent, opacity: 0.85 }} /&gt;
+
+      &lt;ScrollView
+        style={formStyles.scroll}
+        contentContainerStyle={[formStyles.scrollContent, { paddingBottom: insets.bottom + Spacing.xxxl }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      &gt;
+        {children}
+        &lt;TouchableOpacity
+          onPress={onSave}
+          disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={saveLabel}
+          testID="form-save"
+          style={{
+            marginTop: Spacing.md,
+            minHeight: 52,
+            borderRadius: Radius.lg,
+            backgroundColor: accent,
+            opacity: saving ? 0.6 : 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: Spacing.sm,
+          }}
+        &gt;
+          &lt;Ionicons name={ITEM_FAMILY_DEFINITIONS[family].icon} size={20} color={onAccent} /&gt;
+          &lt;Text style={{ ...Typography.labelLarge, fontWeight: '700', color: onAccent }}&gt;
+            {saving ? t('itemForm.saving') : saveLabel}
+          &lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+      &lt;/ScrollView&gt;
+    &lt;/KeyboardAvoidingView&gt;
+  );
+}
+
+/** A section: a small coloured badge, its title, and a card with its fields. */
+export function FormSection({
+  icon,
+  title,
+  accent,
+  testID,
+  children,
+}: {
+  icon: IconName;
+  title: string;
+  accent: string;
+  testID?: string;
+  children: ReactNode;
+}) {
+  const formStyles = useThemedStyles(makeFormStyles);
+  return (
+    &lt;View testID={testID}&gt;
+      &lt;View style={formStyles.sectionHeaderRow}&gt;
+        &lt;View style={[formStyles.sectionHeaderIconBadge, { backgroundColor: `${accent}22` }]}&gt;
+          &lt;Ionicons name={icon} size={14} color={accent} /&gt;
+        &lt;/View&gt;
+        &lt;Text style={formStyles.sectionHeaderTitle}&gt;{title}&lt;/Text&gt;
+      &lt;/View&gt;
+      &lt;View style={formStyles.cardGroup}&gt;{children}&lt;/View&gt;
+    &lt;/View&gt;
+  );
+}
+
+/** A label and its explanation, above a row of choices. */
+export function FieldLabel({ label, hint }: { label: string; hint?: string }) {
+  const formStyles = useThemedStyles(makeFormStyles);
+  return (
+    &lt;View style={{ marginTop: Spacing.xs }}&gt;
+      &lt;Text style={formStyles.fieldLabel}&gt;{label}&lt;/Text&gt;
+      {hint ? &lt;Text style={formStyles.fieldSub}&gt;{hint}&lt;/Text&gt; : null}
+    &lt;/View&gt;
+  );
+}
+
+/**
+ * A text field with a microphone beside it (Android). The words heard are added after what was
+ * already written. Both fields of a form hear the same microphone: each keeps only what was
+ * said after a tap on its own.
+ */
+export function DictatedInput({
+  value,
+  onChangeText,
+  accent,
+  inputStyle,
+  testID,
+  ...input
+}: Omit&lt;TextInputProps, 'value' | 'onChangeText' | 'style'&gt; &amp; {
+  value: string;
+  onChangeText: (text: string) =&gt; void;
+  accent: string;
+  inputStyle?: StyleProp&lt;TextStyle&gt;;
+  testID?: string;
+}) {
+  const t = useT();
+  const language = useLanguage();
+  const { palette } = useTheme();
+  const { showSnackbar } = useAppStore();
+  const baseRef = useRef('');
+  const mineRef = useRef(false);
+
+  const onText = useCallback(
+    (heard: string) =&gt; {
+      if (!mineRef.current) return;
+      onChangeText(baseRef.current ? `${baseRef.current} ${heard}` : heard);
+    },
+    [onChangeText]
+  );
+  const onProblem = useCallback(
+    (problem: DictationProblem) =&gt; {
+      if (mineRef.current) showSnackbar(t(DICTATION_PROBLEM_KEYS[problem]));
+    },
+    [showSnackbar, t]
+  );
+  const dictation = useDictation(language, onText, onProblem);
+
+  useEffect(() =&gt; {
+    if (!dictation.listening) mineRef.current = false;
+  }, [dictation.listening]);
+
+  const toggle = () =&gt; {
+    if (!dictation.listening) {
+      baseRef.current = value.trim();
+      mineRef.current = true;
+    }
+    void dictation.toggle();
+  };
+
+  return (
+    &lt;View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}&gt;
+      &lt;TextInput
+        {...input}
+        testID={testID}
+        value={value}
+        onChangeText={onChangeText}
+        placeholderTextColor={palette.onSurface.disabled}
+        style={[{ flex: 1 }, inputStyle]}
+      /&gt;
+      {dictation.available ? (
+        &lt;TouchableOpacity
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityLabel={t(dictation.listening ? 'capture.dictation.stop' : 'capture.dictation.start')}
+          testID={testID ? `${testID}-mic` : undefined}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: Radius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: dictation.listening ? palette.error.default : accent,
+            backgroundColor: dictation.listening ? palette.error.default : `${accent}18`,
+          }}
+        &gt;
+          &lt;Ionicons
+            name={dictation.listening ? 'stop' : 'mic-outline'}
+            size={18}
+            color={dictation.listening ? palette.onSurface.primary : accent}
+          /&gt;
+        &lt;/TouchableOpacity&gt;
+      ) : null}
+    &lt;/View&gt;
+  );
+}
+
+export interface Choice&lt;T&gt; {
+  value: T;
+  label: string;
+  icon?: IconName;
+}
+
+/** A row of choices, one selected, in the colour of the family. */
+export function ChoiceChips&lt;T&gt;({
+  options,
+  value,
+  onChange,
+  accent,
+  testIDPrefix,
+}: {
+  options: readonly Choice&lt;T&gt;[];
+  value: T;
+  onChange: (value: T) =&gt; void;
+  accent: string;
+  testIDPrefix?: string;
+}) {
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  return (
+    &lt;View style={formStyles.chipsRow} accessibilityRole="radiogroup"&gt;
+      {options.map((option, index) =&gt; {
+        const selected = option.value === value;
+        return (
+          &lt;TouchableOpacity
+            key={index}
+            style={[formStyles.chip, { minHeight: 44 }, selected &amp;&amp; { backgroundColor: `${accent}22`, borderColor: accent }]}
+            onPress={() =&gt; onChange(option.value)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            testID={testIDPrefix ? `${testIDPrefix}-${String(option.value ?? 'none')}` : undefined}
+          &gt;
+            {option.icon ? (
+              &lt;Ionicons name={option.icon} size={14} color={selected ? accent : palette.onSurface.variant} /&gt;
+            ) : null}
+            &lt;Text style={[formStyles.chipText, selected &amp;&amp; { color: accent, fontWeight: '700' }]}&gt;{option.label}&lt;/Text&gt;
+          &lt;/TouchableOpacity&gt;
+        );
+      })}
+    &lt;/View&gt;
+  );
+}
+
+/** A switch with its label and explanation. */
+export function SwitchRow({
+  label,
+  hint,
+  value,
+  onChange,
+  accent,
+  testID,
+}: {
+  label: string;
+  hint?: string;
+  value: boolean;
+  onChange: (value: boolean) =&gt; void;
+  accent: string;
+  testID?: string;
+}) {
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  return (
+    &lt;View style={[formStyles.rowBetween, { minHeight: 44 }]}&gt;
+      &lt;View style={{ flex: 1, paddingRight: Spacing.sm }}&gt;
+        &lt;Text style={formStyles.fieldLabel}&gt;{label}&lt;/Text&gt;
+        {hint ? &lt;Text style={formStyles.fieldSub}&gt;{hint}&lt;/Text&gt; : null}
+      &lt;/View&gt;
+      &lt;Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: palette.outline.variant, true: accent }}
+        thumbColor={value ? '#FFFFFF' : palette.onSurface.disabled}
+        accessibilityLabel={label}
+        testID={testID}
+      /&gt;
+    &lt;/View&gt;
+  );
+}
+
+/** "More options": folded at first, so the form stays short. */
+export function MoreOptions({ accent, children }: { accent: string; children: ReactNode }) {
+  const t = useT();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const [open, setOpen] = useState(false);
+  return (
+    &lt;View&gt;
+      &lt;TouchableOpacity
+        onPress={() =&gt; setOpen(value =&gt; !value)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        testID="form-more"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44, marginTop: Spacing.sm }}
+      &gt;
+        &lt;Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={accent} /&gt;
+        &lt;Text style={[formStyles.fieldLabel, { color: accent }]}&gt;{t(open ? 'itemForm.less' : 'itemForm.more')}&lt;/Text&gt;
+      &lt;/TouchableOpacity&gt;
+      {open ? &lt;View style={[formStyles.cardGroup, { gap: Spacing.sm }]}&gt;{children}&lt;/View&gt; : null}
+    &lt;/View&gt;
+  );
+}</code></pre>
+<table><thead><tr><th>Brique</th><th>Rôle</th></tr></thead><tbody><tr><td><code>FormShell</code></td><td>Le cadre : barre (Annuler, l'icône et le nom de la famille <strong>dans sa couleur</strong>, Ajouter), une fine ligne de couleur, la page, le grand bouton coloré en bas</td></tr><tr><td><code>onAccent</code></td><td>Le texte du grand bouton : foncé sur le cyan et l'ambre clairs du thème sombre, blanc sur les teintes profondes du thème clair (contraste)</td></tr><tr><td><code>FormSection</code></td><td>Une section : petit badge coloré, titre, carte</td></tr><tr><td><code>DictatedInput</code></td><td>Champ de texte + micro. <code>mineRef</code> : le champ ne garde que ce qui est dicté après <strong>son</strong> micro ; <code>baseRef</code> : les mots s'ajoutent après le texte déjà écrit</td></tr><tr><td><code>ChoiceChips</code></td><td>Une rangée de choix (44 px de haut, lisible par les lecteurs d'écran : « radio », « sélectionné »)</td></tr><tr><td><code>SwitchRow</code></td><td>Un interrupteur avec son explication</td></tr><tr><td><code>MoreOptions</code></td><td>Replié au départ : le formulaire reste court</td></tr></tbody></table>
+<h3 id="annexe-H-28">Étape 3 — Le formulaire « À faire »</h3>
+<p>Créer <code>src/features/create/TodoForm.tsx</code> :</p>
+<div class="bloc">Bloc : todo-form</div>
+<pre class="lang-tsx"><code>/**
+ * The "To do" form (study 001, 12.2 "2-B"; sheet 012), in cyan: What → When → Alert → With whom
+ * → More options, in the order of the registry (constants/item-forms). Saved without an alert it
+ * is a task; with one, a reminder: the kinds kept in the data (constants/item-kinds).
+ */
+
+import { Ionicons } from '@expo/vector-icons';
+import { addDays, addWeeks, format, startOfWeek } from 'date-fns';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
+import {
+  ChoiceChips,
+  DictatedInput,
+  FieldLabel,
+  FormSection,
+  FormShell,
+  MoreOptions,
+  SwitchRow,
+  type Choice,
+  type IconName,
+} from '@/components/create/form/FormBricks';
+import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
+import { DeadlineField } from '@/components/tasks/DeadlineField';
+import {
+  alertMoment,
+  dayParam,
+  hourParam,
+  TODO_DURATION_OPTIONS,
+  visibleMoreFields,
+  visibleSections,
+  type FormSectionId,
+  type MoreFieldId,
+} from '@/constants/item-forms';
+import { itemFamilyColor } from '@/constants/item-kinds';
+import { Radius, Spacing } from '@/constants/theme';
+import type { Reminder, ReminderPriority } from '@/domain/entities';
+import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
+import { SettingsRepository } from '@/repositories/settings-repository';
+import { useAppStore } from '@/store/app-store';
+import { makeFormStyles } from '@/styles/common/form-styles';
+import { createReminder } from '@/use-cases/reminder-use-cases';
+import { TaskUseCases } from '@/use-cases/task-use-cases';
+
+type ActionType = Reminder['actionType'];
+type Recurrence = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+const PRIORITIES: readonly { value: ReminderPriority; labelKey: MessageKey }[] = [
+  { value: 'LOW', labelKey: 'form.priority.low' },
+  { value: 'NORMAL', labelKey: 'priority.normal' },
+  { value: 'HIGH', labelKey: 'priority.high' },
+  { value: 'URGENT', labelKey: 'form.priority.urgentF' },
+];
+
+const ACTIONS: readonly { value: ActionType; labelKey: MessageKey; icon: IconName }[] = [
+  { value: 'NONE', labelKey: 'form.none', icon: 'remove-outline' },
+  { value: 'CALL', labelKey: 'people.call', icon: 'call-outline' },
+  { value: 'MESSAGE', labelKey: 'reminders.action.MESSAGE', icon: 'chatbubble-outline' },
+  { value: 'EMAIL', labelKey: 'reminders.action.EMAIL', icon: 'mail-outline' },
+  { value: 'MEET', labelKey: 'remNew.action.meet', icon: 'people-outline' },
+  { value: 'TASK', labelKey: 'reminders.action.TASK', icon: 'checkmark-outline' },
+];
+
+const RECURRENCES: readonly { value: Recurrence; labelKey: MessageKey }[] = [
+  { value: 'DAILY', labelKey: 'remNew.daily' },
+  { value: 'WEEKLY', labelKey: 'remNew.weekly' },
+  { value: 'MONTHLY', labelKey: 'remNew.monthly' },
+];
+
+const pad = (value: number) =&gt; String(value).padStart(2, '0');
+
+export interface TodoFormProps {
+  /** Opened as a reminder ("With an alert", a Planning slot): the alert is on. */
+  initialAlert?: boolean;
+  defaultDate?: string;
+  defaultHour?: string;
+  /** Opened from the page of a person: it is already about them. */
+  personId?: string;
+}
+
+export function TodoForm({ initialAlert = false, defaultDate, defaultHour, personId }: TodoFormProps) {
+  const t = useT();
+  const language = useLanguage();
+  const dateLocale = useDateLocale();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const { showSnackbar } = useAppStore();
+  const accent = itemFamilyColor(palette, 'todo');
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+  const nextMonday = format(addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1), 'yyyy-MM-dd');
+
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [day, setDay] = useState&lt;string | undefined&gt;(() =&gt; dayParam(defaultDate) ?? (initialAlert ? today : undefined));
+  const [alert, setAlert] = useState(initialAlert);
+  const [alertTime, setAlertTime] = useState(() =&gt; ({
+    hour: hourParam(defaultHour) ?? (new Date().getHours() + 1) % 24,
+    minute: 0,
+  }));
+  const [priority, setPriority] = useState&lt;ReminderPriority&gt;('NORMAL');
+  const [actionType, setActionType] = useState&lt;ActionType&gt;('NONE');
+  const [repeat, setRepeat] = useState(false);
+  const [recurrence, setRecurrence] = useState&lt;Recurrence&gt;('DAILY');
+  const [confirm, setConfirm] = useState(false);
+  const [dueDate, setDueDate] = useState&lt;string | undefined&gt;(undefined);
+  const [estimatedMinutes, setEstimatedMinutes] = useState&lt;number | undefined&gt;(undefined);
+  const [subtasks, setSubtasks] = useState&lt;string[]&gt;([]);
+  const [subtaskInput, setSubtaskInput] = useState('');
+  const [personIds, setPersonIds] = useState&lt;string[]&gt;(() =&gt; (personId ? [personId] : []));
+  const [tagIds, setTagIds] = useState&lt;string[]&gt;([]);
+  const [picker, setPicker] = useState&lt;'day' | 'time' | null&gt;(null);
+  const [saving, setSaving] = useState(false);
+
+  const customDay = day &amp;&amp; ![today, tomorrow, nextMonday].includes(day) ? day : undefined;
+  const dayChoice = day === undefined ? 'none' : customDay ? 'pick' : day;
+  const dayOptions: Choice&lt;string&gt;[] = [
+    ...(alert ? [] : [{ value: 'none', label: t('itemForm.noDay'), icon: 'file-tray-outline' as const }]),
+    { value: today, label: t('common.today'), icon: 'today-outline' },
+    { value: tomorrow, label: t('reminders.section.tomorrow'), icon: 'arrow-forward-outline' },
+    { value: nextMonday, label: t('taskNew.nextMonday'), icon: 'calendar-outline' },
+    {
+      value: 'pick',
+      label: customDay
+        ? format(new Date(`${customDay}T12:00:00`), t('form.dateFormat'), { locale: dateLocale })
+        : t('form.pickDate'),
+      icon: 'calendar-number-outline',
+    },
+  ];
+  const priorityOptions: Choice&lt;ReminderPriority&gt;[] = PRIORITIES.map(option =&gt; ({ value: option.value, label: t(option.labelKey) }));
+  const durationLabel = (minutes: number | undefined) =&gt; {
+    if (minutes === undefined) return t('form.none');
+    if (minutes === 60) return t('taskNew.hours1');
+    if (minutes === 120) return t('taskNew.hours2');
+    return `${minutes} min`;
+  };
+
+  const toggleAlert = (on: boolean) =&gt; {
+    setAlert(on);
+    // An alert rings on a day: today when none was chosen
+    if (on &amp;&amp; !day) setDay(today);
+  };
+
+  const addSubtask = () =&gt; {
+    const trimmed = subtaskInput.trim();
+    if (!trimmed) return;
+    setSubtasks(previous =&gt; [...previous, trimmed]);
+    setSubtaskInput('');
+  };
+
+  async function handleSave() {
+    if (!title.trim()) {
+      setTitleError(t('taskNew.titleRequired'));
+      return;
+    }
+    const scheduledAt = alertMoment(day, alertTime, new Date());
+    if (alert &amp;&amp; scheduledAt &lt;= new Date()) {
+      showSnackbar(t('remNew.mustBeFuture'));
+      return;
+    }
+    setSaving(true);
+    try {
+      if (alert) {
+        const settings = await SettingsRepository.get();
+        await createReminder({
+          title: title.trim(),
+          notes: notes.trim() || undefined,
+          scheduledAt,
+          timezone: settings.timezone,
+          priority,
+          actionType,
+          personIds,
+          tagIds,
+          requiresConfirmation: confirm,
+          recurrenceRule: repeat
+            ? { type: recurrence, interval: 1, dayOfMonth: recurrence === 'MONTHLY' ? scheduledAt.getDate() : undefined }
+            : undefined,
+        });
+        showSnackbar(t('remNew.created'));
+      } else {
+        await TaskUseCases.createTask({
+          title: title.trim(),
+          description: notes.trim() || undefined,
+          priority,
+          scheduledDate: day,
+          dueDate,
+          estimatedMinutes,
+          subtasks,
+          personIds,
+          tagIds,
+        });
+        showSnackbar(t('taskNew.created'));
+      }
+      router.back();
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const renderMore = (field: MoreFieldId) =&gt; {
+    switch (field) {
+      case 'priority':
+        return (
+          &lt;View key={field}&gt;
+            &lt;FieldLabel label={t('itemForm.priority')} /&gt;
+            &lt;ChoiceChips options={priorityOptions} value={priority} onChange={setPriority} accent={accent} testIDPrefix="todo-priority" /&gt;
+          &lt;/View&gt;
+        );
+      case 'deadline':
+        return &lt;DeadlineField key={field} value={dueDate} onChange={setDueDate} /&gt;;
+      case 'duration':
+        return (
+          &lt;View key={field}&gt;
+            &lt;FieldLabel label={t('taskNew.durationHeader')} hint={t('itemForm.durationHint')} /&gt;
+            &lt;ChoiceChips
+              options={TODO_DURATION_OPTIONS.map(minutes =&gt; ({ value: minutes, label: durationLabel(minutes) }))}
+              value={estimatedMinutes}
+              onChange={setEstimatedMinutes}
+              accent={accent}
+              testIDPrefix="todo-duration"
+            /&gt;
+          &lt;/View&gt;
+        );
+      case 'subtasks':
+        return (
+          &lt;View key={field} style={{ gap: Spacing.xs }}&gt;
+            &lt;FieldLabel label={t('taskNew.subtasksHeader', { count: subtasks.length })} /&gt;
+            {subtasks.map((subtask, index) =&gt; (
+              &lt;View key={index} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 44 }}&gt;
+                &lt;Ionicons name="ellipse-outline" size={16} color={accent} /&gt;
+                &lt;Text style={[formStyles.fieldLabel, { flex: 1 }]}&gt;{subtask}&lt;/Text&gt;
+                &lt;TouchableOpacity
+                  onPress={() =&gt; setSubtasks(previous =&gt; previous.filter((_, i) =&gt; i !== index))}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('a11y.removeSubtask', { title: subtask })}
+                  style={{ padding: Spacing.sm }}
+                &gt;
+                  &lt;Ionicons name="close-circle" size={18} color={palette.error.default} /&gt;
+                &lt;/TouchableOpacity&gt;
+              &lt;/View&gt;
+            ))}
+            &lt;View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}&gt;
+              &lt;TextInput
+                style={[formStyles.inputBox, { flex: 1 }]}
+                value={subtaskInput}
+                onChangeText={setSubtaskInput}
+                placeholder={t('taskNew.subtaskPlaceholder')}
+                placeholderTextColor={palette.onSurface.disabled}
+                onSubmitEditing={addSubtask}
+                returnKeyType="done"
+              /&gt;
+              &lt;TouchableOpacity
+                onPress={addSubtask}
+                accessibilityRole="button"
+                accessibilityLabel={t('a11y.addSubtask')}
+                style={{ width: 44, height: 44, borderRadius: Radius.md, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}
+              &gt;
+                &lt;Ionicons name="add" size={20} color={palette.mode === 'light' ? '#FFFFFF' : '#141317'} /&gt;
+              &lt;/TouchableOpacity&gt;
+            &lt;/View&gt;
+          &lt;/View&gt;
+        );
+      case 'tags':
+        return &lt;TagField key={field} selectedIds={tagIds} onChange={setTagIds} /&gt;;
+      default:
+        return null;
+    }
+  };
+
+  const renderSection = (section: FormSectionId) =&gt; {
+    switch (section) {
+      case 'what':
+        return (
+          &lt;FormSection icon="create-outline" title={t('itemForm.what')} accent={accent}&gt;
+            &lt;DictatedInput
+              value={title}
+              onChangeText={text =&gt; {
+                setTitle(text);
+                if (titleError) setTitleError('');
+              }}
+              accent={accent}
+              placeholder={t('itemForm.todoPlaceholder')}
+              inputStyle={formStyles.titleInput}
+              autoFocus
+              maxLength={120}
+              testID="todo-title"
+            /&gt;
+            {titleError ? &lt;Text style={formStyles.errorText}&gt;{titleError}&lt;/Text&gt; : null}
+            &lt;DictatedInput
+              value={notes}
+              onChangeText={setNotes}
+              accent={accent}
+              placeholder={t('itemForm.notesPlaceholder')}
+              inputStyle={formStyles.notesInput}
+              multiline
+              maxLength={500}
+              testID="todo-notes"
+            /&gt;
+          &lt;/FormSection&gt;
+        );
+      case 'when':
+        return (
+          &lt;FormSection icon="calendar-outline" title={t('itemForm.when')} accent={accent}&gt;
+            &lt;ChoiceChips
+              options={dayOptions}
+              value={dayChoice}
+              onChange={value =&gt; {
+                if (value === 'pick') setPicker('day');
+                else setDay(value === 'none' ? undefined : value);
+              }}
+              accent={accent}
+              testIDPrefix="todo-day"
+            /&gt;
+          &lt;/FormSection&gt;
+        );
+      case 'alert':
+        return (
+          &lt;FormSection icon="notifications-outline" title={t('itemForm.alert')} accent={accent}&gt;
+            &lt;SwitchRow
+              label={t('itemForm.alertSwitch')}
+              hint={t('itemForm.alertHint')}
+              value={alert}
+              onChange={toggleAlert}
+              accent={accent}
+              testID="todo-alert"
+            /&gt;
+            {alert ? (
+              &lt;View style={{ gap: Spacing.sm }}&gt;
+                &lt;TouchableOpacity
+                  onPress={() =&gt; setPicker('time')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('itemForm.alertTime', { time: `${pad(alertTime.hour)}:${pad(alertTime.minute)}` })}
+                  testID="todo-alert-time"
+                  style={[formStyles.selectorRow, { minHeight: 44 }]}
+                &gt;
+                  &lt;View style={formStyles.selectorLeft}&gt;
+                    &lt;Ionicons name="time-outline" size={18} color={accent} /&gt;
+                    &lt;Text style={formStyles.selectorValue}&gt;
+                      {t('itemForm.alertTime', { time: `${pad(alertTime.hour)}:${pad(alertTime.minute)}` })}
+                    &lt;/Text&gt;
+                  &lt;/View&gt;
+                  &lt;Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} /&gt;
+                &lt;/TouchableOpacity&gt;
+                &lt;FieldLabel label={t('itemForm.priority')} hint={t('itemForm.priorityHint')} /&gt;
+                &lt;ChoiceChips options={priorityOptions} value={priority} onChange={setPriority} accent={accent} testIDPrefix="todo-priority" /&gt;
+                &lt;FieldLabel label={t('itemForm.action')} /&gt;
+                &lt;ChoiceChips
+                  options={ACTIONS.map(option =&gt; ({ value: option.value, label: t(option.labelKey), icon: option.icon }))}
+                  value={actionType}
+                  onChange={setActionType}
+                  accent={accent}
+                  testIDPrefix="todo-action"
+                /&gt;
+                &lt;SwitchRow label={t('remNew.repeat')} hint={t('remNew.repeatHelper')} value={repeat} onChange={setRepeat} accent={accent} /&gt;
+                {repeat ? (
+                  &lt;ChoiceChips
+                    options={RECURRENCES.map(option =&gt; ({ value: option.value, label: t(option.labelKey) }))}
+                    value={recurrence}
+                    onChange={setRecurrence}
+                    accent={accent}
+                  /&gt;
+                ) : null}
+                &lt;SwitchRow
+                  label={t('confirmReminder.label')}
+                  hint={t('confirmReminder.helper')}
+                  value={confirm}
+                  onChange={value =&gt; {
+                    setConfirm(value);
+                    if (value) void offerExactAlarmsForConfirmation();
+                  }}
+                  accent={accent}
+                  testID="reminder-confirmation"
+                /&gt;
+              &lt;/View&gt;
+            ) : null}
+          &lt;/FormSection&gt;
+        );
+      case 'who':
+        return &lt;PersonField selectedIds={personIds} onChange={setPersonIds} multiple /&gt;;
+      case 'more':
+        return &lt;MoreOptions accent={accent}&gt;{visibleMoreFields('todo', { alert }).map(renderMore)}&lt;/MoreOptions&gt;;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    &lt;FormShell
+      family="todo"
+      title={t('itemForm.todo.title')}
+      subtitle={t('itemForm.todo.subtitle')}
+      saveLabel={t('itemForm.todo.submit')}
+      saving={saving}
+      onSave={handleSave}
+      testID="todo-form"
+    &gt;
+      {visibleSections('todo', { alert }).map(section =&gt; (
+        &lt;React.Fragment key={section}&gt;{renderSection(section)}&lt;/React.Fragment&gt;
+      ))}
+      &lt;DateTimePickerModal
+        isVisible={picker !== null}
+        mode={picker === 'time' ? 'time' : 'date'}
+        date={picker === 'time' ? alertMoment(day, alertTime, new Date()) : new Date(`${day ?? today}T12:00:00`)}
+        onConfirm={picked =&gt; {
+          if (picker === 'time') setAlertTime({ hour: picked.getHours(), minute: picked.getMinutes() });
+          else setDay(format(picked, 'yyyy-MM-dd'));
+          setPicker(null);
+        }}
+        onCancel={() =&gt; setPicker(null)}
+        confirmTextIOS={t('personNew.confirm')}
+        cancelTextIOS={t('form.cancel')}
+        locale={language === 'fr' ? 'fr_FR' : 'en_US'}
+      /&gt;
+    &lt;/FormShell&gt;
+  );
+}</code></pre>
+<table><thead><tr><th>Passage</th><th>Ce qu'il fait</th></tr></thead><tbody><tr><td><code>visibleSections('todo', { alert })</code></td><td>L'écran dessine les sections <strong>dans l'ordre du registre</strong></td></tr><tr><td><code>dayOptions</code></td><td>« Sans date » disparaît quand l'alerte est activée (une alerte sonne un jour précis)</td></tr><tr><td><code>toggleAlert</code></td><td>Activer l'alerte sans jour choisi prend aujourd'hui</td></tr><tr><td><code>alertMoment(day, alertTime, …)</code></td><td>Le jour et l'heure de l'alerte réunis en une date ; refusée si elle est déjà passée</td></tr><tr><td><code>if (alert) createReminder … else createTask</code></td><td>Avec alerte : un <strong>rappel</strong> (mêmes champs qu'avant : priorité, action, répétition, à confirmer) ; sans : une <strong>tâche</strong> (mêmes champs qu'avant)</td></tr><tr><td><code>renderMore</code></td><td>Ce qui est sous « Plus d'options », selon le registre</td></tr><tr><td><code>testID="reminder-confirmation"</code></td><td>Le même nom qu'avant pour l'interrupteur « à confirmer »</td></tr></tbody></table>
+<h3 id="annexe-H-33">Étape 4 — Le formulaire « Moment »</h3>
+<p>Créer <code>src/features/create/MomentForm.tsx</code> :</p>
+<div class="bloc">Bloc : moment-form</div>
+<pre class="lang-tsx"><code>/**
+ * The "Moment" form (study 001, 12.2 "2-B"; sheet 012), in amber: What → Start and end → Where →
+ * Leave … min before (only once a place is written) → With whom → More options, in the order of
+ * the registry (constants/item-forms).
+ */
+
+import { Ionicons } from '@expo/vector-icons';
+import { addHours, format } from 'date-fns';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
+import {
+  ChoiceChips,
+  DictatedInput,
+  FieldLabel,
+  FormSection,
+  FormShell,
+  MoreOptions,
+  type Choice,
+} from '@/components/create/form/FormBricks';
+import { PersonField } from '@/components/people/PersonField';
+import { TagField } from '@/components/tags/TagField';
+import {
+  dayParam,
+  hourParam,
+  LEAVE_OPTIONS,
+  visibleMoreFields,
+  visibleSections,
+  type FormSectionId,
+  type MoreFieldId,
+} from '@/constants/item-forms';
+import { itemFamilyColor } from '@/constants/item-kinds';
+import { Spacing } from '@/constants/theme';
+import type { EventType } from '@/domain/entities';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { useDateLocale, useLanguage, useT } from '@/i18n';
+import { useAppStore } from '@/store/app-store';
+import { makeFormStyles } from '@/styles/common/form-styles';
+import { EventUseCases } from '@/use-cases/event-use-cases';
+
+export interface MomentFormProps {
+  defaultDate?: string;
+  defaultHour?: string;
+  /** Opened from the page of a person: they already take part. */
+  personId?: string;
+}
+
+/** The first hour of a new moment: the hour asked for, or the next full hour. */
+function initialStart(defaultDate?: string, defaultHour?: string): Date {
+  const now = new Date();
+  const day = dayParam(defaultDate);
+  const start = day ? new Date(`${day}T12:00:00`) : new Date(now);
+  start.setHours(hourParam(defaultHour) ?? now.getHours() + 1, 0, 0, 0);
+  return start;
+}
+
+export function MomentForm({ defaultDate, defaultHour, personId }: MomentFormProps) {
+  const t = useT();
+  const language = useLanguage();
+  const dateLocale = useDateLocale();
+  const { palette } = useTheme();
+  const formStyles = useThemedStyles(makeFormStyles);
+  const { showSnackbar, userTimezone } = useAppStore();
+  const accent = itemFamilyColor(palette, 'moment');
+
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [startAt, setStartAt] = useState(() =&gt; initialStart(defaultDate, defaultHour));
+  const [endAt, setEndAt] = useState(() =&gt; addHours(initialStart(defaultDate, defaultHour), 1));
+  const [location, setLocation] = useState('');
+  const [travelBufferMinutes, setTravelBufferMinutes] = useState(0);
+  const [eventType, setEventType] = useState&lt;EventType&gt;('BUSY');
+  const [personIds, setPersonIds] = useState&lt;string[]&gt;(() =&gt; (personId ? [personId] : []));
+  const [tagIds, setTagIds] = useState&lt;string[]&gt;([]);
+  const [picker, setPicker] = useState&lt;'start' | 'end' | null&gt;(null);
+  const [saving, setSaving] = useState(false);
+
+  const place = location.trim();
+
+  async function handleSave() {
+    if (!title.trim()) {
+      setTitleError(t('eventNew.titleRequired'));
+      return;
+    }
+    if (endAt &lt;= startAt) {
+      showSnackbar(t('eventNew.endAfterStart'));
+      return;
+    }
+    setSaving(true);
+    try {
+      await EventUseCases.createEvent({
+        title: title.trim(),
+        notes: notes.trim() || undefined,
+        startAt,
+        endAt,
+        timezone: userTimezone,
+        location: place || undefined,
+        type: eventType,
+        // Leaving only means something with a place
+        travelBufferMinutes: place ? travelBufferMinutes : 0,
+        personIds,
+        tagIds,
+      });
+      showSnackbar(t('eventNew.created'));
+      router.back();
+    } catch (e) {
+      showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // The hour first, as on the old form, then the day
+  const whenLabel = (value: Date) =&gt;
+    `${format(value, 'HH:mm')} · ${format(value, t('eventNew.shortDate'), { locale: dateLocale })}`;
+
+  const slotRow = (which: 'start' | 'end', value: Date) =&gt; (
+    &lt;TouchableOpacity
+      onPress={() =&gt; setPicker(which)}
+      accessibilityRole="button"
+      accessibilityLabel={`${t(which === 'start' ? 'eventNew.start' : 'eventNew.end')} ${whenLabel(value)}`}
+      testID={`moment-${which}`}
+      style={[formStyles.selectorRow, { minHeight: 44 }]}
+    &gt;
+      &lt;View style={formStyles.selectorLeft}&gt;
+        &lt;Ionicons name={which === 'start' ? 'play-outline' : 'stop-outline'} size={16} color={accent} /&gt;
+        &lt;Text style={formStyles.selectorLabel}&gt;{t(which === 'start' ? 'eventNew.start' : 'eventNew.end')}&lt;/Text&gt;
+      &lt;/View&gt;
+      &lt;Text style={formStyles.selectorValue}&gt;{whenLabel(value)}&lt;/Text&gt;
+    &lt;/TouchableOpacity&gt;
+  );
+
+  const renderMore = (field: MoreFieldId) =&gt; {
+    switch (field) {
+      case 'availability': {
+        const options: Choice&lt;EventType&gt;[] = [
+          { value: 'BUSY', label: t('eventNew.busy'), icon: 'lock-closed-outline' },
+          { value: 'FREE', label: t('eventNew.free'), icon: 'leaf-outline' },
+        ];
+        return (
+          &lt;View key={field}&gt;
+            &lt;FieldLabel label={t('itemForm.availability')} /&gt;
+            &lt;ChoiceChips options={options} value={eventType} onChange={setEventType} accent={accent} testIDPrefix="moment-availability" /&gt;
+          &lt;/View&gt;
+        );
+      }
+      case 'tags':
+        return &lt;TagField key={field} selectedIds={tagIds} onChange={setTagIds} /&gt;;
+      default:
+        return null;
+    }
+  };
+
+  const renderSection = (section: FormSectionId) =&gt; {
+    switch (section) {
+      case 'what':
+        return (
+          &lt;FormSection icon="create-outline" title={t('itemForm.what')} accent={accent}&gt;
+            &lt;DictatedInput
+              value={title}
+              onChangeText={text =&gt; {
+                setTitle(text);
+                if (titleError) setTitleError('');
+              }}
+              accent={accent}
+              placeholder={t('itemForm.momentPlaceholder')}
+              inputStyle={formStyles.titleInput}
+              autoFocus
+              maxLength={120}
+              testID="moment-title"
+            /&gt;
+            {titleError ? &lt;Text style={formStyles.errorText}&gt;{titleError}&lt;/Text&gt; : null}
+            &lt;DictatedInput
+              value={notes}
+              onChangeText={setNotes}
+              accent={accent}
+              placeholder={t('itemForm.notesPlaceholder')}
+              inputStyle={formStyles.notesInput}
+              multiline
+              maxLength={500}
+              testID="moment-notes"
+            /&gt;
+          &lt;/FormSection&gt;
+        );
+      case 'slot':
+        return (
+          &lt;FormSection icon="time-outline" title={t('itemForm.slot')} accent={accent}&gt;
+            {slotRow('start', startAt)}
+            {slotRow('end', endAt)}
+          &lt;/FormSection&gt;
+        );
+      case 'where':
+        return (
+          &lt;FormSection icon="location-outline" title={t('itemForm.where')} accent={accent}&gt;
+            &lt;TextInput
+              style={formStyles.inputBox}
+              value={location}
+              onChangeText={setLocation}
+              placeholder={t('itemForm.wherePlaceholder')}
+              placeholderTextColor={palette.onSurface.disabled}
+              testID="moment-place"
+            /&gt;
+          &lt;/FormSection&gt;
+        );
+      case 'leave':
+        return (
+          &lt;FormSection icon="car-outline" title={t('itemForm.leave')} accent={accent} testID="moment-leave"&gt;
+            &lt;FieldLabel label={t('itemForm.leaveHint')} /&gt;
+            &lt;ChoiceChips
+              options={LEAVE_OPTIONS.map(minutes =&gt; ({ value: minutes, label: minutes === 0 ? t('form.none') : minutes === 60 ? t('taskNew.hours1') : `${minutes} min` }))}
+              value={travelBufferMinutes}
+              onChange={setTravelBufferMinutes}
+              accent={accent}
+              testIDPrefix="moment-leave"
+            /&gt;
+          &lt;/FormSection&gt;
+        );
+      case 'who':
+        return &lt;PersonField selectedIds={personIds} onChange={setPersonIds} multiple /&gt;;
+      case 'more':
+        return (
+          &lt;MoreOptions accent={accent}&gt;
+            &lt;View style={{ gap: Spacing.sm }}&gt;{visibleMoreFields('moment').map(renderMore)}&lt;/View&gt;
+          &lt;/MoreOptions&gt;
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    &lt;FormShell
+      family="moment"
+      title={t('itemForm.moment.title')}
+      subtitle={t('itemForm.moment.subtitle')}
+      saveLabel={t('itemForm.moment.submit')}
+      saving={saving}
+      onSave={handleSave}
+      testID="moment-form"
+    &gt;
+      {visibleSections('moment', { place }).map(section =&gt; (
+        &lt;React.Fragment key={section}&gt;{renderSection(section)}&lt;/React.Fragment&gt;
+      ))}
+      &lt;DateTimePickerModal
+        isVisible={picker !== null}
+        mode="datetime"
+        date={picker === 'end' ? endAt : startAt}
+        onConfirm={picked =&gt; {
+          if (picker === 'start') {
+            setStartAt(picked);
+            // The end follows a start moved past it, keeping one hour
+            if (endAt &lt;= picked) setEndAt(addHours(picked, 1));
+          } else {
+            setEndAt(picked);
+          }
+          setPicker(null);
+        }}
+        onCancel={() =&gt; setPicker(null)}
+        confirmTextIOS={t('personNew.confirm')}
+        cancelTextIOS={t('form.cancel')}
+        locale={language === 'fr' ? 'fr-FR' : 'en-US'}
+      /&gt;
+    &lt;/FormShell&gt;
+  );
+}</code></pre>
+<table><thead><tr><th>Passage</th><th>Ce qu'il fait</th></tr></thead><tbody><tr><td><code>initialStart</code></td><td>La première heure : celle demandée par le Planning, sinon l'heure pleine suivante ; la fin, une heure après</td></tr><tr><td><code>visibleSections('moment', { place })</code></td><td>« Partir … min avant » n'apparaît qu'une fois un lieu écrit</td></tr><tr><td><code>travelBufferMinutes: place ? … : 0</code></td><td>Sans lieu, pas de trajet enregistré (les notifications de départ en ont besoin, fiche 011)</td></tr><tr><td><code>if (endAt &lt;= picked) setEndAt(…)</code></td><td>Déplacer le début après la fin pousse la fin, une heure après</td></tr><tr><td>« Occupé / Libre » dans Plus d'options</td><td>Le réglage existant de disponibilité, rangé à part</td></tr></tbody></table>
+<h3 id="annexe-H-38">Étape 5 — Les trois routes ouvrent les nouveaux formulaires</h3>
+<p>Remplacer tout le contenu de <code>src/app/tasks/new.tsx</code> :</p>
+<div class="bloc">Bloc : route-task</div>
+<pre class="lang-tsx"><code>/** New "To do" (sheet 012): the form of the family, without an alert unless asked (?alert=1). */
+import { useLocalSearchParams } from 'expo-router';
+import React from 'react';
+
+import { TodoForm } from '@/features/create/TodoForm';
+
+export default function NewTaskScreen() {
+  const params = useLocalSearchParams&lt;{ defaultDate?: string; personId?: string; alert?: string }&gt;();
+  return &lt;TodoForm initialAlert={params.alert === '1'} defaultDate={params.defaultDate} personId={params.personId} /&gt;;
+}</code></pre>
+<p>Remplacer tout le contenu de <code>src/app/reminders/new.tsx</code> :</p>
+<div class="bloc">Bloc : route-reminder</div>
+<pre class="lang-tsx"><code>/** New reminder (sheet 012): the "To do" form with its alert on. The route stays for every link to it. */
+import { useLocalSearchParams } from 'expo-router';
+import React from 'react';
+
+import { TodoForm } from '@/features/create/TodoForm';
+
+export default function NewReminderScreen() {
+  const params = useLocalSearchParams&lt;{ defaultDate?: string; defaultHour?: string; personId?: string }&gt;();
+  return (
+    &lt;TodoForm initialAlert defaultDate={params.defaultDate} defaultHour={params.defaultHour} personId={params.personId} /&gt;
+  );
+}</code></pre>
+<p>Remplacer tout le contenu de <code>src/app/events/new.tsx</code> :</p>
+<div class="bloc">Bloc : route-event</div>
+<pre class="lang-tsx"><code>/** New moment (sheet 012): the "Moment" form. */
+import { useLocalSearchParams } from 'expo-router';
+import React from 'react';
+
+import { MomentForm } from '@/features/create/MomentForm';
+
+export default function NewEventScreen() {
+  const params = useLocalSearchParams&lt;{ defaultDate?: string; defaultHour?: string; personId?: string }&gt;();
+  return &lt;MomentForm defaultDate={params.defaultDate} defaultHour={params.defaultHour} personId={params.personId} /&gt;;
+}</code></pre>
+<h3 id="annexe-H-48">Étape 6 — « Temps pour le faire » règle le minuteur de Focus</h3>
+<p>Dans <code>src/domain/rules/focus-rules.ts</code>, juste avant <code>createFocusSession</code> :</p>
+<div class="bloc">Bloc : focus-1-avant</div>
+<pre class="lang-ts"><code>export function createFocusSession(params?: {</code></pre>
+<div class="bloc">Bloc : focus-1-apres</div>
+<pre class="lang-ts"><code>/**
+ * The timer of a session started from a task (sheet 012): its "time to do it", kept between 1 and
+ * 120 minutes, or the default 25 minutes when it has none. A time that is not a preset is custom.
+ */
+export function focusMinutesForTask(estimatedMinutes?: number | null): {
+  durationMinutes: number;
+  selectionMode: FocusSelectionMode;
+} {
+  if (!estimatedMinutes || !Number.isFinite(estimatedMinutes) || estimatedMinutes &lt;= 0) {
+    return { durationMinutes: DEFAULT_FOCUS_MINUTES, selectionMode: 'preset' };
+  }
+  const minutes = Math.min(MAX_FOCUS_MINUTES, Math.max(MIN_FOCUS_MINUTES, Math.round(estimatedMinutes)));
+  return {
+    durationMinutes: minutes,
+    selectionMode: (FOCUS_PRESETS as readonly number[]).includes(minutes) ? 'preset' : 'custom',
+  };
+}
+
+export function createFocusSession(params?: {</code></pre>
+<p>Dans <code>src/app/focus.tsx</code>, l'import, le paramètre reçu et le minuteur :</p>
+<div class="bloc">Bloc : focus-2-avant</div>
+<pre class="lang-tsx"><code>  calculateFocusProgress,
+} from '@/domain/rules/focus-rules';</code></pre>
+<div class="bloc">Bloc : focus-2-apres</div>
+<pre class="lang-tsx"><code>  calculateFocusProgress,
+  focusMinutesForTask,
+} from '@/domain/rules/focus-rules';</code></pre>
+<div class="bloc">Bloc : focus-3-avant</div>
+<pre class="lang-tsx"><code>  const params = useLocalSearchParams&lt;{ taskId?: string; taskTitle?: string }&gt;();
+
+  const [session, setSession] = useState&lt;FocusSession&gt;(() =&gt;
+    createFocusSession({
+      durationMinutes: 25,
+      taskId: params.taskId,</code></pre>
+<div class="bloc">Bloc : focus-3-apres</div>
+<pre class="lang-tsx"><code>  const params = useLocalSearchParams&lt;{ taskId?: string; taskTitle?: string; minutes?: string }&gt;();
+
+  const [session, setSession] = useState&lt;FocusSession&gt;(() =&gt;
+    createFocusSession({
+      // From a task: its "time to do it" (sheet 012), otherwise 25 minutes
+      ...focusMinutesForTask(Number(params.minutes)),
+      taskId: params.taskId,</code></pre>
+<p>Dans <code>src/app/tasks/[id].tsx</code>, le bouton Focus passe le temps de la tâche :</p>
+<div class="bloc">Bloc : focus-4-avant</div>
+<pre class="lang-tsx"><code>                params: { taskId: task.id, taskTitle: task.title },</code></pre>
+<div class="bloc">Bloc : focus-4-apres</div>
+<pre class="lang-tsx"><code>                params: { taskId: task.id, taskTitle: task.title, minutes: String(task.estimatedMinutes ?? '') },</code></pre>
+<p>Et le nom, partout où il s'affiche (création, modification), dans <code>src/i18n/messages.ts</code> :</p>
+<div class="bloc">Bloc : dur-fr-avant</div>
+<pre class="lang-ts"><code>  'taskNew.durationHeader': 'Durée estimée',</code></pre>
+<div class="bloc">Bloc : dur-fr-apres</div>
+<pre class="lang-ts"><code>  'taskNew.durationHeader': 'Temps pour le faire',</code></pre>
+<div class="bloc">Bloc : dur-en-avant</div>
+<pre class="lang-ts"><code>  'taskNew.durationHeader': 'Estimated time',</code></pre>
+<div class="bloc">Bloc : dur-en-apres</div>
+<pre class="lang-ts"><code>  'taskNew.durationHeader': 'Time to do it',</code></pre>
+<table><thead><tr><th>Changement</th><th>Effet</th></tr></thead><tbody><tr><td><code>focusMinutesForTask</code></td><td>Une tâche de 45 min ouvre Focus sur 45 min ; sans temps, 25 min comme avant ; 3 h est ramené à 120 min (le maximum de Focus)</td></tr><tr><td><code>selectionMode: 'custom'</code></td><td>45 n'est pas un des boutons de Focus (5, 15, 25, 50) : le minuteur est « personnalisé »</td></tr><tr><td><code>minutes: String(…)</code></td><td>Le bouton Focus de la tâche transmet son temps</td></tr><tr><td>« Temps pour le faire »</td><td>Le même nom à la création, à la modification, et la même étiquette « 30 min » sur les cartes qu'avant</td></tr></tbody></table>
+<h3 id="annexe-H-78">Étape 7 — Les textes (français et anglais)</h3>
+<p>Dans <code>src/i18n/messages-rest-fr.ts</code> :</p>
+<div class="bloc">Bloc : fr-avant</div>
+<pre class="lang-ts"><code>  'settingsScreen.nightSaved': "Horaires de nuit enregistrés",</code></pre>
+<div class="bloc">Bloc : fr-apres</div>
+<pre class="lang-ts"><code>  'settingsScreen.nightSaved': "Horaires de nuit enregistrés",
+  'itemForm.todo.title': "À faire",
+  'itemForm.todo.subtitle': "Une chose à cocher, avec ou sans alerte",
+  'itemForm.todo.submit': "Ajouter à mes choses à faire",
+  'itemForm.moment.title': "Moment",
+  'itemForm.moment.subtitle': "Un rendez-vous ou un événement, avec un début et une fin",
+  'itemForm.moment.submit': "Ajouter ce moment",
+  'itemForm.save': "Ajouter",
+  'itemForm.saving': "Ajout…",
+  'itemForm.what': "Quoi",
+  'itemForm.todoPlaceholder': "Que faut-il faire ?",
+  'itemForm.momentPlaceholder': "Quel moment ?",
+  'itemForm.notesPlaceholder': "Notes (facultatif)",
+  'itemForm.when': "Quand",
+  'itemForm.noDay': "Sans date",
+  'itemForm.alert': "Alerte",
+  'itemForm.alertSwitch': "M'alerter à une heure",
+  'itemForm.alertHint': "Sans alerte, elle attend dans ta liste. Avec, ton téléphone te prévient.",
+  'itemForm.alertTime': "À {time}",
+  'itemForm.priority': "Priorité",
+  'itemForm.priorityHint': "« Urgente » sonne comme une alarme.",
+  'itemForm.action': "Ce que tu feras",
+  'itemForm.slot': "Début et fin",
+  'itemForm.where': "Où",
+  'itemForm.wherePlaceholder': "Adresse ou lieu (facultatif)",
+  'itemForm.leave': "Partir … min avant",
+  'itemForm.leaveHint': "Ton téléphone te dira quand partir.",
+  'itemForm.more': "Plus d'options",
+  'itemForm.less': "Moins d'options",
+  'itemForm.durationHint': "Lancer Focus depuis cette tâche réglera le minuteur sur ce temps.",
+  'itemForm.availability': "Pendant ce moment",</code></pre>
+<p>Dans <code>src/i18n/messages-rest-en.ts</code> :</p>
+<div class="bloc">Bloc : en-avant</div>
+<pre class="lang-ts"><code>  'settingsScreen.nightSaved': "Night hours saved",</code></pre>
+<div class="bloc">Bloc : en-apres</div>
+<pre class="lang-ts"><code>  'settingsScreen.nightSaved': "Night hours saved",
+  'itemForm.todo.title': "To do",
+  'itemForm.todo.subtitle': "Something to tick off, with or without an alert",
+  'itemForm.todo.submit': "Add to my to-dos",
+  'itemForm.moment.title': "Moment",
+  'itemForm.moment.subtitle': "An appointment or event, with a start and an end",
+  'itemForm.moment.submit': "Add this moment",
+  'itemForm.save': "Add",
+  'itemForm.saving': "Adding…",
+  'itemForm.what': "What",
+  'itemForm.todoPlaceholder': "What needs doing?",
+  'itemForm.momentPlaceholder': "What is happening?",
+  'itemForm.notesPlaceholder': "Notes (optional)",
+  'itemForm.when': "When",
+  'itemForm.noDay': "No date",
+  'itemForm.alert': "Alert",
+  'itemForm.alertSwitch': "Alert me at a time",
+  'itemForm.alertHint': "Without an alert it waits in your list. With one, your phone tells you.",
+  'itemForm.alertTime': "At {time}",
+  'itemForm.priority': "Priority",
+  'itemForm.priorityHint': "“Urgent” rings like an alarm.",
+  'itemForm.action': "What you will do",
+  'itemForm.slot': "Start and end",
+  'itemForm.where': "Where",
+  'itemForm.wherePlaceholder': "Address or place (optional)",
+  'itemForm.leave': "Leave … min before",
+  'itemForm.leaveHint': "Your phone will tell you when to leave.",
+  'itemForm.more': "More options",
+  'itemForm.less': "Fewer options",
+  'itemForm.durationHint': "Starting Focus from this task sets the timer to this time.",
+  'itemForm.availability': "During this moment",</code></pre>
+<h3 id="annexe-H-89">Étape 8 — Les tests</h3>
+<p>Créer <code>src/__tests__/item-forms.test.ts</code> :</p>
+<div class="bloc">Bloc : test</div>
+<pre class="lang-ts"><code>import {
+  alertMoment,
+  dayParam,
+  hourParam,
+  ITEM_FORMS,
+  visibleMoreFields,
+  visibleSections,
+} from '../constants/item-forms';
+import { ITEM_FAMILIES } from '../constants/item-kinds';
+import { focusMinutesForTask } from '../domain/rules/focus-rules';
+
+describe('the forms registry', () =&gt; {
+  it('gives each family its own form, in the order of the study', () =&gt; {
+    expect(Object.keys(ITEM_FORMS).sort()).toEqual([...ITEM_FAMILIES].sort());
+    expect(visibleSections('todo')).toEqual(['what', 'when', 'alert', 'who', 'more']);
+    expect(ITEM_FORMS.moment.sections).toEqual(['what', 'slot', 'where', 'leave', 'who', 'more']);
+  });
+
+  it('offers "Leave … min before" only once a place is written', () =&gt; {
+    expect(visibleSections('moment', { place: '' })).not.toContain('leave');
+    expect(visibleSections('moment', { place: '   ' })).not.toContain('leave');
+    expect(visibleSections('moment', { place: 'Chez Léa' })).toContain('leave');
+  });
+
+  it('hides what a reminder does not have once the alert is on', () =&gt; {
+    expect(visibleMoreFields('todo')).toEqual(['priority', 'deadline', 'duration', 'subtasks', 'tags']);
+    expect(visibleMoreFields('todo', { alert: true })).toEqual(['tags']);
+    expect(visibleMoreFields('moment', { alert: true })).toEqual(['availability', 'tags']);
+  });
+
+  it('reads the day and the hour handed by the Planning', () =&gt; {
+    expect(dayParam('2026-11-24')).toBe('2026-11-24');
+    expect(dayParam('2026-11-24T10:00:00.000Z')).toBe('2026-11-24');
+    expect(dayParam('demain')).toBeUndefined();
+    expect(dayParam(undefined)).toBeUndefined();
+    expect(hourParam('14')).toBe(14);
+    expect(hourParam('0')).toBe(0);
+    expect(hourParam('24')).toBeUndefined();
+    expect(hourParam('9.5')).toBeUndefined();
+    expect(hourParam('')).toBeUndefined();
+  });
+
+  it('puts the alert on its day at its time, today when no day is chosen', () =&gt; {
+    const now = new Date(2026, 10, 23, 15, 10);
+    const onDay = alertMoment('2026-11-25', { hour: 9, minute: 30 }, now);
+    expect([onDay.getFullYear(), onDay.getMonth(), onDay.getDate(), onDay.getHours(), onDay.getMinutes()]).toEqual([2026, 10, 25, 9, 30]);
+    const today = alertMoment(undefined, { hour: 18, minute: 0 }, now);
+    expect([today.getDate(), today.getHours()]).toEqual([23, 18]);
+  });
+});
+
+describe('the time to do a task, in Focus', () =&gt; {
+  it('sets the timer to the time of the task', () =&gt; {
+    expect(focusMinutesForTask(15)).toEqual({ durationMinutes: 15, selectionMode: 'preset' });
+    expect(focusMinutesForTask(45)).toEqual({ durationMinutes: 45, selectionMode: 'custom' });
+  });
+
+  it('keeps 25 minutes for a task without a time', () =&gt; {
+    expect(focusMinutesForTask(undefined)).toEqual({ durationMinutes: 25, selectionMode: 'preset' });
+    expect(focusMinutesForTask(Number(''))).toEqual({ durationMinutes: 25, selectionMode: 'preset' });
+    expect(focusMinutesForTask(Number(undefined))).toEqual({ durationMinutes: 25, selectionMode: 'preset' });
+  });
+
+  it('keeps the timer within what Focus allows', () =&gt; {
+    expect(focusMinutesForTask(180)).toEqual({ durationMinutes: 120, selectionMode: 'custom' });
+  });
+});</code></pre>
+<table><thead><tr><th>Test</th><th>Ce qu'il prouve</th></tr></thead><tbody><tr><td>ordre</td><td>Chaque famille a son formulaire, dans l'ordre de l'étude</td></tr><tr><td>lieu</td><td>« Partir … min avant » n'apparaît qu'avec un vrai lieu (des espaces ne comptent pas)</td></tr><tr><td>alerte</td><td>Avec l'alerte, seules les étiquettes restent dans Plus d'options (la priorité est montée sous l'alerte)</td></tr><tr><td>paramètres</td><td>Le jour et l'heure venus du Planning sont lus proprement, les valeurs fausses ignorées</td></tr><tr><td>heure de l'alerte</td><td>Le bon jour à la bonne heure ; aujourd'hui sans jour</td></tr><tr><td>Focus</td><td>15 min = un bouton de Focus ; 45 = personnalisé ; sans temps = 25 ; 3 h = 120</td></tr></tbody></table>
+<h2 id="annexe-H-94">8. Test final</h2>
+<pre class="lang-bash"><code>npx jest src/__tests__/item-forms.test.ts
+npx jest
+npx tsc --noEmit
+npx eslint src/constants/item-forms.ts src/components/create/form/FormBricks.tsx src/features/create src/app/tasks src/app/reminders/new.tsx src/app/events/new.tsx src/app/focus.tsx src/domain/rules/focus-rules.ts src/__tests__/item-forms.test.ts</code></pre>
+<p>Résultat attendu : <code>Tests: 8 passed</code> pour le nouveau fichier ; toute la suite passe ; <code>tsc</code> et <code>eslint</code> n'affichent rien.</p>
+<p><strong>Sur le web</strong> :</p>
+<ol><li>Accueil › « + » › <strong>À faire</strong> › Sans alerte : formulaire <strong>cyan</strong>, « Quoi », « Quand », « Alerte » (éteinte), « Avec qui », « Plus d'options ». Écrire un titre, Aujourd'hui, Ajouter : la tâche apparaît.</li><li>Activer <strong>Alerte</strong> : l'heure, la priorité, l'action, la répétition et « à confirmer » apparaissent ; « Sans date » disparaît ; Plus d'options ne garde que les étiquettes. Ajouter : un rappel est créé.</li><li>« + » › <strong>Moment</strong> : formulaire <strong>ambre</strong> ; « Partir … min avant » apparaît dès qu'un lieu est écrit.</li><li>Une tâche avec « Temps pour le faire » 45 min › sa fiche › Focus : le minuteur affiche 45:00.</li><li>Thème clair : les deux formulaires restent lisibles (cyan et ambre foncés, bouton à texte blanc).</li></ol>
+<p><strong>Sur le téléphone</strong> : le micro à côté du titre et des notes ; parler remplit le champ.</p>
+<h2 id="annexe-H-100">9. Dépannage</h2>
+<table><thead><tr><th>Symptôme</th><th>Cause</th><th>Remède</th></tr></thead><tbody><tr><td><code>Property 'fieldSub' does not exist</code></td><td>Le style porte un autre nom dans <code>form-styles.ts</code></td><td>Chercher le nom du petit texte d'aide dans <code>src/styles/common/form-styles.ts</code> et le mettre dans <code>FieldLabel</code> et <code>SwitchRow</code></td></tr><tr><td>Le micro n'apparaît pas</td><td>Normal sur le web et sur iPhone : la dictée est seulement sur Android</td><td>Tester sur le téléphone</td></tr><tr><td>La dictée remplit les deux champs</td><td><code>mineRef</code> absent ou mal recopié</td><td>Recopier le bloc de l'étape 2</td></tr><tr><td>« Il faut une heure à venir » en activant l'alerte le soir</td><td>L'heure proposée est l'heure suivante du jour choisi ; après 23 h, elle revient à minuit</td><td>Choisir Demain, ou une autre heure</td></tr><tr><td>Un ancien test cherche un texte de l'ancien formulaire</td><td>Les écrans ont changé</td><td>Mettre à jour le test avec le nouveau texte, ou chercher par <code>testID</code></td></tr></tbody></table>
+<h2 id="annexe-H-102">10. Lexique</h2>
+<ul><li><strong>Registre</strong> : une liste unique qui décrit quelque chose (ici, les sections de chaque formulaire) ; les écrans la lisent au lieu de tout écrire en dur.</li><li><strong>Brique</strong> : un petit composant réutilisable (une section, un champ, une rangée de choix).</li><li><strong>Route</strong> : l'adresse d'un écran dans l'appli (<code>/tasks/new</code>). On garde les routes pour que tous les liens existants continuent de marcher.</li><li><strong>Dictée sur l'appareil</strong> : la voix est reconnue par le téléphone lui-même, sans Internet.</li></ul>
+<h2 id="annexe-H-104">11. Et après</h2>
+<ol><li>Les écrans de <strong>modification</strong> (tâche, rappel, moment) avec les mêmes briques.</li><li>Le chantier n° 4 (12.10) : l'onglet « À faire » et le bouton « + À faire ou moment ».</li><li>Au chantier n° 5 : le champ « Type de moment » dans le registre (<code>ITEM_FORMS.moment</code>).</li></ol>
+<h2 id="annexe-H-106">Compte rendu d'exécution (23 novembre 2026)</h2>
+<ul><li>Décisions prises avant d'écrire et notées dans l'étude 001, section 12.2 : création d'abord ; priorité sous l'Alerte ; options des rappels sous l'Alerte ; la durée devient « Temps pour le faire », reliée au minuteur de Focus (elle ne servait à rien, d'où l'incompréhension : seulement une étiquette « 30 min » sur les cartes).</li><li>Code lu avant d'écrire : les trois anciens formulaires en entier, la dictée de la saisie rapide (<code>use-dictation.ts</code>), les routes du choix « Nouveau », Focus et son lancement depuis une tâche.</li><li>Étapes 1 à 8 appliquées <strong>à partir des blocs de cette fiche</strong> (<code>docs/tutoriel-suite/outils/appliquer-fiche-012.js</code>) : toutes les modifications trouvées une seule fois.</li><li>Tests : <code>Tests: 8 passed</code> (nouveau fichier) ; toute la suite <code>Test Suites: 89 passed</code>, <code>Tests: 1926 passed</code> ; <code>tsc</code> et <code>eslint</code> sans erreur, du premier coup.</li><li><strong>Vu sur le web</strong> : « À faire » en cyan, sections dans l'ordre de l'étude ; l'Alerte activée fait disparaître « Sans date », choisit Aujourd'hui, montre l'heure, la priorité avec son explication, l'action, la répétition et « à confirmer » ; « Moment » en ambre ; « Partir … min avant » n'apparaît qu'après avoir écrit un lieu.</li><li><strong>Deux écarts corrigés après les avoir vus à l'écran</strong> (la fiche décrit maintenant la version corrigée) :</li><li>le titre de l'action reprenait un vieux texte jargonneux (« Sphère d'Intention &amp; Action ») : nouveau texte <code>itemForm.action</code> « Ce que tu feras » / « What you will do » ;</li><li>« Début » et « Fin » n'affichaient que la date : ils affichent l'heure puis la date (« 14:00 · 23 nov. 2026 »), comme l'ancien formulaire.</li><li>Les 8 fichiers créés ou remplacés ont été comparés à leurs blocs : identiques.</li><li><strong>Pas vérifié</strong> : le thème clair des deux formulaires, le minuteur de Focus réglé par une vraie tâche (couvert par le test de <code>focusMinutesForTask</code>), l'enregistrement réel d'une tâche, d'un rappel et d'un moment (mêmes fonctions qu'avant : <code>createTask</code>, <code>createReminder</code>, <code>createEvent</code>), et la dictée (Android seulement). À voir sur le téléphone avec un nouvel APK. Rien n'est encore enregistré dans git.</li></ul></section>
 </body></html>

@@ -50,7 +50,11 @@ git status --short
 
 > [astuce] Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).
 
-## 2.2 Fait, testé, mais PAS encore enregistré : la fiche 011 (notifications)
+## 2.2 bis Fait, testé, mais PAS encore enregistré : la fiche 012 (formulaires)
+
+La **fiche 012** (annexe H) fait le chantier n° 3 : deux formulaires de création, **« À faire »** (cyan, avec l'interrupteur Alerte) et **« Moment »** (ambre, « Partir … min avant » seulement avec un lieu), construits à partir d'un registre (`src/constants/item-forms.ts`), avec la **dictée** dans le titre et les notes. La durée devient **« Temps pour le faire »** et règle le minuteur de Focus. Appliquée, testée (1926 tests), vue sur le web ; à enregistrer, puis à voir sur le téléphone.
+
+## 2.2 La fiche 011 (notifications)
 
 La **fiche 011** (annexe G) fait le chantier n° 2 : les notifications des trois types, avec trois niveaux et la nuit réglable. Elle est **appliquée, testée (1918 tests) et vue sur le web** (le réglage « Nuit plus calme »). Il reste à l'**enregistrer** (commit), puis à la voir sur le téléphone avec un nouvel APK (recette C). Le détail est dans le compte rendu en bas de la fiche.
 

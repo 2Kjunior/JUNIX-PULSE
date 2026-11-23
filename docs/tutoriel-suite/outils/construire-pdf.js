@@ -120,7 +120,10 @@ toc.push({ level: 1, text: 'Annexe F — Étude 001, section 12 : toutes les dé
 annexes.push(`<section class="annexe"><h1 id="annexe-etude">Annexe F — Étude 001, section 12 : toutes les décisions</h1>${markdown(s12, 'e')}</section>`);
 
 // Later sheets, as annexes G, H… (chapter 25 of the tutorial explains how to add one)
-for (const [title, file] of [['Annexe G — Fiche 011 complète (notifications des trois types)', 'docs/fiches/FICHE-011-notifications-trois-types.md']]) {
+for (const [title, file] of [
+  ['Annexe G — Fiche 011 complète (notifications des trois types)', 'docs/fiches/FICHE-011-notifications-trois-types.md'],
+  ['Annexe H — Fiche 012 complète (formulaires À faire et Moment)', 'docs/fiches/FICHE-012-formulaires-a-faire-et-moment.md'],
+]) {
   const id = `annexe-${title.slice(7, 8)}`;
   toc.push({ level: 1, text: title, id });
   const md = fs.readFileSync(path.join(ROOT, file), 'utf8').replace(/^# .*\n/, '');

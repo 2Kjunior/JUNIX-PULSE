@@ -240,6 +240,8 @@ Dans les formulaires (recette E), ajoute une rangée de trois boutons **Discret 
 
 <div class="fiche-recette"><div><b>Temps</b>2 jours</div><div><b>Difficulté</b>3 / 5</div><div><b>Ingrédients</b>src/app/reminders/new, tasks/new, events/new, item-kinds.ts</div><div><b>Ustensiles</b>composants existants (GlowCard, champs)</div></div>
 
+> [astuce] **Fait le 23 novembre 2026 par la fiche 012** (annexe H), pour les écrans de **création**, après quatre décisions prises ensemble (création d'abord, priorité et options des rappels sous l'Alerte, durée renommée « Temps pour le faire » et reliée à Focus). **La fiche 012 est la version qui marche** ; les écrans de **modification** restent à faire avec les mêmes briques (`FormBricks.tsx`).
+
 ## 11.1 La décision (étude 12.2)
 
 Deux formulaires **bien différents à l'œil**, construits depuis le registre :
