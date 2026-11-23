@@ -404,7 +404,8 @@ export default function RootLayout() {
       const reminderId = data?.reminderId as string | undefined;
 
       // Jouer le son Junix Pulse en foreground (le système ne joue pas de son car shouldPlaySound: false)
-      NotificationSoundService.play(!splashFinishedRef.current);
+      // A discreet notification stays silent, in the app too (sheet 011)
+      if (data?.level !== "discreet") NotificationSoundService.play(!splashFinishedRef.current);
 
       if (reminderId) {
         void announceReminderArrived(reminderId);

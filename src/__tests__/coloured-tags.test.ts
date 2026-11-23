@@ -186,7 +186,10 @@ describe('migration 33', () => {
     expect(sql.match(/ON DELETE CASCADE/g)).toHaveLength(6);
   });
 
-  it('is the last migration', () => {
-    expect(Math.max(...MIGRATIONS.map(m => m.version))).toBe(33);
+  // Later sheets add migrations after it (34: the night of the notifications, sheet 011)
+  it('keeps its place, right after 32, with the versions in order', () => {
+    const versions = MIGRATIONS.map(m => m.version);
+    expect(versions.indexOf(33)).toBe(versions.indexOf(32) + 1);
+    expect(versions).toEqual([...versions].sort((a, b) => a - b));
   });
 });

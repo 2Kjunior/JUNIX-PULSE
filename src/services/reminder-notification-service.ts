@@ -12,7 +12,9 @@ import {
 } from '@/domain/rules/reminder-notification-rules';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
+import { levelOf, quietHoursOf } from '@/domain/rules/notification-level-rules';
 import { NotificationService } from '@/services/notification-service';
+import { syncItemNotifications } from '@/services/item-notification-service';
 import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 
@@ -57,7 +59,12 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
   try {
     const settings = await SettingsRepository.get();
     const planned = settings.notificationsEnabled
-      ? planReminderNotifications(await loadReminders(), new Date(), useAppStore.getState().language)
+      ? planReminderNotifications(
+          await loadReminders(),
+          new Date(),
+          useAppStore.getState().language,
+          quietHoursOf(settings)
+        )
       : [];
 
     const held = (await NotificationService.getAllScheduled()).filter(request =>
@@ -73,6 +80,8 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         item &&
         item.title === request.content.title &&
         item.body === request.content.body &&
+        // A reminder whose level changed (night, urgency) moves to the channel of its new level
+        levelOf(request.content.data?.level) === item.level &&
         // Notifications planned before the buttons existed are planned again with them
         request.content.categoryIdentifier === REMINDER_CATEGORY_ID
       ) {
@@ -101,6 +110,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         body: item.body,
         scheduledAt: item.scheduledAt,
         silent: !settings.notificationSoundEnabled,
+        level: item.level,
       });
       if (scheduled) report.scheduled += 1;
       else report.failed += 1;
@@ -116,6 +126,8 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
 export function syncReminderNotifications(options: ReminderSyncOptions = {}): Promise<ReminderSyncReport> {
   const run = queue.then(() => sync(options));
   queue = run;
+  // The tasks and moments follow the same changes (settings, language, permission, launch)
+  void syncItemNotifications({ force: options.force });
   return run.then(report => {
     if (options.interactive && (report.failed > 0 || report.permissionDenied)) {
       listeners.forEach(listener => listener(report));

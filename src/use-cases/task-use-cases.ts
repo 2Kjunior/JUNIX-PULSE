@@ -12,6 +12,7 @@ import { Subtask, Task, TaskStatus, ReminderPriority } from '../domain/entities'
 import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
 import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
+import { syncItemNotifications } from '../services/item-notification-service';
 
 // ─── Interfaces d'entrée ──────────────────────────────────────────────────────
 
@@ -129,6 +130,7 @@ export const TaskUseCases = {
     }
 
     emitMascotEvent({ type: 'ITEM_CREATED' });
+    void syncItemNotifications();
     return taskId;
   },
 
@@ -144,6 +146,7 @@ export const TaskUseCases = {
     });
     if (personIds !== undefined) await TaskRepository.setPersons(input.id, personIds);
     if (tagIds !== undefined) await TagRepository.setFor('task', input.id, tagIds);
+    void syncItemNotifications();
   },
 
   /**
@@ -174,6 +177,7 @@ export const TaskUseCases = {
     if (isNowCompleted) await announceTaskCompleted(task);
     // Its goals follow: reached with their last task, active again if one is reopened
     await GoalUseCases.refreshGoalsOfTask(id).catch(() => {});
+    void syncItemNotifications();
     return newStatus;
   },
 
@@ -194,10 +198,12 @@ export const TaskUseCases = {
     const now = new Date().toISOString();
     await TaskRepository.softDelete(id, now);
     emitMascotEvent({ type: 'ITEM_DELETED' });
+    void syncItemNotifications();
     return {
       undo: async () => {
         const undoNow = new Date().toISOString();
         await TaskRepository.undoDelete(id, undoNow);
+        void syncItemNotifications();
       },
     };
   },
@@ -208,6 +214,7 @@ export const TaskUseCases = {
   async undoDelete(id: string): Promise<void> {
     const now = new Date().toISOString();
     await TaskRepository.undoDelete(id, now);
+    void syncItemNotifications();
   },
 
   // ─── Actions Sous-tâches ────────────────────────────────────────────────────

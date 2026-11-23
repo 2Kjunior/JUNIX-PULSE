@@ -14,5 +14,6 @@ Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail
 | [008](FICHE-008-deux-familles.md) | Deux familles : « À faire » et « Moment » (1-B, étape 1) | 22 novembre 2026 | fait (vérifié sur le web, à tester sur téléphone) |
 | [009](FICHE-009-icones-logo-a1.md) | Les icônes du logo A1 (l'orbe) | 22 novembre 2026 | fait (à voir sur le téléphone après un nouvel APK) |
 | [010](FICHE-010-animation-lancement-orbe.md) | L'animation de lancement autour de l'orbe, et le nouveau `PulseLogo` | 23 novembre 2026 | fait et testé (à voir sur le téléphone après un nouvel APK) |
+| [011](FICHE-011-notifications-trois-types.md) | Les notifications des trois types, avec trois niveaux (Discret, Normal, Alarme) et la nuit réglable | 23 novembre 2026 | fait et testé (à voir sur le téléphone après un nouvel APK) |
 
 Pour comprendre le rôle de chaque dossier et fichier : [l'explorateur du projet](../apprendre/explorateur-du-projet.html) (à ouvrir dans un navigateur ; le remettre à jour avec `node docs/apprendre/generer-explorateur.js`).

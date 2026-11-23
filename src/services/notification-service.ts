@@ -19,6 +19,11 @@ import {
 } from "@/domain/rules/reminder-notification-rules";
 import { Platform } from "react-native";
 import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
+import {
+  notificationChannelFor,
+  type NotificationChannelKind,
+  type NotificationLevel,
+} from "@/domain/rules/notification-level-rules";
 
 type NotificationsType = typeof import("expo-notifications");
 
@@ -39,6 +44,21 @@ try {
 // Canal distinct des rappels : importance normale, désactivable séparément dans Android
 const DAILY_RECAP_CHANNEL_ID = "junix-pulse-daily-recap";
 const NOTIFICATION_SILENT_CHANNEL_ID = "junix-pulse-reminders-silent-v1";
+// The levels of study 001 (12.6). A channel's sound and importance are fixed when it is created:
+// other settings mean a new identifier, never a change to these
+const NOTIFICATION_DISCREET_CHANNEL_ID = "junix-pulse-level-discreet-v1";
+const NOTIFICATION_ALARM_CHANNEL_ID = "junix-pulse-level-alarm-v1";
+
+/** The Android channel of a level, given whether the notifications have their sound. */
+export function channelIdFor(level: NotificationLevel, soundOn: boolean): string {
+  const channels: Record<NotificationChannelKind, string> = {
+    discreet: NOTIFICATION_DISCREET_CHANNEL_ID,
+    normal: NOTIFICATION_CHANNEL_ID,
+    alarm: NOTIFICATION_ALARM_CHANNEL_ID,
+    silent: NOTIFICATION_SILENT_CHANNEL_ID,
+  };
+  return channels[notificationChannelFor(level, soundOn)];
+}
 const DAILY_RECAP_KINDS: readonly DailyRecapKind[] = ["MORNING_SUMMARY", "EVENING_REVIEW"];
 
 const dailyRecapIdentifier = (kind: DailyRecapKind) => `daily-recap-${kind}`;
@@ -56,6 +76,19 @@ export interface ScheduleReminderParams {
   body?: string;
   scheduledAt: Date;
   data?: Record<string, unknown>;
+  /** How loud it rings (sheet 011); normal when not given. */
+  level?: NotificationLevel;
+}
+
+export interface ScheduleItemParams {
+  identifier: string;
+  itemType: "TASK" | "EVENT";
+  itemId: string;
+  title: string;
+  body: string;
+  scheduledAt: Date;
+  level: NotificationLevel;
+  soundOn: boolean;
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -125,6 +158,32 @@ export const NotificationService = {
           sound: null,
         });
 
+        // Discreet: in the list of notifications, without sound, vibration or banner
+        await Notifications.setNotificationChannelAsync(NOTIFICATION_DISCREET_CHANNEL_ID, {
+          name: t('notifChannel.discreetName'),
+          description: t('notifChannel.discreetDesc'),
+          importance: Notifications.AndroidImportance.LOW,
+          enableVibrate: false,
+          lightColor: "#8B3DF0",
+          showBadge: false,
+          sound: null,
+        });
+
+        // Alarm: the loudest, shown on the locked screen. It does not bypass Do not disturb: the user
+        // can allow it in the settings of the phone
+        await Notifications.setNotificationChannelAsync(NOTIFICATION_ALARM_CHANNEL_ID, {
+          name: t('notifChannel.alarmName'),
+          description: t('notifChannel.alarmDesc'),
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 600, 300, 600, 300, 600],
+          lightColor: "#FFB4AB",
+          enableVibrate: true,
+          showBadge: false,
+          sound: NOTIFICATION_SOUND_WAV_FILENAME,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          bypassDnd: false,
+        });
+
         await Notifications.setNotificationChannelAsync(DAILY_RECAP_CHANNEL_ID, {
           name: t('notifChannel.recapName'),
           description: t('notifChannel.recapDesc'),
@@ -192,24 +251,59 @@ export const NotificationService = {
           data: {
             reminderId: params.id,
             type: "REMINDER",
+            level: params.level ?? "normal",
             ...params.data,
           },
           // iOS uses the filename; Android uses the channel's configured sound.
-          sound: params.silent ? false : NOTIFICATION_SOUND_WAV_FILENAME,
+          sound: params.silent || params.level === "discreet" ? false : NOTIFICATION_SOUND_WAV_FILENAME,
           categoryIdentifier: REMINDER_CATEGORY_ID,
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: triggerDate,
-          channelId:
-            Platform.OS === "android"
-              ? params.silent ? NOTIFICATION_SILENT_CHANNEL_ID : NOTIFICATION_CHANNEL_ID
-              : undefined,
+          channelId: Platform.OS === "android" ? channelIdFor(params.level ?? "normal", !params.silent) : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
     } catch {
       logger.error("[NotificationService] Erreur lors de scheduleReminder");
+      return null;
+    }
+  },
+
+  /**
+   * Plans the notification of a task or a moment (sheet 011), on the channel of its level.
+   * Returns its identifier, or null when its time is past or planning failed.
+   */
+  async scheduleItem(params: ScheduleItemParams): Promise<string | null> {
+    if (!Notifications || params.scheduledAt <= new Date()) return null;
+    const priorities = {
+      discreet: Notifications.AndroidNotificationPriority.LOW,
+      normal: Notifications.AndroidNotificationPriority.HIGH,
+      alarm: Notifications.AndroidNotificationPriority.MAX,
+    };
+    try {
+      return await Notifications.scheduleNotificationAsync({
+        identifier: params.identifier,
+        content: {
+          title: params.title,
+          body: params.body,
+          data: {
+            type: params.itemType,
+            [params.itemType === "TASK" ? "taskId" : "eventId"]: params.itemId,
+            level: params.level,
+          },
+          sound: params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,
+          priority: priorities[params.level],
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: params.scheduledAt,
+          channelId: Platform.OS === "android" ? channelIdFor(params.level, params.soundOn) : undefined,
+        } as import("expo-notifications").DateTriggerInput,
+      });
+    } catch {
+      logger.error("[NotificationService] Erreur lors de scheduleItem");
       return null;
     }
   },

@@ -47,6 +47,8 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     forgottenContactThresholdDays: (row.forgotten_contact_threshold_days as number) ?? 30,
     endOfDayHour: (row.end_of_day_hour as number) ?? 20,
     morningBriefingHour: (row.morning_briefing_hour as number) ?? 8,
+    quietHoursStart: (row.quiet_hours_start as number | undefined) ?? 22,
+    quietHoursEnd: (row.quiet_hours_end as number | undefined) ?? 7,
     appearanceMode,
     reduceTransparency: (row.reduce_transparency as number) === 1,
     appearanceDark: row.appearance_dark !== undefined ? (row.appearance_dark as number) === 1 : true,
@@ -138,6 +140,14 @@ export const SettingsRepository = {
     if (params.morningBriefingHour !== undefined) {
       setClauses.push('morning_briefing_hour = ?');
       values.push(params.morningBriefingHour);
+    }
+    if (params.quietHoursStart !== undefined) {
+      setClauses.push('quiet_hours_start = ?');
+      values.push(params.quietHoursStart);
+    }
+    if (params.quietHoursEnd !== undefined) {
+      setClauses.push('quiet_hours_end = ?');
+      values.push(params.quietHoursEnd);
     }
 
     if (params.mascotPresence !== undefined && VALID_MASCOT_PRESENCE.has(params.mascotPresence)) {

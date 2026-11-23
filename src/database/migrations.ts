@@ -608,5 +608,15 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_event_tags_tag ON event_tags(tag_id);
     `,
   },
+  {
+    version: 34,
+    name: 'add_quiet_hours',
+    sql: `
+      -- La nuit des notifications (fiche 011) : entre ces deux heures, tout descend
+      -- d un niveau sauf les alarmes. 22 et 7 par defaut, reglables dans les Parametres.
+      ALTER TABLE settings ADD COLUMN quiet_hours_start INTEGER NOT NULL DEFAULT 22;
+      ALTER TABLE settings ADD COLUMN quiet_hours_end INTEGER NOT NULL DEFAULT 7;
+    `,
+  },
 ];
 

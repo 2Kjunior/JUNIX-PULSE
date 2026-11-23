@@ -298,6 +298,12 @@ export interface Settings {
   endOfDayHour: number;        // Heure à laquelle Junix propose de gérer les tâches restantes (ex: 20)
   morningBriefingHour: number; // Heure du résumé matin (ex: 8)
   /**
+   * The night of the notifications, in hours (sheet 011): everything goes down one level,
+   * except alarms. 22 and 7 by default; absent from settings built before it existed.
+   */
+  quietHoursStart?: number;
+  quietHoursEnd?: number;
+  /**
    * Mode d'apparence choisi : suit le système, clair, ou sombre.
    * Valeur par défaut : 'dark'.
    */

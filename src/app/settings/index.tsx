@@ -372,6 +372,18 @@ export default function SettingsScreen() {
     }
   };
 
+  // The night of the notifications (sheet 011): the planned notifications follow at once
+  const handleUpdateQuietHours = async (change: { quietHoursStart?: number; quietHoursEnd?: number }) => {
+    try {
+      await SettingsRepository.update({ ...change, updatedAt: new Date().toISOString() });
+      setSettings(s => (s ? { ...s, ...change } : s));
+      await syncReminderNotifications();
+      showSnackbar(t('settingsScreen.nightSaved'));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+
   const handleExportData = async () => {
     GlassAlert.alert(
       t('settingsScreen.backupTitle'),
@@ -638,6 +650,19 @@ export default function SettingsScreen() {
             {...switchColors(settings.notificationSoundEnabled)}
             accessibilityLabel={t('settingsScreen.soundLabel')}
           />
+        </View>
+      )}
+
+      {settings.notificationsEnabled && (
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('settingsScreen.nightLabel')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.nightHint')}</Text>
+          <Text style={styles.rowSub}>{t('settingsScreen.nightStart')}</Text>
+          {renderHourPills([21, 22, 23], settings.quietHoursStart ?? 22, hour =>
+            handleUpdateQuietHours({ quietHoursStart: hour })
+          )}
+          <Text style={styles.rowSub}>{t('settingsScreen.nightEnd')}</Text>
+          {renderHourPills([6, 7, 8], settings.quietHoursEnd ?? 7, hour => handleUpdateQuietHours({ quietHoursEnd: hour }))}
         </View>
       )}
 

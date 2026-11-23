@@ -8,6 +8,7 @@ import { EventRepository } from '../repositories/event-repository';
 import { EventType } from '../domain/entities';
 import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
+import { syncItemNotifications } from '../services/item-notification-service';
 import { meetingWindow } from '../domain/rules/person-link-rules';
 import { recordLinkedInteraction } from './person-use-cases';
 
@@ -70,6 +71,7 @@ export const EventUseCases = {
     if (input.tagIds?.length) await TagRepository.setFor('event', eventId, input.tagIds);
 
     emitMascotEvent({ type: 'ITEM_CREATED' });
+    void syncItemNotifications();
     return eventId;
   },
 
@@ -97,6 +99,7 @@ export const EventUseCases = {
       input.personIds
     );
     if (input.tagIds !== undefined) await TagRepository.setFor('event', input.id, input.tagIds);
+    void syncItemNotifications();
   },
 
   /**
@@ -106,6 +109,7 @@ export const EventUseCases = {
     const now = new Date().toISOString();
     await EventRepository.softDelete(id, now);
     emitMascotEvent({ type: 'ITEM_DELETED' });
+    void syncItemNotifications();
   },
 
   /**
@@ -137,5 +141,6 @@ export const EventUseCases = {
   async undoDelete(id: string): Promise<void> {
     const now = new Date().toISOString();
     await EventRepository.undoDelete(id, now);
+    void syncItemNotifications();
   },
 };

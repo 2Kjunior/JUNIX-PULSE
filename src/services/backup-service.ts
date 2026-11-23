@@ -63,7 +63,7 @@ const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   planning_blocks: ['id', 'schedule_id', 'label', 'type', 'day_of_week', 'start_time', 'end_time', 'color', 'created_at', 'updated_at'],
   interactions: ['id', 'person_id', 'type', 'occurred_at', 'notes', 'reminder_id', 'task_id', 'event_id', 'created_at'],
   suggestions: ['id', 'type', 'status', 'title', 'explanation', 'target_id', 'target_type', 'proposed_data', 'generated_at', 'expires_at', 'decided_at', 'created_at'],
-  settings: ['id', 'display_name', 'timezone', 'onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'appearance_mode', 'mascot_presence', 'mascot_address', 'mascot_proposals', 'mascot_briefings', 'language', 'notification_sound_enabled', 'haptics_enabled', 'created_at', 'updated_at'],
+  settings: ['id', 'display_name', 'timezone', 'onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'appearance_mode', 'mascot_presence', 'mascot_address', 'mascot_proposals', 'mascot_briefings', 'language', 'notification_sound_enabled', 'haptics_enabled', 'quiet_hours_start', 'quiet_hours_end', 'created_at', 'updated_at'],
   sanctum_notes: ['id', 'title', 'content', 'folder', 'created_at', 'updated_at'],
 };
 
@@ -106,7 +106,7 @@ const INTEGER_COLUMNS: Partial<Record<BackupTable, readonly string[]>> = {
   habits: ['target_days_per_week'],
   personal_schedules: [],
   planning_blocks: ['day_of_week'],
-  settings: ['onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'mascot_briefings', 'notification_sound_enabled', 'haptics_enabled'],
+  settings: ['onboarding_completed', 'notifications_enabled', 'forgotten_contact_threshold_days', 'end_of_day_hour', 'morning_briefing_hour', 'appearance_dark', 'mascot_briefings', 'notification_sound_enabled', 'haptics_enabled', 'quiet_hours_start', 'quiet_hours_end'],
 };
 
 const ENUM_COLUMNS: Partial<Record<BackupTable, Record<string, readonly string[]>>> = {

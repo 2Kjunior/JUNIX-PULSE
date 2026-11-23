@@ -441,6 +441,11 @@ Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leu
   - **dans l'appli ou hors de l'appli** : appli ouverte, un petit son et un bandeau dans l'appli ; appli fermée, la notification Android avec son niveau.
 - **L'alarme** se fait **dans la notification**, comme l'appli Réveil du téléphone : notification qui reste, sonnerie qui continue, gros boutons **Arrêter** / **Plus tard**, et plein écran **seulement si** Android l'autorise (sinon la même chose en notification prioritaire).
 - **Les sons** (6-D) : sons de Junix d'abord, puis sonneries et musiques du téléphone, avec un son par niveau et par type de moment, réglables dans les Paramètres.
+- **Précisions du 23 novembre 2026** (avant la fiche 011) :
+  - **la nuit** : de 22 h à 7 h par défaut, **réglable dans les Paramètres** ;
+  - **les échéances** d'une chose « À faire » : la **veille à 18 h** et le **jour même à 9 h** ;
+  - **les Moments** : **15 min avant** le début, en plus de l'alerte de départ (« Partir … min avant ») s'il y a un lieu ;
+  - **découpage** : la fiche 011 fait la règle des niveaux, les canaux Android et les notifications des trois types ; les sons et l'alarme qui sonne en continu viennent au chantier n° 9. Le critère « type de moment » attend le chantier n° 5 (les types de moments n'existent pas encore).
 
 ### 12.7 Logo (point 7 et 10.3) : A · L'orbe, et la question du « J »
 

@@ -8,6 +8,7 @@ import { RecurrenceRule, Reminder } from '../entities';
 import { translate } from '../../i18n/translate';
 import type { AppLanguage } from './language-rules';
 import { getNextOccurrence } from './reminder-rules';
+import { DEFAULT_QUIET_HOURS, NotificationLevel, notificationLevelFor, QuietHours } from './notification-level-rules';
 
 export const MAX_RECURRING_OCCURRENCES = 14;
 /** A reminder to confirm rings again this many times, this many minutes apart. */
@@ -24,6 +25,8 @@ export interface PlannedReminderNotification {
   title: string;
   body: string;
   scheduledAt: Date;
+  /** How loud it rings (sheet 011). */
+  level: NotificationLevel;
 }
 
 export interface ReminderToPlan {
@@ -57,7 +60,12 @@ function bodyOf(reminder: Reminder, language: AppLanguage): string {
  * repeats survive the next sync) and after the next one. They stop when the reminder is done or
  * snoozed, since it then leaves the active ones, or moves to its new time.
  */
-function confirmationRepeats(item: ReminderToPlan, now: Date, language: AppLanguage): PlannedReminderNotification[] {
+function confirmationRepeats(
+  item: ReminderToPlan,
+  now: Date,
+  language: AppLanguage,
+  quietHours: QuietHours
+): PlannedReminderNotification[] {
   if (!item.reminder.requiresConfirmation) return [];
   const anchors = new Set([new Date(item.reminder.scheduledAt).getTime()]);
   const next = occurrencesOf(item, now)[0];
@@ -75,6 +83,7 @@ function confirmationRepeats(item: ReminderToPlan, now: Date, language: AppLangu
         title: item.reminder.title,
         body: translate(language, 'reminderNotif.confirmAgain'),
         scheduledAt,
+        level: notificationLevelFor({ moment: 'reminder', priority: item.reminder.priority, at: scheduledAt, quietHours }),
       });
     }
   }
@@ -84,7 +93,8 @@ function confirmationRepeats(item: ReminderToPlan, now: Date, language: AppLangu
 export function planReminderNotifications(
   items: ReminderToPlan[],
   now: Date,
-  language: AppLanguage = 'fr'
+  language: AppLanguage = 'fr',
+  quietHours: QuietHours = DEFAULT_QUIET_HOURS
 ): PlannedReminderNotification[] {
   const active = items.filter(({ reminder }) => ACTIVE_STATUSES.includes(reminder.status) && !reminder.deletedAt);
   const planned = active
@@ -97,6 +107,7 @@ export function planReminderNotifications(
           title: item.reminder.title,
           body: bodyOf(item.reminder, language),
           scheduledAt,
+          level: notificationLevelFor({ moment: 'reminder', priority: item.reminder.priority, at: scheduledAt, quietHours }),
         };
       })
     )
@@ -105,7 +116,7 @@ export function planReminderNotifications(
 
   // The repeats take the places left: they never push a reminder of its own out of the phone
   const repeats = active
-    .flatMap(item => confirmationRepeats(item, now, language))
+    .flatMap(item => confirmationRepeats(item, now, language, quietHours))
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
     .slice(0, MAX_SCHEDULED_REMINDERS - planned.length);
   return [...planned, ...repeats];
@@ -131,6 +142,9 @@ export function notificationActionFor(actionIdentifier: string): ReminderNotific
 /** Where a tapped notification leads, or null when opening the app is enough. */
 export function notificationRoute(data: Record<string, unknown> | null | undefined): string | null {
   if (typeof data?.reminderId === 'string') return `/reminders/${data.reminderId}`;
+  // A deadline or a moment (sheet 011): its own screen
+  if (data?.type === 'TASK' && typeof data.taskId === 'string') return `/tasks/${data.taskId}`;
+  if (data?.type === 'EVENT' && typeof data.eventId === 'string') return `/events/${data.eventId}`;
   // The recap of the day opens the review of the day, where it is always there to read
   if (data?.type === 'DAILY_RECAP') return '/review?period=day';
   // A failed automatic backup: its settings, to pick the folder again or try now
