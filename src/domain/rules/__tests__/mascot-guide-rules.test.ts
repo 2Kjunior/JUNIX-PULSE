@@ -320,7 +320,13 @@ describe('the welcome anchor', () => {
 
 describe('the discovery cards', () => {
   it('has one message per card, in the order of the cards', () => {
-    expect(DISCOVER_CARD_MESSAGES.map(item => item.id)).toEqual(['DISCOVER_REMINDER', 'DISCOVER_TASK', 'DISCOVER_EVENT']);
+    expect(DISCOVER_CARD_MESSAGES.map(item => item.id)).toEqual([
+      'DISCOVER_TASK',
+      'DISCOVER_REMINDER',
+      'DISCOVER_EVENT',
+      'DISCOVER_HABIT',
+      'DISCOVER_GOAL',
+    ]);
   });
 
   it('points an arm at the card it is talking about', () => {

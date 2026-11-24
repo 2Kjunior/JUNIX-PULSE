@@ -1,55 +1,49 @@
 /**
- * Onboarding — Étape 2 : Découverte courte
- * Explique les 3 concepts clés sans raconter toute l'architecture.
- *
- * Corrections rebranding :
- * - Emojis (🔔, ✓, 📅, 💡) → icônes Ionicons (règle A.1)
- * - Titre en Outfit Bold (règle A.2)
- * - StepIndicator harmonisé (barre, pas dots)
+ * Onboarding, step 2: how it works. The five things of Junix Pulse (task, reminder, moment,
+ * habit, goal) as shared cards, and one line on how to add (sheet 021). The list and its
+ * texts live in constants/pulse-concepts.ts, so this screen never lists them by hand.
  */
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { setDiscoverCardsY } from '@/features/mascot/onboarding-guide-state';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
-import type { ThemePalette } from '@/constants/palettes';
-import { useTheme } from '@/hooks/use-theme';
-import { useThemedStyles } from '@/hooks/use-themed-styles';
+
 import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
+import type { ThemePalette } from '@/constants/palettes';
+import { PULSE_CONCEPTS } from '@/constants/pulse-concepts';
+import { Spacing, Radius, Typography } from '@/constants/theme';
+import { setDiscoverCardsY } from '@/features/mascot/onboarding-guide-state';
+import { ConceptCard } from '@/features/onboarding/ConceptCard';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT } from '@/i18n';
 
-type IoniconName = keyof typeof Ionicons.glyphMap;
-
-interface Concept {
-  icon: IoniconName;
-  accentColor: string;
-  bgColor: string;
-  title: string;
-  desc: string;
-  example: string;
-}
+/** How far above the bottom of the list the mascot points for a card that is scrolled out of view. */
+const HIDDEN_CARD_MARGIN = 24;
 
 export default function OnboardingDiscover() {
   const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingDiscoverStyles);
 
-  // La mascotte guide désigne chaque carte : l'écran lui dit où elles sont. On mesure une fois
-  // la transition de l'écran terminée, sinon la position serait celle de l'écran en train de glisser.
+  // The mascot guide points at each card: the screen tells it where they are. They are measured
+  // once the screen has finished sliding in, otherwise the position would be the moving one.
+  // A card below the visible part of the list is pointed at the bottom of that part.
+  const listRef = useRef<React.ComponentRef<typeof View>>(null);
   const cardRefs = useRef<(React.ComponentRef<typeof View> | null)[]>([]);
   useEffect(() => {
     const timer = setTimeout(() => {
-      const centres: number[] = [];
-      cardRefs.current.forEach((card, index) => {
-        card?.measureInWindow((_x, y, _w, h) => {
-          centres[index] = y + h / 2;
-          if (centres.filter(value => value !== undefined).length === cardRefs.current.length) setDiscoverCardsY(centres);
+      listRef.current?.measureInWindow((_lx, listY, _lw, listHeight) => {
+        const bottom = listY + listHeight - HIDDEN_CARD_MARGIN;
+        const centres: number[] = [];
+        let measured = 0;
+        cardRefs.current.forEach((card, index) => {
+          card?.measureInWindow((_x, y, _w, h) => {
+            centres[index] = Math.min(y + h / 2, bottom);
+            measured += 1;
+            if (measured === PULSE_CONCEPTS.length) setDiscoverCardsY(centres);
+          });
         });
       });
     }, 600);
@@ -59,36 +53,8 @@ export default function OnboardingDiscover() {
     };
   }, []);
 
-  const concepts: Concept[] = [
-    {
-      icon: 'alarm-outline',
-      accentColor: palette.primary.default,
-      bgColor: palette.primary.container + '33',
-      title: t('discover.reminders.title'),
-      desc: t('discover.reminders.desc'),
-      example: t('discover.reminders.example'),
-    },
-    {
-      icon: 'checkmark-circle-outline',
-      accentColor: palette.tertiary.default,
-      bgColor: palette.tertiary.container + '33',
-      title: t('discover.tasks.title'),
-      desc: t('discover.tasks.desc'),
-      example: t('discover.tasks.example'),
-    },
-    {
-      icon: 'calendar-outline',
-      accentColor: palette.success.default,
-      bgColor: palette.success.container + '33',
-      title: t('discover.events.title'),
-      desc: t('discover.events.desc'),
-      example: t('discover.events.example'),
-    },
-  ];
-
   return (
     <View style={styles.container}>
-      {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <StepIndicator total={5} current={2} />
@@ -105,42 +71,26 @@ export default function OnboardingDiscover() {
         <Text style={styles.subtitle}>{t('discover.subtitle')}</Text>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {concepts.map((c, index) => (
-          <View
-            key={c.title}
-            ref={node => {
-              cardRefs.current[index] = node;
-            }}
-            collapsable={false}
-            style={styles.conceptCard}
-          >
-            <View style={[styles.conceptIcon, { backgroundColor: c.bgColor }]}>
-              <Ionicons name={c.icon} size={22} color={c.accentColor} />
+      <View ref={listRef} collapsable={false} style={styles.scroll}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+          {PULSE_CONCEPTS.map((concept, index) => (
+            <View
+              key={concept}
+              ref={node => {
+                cardRefs.current[index] = node;
+              }}
+              collapsable={false}
+            >
+              <ConceptCard concept={concept} />
             </View>
-            <View style={styles.conceptBody}>
-              <Text style={styles.conceptTitle}>{c.title}</Text>
-              <Text style={styles.conceptDesc}>{c.desc}</Text>
-              <Text style={[styles.conceptExample, { color: c.accentColor }]}>
-                {c.example}
-              </Text>
-            </View>
-          </View>
-        ))}
+          ))}
 
-        {/* Note de distinction — sans emoji */}
-        <View style={styles.distinction}>
-          <View style={styles.distinctionIconRow}>
-            <Ionicons name="information-circle-outline" size={16} color={palette.primary.default} />
-            <Text style={styles.distinctionLabel}>{t('discover.remember')}</Text>
+          <View style={styles.hint}>
+            <Ionicons name="mic-outline" size={18} color={palette.primary.default} />
+            <Text style={styles.hintText}>{t('discover.hint')}</Text>
           </View>
-          <Text style={styles.distinctionText}>
-            {t('discover.rememberReminder')}{'\n'}
-            {t('discover.rememberTask')}{'\n'}
-            {t('discover.rememberEvent')}
-          </Text>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       <View style={styles.actions}>
         <Button
@@ -151,12 +101,7 @@ export default function OnboardingDiscover() {
           style={styles.btnPrimary}
           testID="onboarding-discover-next"
         />
-        <Button
-          label={t('common.back')}
-          onPress={() => router.back()}
-          variant="ghost"
-          size="md"
-        />
+        <Button label={t('common.back')} onPress={() => router.back()} variant="ghost" size="md" />
       </View>
     </View>
   );
@@ -203,71 +148,32 @@ const makeOnboardingDiscoverStyles = (theme: ThemePalette) =>
     scroll: {
       flex: 1,
     },
-    conceptCard: {
+    list: {
+      gap: Spacing.sm,
+      paddingBottom: Spacing.lg,
+    },
+    hint: {
       flexDirection: 'row',
-      backgroundColor: theme.surface.container,
-      borderRadius: Radius.lg,
-      padding: Spacing.lg,
-      marginBottom: Spacing.md,
-      gap: Spacing.md,
-      borderWidth: 1,
-      borderColor: theme.outline.variant,
-    },
-    conceptIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: Radius.md,
       alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    },
-    conceptBody: {
-      flex: 1,
-    },
-    conceptTitle: {
-      ...Typography.titleMedium,
-      color: theme.onSurface.primary,
-      marginBottom: Spacing.xs,
-    },
-    conceptDesc: {
-      ...Typography.bodySmall,
-      color: theme.onSurface.variant,
-      lineHeight: 18,
-      marginBottom: Spacing.xs,
-    },
-    conceptExample: {
-      ...Typography.labelSmall,
-      opacity: 0.9,
-    },
-    distinction: {
+      gap: Spacing.sm,
       backgroundColor: theme.surface.high,
       borderRadius: Radius.md,
-      padding: Spacing.lg,
-      marginBottom: Spacing.xl,
+      padding: Spacing.md,
+      marginTop: Spacing.xs,
       borderWidth: 1,
       borderColor: theme.primary.default + '26',
     },
-    distinctionIconRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Spacing.xs,
-      marginBottom: Spacing.sm,
-    },
-    distinctionLabel: {
-      ...Typography.labelMedium,
-      color: theme.primary.default,
-    },
-    distinctionText: {
+    hintText: {
       ...Typography.bodySmall,
       color: theme.onSurface.variant,
-      lineHeight: 22,
+      flex: 1,
     },
     actions: {
       gap: Spacing.sm,
       alignItems: 'center',
+      paddingTop: Spacing.md,
     },
     btnPrimary: {
       width: '100%',
     },
   });
-

@@ -106,7 +106,7 @@ export default function OnboardingWelcome() {
       {/* 3 badges de valeur */}
       <View style={styles.badges}>
         <ValueBadge
-          icon="moon-outline"
+          icon="mic-outline"
           title={t('welcome.badge.calm.title')}
           subtitle={t('welcome.badge.calm.subtitle')}
           accentColor={palette.primary.default}

@@ -27,20 +27,29 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Welcome. I'm Pulse, your assistant to remember, plan and organize your days.", "Welcome, {name}. I'm Pulse, your assistant to remember, plan and organize your days."],
   ),
   DISCOVER_INTRO: entry(
-    ["Here are the three things I'll keep track of for you.", "{name}, here are the three things I'll keep track of for you."],
-    ["Here are the three items I'll follow for you.", "{name}, here are the three items I'll follow for you."],
-  ),
-  DISCOVER_REMINDER: entry(
-    ["A reminder alerts you on time.", "{name}, a reminder alerts you on time."],
-    ["A reminder notifies you at the scheduled time.", "{name}, a reminder notifies you at the scheduled time."],
+    ["Here are the five things I keep for you.", "{name}, here are the five things I keep for you."],
+    ["Here are the five items I follow for you.", "{name}, here are the five items I follow for you."],
   ),
   DISCOVER_TASK: entry(
-    ["A task is waiting to be done.", "{name}, a task is waiting to be done."],
-    ["A task remains to be completed.", "{name}, a task remains to be completed."],
+    ["A task is ticked once it's done.", "{name}, a task is ticked once it's done."],
+    ["A task is ticked when done.", "{name}, a task is ticked when done."],
   ),
+  DISCOVER_REMINDER: entry(
+    ["A reminder rings at the time you choose.", "{name}, a reminder rings at the time you choose."],
+    ["A reminder rings at the chosen time.", "{name}, a reminder rings at the chosen time."],
+  ),
+  // The id stays DISCOVER_EVENT; the user now reads "moment"
   DISCOVER_EVENT: entry(
-    ["An event takes up a moment.", "{name}, an event takes up a moment."],
-    ["An event takes up a time slot.", "{name}, an event takes up a time slot."],
+    ["A moment takes its place in your schedule.", "{name}, a moment takes its place in your schedule."],
+    ["A moment takes a slot in the schedule.", "{name}, a moment takes a slot in the schedule."],
+  ),
+  DISCOVER_HABIT: entry(
+    ["A habit comes back: you tick it each time.", "{name}, a habit comes back: you tick it each time."],
+    ["A habit is ticked each time.", "{name}, a habit is ticked each time."],
+  ),
+  DISCOVER_GOAL: entry(
+    ["A goal moves forward with your tasks and habits.", "{name}, a goal moves forward with your tasks and habits."],
+    ["A goal moves with its tasks and habits.", "{name}, a goal moves with its tasks and habits."],
   ),
   PERSONALIZE_NAME: entry(
     ["What should I call you?", "{name}, is that your first name?"],
@@ -69,12 +78,12 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
 
   // ─── Home tour (four stops) and first visit tips ───────────────────────────
   TOUR_PILLARS: entry(
-    ["This is your home: reminders, tasks, schedule and loved ones at a glance.", "{name}, this is your home: reminders, tasks, schedule and loved ones at a glance."],
-    ["Your home brings together reminders, tasks, schedule and loved ones.", "{name}, your home brings together reminders, tasks, schedule and loved ones."],
+    ["This is your home: what's left to do, your schedule and loved ones at a glance.", "{name}, this is your home: what's left to do, your schedule and loved ones at a glance."],
+    ["Your home brings together your tasks, schedule and loved ones.", "{name}, your home brings together your tasks, schedule and loved ones."],
   ),
   TOUR_QUICK_ADD: entry(
-    ["Here you add a reminder, a task or an event in a few seconds.", "{name}, here you add a reminder, a task or an event in a few seconds."],
-    ["Add a reminder, a task or an event here.", "{name}, add a reminder, a task or an event here."],
+    ["Here you add a task, a reminder or a moment. One spoken sentence is enough.", "{name}, here you add a task, a reminder or a moment. One spoken sentence is enough."],
+    ["Add a task, a reminder or a moment here, by typing or by voice.", "{name}, add a task, a reminder or a moment here, by typing or by voice."],
   ),
   TOUR_TIMELINE: entry(
     ["Your daily timeline puts everything that matters today in order.", "{name}, your daily timeline puts everything that matters today in order."],
@@ -89,8 +98,8 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Swipe a reminder to complete or postpone it.", "{name}, swipe a reminder to complete or postpone it."],
   ),
   TIP_TASKS: entry(
-    ["Here are your tasks. Tap the circle to complete one.", "{name}, here are your tasks. Tap the circle to complete one."],
-    ["Tap the circle of a task to complete it.", "{name}, tap the circle of a task to complete it."],
+    ["Here are your tasks and reminders. The filter on top splits them; swipe a card for more actions.", "{name}, here are your tasks and reminders. The filter on top splits them; swipe a card for more actions."],
+    ["Filter on top, and swipe a card for more actions.", "{name}, filter on top, and swipe a card for more actions."],
   ),
   TIP_CALENDAR: entry(
     ["Here is your schedule. Pick a day to see what awaits.", "{name}, here is your schedule. Pick a day to see what awaits."],

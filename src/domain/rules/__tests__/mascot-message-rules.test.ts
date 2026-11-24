@@ -233,7 +233,7 @@ describe('resolveMascotMessage', () => {
       'Réunion commence maintenant.'
     );
     expect(resolveMascotMessage('DISCOVER_REMINDER', {}, prefs({ address: 'vous' }), null)).toBe(
-      "Un rappel vous prévient à l'heure."
+      "Un rappel sonne à l'heure que vous choisissez."
     );
   });
 

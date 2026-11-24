@@ -24,5 +24,6 @@ Chaque fiche décrit pas à pas une intervention sur le projet, assez en détail
 | [018](FICHE-018-progres-habitudes-et-objectifs.md) | « Progrès » : carte de l'Accueil, page Habitudes · Objectifs, un objectif avance avec ses habitudes (migration 35) | 23 novembre 2026 | fait et testé (à voir à l'écran) |
 | [019](FICHE-019-habitude-qui-sonne.md) | Une habitude qui sonne à une heure, et « Fait » dans la notification qui la coche (migration 36) | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
 | [020](FICHE-020-pulse-propose-une-habitude.md) | Pulse propose « En faire une habitude ? » pour un rappel répété ou une tâche faite souvent | 23 novembre 2026 | fait et testé (à voir sur le téléphone) |
+| [021](FICHE-021-presentation-et-bulles-de-pulse.md) | La présentation et les bulles de Pulse à jour : badges Simple · Privé · Pulse, « Comment ça fonctionne » en 5 cartes (Tâche, Rappel, Moment, Habitude, Objectif), visite de l'accueil et astuce d'À faire | 24 novembre 2026 | fait et testé (à voir à l'écran) |
 
 Pour comprendre le rôle de chaque dossier et fichier : [l'explorateur du projet](../apprendre/explorateur-du-projet.html) (à ouvrir dans un navigateur ; le remettre à jour avec `node docs/apprendre/generer-explorateur.js`).

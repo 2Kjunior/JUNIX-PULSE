@@ -120,11 +120,16 @@ export function guideMessageFor(step: GuideStep, permission: GuidePermissionOutc
   }
 }
 
-/** What the mascot says as it points at each of the three discovery cards, in order. */
+/**
+ * What the mascot says as it points at each discovery card, in order: the order of
+ * PULSE_CONCEPTS (task, reminder, moment, habit, goal; sheet 021). A test keeps both the same length.
+ */
 export const DISCOVER_CARD_MESSAGES: readonly GuideMessage[] = [
-  { id: 'DISCOVER_REMINDER', mood: 'calm' },
   { id: 'DISCOVER_TASK', mood: 'calm' },
+  { id: 'DISCOVER_REMINDER', mood: 'calm' },
   { id: 'DISCOVER_EVENT', mood: 'calm' },
+  { id: 'DISCOVER_HABIT', mood: 'calm' },
+  { id: 'DISCOVER_GOAL', mood: 'happy' },
 ];
 
 /** The onboarding screens, in order, as the router names them. */
