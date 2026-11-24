@@ -270,7 +270,7 @@ Deux formulaires **bien différents à l'œil**, construits depuis le registre :
 
 <div class="fiche-recette"><div><b>Temps</b>15 min (bouton) · 1 à 2 jours (onglet)</div><div><b>Difficulté</b>1 puis 3 / 5</div><div><b>Ingrédients</b>messages.ts, (tabs)/_layout.tsx, tasks.tsx, reminders.tsx</div><div><b>Ustensiles</b>—</div></div>
 
-> [astuce] **Fait le 23 novembre 2026 par la fiche 015** (annexe K) : un seul onglet « À faire », filtre en haut, liste par moment, carte unique, barre du bas à 4 onglets. Le bouton de l'Accueil reste à renommer (section 12.1 ci-dessous).
+> [astuce] **Fait le 23 novembre 2026 par la fiche 015** (annexe K) : un seul onglet « À faire », filtre en haut, liste par moment, carte unique, barre du bas à 4 onglets. Le bouton de l'Accueil a été renommé « + À faire ou moment » le 24 novembre par la **fiche 017** (annexe M).
 
 ## 12.1 Le bouton : changement immédiat
 

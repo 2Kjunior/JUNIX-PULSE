@@ -127,6 +127,11 @@ for (const [title, file] of [
   ['Annexe J — Fiche 014 complète (formulaires ajustés, Dicter tout complet)', 'docs/fiches/FICHE-014-formulaires-ajustes-et-dicter-tout-complet.md'],
   ['Annexe K — Fiche 015 complète (un seul onglet À faire)', 'docs/fiches/FICHE-015-onglet-a-faire-unique.md'],
   ['Annexe L — Fiche 016 complète (revue des écrans à 360 px)', 'docs/fiches/FICHE-016-revue-ecrans-largeur-telephone.md'],
+  ['Annexe M — Fiche 017 complète (cohérence : Paramètres, mots Tâche et Rappel)', 'docs/fiches/FICHE-017-coherence-parametres-et-mots.md'],
+  ['Annexe N — Fiche 018 complète (Progrès : habitudes et objectifs)', 'docs/fiches/FICHE-018-progres-habitudes-et-objectifs.md'],
+  ['Annexe O — Fiche 019 complète (une habitude qui sonne)', 'docs/fiches/FICHE-019-habitude-qui-sonne.md'],
+  ['Annexe P — Fiche 020 complète (Pulse propose une habitude)', 'docs/fiches/FICHE-020-pulse-propose-une-habitude.md'],
+  ['Annexe Q — Fiche 021 complète (présentation et bulles de Pulse)', 'docs/fiches/FICHE-021-presentation-et-bulles-de-pulse.md'],
 ]) {
   const id = `annexe-${title.slice(7, 8)}`;
   toc.push({ level: 1, text: title, id });

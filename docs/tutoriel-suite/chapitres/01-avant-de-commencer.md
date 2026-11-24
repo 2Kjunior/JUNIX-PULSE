@@ -35,7 +35,7 @@ git status --short
 
 <div class="pb"></div>
 
-# 2. Où en est le projet (23 novembre 2026)
+# 2. Où en est le projet (24 novembre 2026)
 
 ## 2.1 Ce qui est fait et enregistré dans git
 
@@ -48,7 +48,23 @@ git status --short
 | `1f9b1d8` | Fiche 010 : l'animation de lancement autour de l'orbe, sur fond sombre, et `PulseLogo` | oui |
 | `5e5f049` | Ce tutoriel, ses outils et ses fichiers fournis | oui |
 
-> [astuce] Tout ce qui est enregistré est aussi sur GitHub (envoyé le 23 novembre 2026).
+| `ea1d5a1` | Fiches 014 à 016, le tutoriel à jour avant le 2e APK | oui |
+| `4f70b58` | Fiche 017 : un seul bouton Paramètres, les mots Tâche et Rappel partout, plus de liste sur un rappel | **non** |
+| `c26aadd` | Fiche 018 : « Progrès » (carte de l'Accueil, page Habitudes · Objectifs), un objectif avance avec ses habitudes (migration 35) | **non** |
+| `cf906b4` | Fiche 019 : une habitude sonne à son heure, « Fait » dans la notification la coche (migration 36) | **non** |
+| `48d15f1` | Fiche 020 : Pulse propose « En faire une habitude ? » | **non** |
+
+> [attention] Les commits des fiches 017 à 020 sont **sur l'ordinateur seulement** : ils ne sont pas encore envoyés sur GitHub (`git push`).
+
+## 2.2 quinquies Fiches 017 à 021 : cohérence, Progrès, habitudes, présentation
+
+- **017** (annexe M) : un seul bouton Paramètres sur tous les onglets ; les mots **Tâche** (sans heure) et **Rappel** (sonne à une heure) partout ; plus de liste de sous-tâches sur un rappel ; bouton « + À faire ou moment ».
+- **018** (annexe N) : **Progrès** : une carte sur l'Accueil et une page Habitudes · Objectifs ; une habitude peut être liée à un objectif et le fait avancer.
+- **019** (annexe O) : une habitude peut **sonner à son heure** ; « Fait » dans la notification la coche.
+- **020** (annexe P) : Pulse propose d'**en faire une habitude** pour un rappel répété ou une tâche faite souvent.
+- **021** (annexe Q, **pas encore enregistrée**) : la présentation à jour (badges Simple · Privé · Pulse ; « Comment ça fonctionne » en **5 cartes** : Tâche, Rappel, Moment, Habitude, Objectif) et les bulles de Pulse avec ce vocabulaire.
+
+Tests : 2009. Ces fiches ont été vérifiées par les tests, TypeScript et eslint, **pas à l'écran** (le panneau du navigateur était masqué) : l'APK de la section 2.3 sert à les voir.
 
 ## 2.2 quater Après l'essai du 23 novembre sur le téléphone : fiches 014, 015, 016
 
@@ -136,13 +152,13 @@ Trois corrections ont été nécessaires pendant les tests ; elles sont décrite
 
 ## 2.3 L'APK du jour
 
-Le plus récent a été fabriqué le 23 novembre à 12 h 32 :
+Le plus récent est fabriqué le 24 novembre, juste après cette mise à jour :
 
-- **Fichier** : `C:\Users\simon\Desktop\junix-pulse-local-2026-11-23-lancement.apk` (61 Mo)
-- **Contient** : le code du commit `5e5f049` : les deux familles, le nouveau logo partout, et la **nouvelle animation de lancement** sur fond sombre (fiche 010)
-- **Ne contient pas** : les notifications des tâches et des moments (fiche 011, faite après). Il faudra un nouvel APK pour les voir.
+- **Fichier** : `C:\Users\simon\Desktop\junix-pulse-local-2026-11-24-fiches-017-021.apk`
+- **Contient** : tout jusqu'à la fiche 021 (le commit `48d15f1` et la fiche 021 pas encore enregistrée)
+- **À regarder en priorité** : la présentation (5 cartes), la carte Progrès de l'Accueil, une habitude avec une heure (notification et « Fait »), une proposition « En faire une habitude ? » dans Pulse.
 
-L'ancien `junix-pulse-local-2026-11-23.apk` (sans la nouvelle animation) peut être supprimé.
+Les APK plus anciens (`junix-pulse-local-2026-11-23-*.apk`) peuvent être supprimés.
 
 La recette A (chapitre 6) explique comment l'installer.
 
