@@ -202,8 +202,11 @@ C:\Users\simon\Desktop\junix-pulse-tutoriel-suite.zip : 2300 Ko
 | Une ligne qui commence par `- ` ou `1. ` | Une liste |
 | Un tableau avec des `|` | Un tableau |
 | Trois accents graves suivis de `powershell`, `bash`, `ts`… puis le code, puis trois accents graves | Un bloc de commande noir |
-| `> [note] …`, `> [astuce] …`, `> [attention] …`, `> [danger] …` | Les encadrés de couleur |
+| `> [note] …`, `> [astuce] …`, `> [attention] …`, `> [danger] …`, `> [video] …` | Les encadrés, placés **dans la marge de droite** avec leur titre (« Bon à savoir », « Astuce », « Attention », « Danger », « Comme en vidéo ») |
 | `![légende](assets/images/icon.png)` | Une image (chemin à partir de `docs/tutoriel-suite/`) |
+| Une ligne seule `![…](…)`, puis, après une ligne vide, `*Figure 26-1 — Capture réelle (web, 360 px). Ce qu'on voit.*` | Une **figure numérotée** : l'image, et sa légende à côté avec « Figure 26-1 » en gras (édition illustrée) |
+| `[Étape 2/5]` au début d'un paragraphe | La pastille violette d'une étape numérotée |
+| Un bloc `<div class="episode">…</div>` (copie celui du chapitre 26) | L'ouverture d'un épisode : numéro, titre, « Tu sauras », durée, prérequis |
 | Un bloc qui commence par `<figure>` ou `<svg` | Un schéma dessiné (copie un schéma existant et modifie-le) |
 
 > [attention] Une ligne vide sépare chaque paragraphe, tableau, liste ou schéma. Dans un schéma `<svg>`, **pas de ligne vide** à l'intérieur, sinon il est coupé en deux.

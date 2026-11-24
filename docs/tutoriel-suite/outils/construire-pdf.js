@@ -23,6 +23,8 @@ function inline(text) {
   s = escapeHtml(s)
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2">')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    // [Étape 2/5] : the numbered step pill of the illustrated edition
+    .replace(/\[(Étape \d+\/\d+)\](?!\()/g, '<span class="etape">$1</span>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
   return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[i]}</code>`);
@@ -74,7 +76,8 @@ function markdown(md, idPrefix) {
       while (i < lines.length && /^> ?/.test(lines[i])) body.push(lines[i++].replace(/^> ?/, ''));
       const kind = (body[0].match(/^\[(\w+)\]/) || [])[1];
       if (kind) body[0] = body[0].replace(/^\[\w+\]\s*/, '');
-      out.push(`<blockquote class="${kind || 'note'}">${markdown(body.join('\n'), idPrefix + 'q')}</blockquote>`);
+      const titles = { note: 'Bon à savoir', astuce: 'Astuce', attention: 'Attention', danger: 'Danger', video: 'Comme en vidéo' };
+      out.push(`<blockquote class="${kind || 'note'}"><div class="encadre-titre">${titles[kind || 'note'] || ''}</div>${markdown(body.join('\n'), idPrefix + 'q')}</blockquote>`);
     } else if (/^<!-- bloc/.test(line)) {
       out.push(`<div class="bloc">${escapeHtml(line.replace(/<!-- bloc: (.*) -->/, 'Bloc : $1'))}</div>`);
       i += 1;
@@ -84,6 +87,20 @@ function markdown(md, idPrefix) {
       out.push(body.join('\n'));
     } else if (line.trim() === '' || /^---\s*$/.test(line)) {
       i += 1;
+    } else if (/^!\[[^\]]*\]\([^)]+\)\s*$/.test(line)) {
+      // A figure, as in a printed book: the image, then its numbered caption (edition illustree)
+      const [, alt, src] = line.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
+      i += 1;
+      while (i < lines.length && lines[i].trim() === '') i += 1;
+      let caption = '';
+      if (i < lines.length && /^\*Figure /.test(lines[i])) {
+        caption = lines[i++].trim().replace(/^\*|\*$/g, '');
+      }
+      const label = caption.match(/^Figure [\w-]+/);
+      const rest = label ? caption.slice(label[0].length).replace(/^\s*[—–-]\s*/, '') : caption;
+      out.push(
+        `<figure><img alt="${escapeHtml(alt)}" src="${escapeHtml(src)}">${caption ? `<figcaption>${label ? `<b>${escapeHtml(label[0])}</b> ` : ''}${inline(rest)}</figcaption>` : ''}</figure>`
+      );
     } else {
       const body = [];
       while (i < lines.length && lines[i].trim() !== '' && !/^(#|```|\||>|<|\s*([-*]|\d+\.) )/.test(lines[i])) body.push(lines[i++]);
@@ -136,10 +153,14 @@ for (const [title, file] of [
   ['Annexe S — Fiche 023 complète (types de moment et niveaux d\'alerte)', 'docs/fiches/FICHE-023-types-de-moment-et-niveaux-d-alerte.md'],
   ['Annexe T — Fiche 024 complète (gestes découvrables)', 'docs/fiches/FICHE-024-gestes-decouvrables.md'],
   ['Annexe U — Fiche 025 complète (partager sans compte)', 'docs/fiches/FICHE-025-partager-sans-compte.md'],
+  ['Annexe V — Fiche 026 complète (Planning Jour, Semaine, Mois et glisser-déposer)', 'docs/fiches/FICHE-026-planning-jour-semaine-mois.md'],
 ]) {
   const id = `annexe-${title.slice(7, 8)}`;
   toc.push({ level: 1, text: title, id });
-  const md = fs.readFileSync(path.join(ROOT, file), 'utf8').replace(/^# .*\n/, '');
+  const md = fs
+    .readFileSync(path.join(ROOT, file), 'utf8')
+    .replace(/^# .*\n/, '')
+    .replace(/\]\(images\//g, '](../fiches/images/');
   annexes.push(`<section class="annexe"><h1 id="${id}">${escapeHtml(title)}</h1>${markdown(md, id)}</section>`);
 }
 

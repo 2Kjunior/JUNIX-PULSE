@@ -8,13 +8,13 @@ Puis viennent **les étapes, dans l'ordre**, une action à la fois : « ouvre te
 
 ## 1.1 Les encadrés
 
-> [note] **À savoir** : une explication pour comprendre ce que tu fais.
+> [note] Une explication pour comprendre ce que tu fais.
 
-> [astuce] **Astuce** : une façon plus rapide ou plus sûre de faire.
+> [astuce] Une façon plus rapide ou plus sûre de faire.
 
-> [attention] **Attention** : une erreur fréquente, à éviter.
+> [attention] Une erreur fréquente, à éviter.
 
-> [danger] **Danger** : une action qui peut casser l'application ou faire perdre des données. Lis deux fois avant.
+> [danger] Une action qui peut casser l'application ou faire perdre des données. Lis deux fois avant.
 
 ## 1.2 Les blocs de commande
 

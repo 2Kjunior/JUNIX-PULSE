@@ -1,37 +1,73 @@
-@page { size: A4; margin: 18mm 16mm 18mm 16mm; }
-body { font-family: "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1c1b1f; }
-h1 { font-size: 22pt; color: #3B2A78; border-bottom: 3px solid #8B3DF0; padding-bottom: 6px; page-break-before: always; margin-top: 0; }
-h2 { font-size: 15pt; color: #3B2A78; margin-top: 22px; border-left: 6px solid #0AE8F0; padding-left: 8px; page-break-after: avoid; }
+/* Édition illustrée (à la manière d'un livre technique) : le texte à gauche, les encadrés dans la marge
+   de droite, les figures numérotées avec leur légende, et une ouverture pour chaque épisode. */
+@page { size: A4; margin: 18mm 14mm 18mm 18mm; }
+:root { --marge: 48mm; --violet: #3B2A78; --violet-vif: #8B3DF0; --cyan: #0AE8F0; --encre: #1c1b1f; }
+body { font-family: Georgia, "Cambria", "Times New Roman", serif; font-size: 10.8pt; line-height: 1.55; color: var(--encre); padding-right: var(--marge); }
+h1, h2, h3, h4, th, figcaption, .encadre-titre, .episode, .toc, .couverture, .fiche-recette, .bloc { font-family: "Segoe UI", Arial, sans-serif; }
+h1 { font-size: 22pt; color: var(--violet); border-bottom: 3px solid var(--violet-vif); padding-bottom: 6px; page-break-before: always; margin-top: 0; margin-right: calc(-1 * var(--marge)); }
+h2 { font-size: 15pt; color: var(--violet); margin-top: 22px; border-left: 6px solid var(--cyan); padding-left: 8px; page-break-after: avoid; }
 h3 { font-size: 12.5pt; color: #5b3fb0; margin-top: 18px; page-break-after: avoid; }
 h4 { font-size: 11.5pt; color: #0E7490; page-break-after: avoid; }
 p, li { orphans: 3; widows: 3; }
-code { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: #f1ecfb; padding: 1px 4px; border-radius: 3px; }
-pre { background: #141317; color: #f3eefc; padding: 10px 12px; border-radius: 8px; font-size: 8.8pt; line-height: 1.4; white-space: pre-wrap; word-break: break-word; border-left: 5px solid #8B3DF0; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 9.3pt; background: #f1ecfb; padding: 1px 4px; border-radius: 3px; }
+/* Code, tableaux et grandes figures prennent toute la largeur, marge comprise */
+pre, table, figure { margin-right: calc(-1 * var(--marge)); }
+pre { background: #141317; color: #f3eefc; padding: 10px 12px; border-radius: 8px; font-size: 8.6pt; line-height: 1.4; white-space: pre-wrap; word-break: break-word; border-left: 5px solid var(--violet-vif); clear: both; }
 pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
-table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 9.8pt; page-break-inside: auto; }
+table { border-collapse: collapse; width: calc(100% + var(--marge)); margin-top: 10px; margin-bottom: 10px; font-size: 9.6pt; page-break-inside: auto; clear: both; }
 tr { page-break-inside: avoid; }
-th { background: #3B2A78; color: #fff; text-align: left; padding: 5px 7px; }
+th { background: var(--violet); color: #fff; text-align: left; padding: 5px 7px; }
 td { border: 1px solid #ddd3f3; padding: 5px 7px; vertical-align: top; }
 tr:nth-child(even) td { background: #faf8ff; }
-blockquote { margin: 12px 0; padding: 8px 14px; border-radius: 8px; page-break-inside: avoid; }
-blockquote.note { background: #eef9fb; border-left: 5px solid #0AE8F0; }
-blockquote.attention { background: #fff4e0; border-left: 5px solid #F5B942; }
-blockquote.danger { background: #fdeceb; border-left: 5px solid #B3261E; }
-blockquote.astuce { background: #eefaf1; border-left: 5px solid #2e9e57; }
-blockquote p { margin: 4px 0; }
+
+/* Encadrés dans la marge, comme « Astuce » et « Bon à savoir » dans un livre */
+blockquote { float: right; clear: right; width: calc(var(--marge) - 6mm); margin: 2px calc(-1 * var(--marge)) 10px 6mm; padding: 6px 9px; border-radius: 6px; page-break-inside: avoid; font-family: "Segoe UI", Arial, sans-serif; font-size: 8.6pt; line-height: 1.4; }
+blockquote p { margin: 3px 0; }
+blockquote pre, blockquote table { margin-right: 0; width: auto; }
+.encadre-titre { font-size: 7.5pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 2px; }
+blockquote.note { background: #eef9fb; border-top: 3px solid var(--cyan); }
+blockquote.note .encadre-titre { color: #0E7490; }
+blockquote.astuce { background: #eefaf1; border-top: 3px solid #2e9e57; }
+blockquote.astuce .encadre-titre { color: #1f7a42; }
+blockquote.attention { background: #fff4e0; border-top: 3px solid #F5B942; }
+blockquote.attention .encadre-titre { color: #9a6a00; }
+blockquote.danger { background: #fdeceb; border-top: 3px solid #B3261E; }
+blockquote.danger .encadre-titre { color: #B3261E; }
+blockquote.video { background: #f1ecfb; border-top: 3px solid var(--violet-vif); }
+blockquote.video .encadre-titre { color: var(--violet-vif); }
+
+/* Figures numérotées : l'image, puis « Figure 26-1 » en gras et la légende */
 img { max-width: 100%; }
-figure { text-align: center; margin: 14px 0; page-break-inside: avoid; }
-figcaption { font-size: 9.5pt; color: #555; margin-top: 4px; }
-.bloc { font-size: 8.5pt; color: #8B3DF0; font-weight: 600; margin-top: 8px; }
+figure { margin-top: 14px; margin-bottom: 14px; margin-left: 0; page-break-inside: avoid; clear: both; display: flex; align-items: flex-end; gap: 6mm; }
+figure img { max-height: 120mm; border: 1px solid #ddd3f3; border-radius: 6px; }
+figcaption { font-size: 8.8pt; color: #444; line-height: 1.35; width: calc(var(--marge) - 4mm); flex-shrink: 0; border-top: 2px solid var(--violet-vif); padding-top: 4px; }
+figcaption b { display: block; color: var(--violet); }
+
+/* L'ouverture d'un épisode : numéro, titre, ce qu'on saura faire, durée, prérequis */
+.episode { margin: 0 calc(-1 * var(--marge)) 16px 0; border-radius: 10px; overflow: hidden; border: 1px solid #ddd3f3; page-break-inside: avoid; }
+.episode .bandeau { background: #141317; color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.episode .numero { font-size: 30pt; font-weight: 800; color: var(--cyan); line-height: 1; }
+.episode .titre { font-size: 15pt; font-weight: 700; }
+.episode .sous { color: #cfc6e8; font-size: 9.5pt; }
+.episode .cases { display: grid; grid-template-columns: repeat(3, 1fr); }
+.episode .cases div { padding: 8px 12px; font-size: 9.2pt; border-right: 1px solid #ddd3f3; }
+.episode .cases div:last-child { border-right: none; }
+.episode .cases b { display: block; color: var(--violet); font-size: 8pt; letter-spacing: 1px; text-transform: uppercase; }
+.etape { font-family: "Segoe UI", Arial, sans-serif; display: inline-block; background: var(--violet); color: #fff; border-radius: 12px; padding: 1px 9px; font-size: 8.5pt; font-weight: 700; margin-right: 6px; }
+
+.bloc { font-size: 8.5pt; color: var(--violet-vif); font-weight: 600; margin-top: 8px; clear: both; }
+.pb { page-break-after: always; }
+.toc { padding-right: 0; margin-right: calc(-1 * var(--marge)); }
 .toc ul { list-style: none; padding-left: 0; }
 .toc li.toc-1 { font-weight: 700; margin-top: 8px; }
 .toc li.toc-2 { padding-left: 18px; font-size: 10pt; }
-.toc a { color: #1c1b1f; text-decoration: none; }
-.couverture { height: 250mm; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #141317; color: #fff; margin: -18mm -16mm; padding: 18mm; }
-.couverture h1 { border: none; color: #fff; font-size: 34pt; page-break-before: avoid; letter-spacing: 6px; }
+.toc a { color: var(--encre); text-decoration: none; }
+.couverture { height: 250mm; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #141317; color: #fff; margin: -18mm calc(-14mm - var(--marge)) -18mm -18mm; padding: 18mm; }
+.couverture h1 { border: none; color: #fff; font-size: 34pt; page-break-before: avoid; letter-spacing: 6px; margin-right: 0; }
 .couverture .sous { color: #7FE9F2; letter-spacing: 8px; font-size: 13pt; }
 .couverture .info { color: #cfc6e8; font-size: 11pt; margin-top: 30px; }
-.fiche-recette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; page-break-inside: avoid; }
+.fiche-recette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px calc(-1 * var(--marge)) 10px 0; page-break-inside: avoid; }
 .fiche-recette div { background: #f1ecfb; border-radius: 8px; padding: 6px 8px; font-size: 9.5pt; }
-.fiche-recette b { display: block; color: #3B2A78; }
-.annexe h1 { background: #3B2A78; color: #fff; padding: 8px 12px; border: none; border-radius: 6px; }
+.fiche-recette b { display: block; color: var(--violet); }
+.annexe h1 { background: var(--violet); color: #fff; padding: 8px 12px; border: none; border-radius: 6px; }
+section { clear: both; }
