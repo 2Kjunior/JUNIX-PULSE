@@ -322,6 +322,8 @@ Aujourd'hui, la barre d'onglets (`src/app/(tabs)/_layout.tsx`) a des onglets sé
 
 <div class="fiche-recette"><div><b>Temps</b>1 jour</div><div><b>Difficulté</b>3 / 5</div><div><b>Ingrédients</b>item-kinds.ts (ou un nouveau event-types.ts), migration</div><div><b>Ustensiles</b>Ionicons</div></div>
 
+> [astuce] **Fait le 24 novembre 2026 par la fiche 023** (annexe S) : neuf types de moment devinés du titre, un niveau Auto · Discrète · Normale · Alarme sur les rappels et les moments, un niveau par défaut par famille dans les Paramètres. **La fiche 023 est la version qui marche** ; les sons par type et l'alarme continue restent pour la recette K.
+
 Ton message : « des types d'événements (anniversaire, enterrement…) ». Comme pour les familles, on fait un **registre**, pour pouvoir en ajouter ou en retirer sans rien casser.
 
 Crée `src/constants/event-types.ts` :
@@ -376,6 +378,8 @@ Puis :
 
 <div class="fiche-recette"><div><b>Temps</b>1 jour</div><div><b>Difficulté</b>2 / 5</div><div><b>Ingrédients</b>FirstVisitTip.tsx, mascot-tour-rules.ts, réglages</div><div><b>Ustensiles</b>la mascotte</div></div>
 
+> [astuce] **Fait le 24 novembre 2026 par la fiche 024** (annexe T) : « ⋯ » et appui long sur les cartes des listes, l'astuce du glissement une fois (jamais le même jour qu'une autre). Les astuces du Planning et des invitations viendront avec les recettes J et I suivantes.
+
 La décision (12.3) : les gestes (glisser pour cocher, appui long = menu dans les listes, glisser dans le planning) étaient comme des « œufs de Pâques ». On les fait découvrir **une astuce à la fois**, par Pulse, au bon moment, et on peut les revoir dans les réglages.
 
 1. Lis `src/features/mascot/FirstVisitTip.tsx` et `src/domain/rules/mascot-tour-rules.ts` : le mécanisme d'astuce au premier passage existe déjà.
@@ -388,6 +392,8 @@ La décision (12.3) : les gestes (glisser pour cocher, appui long = menu dans le
 # 15. Recette I — Le partage, étape 5-A
 
 <div class="fiche-recette"><div><b>Temps</b>1 à 2 jours</div><div><b>Difficulté</b>3 / 5</div><div><b>Ingrédients</b>une règle de mise en forme, l'écran détail</div><div><b>Ustensiles</b>`Share` de React Native (déjà là), aucune dépendance</div></div>
+
+> [astuce] **Fait le 24 novembre 2026 par la fiche 025** (annexe U), après quatre décisions prises ensemble : texte et lien Junix, pour les trois types, QR plus tard, « Invitation envoyée » à l'envoi. Limite : WhatsApp et la plupart des SMS ne rendent cliquables que les liens `https://` ; sinon, on colle le message dans « Invitation reçue ».
 
 La décision (12.5) : partage **hybride**, par étapes, **gratuit**. Étape 5-A = partager **un message lisible** (WhatsApp, SMS, e-mail, Bluetooth : tout ce que le téléphone propose), sans compte.
 

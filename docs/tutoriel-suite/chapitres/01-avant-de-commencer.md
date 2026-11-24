@@ -47,14 +47,28 @@ git status --short
 | `cda1910` | Le logo A1 (l'orbe) : icône, icône à thème, icône de notification, image de démarrage | oui |
 | `1f9b1d8` | Fiche 010 : l'animation de lancement autour de l'orbe, sur fond sombre, et `PulseLogo` | oui |
 | `5e5f049` | Ce tutoriel, ses outils et ses fichiers fournis | oui |
-
 | `ea1d5a1` | Fiches 014 à 016, le tutoriel à jour avant le 2e APK | oui |
-| `4f70b58` | Fiche 017 : un seul bouton Paramètres, les mots Tâche et Rappel partout, plus de liste sur un rappel | **non** |
-| `c26aadd` | Fiche 018 : « Progrès » (carte de l'Accueil, page Habitudes · Objectifs), un objectif avance avec ses habitudes (migration 35) | **non** |
-| `cf906b4` | Fiche 019 : une habitude sonne à son heure, « Fait » dans la notification la coche (migration 36) | **non** |
-| `48d15f1` | Fiche 020 : Pulse propose « En faire une habitude ? » | **non** |
+| `4f70b58` | Fiche 017 : un seul bouton Paramètres, les mots Tâche et Rappel partout, plus de liste sur un rappel | oui |
+| `c26aadd` | Fiche 018 : « Progrès » (carte de l'Accueil, page Habitudes · Objectifs), un objectif avance avec ses habitudes (migration 35) | oui |
+| `cf906b4` | Fiche 019 : une habitude sonne à son heure, « Fait » dans la notification la coche (migration 36) | oui |
+| `48d15f1` | Fiche 020 : Pulse propose « En faire une habitude ? » | oui |
 
-> [attention] Les commits des fiches 017 à 020 sont **sur l'ordinateur seulement** : ils ne sont pas encore envoyés sur GitHub (`git push`).
+| `f8134d3` | Fiche 021 : la présentation en 5 cartes et les bulles de Pulse à jour | oui |
+| `b08ea08` | Le tutoriel avant le 3e APK (annexes M à Q) | oui |
+| `851d01f` | Fiches 022 et 023 : modifier avec les mêmes formulaires ; types de moment et niveaux d'alerte (migration 37) | oui |
+| `8b64f91` | Fiche 024 : bouton « ⋯ », appui long, Pulse montre le glissement une fois | oui |
+| `79bbf73` | Fiche 025 : partager sans compte (migration 38) | oui |
+
+> [astuce] Tout ce qui est enregistré est aussi sur GitHub (envoyé le 24 novembre 2026).
+
+## 2.2 sexies Fiches 022 à 025 : modifier, alertes, gestes, partage
+
+- **022** (annexe R) : modifier une tâche, un rappel ou un moment avec **le même formulaire** que pour créer ; « à confirmer » enfin enregistré, une tâche peut retourner dans l'Inbox, la répétition d'un rappel se change.
+- **023** (annexe S, chantier n° 5) : **types de moment** (Santé, Deuil, Voyage…) devinés du titre, et **niveau d'alerte** Auto · Discrète · Normale · Alarme, avec un niveau par défaut par famille dans les Paramètres (migration 37).
+- **024** (annexe T, chantier n° 6) : bouton **« ⋯ »** et **appui long** sur les cartes ; Pulse montre le glissement **une fois** (la première carte s'entrouvre).
+- **025** (annexe U, chantier n° 7) : **« Envoyer »** une tâche, un rappel ou un moment (texte et lien Junix, sans serveur) ; **« Invitation reçue »** pour l'ajouter ; « Invitation envoyée / Participe » (migration 38).
+
+Tests : 2070. Ces fiches ont été vues sur le web à 360 px ; l'APK de la section 2.3 sert à les voir sur le téléphone (notifications, glissement, partage).
 
 ## 2.2 quinquies Fiches 017 à 021 : cohérence, Progrès, habitudes, présentation
 
@@ -154,11 +168,11 @@ Trois corrections ont été nécessaires pendant les tests ; elles sont décrite
 
 Le plus récent est fabriqué le 24 novembre, juste après cette mise à jour :
 
-- **Fichier** : `C:\Users\simon\Desktop\junix-pulse-local-2026-11-24-fiches-017-021.apk`
-- **Contient** : tout jusqu'à la fiche 021 (le commit `48d15f1` et la fiche 021 pas encore enregistrée)
-- **À regarder en priorité** : la présentation (5 cartes), la carte Progrès de l'Accueil, une habitude avec une heure (notification et « Fait »), une proposition « En faire une habitude ? » dans Pulse.
+- **Fichier** : `C:\Users\simon\Desktop\junix-pulse-local-2026-11-24-fiches-022-025.apk`
+- **Contient** : tout jusqu'à la fiche 025 (commit `79bbf73`)
+- **À regarder en priorité** : modifier un rappel, une tâche, un moment ; un moment « Dentiste » (type Santé) ; un rappel en « Alarme » ; le « ⋯ » et l'appui long ; « Envoyer » un moment par WhatsApp, puis le lien ou « Invitation reçue ».
 
-Les APK plus anciens (`junix-pulse-local-2026-11-23-*.apk`) peuvent être supprimés.
+Les APK plus anciens (`junix-pulse-local-2026-11-2*-*.apk`) peuvent être supprimés.
 
 La recette A (chapitre 6) explique comment l'installer.
 

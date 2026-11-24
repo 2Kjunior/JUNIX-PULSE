@@ -132,6 +132,10 @@ for (const [title, file] of [
   ['Annexe O — Fiche 019 complète (une habitude qui sonne)', 'docs/fiches/FICHE-019-habitude-qui-sonne.md'],
   ['Annexe P — Fiche 020 complète (Pulse propose une habitude)', 'docs/fiches/FICHE-020-pulse-propose-une-habitude.md'],
   ['Annexe Q — Fiche 021 complète (présentation et bulles de Pulse)', 'docs/fiches/FICHE-021-presentation-et-bulles-de-pulse.md'],
+  ['Annexe R — Fiche 022 complète (modifier avec les mêmes formulaires)', 'docs/fiches/FICHE-022-modifier-avec-les-memes-formulaires.md'],
+  ['Annexe S — Fiche 023 complète (types de moment et niveaux d\'alerte)', 'docs/fiches/FICHE-023-types-de-moment-et-niveaux-d-alerte.md'],
+  ['Annexe T — Fiche 024 complète (gestes découvrables)', 'docs/fiches/FICHE-024-gestes-decouvrables.md'],
+  ['Annexe U — Fiche 025 complète (partager sans compte)', 'docs/fiches/FICHE-025-partager-sans-compte.md'],
 ]) {
   const id = `annexe-${title.slice(7, 8)}`;
   toc.push({ level: 1, text: title, id });
