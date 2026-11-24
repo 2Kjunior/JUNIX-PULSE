@@ -5,6 +5,7 @@
 import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Event, Person } from '../domain/entities';
+import { chosenLevelOf } from '../domain/rules/notification-level-rules';
 
 type NullableFields<T> = {
   [K in keyof T]?: T[K] | null;
@@ -23,6 +24,8 @@ function rowToEvent(row: Record<string, unknown>): Event {
     location: (row.location as string | null) ?? undefined,
     type: row.type as Event['type'],
     travelBufferMinutes: (row.travel_buffer_minutes as number | null) ?? undefined,
+    momentKind: (row.moment_kind as Event['momentKind'] | null) ?? undefined,
+    alertLevel: chosenLevelOf(row.alert_level) ?? undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     deletedAt: (row.deleted_at as string | null) ?? undefined,
@@ -51,8 +54,8 @@ export const EventRepository = {
   async create(event: Omit<Event, 'deletedAt'>, personIds?: string[]): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO events (id, title, notes, start_at, end_at, timezone, location, type, travel_buffer_minutes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO events (id, title, notes, start_at, end_at, timezone, location, type, travel_buffer_minutes, moment_kind, alert_level, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       event.id,
       event.title,
       event.notes ?? null,
@@ -62,6 +65,8 @@ export const EventRepository = {
       event.location ?? null,
       event.type,
       event.travelBufferMinutes ?? 0,
+      event.momentKind ?? null,
+      event.alertLevel ?? null,
       event.createdAt,
       event.updatedAt
     );
@@ -111,6 +116,14 @@ export const EventRepository = {
     if (params.travelBufferMinutes !== undefined) {
       setClauses.push('travel_buffer_minutes = ?');
       values.push(params.travelBufferMinutes);
+    }
+    if (params.momentKind !== undefined) {
+      setClauses.push('moment_kind = ?');
+      values.push(params.momentKind);
+    }
+    if (params.alertLevel !== undefined) {
+      setClauses.push('alert_level = ?');
+      values.push(params.alertLevel);
     }
     if (params.deletedAt !== undefined) {
       setClauses.push('deleted_at = ?');

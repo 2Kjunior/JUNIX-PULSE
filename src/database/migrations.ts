@@ -642,5 +642,18 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE habits ADD COLUMN reminder_time TEXT;
     `,
   },
+  {
+    version: 37,
+    name: 'add_moment_kinds_and_alert_levels',
+    sql: `
+      -- Le type d un moment, et le niveau d alerte choisi pour un moment ou un rappel (fiche 023, etude 6-B et 6-C).
+      -- Vide = Autre pour le type, Auto pour le niveau : rien ne change pour ce qui existe deja.
+      ALTER TABLE events ADD COLUMN moment_kind TEXT;
+      ALTER TABLE events ADD COLUMN alert_level TEXT;
+      ALTER TABLE reminders ADD COLUMN alert_level TEXT;
+      -- Le niveau par defaut de chaque famille, ecrit reminder=normal;deadline=normal;...
+      ALTER TABLE settings ADD COLUMN alert_levels TEXT;
+    `,
+  },
 ];
 

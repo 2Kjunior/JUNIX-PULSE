@@ -25,6 +25,7 @@ async function sync(force: boolean): Promise<void> {
           now: new Date(),
           language: useAppStore.getState().language,
           quietHours: quietHoursOf(settings),
+          alertDefaults: settings.alertLevels,
         })
       : [];
 

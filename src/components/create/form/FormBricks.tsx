@@ -47,6 +47,7 @@ export function FormShell({
   title,
   subtitle,
   saveLabel,
+  editing = false,
   saving,
   onSave,
   testID,
@@ -58,6 +59,8 @@ export function FormShell({
   title: string;
   subtitle: string;
   saveLabel: string;
+  /** Changing a saved item (sheet 022): the bar says "Enregistrer" rather than "Ajouter". */
+  editing?: boolean;
   saving: boolean;
   onSave: () => void;
   testID?: string;
@@ -105,7 +108,7 @@ export function FormShell({
           accessibilityLabel={saveLabel}
         >
           <Text style={[formStyles.toolbarSave, { color: accent }, saving && formStyles.toolbarSaveDisabled]}>
-            {saving ? t('itemForm.saving') : t('itemForm.save')}
+            {saving ? t(editing ? 'itemForm.savingEdit' : 'itemForm.saving') : t(editing ? 'itemForm.saveEdit' : 'itemForm.save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -138,7 +141,7 @@ export function FormShell({
         >
           <Ionicons name={ITEM_FAMILY_DEFINITIONS[family].icon} size={20} color={onAccent} />
           <Text style={{ ...Typography.labelLarge, fontWeight: '700', color: onAccent }}>
-            {saving ? t('itemForm.saving') : saveLabel}
+            {saving ? t(editing ? 'itemForm.savingEdit' : 'itemForm.saving') : saveLabel}
           </Text>
         </TouchableOpacity>
       </ScrollView>

@@ -67,6 +67,9 @@ import { detectDeviceTimezone } from '@/services/device-timezone';
 import { timezoneLabel } from '@/constants/timezones';
 import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
+import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
+import { DEFAULT_ALERT_DEFAULTS, type AlertFamily } from '@/domain/rules/notification-level-rules';
+import type { AlertLevel } from '@/domain/entities';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
 const APPEARANCE_OPTIONS: {
@@ -384,6 +387,20 @@ export default function SettingsScreen() {
     }
   };
 
+  // The default level of each family (sheet 023): the planned notifications follow at once
+  const handleUpdateAlertDefault = async (family: AlertFamily, level: AlertLevel) => {
+    if (!settings) return;
+    const alertLevels = { ...(settings.alertLevels ?? DEFAULT_ALERT_DEFAULTS), [family]: level };
+    try {
+      await SettingsRepository.update({ alertLevels, updatedAt: new Date().toISOString() });
+      setSettings(s => (s ? { ...s, alertLevels } : s));
+      await syncReminderNotifications();
+      showSnackbar(t('alertDefaults.saved'));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+
   const handleExportData = async () => {
     GlassAlert.alert(
       t('settingsScreen.backupTitle'),
@@ -663,6 +680,14 @@ export default function SettingsScreen() {
           )}
           <Text style={styles.rowSub}>{t('settingsScreen.nightEnd')}</Text>
           {renderHourPills([6, 7, 8], settings.quietHoursEnd ?? 7, hour => handleUpdateQuietHours({ quietHoursEnd: hour }))}
+        </View>
+      )}
+
+      {settings.notificationsEnabled && (
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('alertDefaults.title')}</Text>
+          <Text style={styles.rowSub}>{t('alertDefaults.hint')}</Text>
+          <AlertDefaultsSetting value={settings.alertLevels ?? DEFAULT_ALERT_DEFAULTS} onChange={handleUpdateAlertDefault} />
         </View>
       )}
 

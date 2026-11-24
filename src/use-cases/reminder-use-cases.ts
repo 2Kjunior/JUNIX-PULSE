@@ -13,7 +13,7 @@ import { ReminderRepository } from '../repositories/reminder-repository';
 import { syncReminderNotifications } from '../services/reminder-notification-service';
 import { NotificationService } from '../services/notification-service';
 import { getNextOccurrence, computeSnoozeUntil, computeSnoozeTomorrowSameTime, UNDO_DELETE_TIMEOUT_MS } from '../domain/rules/reminder-rules';
-import { Reminder, RecurrenceRule } from '../domain/entities';
+import { AlertLevel, Reminder, RecurrenceRule } from '../domain/entities';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import { interactionTypeForAction } from '../domain/rules/person-link-rules';
 import { recordLinkedInteraction } from './person-use-cases';
@@ -34,6 +34,8 @@ export interface CreateReminderInput {
   tagIds?: string[];
   /** Rings again every few minutes until completed or snoozed. */
   requiresConfirmation?: boolean;
+  /** How it warns (sheet 023); null or absent is "Auto". */
+  alertLevel?: AlertLevel | null;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
   checklistItems?: { title: string; position: number }[];
 }
@@ -64,6 +66,7 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     actionType: input.actionType ?? 'NONE',
     personId: input.personIds?.[0] ?? input.personId,
     requiresConfirmation: input.requiresConfirmation,
+    alertLevel: input.alertLevel ?? null,
     recurrenceRuleId,
     createdAt: now,
     updatedAt: now,
@@ -109,12 +112,23 @@ export interface UpdateReminderInput {
   /** Its coloured tags: replaces the ones it had. */
   tagIds?: string[];
   requiresConfirmation?: boolean;
+  /** How it warns (sheet 023): null is "Auto", undefined keeps it. */
+  alertLevel?: AlertLevel | null;
+  /** A new repeat (a new rule; the old one stays in the data), null to stop it, undefined to keep it. */
+  recurrenceRule?: Omit<RecurrenceRule, 'id'> | null;
 }
 
 export async function updateReminder(input: UpdateReminderInput): Promise<void> {
   const now = new Date().toISOString();
   if (input.personIds !== undefined) await ReminderRepository.setPersons(input.id, input.personIds);
   if (input.tagIds !== undefined) await TagRepository.setFor('reminder', input.id, input.tagIds);
+
+  let recurrenceRuleId: string | null | undefined;
+  if (input.recurrenceRule === null) recurrenceRuleId = null;
+  else if (input.recurrenceRule) {
+    recurrenceRuleId = randomUUID();
+    await ReminderRepository.createRecurrenceRule({ id: recurrenceRuleId, ...input.recurrenceRule });
+  }
 
   // Mettre à jour en base
   await ReminderRepository.update({
@@ -125,6 +139,9 @@ export async function updateReminder(input: UpdateReminderInput): Promise<void> 
     priority: input.priority,
     actionType: input.actionType,
     personId: input.personId,
+    requiresConfirmation: input.requiresConfirmation,
+    recurrenceRuleId,
+    alertLevel: input.alertLevel,
     updatedAt: now,
   });
 

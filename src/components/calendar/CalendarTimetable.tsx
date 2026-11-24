@@ -29,6 +29,7 @@ import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { ThemePalette } from '@/constants/palettes';
+import { momentKindColor, momentKindLook } from '@/constants/moment-kinds';
 
 interface CalendarTimetableProps {
   selectedDate: Date;
@@ -280,9 +281,19 @@ export const CalendarTimetable = memo(function CalendarTimetable({
                         >
                           <View style={styles.cardHeaderRow}>
                             <View style={styles.eventBadge}>
-                              <Ionicons name="calendar" size={11} color={eventAccentColor} />
-                              <Text style={[styles.eventBadgeText, { color: eventAccentColor }]}>
-                                {t('timetable.eventBadge')}
+                              {/* The icon, colour and name of its type (sheet 023); "Événement" for "Autre" */}
+                              <Ionicons
+                                name={e.momentKind && e.momentKind !== 'other' ? momentKindLook(e.momentKind).icon : 'calendar'}
+                                size={11}
+                                color={e.momentKind && e.momentKind !== 'other' ? momentKindColor(theme, e.momentKind) : eventAccentColor}
+                              />
+                              <Text
+                                style={[
+                                  styles.eventBadgeText,
+                                  { color: e.momentKind && e.momentKind !== 'other' ? momentKindColor(theme, e.momentKind) : eventAccentColor },
+                                ]}
+                              >
+                                {e.momentKind && e.momentKind !== 'other' ? t(momentKindLook(e.momentKind).labelKey) : t('timetable.eventBadge')}
                               </Text>
                             </View>
                             <Text style={styles.cardTimeText}>{timeStr}</Text>

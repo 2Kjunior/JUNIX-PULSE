@@ -39,10 +39,12 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string;
   status?: TaskStatus;
-  scheduledDate?: string;
+  /** null puts the task back in the Inbox (no day). */
+  scheduledDate?: string | null;
   /** null takes the deadline off the task. */
   dueDate?: string | null;
-  estimatedMinutes?: number;
+  /** null takes its time off. */
+  estimatedMinutes?: number | null;
   priority?: ReminderPriority;
   goalId?: string;
   /** null takes the person off the task. */

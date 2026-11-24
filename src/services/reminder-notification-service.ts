@@ -64,7 +64,8 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
           await loadReminders(),
           new Date(),
           useAppStore.getState().language,
-          quietHoursOf(settings)
+          quietHoursOf(settings),
+          settings.alertLevels
         )
       : [];
 

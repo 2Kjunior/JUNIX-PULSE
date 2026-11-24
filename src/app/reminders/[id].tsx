@@ -6,7 +6,7 @@
  * Règle A.1 : Zéro emoji (icônes vectorielles et typographie soignée).
  * Règle A.2 : Cartes rayon 16px, bottom sheet 28px, palette theme.ts.
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -122,9 +122,12 @@ export default function ReminderDetailScreen() {
     }
   }, [id, t]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Read again on coming back from the form, so the page shows what was just saved (sheet 022)
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   async function handleComplete() {
     if (!reminder) return;

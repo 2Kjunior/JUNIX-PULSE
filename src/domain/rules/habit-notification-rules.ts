@@ -8,7 +8,7 @@ import type { Habit } from '../entities';
 import { translate } from '../../i18n/translate';
 import { doneThisWeek, weeklyTarget } from './goal-rules';
 import type { AppLanguage } from './language-rules';
-import { DEFAULT_QUIET_HOURS, NotificationLevel, notificationLevelFor, QuietHours } from './notification-level-rules';
+import { AlertDefaults, DEFAULT_QUIET_HOURS, NotificationLevel, notificationLevelFor, QuietHours } from './notification-level-rules';
 
 export const HABIT_IDENTIFIER_PREFIX = 'habit-';
 /** Category of the habit notifications and its button. Neither ":" nor "-" in them. */
@@ -45,11 +45,14 @@ export function planHabitNotifications({
   now,
   language = 'fr',
   quietHours = DEFAULT_QUIET_HOURS,
+  alertDefaults,
 }: {
   habits: readonly HabitToPlan[];
   now: Date;
   language?: AppLanguage;
   quietHours?: QuietHours;
+  /** The default level of each family, from the settings (sheet 023). */
+  alertDefaults?: AlertDefaults;
 }): PlannedHabitNotification[] {
   const nextMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) + 7);
   const planned: PlannedHabitNotification[] = [];
@@ -70,7 +73,7 @@ export function planHabitNotifications({
         title: habit.title,
         body: translate(language, 'habitNotif.body'),
         scheduledAt: at,
-        level: notificationLevelFor({ moment: 'habit', at, quietHours }),
+        level: notificationLevelFor({ moment: 'habit', at, quietHours, defaults: alertDefaults }),
       });
     }
   }

@@ -1,32 +1,19 @@
 /**
- * Détail et Édition d'une tâche.
- * Permet de modifier la tâche, de gérer ses sous-tâches en direct,
- * de basculer son statut et de la supprimer avec Undo (30s).
+ * The page of a task: its status, Focus, what it says and its subtasks, ticked here.
+ * Changing the task opens the "To do" form that created it (sheet 022, /tasks/edit/[id]); the
+ * page reads the task again when it comes back to the front.
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { PersonField } from '@/components/people/PersonField';
-import { TagField } from '@/components/tags/TagField';
-import { TagRepository } from '@/repositories/tag-repository';
-import { DeadlineField } from '@/components/tasks/DeadlineField';
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 
 import { TaskRepository } from '@/repositories/task-repository';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
-import { Task, Subtask, TaskStatus, ReminderPriority } from '@/domain/entities';
+import { Task, Subtask, TaskStatus } from '@/domain/entities';
 import { useAppStore } from '@/store/app-store';
 import { Spacing, Radius, Typography } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -35,42 +22,31 @@ import { Button } from '@/components/ui/Button';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { makeTaskDetailStyles } from '@/styles/tasks/task-detail-styles';
-import { useDateLocale, useLanguage, useT } from '@/i18n';
+import { useDateLocale, useT, type MessageKey } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
+const PRIORITY_KEYS: Record<Task['priority'], MessageKey> = {
+  LOW: 'form.priority.low',
+  NORMAL: 'priority.normal',
+  HIGH: 'priority.high',
+  URGENT: 'form.priority.urgentF',
+};
+
 export default function TaskDetailScreen() {
   const t = useT();
-  const language = useLanguage();
   const dateLocale = useDateLocale();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSnackbar } = useAppStore();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeTaskDetailStyles);
-  const isLight = theme.mode === 'light';
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [task, setTask] = useState<Task | null>(null);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [error, setError] = useState('');
-
-  // Form local state for editing
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<ReminderPriority>('NORMAL');
-  const [scheduledDateStr, setScheduledDateStr] = useState<string | undefined>(undefined);
-  const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>(undefined);
-  const [personIds, setPersonIds] = useState<string[]>([]);
-  const [tagIds, setTagIds] = useState<string[]>([]);
-  const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [newSubtaskInput, setNewSubtaskInput] = useState('');
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
   const statusLabels: Record<TaskStatus, { label: string; color: string; icon: keyof typeof Ionicons.glyphMap }> = useMemo(() => ({
     INBOX: { label: t('taskDetail.status.INBOX'), color: theme.onSurface.variant, icon: 'file-tray-outline' },
@@ -80,13 +56,6 @@ export default function TaskDetailScreen() {
     POSTPONED: { label: t('taskDetail.status.POSTPONED'), color: theme.priority.HIGH, icon: 'arrow-forward-circle-outline' },
   }), [theme, t]);
 
-  const priorityOptions: { key: ReminderPriority; label: string; color: string }[] = useMemo(() => [
-    { key: 'LOW', label: t('form.priority.low'), color: theme.onSurface.variant },
-    { key: 'NORMAL', label: t('priority.normal'), color: theme.primary.default },
-    { key: 'HIGH', label: t('priority.high'), color: theme.priority.HIGH },
-    { key: 'URGENT', label: t('form.priority.urgentF'), color: theme.error.default },
-  ], [theme, t]);
-
   const load = useCallback(async () => {
     if (!id) {
       setError(t('taskDetail.missingId'));
@@ -94,10 +63,7 @@ export default function TaskDetailScreen() {
       return;
     }
     try {
-      const [loaded, subs] = await Promise.all([
-        TaskRepository.findById(id),
-        TaskRepository.findSubtasks(id),
-      ]);
+      const [loaded, subs] = await Promise.all([TaskRepository.findById(id), TaskRepository.findSubtasks(id)]);
       if (!loaded) {
         setError(t('taskDetail.notFound'));
         setScreenState('error');
@@ -105,17 +71,6 @@ export default function TaskDetailScreen() {
       }
       setTask(loaded);
       setSubtasks(subs);
-
-      // Population du formulaire local
-      setTitle(loaded.title);
-      setDescription(loaded.description ?? '');
-      setPriority(loaded.priority);
-      setScheduledDateStr(loaded.scheduledDate);
-      setEstimatedMinutes(loaded.estimatedMinutes);
-      setPersonIds(await TaskRepository.findPersonIds(loaded.id));
-      setTagIds(await TagRepository.findIdsFor('task', loaded.id));
-      setDueDate(loaded.dueDate);
-
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : t('taskDetail.loadError'));
@@ -123,18 +78,19 @@ export default function TaskDetailScreen() {
     }
   }, [id, t]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Read again on coming back from the form, so the page shows what was just saved
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
-  // ─── Handlers sous-tâches ───────────────────────────────────────────────────
+  // ─── Subtasks ──────────────────────────────────────────────────────────────
 
   async function handleToggleSubtask(subtaskId: string, currentCompleted: boolean) {
     if (!id) return;
     const nextCompleted = !currentCompleted;
-    setSubtasks(prev =>
-      prev.map(s => (s.id === subtaskId ? { ...s, isCompleted: nextCompleted } : s))
-    );
+    setSubtasks(prev => prev.map(s => (s.id === subtaskId ? { ...s, isCompleted: nextCompleted } : s)));
     await TaskUseCases.toggleSubtask(subtaskId, nextCompleted);
   }
 
@@ -160,7 +116,7 @@ export default function TaskDetailScreen() {
     });
   }
 
-  // ─── Actions Tâche ─────────────────────────────────────────────────────────
+  // ─── Task ──────────────────────────────────────────────────────────────────
 
   async function handleToggleStatus() {
     if (!task) return;
@@ -178,37 +134,6 @@ export default function TaskDetailScreen() {
     router.back();
   }
 
-  async function handleSave() {
-    if (!task || !title.trim()) return;
-    setSaving(true);
-    try {
-      await TaskUseCases.updateTask({
-        id: task.id,
-        title: title.trim(),
-        description: description.trim() || undefined,
-        priority,
-        scheduledDate: scheduledDateStr,
-        estimatedMinutes: estimatedMinutes,
-        personIds,
-        tagIds,
-        dueDate: dueDate ?? null,
-        status:
-          task.status === 'INBOX' && scheduledDateStr
-            ? 'SCHEDULED'
-            : task.status === 'SCHEDULED' && !scheduledDateStr
-            ? 'INBOX'
-            : task.status,
-      });
-
-      showSnackbar(t('taskDetail.updated'));
-      router.back();
-    } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : t('taskDetail.saveError'));
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function handleDelete() {
     if (!task) return;
     await TaskUseCases.deleteTask(task.id);
@@ -224,36 +149,40 @@ export default function TaskDetailScreen() {
   }
 
   if (screenState === 'loading') return <LoadingState />;
-  if (screenState === 'error' || !task)
-    return <ErrorState message={error} onRetry={load} />;
+  if (screenState === 'error' || !task) return <ErrorState message={error} onRetry={load} />;
 
   const statusConfig = statusLabels[task.status];
   const completedSubtasksCount = subtasks.filter(s => s.isCompleted).length;
+  const longDay = (ymd: string) => format(new Date(`${ymd}T12:00:00`), t('form.dateFormat'), { locale: dateLocale });
+  // What the task says, one line each: only what was given
+  const facts: { icon: keyof typeof Ionicons.glyphMap; text: string }[] = [
+    { icon: task.scheduledDate ? 'calendar-outline' : 'file-tray-outline', text: task.scheduledDate ? longDay(task.scheduledDate) : t('itemForm.noDay') },
+    ...(task.dueDate ? [{ icon: 'flag-outline' as const, text: t('itemForm.understoodDeadline', { date: longDay(task.dueDate) }) }] : []),
+    ...(task.estimatedMinutes ? [{ icon: 'timer-outline' as const, text: `${task.estimatedMinutes} min` }] : []),
+    ...(task.priority !== 'NORMAL' ? [{ icon: 'alert-circle-outline' as const, text: t(PRIORITY_KEYS[task.priority]) }] : []),
+  ];
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      {/* En-tête */}
+    <KeyboardAvoidingView style={[styles.container, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-        >
+        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={t('common.back')}>
           <Ionicons name="chevron-back" size={24} color={theme.onSurface.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('taskDetail.title')}</Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={handleDelete}
-          accessibilityRole="button"
-          accessibilityLabel={t('taskDetail.deleteA11y')}
-        >
-          <Ionicons name="trash-outline" size={20} color={theme.error.default} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row' }}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => router.push({ pathname: '/tasks/edit/[id]', params: { id: task.id } })}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.edit')}
+            testID="task-edit"
+          >
+            <Ionicons name="create-outline" size={20} color={theme.onSurface.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn} onPress={handleDelete} accessibilityRole="button" accessibilityLabel={t('taskDetail.deleteA11y')}>
+            <Ionicons name="trash-outline" size={20} color={theme.error.default} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -261,21 +190,12 @@ export default function TaskDetailScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Statut Badge & Bouton de bascule */}
         <GlowCard tone="neutral">
           <View style={styles.statusRowInner}>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: statusConfig.color + '20' },
-              ]}
-            >
+            <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '20' }]}>
               <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
-              <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                {statusConfig.label}
-              </Text>
+              <Text style={[styles.statusText, { color: statusConfig.color }]}>{statusConfig.label}</Text>
             </View>
-
             <Button
               label={task.status === 'COMPLETED' ? t('taskDetail.reopenButton') : t('taskDetail.completeButton')}
               onPress={handleToggleStatus}
@@ -285,7 +205,6 @@ export default function TaskDetailScreen() {
           </View>
         </GlowCard>
 
-        {/* Lancer une session Focus Pomodoro sur cette tâche */}
         {task.status !== 'COMPLETED' && (
           <TouchableOpacity
             style={{
@@ -300,7 +219,7 @@ export default function TaskDetailScreen() {
             }}
             onPress={() =>
               router.push({
-                pathname: '/focus' as any,
+                pathname: '/focus' as never,
                 params: { taskId: task.id, taskTitle: task.title, minutes: String(task.estimatedMinutes ?? '') },
               })
             }
@@ -309,165 +228,39 @@ export default function TaskDetailScreen() {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
               <Ionicons name="timer-outline" size={20} color={theme.tertiary.default} />
-              <Text style={{ ...Typography.labelLarge, color: theme.onSurface.primary }}>
-                {t('taskDetail.focusLabel')}
-              </Text>
+              <Text style={{ ...Typography.labelLarge, color: theme.onSurface.primary }}>{t('taskDetail.focusLabel')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={theme.onSurface.inactive} />
           </TouchableOpacity>
         )}
 
-        {/* Titre */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('taskDetail.titleLabel')}</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder={t('taskDetail.titlePlaceholder')}
-            placeholderTextColor={theme.onSurface.disabled}
-          />
-        </View>
-
-        {/* Description */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('taskDetail.descriptionLabel')}</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder={t('taskDetail.descriptionPlaceholder')}
-            placeholderTextColor={theme.onSurface.disabled}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-        </View>
-
-        {/* Priorité */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('taskDetail.priorityLabel')}</Text>
-          <View style={styles.chipRow}>
-            {priorityOptions.map(opt => {
-              const isSelected = priority === opt.key;
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  style={[
-                    styles.chip,
-                    isSelected && { backgroundColor: opt.color + '22', borderColor: opt.color },
-                  ]}
-                  onPress={() => setPriority(opt.key)}
-                >
-                  <Text style={[styles.chipText, isSelected && { color: opt.color }]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+        {/* What the task says; "Modifier" changes it */}
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: '/tasks/edit/[id]', params: { id: task.id } })}
+          accessibilityRole="button"
+          accessibilityLabel={`${task.title}. ${t('common.edit')}`}
+          style={{
+            backgroundColor: theme.surface.container,
+            padding: Spacing.lg,
+            borderRadius: Radius.lg,
+            borderWidth: 1,
+            borderColor: theme.outline.variant,
+            gap: Spacing.sm,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}>
+            <Text style={{ ...Typography.titleLarge, color: theme.onSurface.primary, flex: 1 }}>{task.title}</Text>
+            <Ionicons name="create-outline" size={18} color={theme.onSurface.variant} />
           </View>
-        </View>
+          {task.description ? <Text style={{ ...Typography.bodyMedium, color: theme.onSurface.variant }}>{task.description}</Text> : null}
+          {facts.map(fact => (
+            <View key={fact.icon} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <Ionicons name={fact.icon} size={16} color={theme.onSurface.variant} />
+              <Text style={{ ...Typography.bodyMedium, color: theme.onSurface.primary }}>{fact.text}</Text>
+            </View>
+          ))}
+        </TouchableOpacity>
 
-        {/* Planification de Date */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('taskDetail.scheduleLabel')}</Text>
-          <View style={styles.chipRowWrap}>
-            <TouchableOpacity
-              style={[styles.chip, !scheduledDateStr && styles.chipActive]}
-              onPress={() => setScheduledDateStr(undefined)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: !scheduledDateStr }}
-              accessibilityLabel={`Inbox${!scheduledDateStr ? ', ' + t('common.selected') : ''}`}
-            >
-              <Ionicons
-                name="file-tray-outline"
-                size={14}
-                color={!scheduledDateStr ? (isLight ? theme.primary.onContainer : theme.primary.onContainer) : theme.onSurface.variant}
-              />
-              <Text style={[styles.chipText, !scheduledDateStr && styles.chipTextActive]}>
-                {t('tasks.filter.inbox')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, scheduledDateStr === todayStr && styles.chipActive]}
-              onPress={() => setScheduledDateStr(todayStr)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: scheduledDateStr === todayStr }}
-              accessibilityLabel={`${t('common.today')}${scheduledDateStr === todayStr ? ', ' + t('common.selected') : ''}`}
-            >
-              <Ionicons
-                name="today-outline"
-                size={14}
-                color={scheduledDateStr === todayStr ? (isLight ? theme.primary.onContainer : theme.primary.onContainer) : theme.onSurface.variant}
-              />
-              <Text style={[styles.chipText, scheduledDateStr === todayStr && styles.chipTextActive]}>
-                {t('common.today')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, scheduledDateStr === tomorrowStr && styles.chipActive]}
-              onPress={() => setScheduledDateStr(tomorrowStr)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: scheduledDateStr === tomorrowStr }}
-              accessibilityLabel={`${t('reminders.section.tomorrow')}${scheduledDateStr === tomorrowStr ? ', ' + t('common.selected') : ''}`}
-            >
-              <Ionicons
-                name="arrow-forward-outline"
-                size={14}
-                color={scheduledDateStr === tomorrowStr ? (isLight ? theme.primary.onContainer : theme.primary.onContainer) : theme.onSurface.variant}
-              />
-              <Text style={[styles.chipText, scheduledDateStr === tomorrowStr && styles.chipTextActive]}>
-                {t('reminders.section.tomorrow')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.chip,
-                !!scheduledDateStr &&
-                  ![todayStr, tomorrowStr].includes(scheduledDateStr) &&
-                  styles.chipActive,
-              ]}
-              onPress={() => setShowDatePicker(true)}
-              accessibilityRole="button"
-              accessibilityLabel={
-                scheduledDateStr && ![todayStr, tomorrowStr].includes(scheduledDateStr)
-                  ? t('taskDetail.customDateA11y', {
-                      date: format(new Date(scheduledDateStr + 'T12:00:00'), t('form.dateFormat'), { locale: dateLocale }),
-                    })
-                  : t('taskDetail.pickDateA11y')
-              }
-            >
-              <Ionicons name="calendar-outline" size={16} color={theme.onSurface.variant} />
-              <Text style={styles.chipText}>
-                {scheduledDateStr && ![todayStr, tomorrowStr].includes(scheduledDateStr)
-                  ? format(new Date(scheduledDateStr + 'T12:00:00'), t('form.dateFormat'), { locale: dateLocale })
-                  : t('taskDetail.otherDate')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* À rendre le… */}
-        <View style={styles.field}>
-          <DeadlineField value={dueDate} onChange={setDueDate} />
-        </View>
-
-        {/* Avec qui ? */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('personField.header')}</Text>
-          <PersonField selectedIds={personIds} onChange={setPersonIds} look="bare" multiple />
-        </View>
-
-        {/* Étiquettes de couleur */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('tagField.header')}</Text>
-          <TagField selectedIds={tagIds} onChange={setTagIds} look="bare" />
-        </View>
-
-        {/* Sous-tâches */}
         <View style={styles.field}>
           <View style={styles.subtasksHeader}>
             <Text style={styles.label}>{t('taskDetail.subtasks')}</Text>
@@ -478,7 +271,6 @@ export default function TaskDetailScreen() {
             )}
           </View>
 
-          {/* Liste des sous-tâches */}
           {subtasks.map(s => (
             <View key={s.id} style={styles.subtaskWrapper}>
               <GlowCard tone="neutral">
@@ -500,14 +292,7 @@ export default function TaskDetailScreen() {
                       color={s.isCompleted ? theme.success.default : theme.onSurface.disabled}
                     />
                   </TouchableOpacity>
-                  <Text
-                    style={[
-                      styles.subtaskTitle,
-                      s.isCompleted && styles.subtaskTitleCompleted,
-                    ]}
-                  >
-                    {s.title}
-                  </Text>
+                  <Text style={[styles.subtaskTitle, s.isCompleted && styles.subtaskTitleCompleted]}>{s.title}</Text>
                   <TouchableOpacity
                     onPress={() => handleDeleteSubtask(s.id)}
                     style={styles.subtaskDelete}
@@ -521,7 +306,6 @@ export default function TaskDetailScreen() {
             </View>
           ))}
 
-          {/* Champ d'ajout sous-tâche inline */}
           <View style={styles.addSubtaskContainer}>
             <TextInput
               style={styles.subtaskInput}
@@ -542,32 +326,7 @@ export default function TaskDetailScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Bouton Enregistrer */}
-        <Button
-          label={t('taskDetail.saveChanges')}
-          onPress={handleSave}
-          variant="primary"
-          size="lg"
-          loading={saving}
-          style={styles.saveBtn}
-        />
       </ScrollView>
-
-      {/* Modal Date Picker */}
-      <DateTimePickerModal
-        isVisible={showDatePicker}
-        mode="date"
-        date={scheduledDateStr ? new Date(scheduledDateStr + 'T12:00:00') : new Date()}
-        onConfirm={d => {
-          setShowDatePicker(false);
-          setScheduledDateStr(format(d, 'yyyy-MM-dd'));
-        }}
-        onCancel={() => setShowDatePicker(false)}
-        confirmTextIOS={t('personNew.confirm')}
-        cancelTextIOS={t('form.cancel')}
-        locale={language === 'fr' ? 'fr_FR' : 'en_US'}
-      />
     </KeyboardAvoidingView>
   );
 }

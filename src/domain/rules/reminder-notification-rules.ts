@@ -9,7 +9,14 @@ import { translate } from '../../i18n/translate';
 import type { AppLanguage } from './language-rules';
 import { getNextOccurrence } from './reminder-rules';
 import { HABIT_ACTION_DONE } from './habit-notification-rules';
-import { DEFAULT_QUIET_HOURS, NotificationLevel, notificationLevelFor, QuietHours } from './notification-level-rules';
+import {
+  AlertDefaults,
+  DEFAULT_ALERT_DEFAULTS,
+  DEFAULT_QUIET_HOURS,
+  NotificationLevel,
+  notificationLevelFor,
+  QuietHours,
+} from './notification-level-rules';
 
 export const MAX_RECURRING_OCCURRENCES = 14;
 /** A reminder to confirm rings again this many times, this many minutes apart. */
@@ -49,6 +56,11 @@ function occurrencesOf({ reminder, rule }: ReminderToPlan, now: Date): string[] 
   return occurrences;
 }
 
+/** The level of a reminder: the one chosen for it, or its priority and the settings (sheet 023). */
+function levelOfReminder(reminder: Reminder, at: Date, quietHours: QuietHours, defaults: AlertDefaults) {
+  return notificationLevelFor({ moment: 'reminder', priority: reminder.priority, at, quietHours, chosen: reminder.alertLevel, defaults });
+}
+
 function bodyOf(reminder: Reminder, language: AppLanguage): string {
   if (reminder.status !== 'SNOOZED') return reminder.notes ?? translate(language, 'reminderNotif.default');
   return reminder.notes
@@ -65,7 +77,8 @@ function confirmationRepeats(
   item: ReminderToPlan,
   now: Date,
   language: AppLanguage,
-  quietHours: QuietHours
+  quietHours: QuietHours,
+  defaults: AlertDefaults
 ): PlannedReminderNotification[] {
   if (!item.reminder.requiresConfirmation) return [];
   const anchors = new Set([new Date(item.reminder.scheduledAt).getTime()]);
@@ -84,7 +97,7 @@ function confirmationRepeats(
         title: item.reminder.title,
         body: translate(language, 'reminderNotif.confirmAgain'),
         scheduledAt,
-        level: notificationLevelFor({ moment: 'reminder', priority: item.reminder.priority, at: scheduledAt, quietHours }),
+        level: levelOfReminder(item.reminder, scheduledAt, quietHours, defaults),
       });
     }
   }
@@ -95,7 +108,8 @@ export function planReminderNotifications(
   items: ReminderToPlan[],
   now: Date,
   language: AppLanguage = 'fr',
-  quietHours: QuietHours = DEFAULT_QUIET_HOURS
+  quietHours: QuietHours = DEFAULT_QUIET_HOURS,
+  defaults: AlertDefaults = DEFAULT_ALERT_DEFAULTS
 ): PlannedReminderNotification[] {
   const active = items.filter(({ reminder }) => ACTIVE_STATUSES.includes(reminder.status) && !reminder.deletedAt);
   const planned = active
@@ -108,7 +122,7 @@ export function planReminderNotifications(
           title: item.reminder.title,
           body: bodyOf(item.reminder, language),
           scheduledAt,
-          level: notificationLevelFor({ moment: 'reminder', priority: item.reminder.priority, at: scheduledAt, quietHours }),
+          level: levelOfReminder(item.reminder, scheduledAt, quietHours, defaults),
         };
       })
     )
@@ -117,7 +131,7 @@ export function planReminderNotifications(
 
   // The repeats take the places left: they never push a reminder of its own out of the phone
   const repeats = active
-    .flatMap(item => confirmationRepeats(item, now, language, quietHours))
+    .flatMap(item => confirmationRepeats(item, now, language, quietHours, defaults))
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
     .slice(0, MAX_SCHEDULED_REMINDERS - planned.length);
   return [...planned, ...repeats];

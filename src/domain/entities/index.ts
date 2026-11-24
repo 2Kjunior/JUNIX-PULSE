@@ -23,8 +23,11 @@ import {
   MascotPresence,
   MascotAddress,
   MascotProposalsLevel,
+  AlertLevel,
+  MomentKind,
 } from '../enums';
 import type { LanguageSetting } from '../rules/language-rules';
+import type { AlertDefaults } from '../rules/notification-level-rules';
 import type { TagColor } from '../rules/tag-rules';
 
 export * from '../enums';
@@ -53,6 +56,8 @@ export interface Reminder {
   personId?: string;
   /** Rings again every few minutes until it is completed or snoozed. */
   requiresConfirmation?: boolean;
+  /** The level chosen for it (sheet 023); absent is "Auto". */
+  alertLevel?: AlertLevel;
   recurrenceRuleId?: string;
   notificationId?: string;     // ID fourni par expo-notifications (pour annulation)
   snoozedUntil?: string;       // ISO 8601 si snooze actif
@@ -124,6 +129,10 @@ export interface Event {
   location?: string;
   type: EventType;
   travelBufferMinutes?: number; // Marge de déplacement avant l'événement (V1: valeur fixe)
+  /** Its type (sheet 023); absent is "Autre". */
+  momentKind?: MomentKind;
+  /** The level chosen for it (sheet 023); absent is "Auto". */
+  alertLevel?: AlertLevel;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -305,6 +314,8 @@ export interface Settings {
    */
   quietHoursStart?: number;
   quietHoursEnd?: number;
+  /** The default level of reminders, deadlines, moments and habits (sheet 023); all normal at first. */
+  alertLevels?: AlertDefaults;
   /**
    * Mode d'apparence choisi : suit le système, clair, ou sombre.
    * Valeur par défaut : 'dark'.

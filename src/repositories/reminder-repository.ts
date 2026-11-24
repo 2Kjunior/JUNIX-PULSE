@@ -6,7 +6,8 @@
 
 import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
-import { Reminder, ReminderChecklistItem, RecurrenceRule } from '../domain/entities';
+import { AlertLevel, Reminder, ReminderChecklistItem, RecurrenceRule } from '../domain/entities';
+import { chosenLevelOf } from '../domain/rules/notification-level-rules';
 
 // ─── Types de paramètres ──────────────────────────────────────────────────────
 
@@ -20,6 +21,7 @@ export interface CreateReminderParams {
   actionType: Reminder['actionType'];
   personId?: string;
   requiresConfirmation?: boolean;
+  alertLevel?: AlertLevel | null;
   recurrenceRuleId?: string;
   createdAt: string;
   updatedAt: string;
@@ -35,6 +37,10 @@ export interface UpdateReminderParams {
   actionType?: Reminder['actionType'];
   personId?: string | null;
   requiresConfirmation?: boolean;
+  /** null: it no longer repeats. */
+  recurrenceRuleId?: string | null;
+  /** null: "Auto". */
+  alertLevel?: AlertLevel | null;
   notificationId?: string | null;
   snoozedUntil?: string | null;
   updatedAt: string;
@@ -56,6 +62,7 @@ function rowToReminder(row: Record<string, unknown>): Reminder {
     actionType: row.action_type as Reminder['actionType'],
     personId: (row.person_id as string | null) ?? undefined,
     requiresConfirmation: (row.requires_confirmation as number | null) === 1,
+    alertLevel: chosenLevelOf(row.alert_level) ?? undefined,
     recurrenceRuleId: (row.recurrence_rule_id as string | null) ?? undefined,
     notificationId: (row.notification_id as string | null) ?? undefined,
     snoozedUntil: (row.snoozed_until as string | null) ?? undefined,
@@ -87,8 +94,8 @@ export const ReminderRepository = {
     await db.runAsync(
       `INSERT INTO reminders (
         id, title, notes, scheduled_at, timezone, priority, status, action_type,
-        person_id, recurrence_rule_id, requires_confirmation, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'UPCOMING', ?, ?, ?, ?, ?, ?)`,
+        person_id, recurrence_rule_id, requires_confirmation, alert_level, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'UPCOMING', ?, ?, ?, ?, ?, ?, ?)`,
       params.id,
       params.title,
       params.notes ?? null,
@@ -99,6 +106,7 @@ export const ReminderRepository = {
       params.personId ?? null,
       params.recurrenceRuleId ?? null,
       params.requiresConfirmation ? 1 : 0,
+      params.alertLevel ?? null,
       params.createdAt,
       params.updatedAt
     );
@@ -138,6 +146,14 @@ export const ReminderRepository = {
     if (params.requiresConfirmation !== undefined) {
       setClauses.push('requires_confirmation = ?');
       values.push(params.requiresConfirmation ? 1 : 0);
+    }
+    if (params.recurrenceRuleId !== undefined) {
+      setClauses.push('recurrence_rule_id = ?');
+      values.push(params.recurrenceRuleId);
+    }
+    if (params.alertLevel !== undefined) {
+      setClauses.push('alert_level = ?');
+      values.push(params.alertLevel);
     }
     if (params.personId !== undefined) {
       setClauses.push('person_id = ?');

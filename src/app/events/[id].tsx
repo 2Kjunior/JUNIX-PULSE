@@ -3,7 +3,7 @@
  * Support dynamique des modes sombre et clair.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import { GlassAlert } from '@/components/feedback/GlassAlert';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format, differenceInMinutes } from 'date-fns';
@@ -33,6 +33,7 @@ import { PersonRepository } from '@/repositories/person-repository';
 import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
 import { mapsDirectionsUrl } from '@/domain/rules/maps-links';
+import { momentKindColor, momentKindLook } from '@/constants/moment-kinds';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -48,7 +49,7 @@ export default function EventDetailScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [event, setEvent] = useState<Event | null>(null);
   const [associatedPersons, setAssociatedPersons] = useState<Person[]>([]);
-  // Events have no edit screen: their people change here, saved at once
+  // Their people and tags also change here, saved at once; the rest in the form (sheet 022)
   const [allPersons, setAllPersons] = useState<Person[]>([]);
   const [pickingPersons, setPickingPersons] = useState(false);
   const [tagIds, setTagIds] = useState<string[]>([]);
@@ -108,9 +109,12 @@ export default function EventDetailScreen() {
     }
   };
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Read again on coming back from the form, so the page shows what was just saved
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   async function handleDelete() {
     if (!event) return;
@@ -168,14 +172,25 @@ export default function EventDetailScreen() {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {event.title}
         </Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={handleDelete}
-          accessibilityRole="button"
-          accessibilityLabel={t('eventDetail.deleteA11y')}
-        >
-          <Ionicons name="trash-outline" size={20} color={theme.error.default} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row' }}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => router.push({ pathname: '/events/edit/[id]', params: { id: event.id } })}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.edit')}
+            testID="event-edit"
+          >
+            <Ionicons name="create-outline" size={20} color={theme.onSurface.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={handleDelete}
+            accessibilityRole="button"
+            accessibilityLabel={t('eventDetail.deleteA11y')}
+          >
+            <Ionicons name="trash-outline" size={20} color={theme.error.default} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -203,6 +218,16 @@ export default function EventDetailScreen() {
               </Text>
             </View>
           </View>
+
+          {/* Its type (sheet 023), shown when it has one */}
+          {event.momentKind && event.momentKind !== 'other' ? (
+            <View style={styles.infoRow} testID="event-kind">
+              <Ionicons name={momentKindLook(event.momentKind).icon} size={20} color={momentKindColor(theme, event.momentKind)} />
+              <Text style={[styles.infoTitle, { color: momentKindColor(theme, event.momentKind) }]}>
+                {t(momentKindLook(event.momentKind).labelKey)}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Date & Horaires */}
           <View style={styles.infoRow}>

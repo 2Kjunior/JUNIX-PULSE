@@ -2,12 +2,15 @@
  * The "To do" form (study 001, 12.2 "2-B"; sheet 012), in cyan: What → When → Alert → With whom
  * → More options, in the order of the registry (constants/item-forms). Saved without an alert it
  * is a task; with one, a reminder: the kinds kept in the data (constants/item-kinds).
+ * The same form changes a saved task or reminder (sheet 022, `editing`): it opens filled in, the
+ * kind stays what it is (a task has no alert section, a reminder keeps its alert) and the
+ * subtasks stay on the page of the task.
  */
 
 import { Ionicons } from '@expo/vector-icons';
 import { addDays, addWeeks, format, startOfWeek } from 'date-fns';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
@@ -23,6 +26,8 @@ import {
   type Choice,
   type IconName,
 } from '@/components/create/form/FormBricks';
+import { AlertLevelField } from '@/components/create/form/AlertLevelField';
+import { LoadingState } from '@/components/feedback/States';
 import { PersonField } from '@/components/people/PersonField';
 import { TagField } from '@/components/tags/TagField';
 import { DeadlineField } from '@/components/tasks/DeadlineField';
@@ -38,8 +43,10 @@ import {
 } from '@/constants/item-forms';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Radius, Spacing } from '@/constants/theme';
-import type { Person, Reminder, ReminderPriority } from '@/domain/entities';
+import type { AlertLevel, Person, Reminder, ReminderPriority, TaskStatus } from '@/domain/entities';
 import { todoFromSentence } from '@/domain/rules/form-dictation-rules';
+import { alertTimeRefused, taskStatusAfterEdit, type SimpleRecurrence } from '@/domain/rules/item-edit-rules';
+import { loadTodoForEdit, type TodoEditTarget } from '@/features/create/edit-loaders';
 import { offerExactAlarmsForConfirmation } from '@/features/reminders/offer-exact-alarms';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
@@ -48,11 +55,11 @@ import { PersonRepository } from '@/repositories/person-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
 import { useAppStore } from '@/store/app-store';
 import { makeFormStyles } from '@/styles/common/form-styles';
-import { createReminder } from '@/use-cases/reminder-use-cases';
+import { createReminder, updateReminder } from '@/use-cases/reminder-use-cases';
 import { TaskUseCases } from '@/use-cases/task-use-cases';
 
 type ActionType = Reminder['actionType'];
-type Recurrence = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+type Recurrence = SimpleRecurrence;
 
 const PRIORITIES: readonly { value: ReminderPriority; labelKey: MessageKey }[] = [
   { value: 'LOW', labelKey: 'form.priority.low' },
@@ -85,9 +92,11 @@ export interface TodoFormProps {
   defaultHour?: string;
   /** Opened from the page of a person: it is already about them. */
   personId?: string;
+  /** A saved task or reminder to change (sheet 022) instead of a new one. */
+  editing?: TodoEditTarget;
 }
 
-export function TodoForm({ initialAlert = false, defaultDate, defaultHour, personId }: TodoFormProps) {
+export function TodoForm({ initialAlert = false, defaultDate, defaultHour, personId, editing }: TodoFormProps) {
   const t = useT();
   const language = useLanguage();
   const dateLocale = useDateLocale();
@@ -104,7 +113,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   const [notes, setNotes] = useState('');
   const [titleError, setTitleError] = useState('');
   const [day, setDay] = useState<string | undefined>(() => dayParam(defaultDate) ?? (initialAlert ? today : undefined));
-  const [alert, setAlert] = useState(initialAlert);
+  // A saved item keeps its kind: a reminder rings, a task does not
+  const [alert, setAlert] = useState(editing ? editing.kind === 'reminder' : initialAlert);
   const [alertTime, setAlertTime] = useState(() => ({
     hour: hourParam(defaultHour) ?? (new Date().getHours() + 1) % 24,
     minute: 0,
@@ -112,8 +122,12 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   const [priority, setPriority] = useState<ReminderPriority>('NORMAL');
   const [actionType, setActionType] = useState<ActionType>('NONE');
   const [repeat, setRepeat] = useState(false);
-  const [recurrence, setRecurrence] = useState<Recurrence>('DAILY');
+  // null: a saved repeat the form cannot show (every 3 days...), kept unless the person changes it
+  const [recurrence, setRecurrence] = useState<Recurrence | null>('DAILY');
+  const [recurrenceTouched, setRecurrenceTouched] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  // How it warns (sheet 023): null is "Auto"
+  const [alertLevel, setAlertLevel] = useState<AlertLevel | null>(null);
   const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>(undefined);
   const [subtasks, setSubtasks] = useState<string[]>([]);
@@ -124,12 +138,66 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   const [saving, setSaving] = useState(false);
   // The people, so that "Appeler Paul" in a dictated sentence finds Paul
   const [persons, setPersons] = useState<Person[]>([]);
+  // What was saved, read once when changing an item
+  const [ready, setReady] = useState(!editing);
+  const savedRef = useRef<{ scheduledAt: Date | null; status: TaskStatus | null }>({ scheduledAt: null, status: null });
 
   useEffect(() => {
     PersonRepository.findAll()
       .then(setPersons)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!editing) return;
+    let active = true;
+    loadTodoForEdit(editing)
+      .then(values => {
+        if (!active) return;
+        if (!values) {
+          showSnackbar(t(editing.kind === 'reminder' ? 'remDetail.notFound' : 'taskDetail.notFound'));
+          router.back();
+          return;
+        }
+        setTitle(values.title);
+        setNotes(values.notes);
+        setDay(values.day);
+        setAlertTime(values.time);
+        setPriority(values.priority);
+        setActionType(values.actionType);
+        setRepeat(values.repeat);
+        setRecurrence(values.repeat ? values.recurrence : 'DAILY');
+        setConfirm(values.confirm);
+        setAlertLevel(values.alertLevel);
+        setDueDate(values.dueDate);
+        setEstimatedMinutes(values.estimatedMinutes);
+        setPersonIds(values.personIds);
+        setTagIds(values.tagIds);
+        savedRef.current = { scheduledAt: values.scheduledAt, status: values.status };
+        setReady(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        showSnackbar(t('common.loadError'));
+        router.back();
+      });
+    return () => {
+      active = false;
+    };
+    // Read once for the item opened
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing?.kind, editing?.id]);
+
+  const changeRepeat = (on: boolean) => {
+    setRepeat(on);
+    setRecurrenceTouched(true);
+    if (on && recurrence === null) setRecurrence('DAILY');
+  };
+  const changeRecurrence = (value: Recurrence | null) => {
+    if (!value) return;
+    setRecurrence(value);
+    setRecurrenceTouched(true);
+  };
 
   // "Dictate everything" (sheets 013 and 014): the sentence fills and touches every field it
   // speaks of; "Compris" lists them so the person checks before adding
@@ -139,10 +207,12 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
     setTitle(fill.title);
     if (fill.title) setTitleError('');
     setDay(fill.day);
-    setAlert(fill.alert);
+    // A saved item keeps its kind, whatever the sentence says
+    if (!editing) setAlert(fill.alert);
     setAlertTime(fill.time);
     setPriority(fill.priority);
     setActionType(fill.actionType);
+    if (Boolean(fill.recurrence) !== repeat || (fill.recurrence && fill.recurrence !== recurrence)) setRecurrenceTouched(true);
     setRepeat(Boolean(fill.recurrence));
     if (fill.recurrence) setRecurrence(fill.recurrence);
     setConfirm(fill.confirm);
@@ -207,19 +277,55 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
     setSubtaskInput('');
   };
 
+  /** The repeat to save: undefined leaves the saved one as it is. */
+  const recurrenceToSave = (scheduledAt: Date) => {
+    if (editing && !recurrenceTouched) return undefined;
+    if (!repeat || !recurrence) return editing ? null : undefined;
+    return { type: recurrence, interval: 1, dayOfMonth: recurrence === 'MONTHLY' ? scheduledAt.getDate() : undefined };
+  };
+
   async function handleSave() {
     if (!title.trim()) {
       setTitleError(t('taskNew.titleRequired'));
       return;
     }
     const scheduledAt = alertMoment(day, alertTime, new Date());
-    if (alert && scheduledAt <= new Date()) {
+    if (alert && alertTimeRefused(savedRef.current.scheduledAt, scheduledAt, new Date())) {
       showSnackbar(t('remNew.mustBeFuture'));
       return;
     }
     setSaving(true);
     try {
-      if (alert) {
+      if (editing?.kind === 'reminder') {
+        await updateReminder({
+          id: editing.id,
+          title: title.trim(),
+          notes: notes.trim(),
+          scheduledAt,
+          priority,
+          actionType,
+          personIds,
+          tagIds,
+          requiresConfirmation: confirm,
+          recurrenceRule: recurrenceToSave(scheduledAt),
+          alertLevel,
+        });
+        showSnackbar(t('remEdit.updated'));
+      } else if (editing?.kind === 'task') {
+        await TaskUseCases.updateTask({
+          id: editing.id,
+          title: title.trim(),
+          description: notes.trim(),
+          priority,
+          scheduledDate: day ?? null,
+          dueDate: dueDate ?? null,
+          estimatedMinutes: estimatedMinutes ?? null,
+          personIds,
+          tagIds,
+          status: savedRef.current.status ? taskStatusAfterEdit(savedRef.current.status, day) : undefined,
+        });
+        showSnackbar(t('taskDetail.updated'));
+      } else if (alert) {
         const settings = await SettingsRepository.get();
         await createReminder({
           title: title.trim(),
@@ -231,9 +337,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           personIds,
           tagIds,
           requiresConfirmation: confirm,
-          recurrenceRule: repeat
-            ? { type: recurrence, interval: 1, dayOfMonth: recurrence === 'MONTHLY' ? scheduledAt.getDate() : undefined }
-            : undefined,
+          recurrenceRule: recurrenceToSave(scheduledAt) ?? undefined,
+          alertLevel,
         });
         showSnackbar(t('remNew.created'));
       } else {
@@ -252,7 +357,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
       }
       router.back();
     } catch (e) {
-      showSnackbar(e instanceof Error ? e.message : t('taskNew.createError'));
+      showSnackbar(e instanceof Error ? e.message : t(editing ? 'taskDetail.saveError' : 'taskNew.createError'));
     } finally {
       setSaving(false);
     }
@@ -342,7 +447,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
               accent={accent}
               placeholder={t('itemForm.todoPlaceholder')}
               inputStyle={formStyles.titleInput}
-              autoFocus
+              // A new item starts with its title; a saved one opens without the keyboard
+              autoFocus={!editing}
               maxLength={120}
               testID="todo-title"
             />
@@ -378,14 +484,16 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
       case 'alert':
         return (
           <FormSection icon="notifications-outline" title={t('itemForm.alert')} accent={accent}>
-            <SwitchRow
-              label={t('itemForm.alertSwitch')}
-              hint={t('itemForm.alertHint')}
-              value={alert}
-              onChange={toggleAlert}
-              accent={accent}
-              testID="todo-alert"
-            />
+            {editing ? null : (
+              <SwitchRow
+                label={t('itemForm.alertSwitch')}
+                hint={t('itemForm.alertHint')}
+                value={alert}
+                onChange={toggleAlert}
+                accent={accent}
+                testID="todo-alert"
+              />
+            )}
             {alert ? (
               <View style={{ gap: Spacing.sm }}>
                 <TouchableOpacity
@@ -413,14 +521,17 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
                   accent={accent}
                   testIDPrefix="todo-action"
                 />
-                <SwitchRow label={t('remNew.repeat')} hint={t('remNew.repeatHelper')} value={repeat} onChange={setRepeat} accent={accent} />
+                <SwitchRow label={t('remNew.repeat')} hint={t('remNew.repeatHelper')} value={repeat} onChange={changeRepeat} accent={accent} />
                 {repeat ? (
-                  <ChoiceChips
-                    options={RECURRENCES.map(option => ({ value: option.value, label: t(option.labelKey) }))}
-                    value={recurrence}
-                    onChange={setRecurrence}
-                    accent={accent}
-                  />
+                  <>
+                    <ChoiceChips
+                      options={RECURRENCES.map(option => ({ value: option.value as Recurrence | null, label: t(option.labelKey) }))}
+                      value={recurrence}
+                      onChange={changeRecurrence}
+                      accent={accent}
+                    />
+                    {recurrence === null ? <Text style={formStyles.fieldLabel}>{t('itemForm.customRepeatKept')}</Text> : null}
+                  </>
                 ) : null}
                 <SwitchRow
                   label={t('confirmReminder.label')}
@@ -433,6 +544,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
                   accent={accent}
                   testID="reminder-confirmation"
                 />
+                <AlertLevelField value={alertLevel} onChange={setAlertLevel} accent={accent} testIDPrefix="todo-alert-level" />
               </View>
             ) : null}
           </FormSection>
@@ -440,20 +552,34 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
       case 'who':
         return <PersonField selectedIds={personIds} onChange={setPersonIds} multiple />;
       case 'more':
-        return <MoreOptions accent={accent}>{visibleMoreFields('todo', { alert }).map(renderMore)}</MoreOptions>;
+        return (
+          <MoreOptions accent={accent}>
+            {visibleMoreFields('todo', { alert })
+              // The subtasks of a saved task are ticked and changed on its page
+              .filter(field => !(editing && field === 'subtasks'))
+              .map(renderMore)}
+          </MoreOptions>
+        );
       default:
         return null;
     }
   };
+
+  if (!ready) return <LoadingState />;
+
+  // A saved task has no alert section: it stays a task
+  const sections = visibleSections('todo', { alert }).filter(section => !(editing?.kind === 'task' && section === 'alert'));
 
   return (
     <FormShell
       family="todo"
       // The header says whether it will ring (sheet 014)
       icon={alert ? 'notifications' : undefined}
+      // Changing keeps the short name of the kind; the subtitle says it is a change (sheet 022)
       title={t(alert ? 'itemForm.todo.titleAlert' : 'itemForm.todo.title')}
-      subtitle={t(alert ? 'itemForm.todo.subtitleAlert' : 'itemForm.todo.subtitle')}
-      saveLabel={t(alert ? 'itemForm.todo.submitAlert' : 'itemForm.todo.submit')}
+      subtitle={t(editing ? 'itemForm.editSubtitle' : alert ? 'itemForm.todo.subtitleAlert' : 'itemForm.todo.subtitle')}
+      saveLabel={t(editing ? 'itemForm.editSubmit' : alert ? 'itemForm.todo.submitAlert' : 'itemForm.todo.submit')}
+      editing={Boolean(editing)}
       saving={saving}
       onSave={handleSave}
       testID="todo-form"
@@ -464,7 +590,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
         onSentence={applySentence}
         understood={understood}
       />
-      {visibleSections('todo', { alert }).map(section => (
+      {sections.map(section => (
         <React.Fragment key={section}>{renderSection(section)}</React.Fragment>
       ))}
       <DateTimePickerModal

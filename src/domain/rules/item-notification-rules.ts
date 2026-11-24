@@ -10,6 +10,8 @@ import { Event, Task } from '../entities';
 import { translate } from '../../i18n/translate';
 import type { AppLanguage } from './language-rules';
 import {
+  AlertDefaults,
+  DEFAULT_ALERT_DEFAULTS,
   DEFAULT_QUIET_HOURS,
   NotificationLevel,
   NotificationMoment,
@@ -45,6 +47,8 @@ export interface ItemPlanInput {
   now: Date;
   language?: AppLanguage;
   quietHours?: QuietHours;
+  /** The default level of each family, from the settings (sheet 023). */
+  alertDefaults?: AlertDefaults;
 }
 
 const MINUTE = 60 * 1000;
@@ -66,15 +70,29 @@ export function planItemNotifications({
   now,
   language = 'fr',
   quietHours = DEFAULT_QUIET_HOURS,
+  alertDefaults = DEFAULT_ALERT_DEFAULTS,
 }: ItemPlanInput): PlannedItemNotification[] {
   const planned: PlannedItemNotification[] = [];
-  const add = (item: Omit<PlannedItemNotification, 'identifier' | 'level'>, priority?: Task['priority']) => {
+  const add = (
+    item: Omit<PlannedItemNotification, 'identifier' | 'level'>,
+    priority?: Task['priority'],
+    // A moment: its type and the level chosen for it (sheet 023)
+    moment?: Pick<Event, 'momentKind' | 'alertLevel'>
+  ) => {
     if (item.scheduledAt <= now) return;
     planned.push({
       ...item,
       // The time is in the identifier: a new date gives a new notification, and the old one is cancelled
       identifier: `${ITEM_IDENTIFIER_PREFIX}${item.itemType.toLowerCase()}-${item.itemId}-${item.moment}-${item.scheduledAt.getTime()}`,
-      level: notificationLevelFor({ moment: item.moment, priority, at: item.scheduledAt, quietHours }),
+      level: notificationLevelFor({
+        moment: item.moment,
+        priority,
+        at: item.scheduledAt,
+        quietHours,
+        defaults: alertDefaults,
+        chosen: moment?.alertLevel,
+        momentKind: moment?.momentKind,
+      }),
     });
   };
 
@@ -101,7 +119,7 @@ export function planItemNotifications({
         moment: 'momentLeave',
         scheduledAt: new Date(start.getTime() - travel * MINUTE),
         body: translate(language, 'itemNotif.momentLeave', { place, time: clock(start) }),
-      });
+      }, undefined, event);
     }
     // Leaving already warns this early or earlier: a second notice would only repeat it
     if (!leaves || travel < MOMENT_BEFORE_MINUTES) {
@@ -110,7 +128,7 @@ export function planItemNotifications({
         moment: 'momentBefore',
         scheduledAt: new Date(start.getTime() - MOMENT_BEFORE_MINUTES * MINUTE),
         body: translate(language, 'itemNotif.momentBefore', { time: clock(start) }),
-      });
+      }, undefined, event);
     }
   }
 

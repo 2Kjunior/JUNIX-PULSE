@@ -50,6 +50,17 @@ export type EventType =
   | 'FREE'        // Temps libre (n'affecte pas les calculs de disponibilité)
   | 'BUSY';       // Occupé
 
+/**
+ * The types of a moment (study 001, 6-C; sheet 023), in the order the form shows them.
+ * What they do: domain/rules/moment-kind-rules.ts; how they look: constants/moment-kinds.ts.
+ */
+export const MOMENT_KINDS = ['appointment', 'work', 'health', 'birthday', 'party', 'ceremony', 'mourning', 'travel', 'other'] as const;
+export type MomentKind = (typeof MOMENT_KINDS)[number];
+
+/** How loud a notification is (study 001, 6-B), from the quietest to the loudest. */
+export const ALERT_LEVELS = ['discreet', 'normal', 'alarm'] as const;
+export type AlertLevel = (typeof ALERT_LEVELS)[number];
+
 export type HabitFrequency =
   | 'DAILY'
   | 'WEEKLY';     // X fois par semaine

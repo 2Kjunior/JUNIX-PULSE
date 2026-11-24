@@ -5,7 +5,7 @@
 import { randomUUID } from 'expo-crypto';
 import { TagRepository } from '../repositories/tag-repository';
 import { EventRepository } from '../repositories/event-repository';
-import { EventType } from '../domain/entities';
+import { AlertLevel, EventType, MomentKind } from '../domain/entities';
 import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import { syncItemNotifications } from '../services/item-notification-service';
@@ -21,6 +21,10 @@ export interface CreateEventInput {
   location?: string;
   type?: EventType;
   travelBufferMinutes?: number;
+  /** Its type (sheet 023); absent is "Autre". */
+  momentKind?: MomentKind;
+  /** How it warns (sheet 023); null or absent is "Auto". */
+  alertLevel?: AlertLevel | null;
   personIds?: string[];
   /** Its coloured tags. */
   tagIds?: string[];
@@ -35,6 +39,9 @@ export interface UpdateEventInput {
   location?: string;
   type?: EventType;
   travelBufferMinutes?: number;
+  momentKind?: MomentKind;
+  /** null is "Auto", undefined keeps it. */
+  alertLevel?: AlertLevel | null;
   personIds?: string[];
   /** Its coloured tags: replaces the ones it had. */
   tagIds?: string[];
@@ -63,6 +70,9 @@ export const EventUseCases = {
         location: input.location?.trim(),
         type: input.type ?? 'BUSY',
         travelBufferMinutes: input.travelBufferMinutes ?? 0,
+        // "Autre" is kept as nothing: a moment of before the types reads the same
+        momentKind: input.momentKind && input.momentKind !== 'other' ? input.momentKind : undefined,
+        alertLevel: input.alertLevel ?? undefined,
         createdAt: now,
         updatedAt: now,
       },
@@ -94,6 +104,8 @@ export const EventUseCases = {
         location: input.location?.trim(),
         type: input.type,
         travelBufferMinutes: input.travelBufferMinutes,
+        momentKind: input.momentKind === undefined ? undefined : input.momentKind === 'other' ? null : input.momentKind,
+        alertLevel: input.alertLevel,
         updatedAt: now,
       },
       input.personIds

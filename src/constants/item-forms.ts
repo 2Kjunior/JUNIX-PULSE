@@ -6,8 +6,8 @@
 
 import type { ItemFamily } from './item-kinds';
 
-export type FormSectionId = 'what' | 'when' | 'alert' | 'slot' | 'where' | 'leave' | 'who' | 'more';
-export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability';
+export type FormSectionId = 'what' | 'kind' | 'when' | 'alert' | 'slot' | 'where' | 'leave' | 'who' | 'more';
+export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability' | 'alertLevel';
 
 export interface ItemFormDefinition {
   sections: readonly FormSectionId[];
@@ -20,8 +20,9 @@ export const ITEM_FORMS: Readonly<Record<ItemFamily, ItemFormDefinition>> = {
     more: ['priority', 'deadline', 'duration', 'subtasks', 'tags'],
   },
   moment: {
-    sections: ['what', 'slot', 'where', 'leave', 'who', 'more'],
-    more: ['availability', 'tags'],
+    // The type right under the title (sheet 023): it is often guessed from it
+    sections: ['what', 'kind', 'slot', 'where', 'leave', 'who', 'more'],
+    more: ['alertLevel', 'availability', 'tags'],
   },
 };
 

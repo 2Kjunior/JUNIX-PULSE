@@ -521,12 +521,14 @@ export default function RootLayout() {
               {/* Tâches */}
               <Stack.Screen name="tasks/[id]" options={{ presentation: "card" }} />
               <Stack.Screen name="tasks/new" options={{ presentation: "modal" }} />
+              <Stack.Screen name="tasks/edit/[id]" options={{ presentation: "modal" }} />
               {/* Personnes */}
               <Stack.Screen name="people/[id]" options={{ presentation: "card" }} />
               <Stack.Screen name="people/new" options={{ presentation: "modal" }} />
               {/* Événements */}
               <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
               <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
+              <Stack.Screen name="events/edit/[id]" options={{ presentation: "modal" }} />
               {/* Habitudes */}
               <Stack.Screen
                 name="habits/index"

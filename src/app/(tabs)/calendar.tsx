@@ -47,6 +47,7 @@ import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
 import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
+import { momentKindColor } from '@/constants/moment-kinds';
 import { useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -122,7 +123,8 @@ export default function CalendarScreen() {
             dayOfWeek: s.getDay(),
             startTime: format(s, 'HH:mm'),
             endTime: format(end, 'HH:mm'),
-            color: theme.primary.default,
+            // The colour of its type (sheet 023); "Autre" keeps the amber of the moments
+            color: momentKindColor(theme, e.momentKind),
             createdAt: e.createdAt,
             updatedAt: e.updatedAt,
           });

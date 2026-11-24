@@ -1,20 +1,27 @@
 /**
- * How loud a notification is: discreet, normal or alarm (study 001, 12.6; sheet 011).
- * The level depends on what rings, its priority and the time of day. Pure: no phone, no
- * database, so every case is tested. A new criterion (the type of a moment) belongs here.
+ * How loud a notification is: discreet, normal or alarm (study 001, 6-B and 12.6; sheets 011 and 023).
+ * In order:
+ * 1. the level the person chose for this item, if any ("Auto" chooses none);
+ * 2. otherwise the default level of its family, set in the settings (normal for all at first),
+ *    the evening before a deadline one step quieter, moved one step by the type of a moment
+ *    (a mourning stays discreet, leaving for a journey is an alarm), and urgent one step up;
+ * 3. at night, everything goes down one step, except the alarm.
+ * Pure: no phone, no database, so every case is tested. A new criterion belongs here.
  */
 
-import type { ReminderPriority } from '../entities';
+import type { AlertLevel, MomentKind, ReminderPriority } from '../entities';
+import { ALERT_LEVELS } from '../enums';
+import { MOMENT_KIND_ALERT_SHIFT } from './moment-kind-rules';
 
-export type NotificationLevel = 'discreet' | 'normal' | 'alarm';
+export type NotificationLevel = AlertLevel;
 
 /** From the quietest to the loudest: one level up or down is one step in this list. */
-export const NOTIFICATION_LEVELS: readonly NotificationLevel[] = ['discreet', 'normal', 'alarm'];
+export const NOTIFICATION_LEVELS: readonly NotificationLevel[] = ALERT_LEVELS;
 
 /** What rings: a reminder, a deadline (the day before, the day itself), a moment (before it, time to leave). */
 export type NotificationMoment = 'reminder' | 'taskEve' | 'taskDay' | 'momentBefore' | 'momentLeave' | 'habit';
 
-/** The level of each moment before the criteria. The evening before a deadline only informs. */
+/** The level of each moment before the criteria, with the default settings. The evening before a deadline only informs. */
 export const BASE_LEVELS: Readonly<Record<NotificationMoment, NotificationLevel>> = {
   reminder: 'normal',
   taskEve: 'discreet',
@@ -23,6 +30,51 @@ export const BASE_LEVELS: Readonly<Record<NotificationMoment, NotificationLevel>
   momentLeave: 'normal',
   habit: 'normal',
 };
+
+// ─── Default level of each family, in the settings (sheet 023) ─────────────────────────────
+
+/** The families whose default level the settings choose. */
+export const ALERT_FAMILIES = ['reminder', 'deadline', 'moment', 'habit'] as const;
+export type AlertFamily = (typeof ALERT_FAMILIES)[number];
+export type AlertDefaults = Readonly<Record<AlertFamily, NotificationLevel>>;
+
+export const DEFAULT_ALERT_DEFAULTS: AlertDefaults = { reminder: 'normal', deadline: 'normal', moment: 'normal', habit: 'normal' };
+
+export function alertFamilyOf(moment: NotificationMoment): AlertFamily {
+  switch (moment) {
+    case 'taskEve':
+    case 'taskDay':
+      return 'deadline';
+    case 'momentBefore':
+    case 'momentLeave':
+      return 'moment';
+    default:
+      return moment;
+  }
+}
+
+function isLevel(value: unknown): value is NotificationLevel {
+  return NOTIFICATION_LEVELS.includes(value as NotificationLevel);
+}
+
+/**
+ * The defaults kept in the settings as "reminder=normal;deadline=alarm…". Anything missing or
+ * unknown keeps its default, so settings saved before (or by another version) always read.
+ */
+export function alertDefaultsOf(text: string | null | undefined): AlertDefaults {
+  const defaults: Record<AlertFamily, NotificationLevel> = { ...DEFAULT_ALERT_DEFAULTS };
+  for (const pair of (text ?? '').split(';')) {
+    const [family, level] = pair.split('=').map(part => part.trim());
+    if ((ALERT_FAMILIES as readonly string[]).includes(family) && isLevel(level)) defaults[family as AlertFamily] = level;
+  }
+  return defaults;
+}
+
+export function alertDefaultsText(defaults: AlertDefaults): string {
+  return ALERT_FAMILIES.map(family => `${family}=${defaults[family]}`).join(';');
+}
+
+// ─── The night ────────────────────────────────────────────────────────────────────────────
 
 /** The night, in whole hours of the phone's clock. The same start and end: no night. */
 export interface QuietHours {
@@ -48,25 +100,49 @@ export function isQuietTime(at: Date, quiet: QuietHours): boolean {
   return startHour > endHour ? hour >= startHour || hour < endHour : hour >= startHour && hour < endHour;
 }
 
+// ─── The level of one notification ───────────────────────────────────────────────────────
+
 export interface NotificationLevelInput {
   moment: NotificationMoment;
   priority?: ReminderPriority;
   at: Date;
   quietHours?: QuietHours;
+  /** The level chosen for this item; null or absent is "Auto". */
+  chosen?: NotificationLevel | null;
+  /** The type of the moment, for momentBefore and momentLeave. */
+  momentKind?: MomentKind;
+  /** The default level of each family, from the settings. */
+  defaults?: AlertDefaults;
 }
+
+const step = (index: number, by: number) => Math.min(Math.max(index + by, 0), NOTIFICATION_LEVELS.length - 1);
 
 export function notificationLevelFor({
   moment,
   priority,
   at,
   quietHours = DEFAULT_QUIET_HOURS,
+  chosen,
+  momentKind,
+  defaults = DEFAULT_ALERT_DEFAULTS,
 }: NotificationLevelInput): NotificationLevel {
   const loudest = NOTIFICATION_LEVELS.length - 1;
-  let index = NOTIFICATION_LEVELS.indexOf(BASE_LEVELS[moment]);
-  // Urgent goes up one level
-  if (priority === 'URGENT') index = Math.min(index + 1, loudest);
+  let index: number;
+  if (chosen && isLevel(chosen)) {
+    index = NOTIFICATION_LEVELS.indexOf(chosen);
+  } else {
+    index = NOTIFICATION_LEVELS.indexOf(defaults[alertFamilyOf(moment)]);
+    // The evening before a deadline only informs: one step below the day itself
+    if (moment === 'taskEve') index = step(index, -1);
+    if (momentKind && (moment === 'momentBefore' || moment === 'momentLeave')) {
+      const shift = MOMENT_KIND_ALERT_SHIFT[momentKind];
+      index = step(index, moment === 'momentLeave' ? shift.leave : shift.before);
+    }
+    // Urgent goes up one level
+    if (priority === 'URGENT') index = step(index, 1);
+  }
   // At night everything goes down one level, except the alarm
-  if (index < loudest && isQuietTime(at, quietHours)) index = Math.max(index - 1, 0);
+  if (index < loudest && isQuietTime(at, quietHours)) index = step(index, -1);
   return NOTIFICATION_LEVELS[index];
 }
 
@@ -80,5 +156,10 @@ export function notificationChannelFor(level: NotificationLevel, soundOn: boolea
 
 /** The level kept in a notification; one planned before the levels existed was normal. */
 export function levelOf(value: unknown): NotificationLevel {
-  return NOTIFICATION_LEVELS.includes(value as NotificationLevel) ? (value as NotificationLevel) : 'normal';
+  return isLevel(value) ? value : 'normal';
+}
+
+/** A level chosen for an item, as saved: null for "Auto" or anything unknown. */
+export function chosenLevelOf(value: unknown): NotificationLevel | null {
+  return isLevel(value) ? value : null;
 }

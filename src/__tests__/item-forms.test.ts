@@ -13,7 +13,7 @@ describe('the forms registry', () => {
   it('gives each family its own form, in the order of the study', () => {
     expect(Object.keys(ITEM_FORMS).sort()).toEqual([...ITEM_FAMILIES].sort());
     expect(visibleSections('todo')).toEqual(['what', 'when', 'alert', 'who', 'more']);
-    expect(ITEM_FORMS.moment.sections).toEqual(['what', 'slot', 'where', 'leave', 'who', 'more']);
+    expect(ITEM_FORMS.moment.sections).toEqual(['what', 'kind', 'slot', 'where', 'leave', 'who', 'more']);
   });
 
   it('offers "Leave … min before" only once a place is written', () => {
@@ -25,7 +25,7 @@ describe('the forms registry', () => {
   it('hides what a reminder does not have once the alert is on', () => {
     expect(visibleMoreFields('todo')).toEqual(['priority', 'deadline', 'duration', 'subtasks', 'tags']);
     expect(visibleMoreFields('todo', { alert: true })).toEqual(['tags']);
-    expect(visibleMoreFields('moment', { alert: true })).toEqual(['availability', 'tags']);
+    expect(visibleMoreFields('moment', { alert: true })).toEqual(['alertLevel', 'availability', 'tags']);
   });
 
   it('reads the day and the hour handed by the Planning', () => {

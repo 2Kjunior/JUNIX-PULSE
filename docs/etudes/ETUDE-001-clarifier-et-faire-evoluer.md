@@ -453,6 +453,11 @@ Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leu
   - **les échéances** d'une chose « À faire » : la **veille à 18 h** et le **jour même à 9 h** ;
   - **les Moments** : **15 min avant** le début, en plus de l'alerte de départ (« Partir … min avant ») s'il y a un lieu ;
   - **découpage** : la fiche 011 fait la règle des niveaux, les canaux Android et les notifications des trois types ; les sons et l'alarme qui sonne en continu viennent au chantier n° 9. Le critère « type de moment » attend le chantier n° 5 (les types de moments n'existent pas encore).
+- **Précisions du 24 novembre 2026** (chantier n° 5, fiche 023 ; à changer dans les registres si besoin) :
+  - les **neuf types** de 6-C, devinés du titre jusqu'à ce qu'on en choisisse un ; « Autre » par défaut ;
+  - **ordre de la règle** : niveau choisi pour l'élément (Auto = aucun), sinon niveau par défaut de sa famille (Paramètres), veille d'échéance un cran en dessous, type (deuil un cran en dessous, départ d'un voyage un cran au-dessus), urgent un cran au-dessus ; **la nuit** baisse tout d'un cran sauf l'Alarme, même un niveau choisi ;
+  - un niveau se **choisit** sur un rappel et sur un moment ; l'échéance d'une tâche suit le réglage « Échéances des tâches » ;
+  - le **ton** de chaque type est noté dans le registre ; Pulse et les sons s'en serviront au chantier n° 9.
 
 ### 12.7 Logo (point 7 et 10.3) : A · L'orbe, et la question du « J »
 
