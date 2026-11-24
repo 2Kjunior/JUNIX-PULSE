@@ -35,6 +35,8 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
+import { CardMenuButton } from '@/components/ui/CardMenu';
+import { useGestureTip } from '@/features/mascot/GestureTip';
 import { useT } from '@/i18n';
 
 const COLOR_PRESETS: Record<string, string> = {
@@ -62,6 +64,8 @@ export default function HabitsListScreen({ embedded = false }: { embedded?: bool
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [statsList, setStatsList] = useState<HabitStats[]>([]);
+  // The swipe tip, once, when the list has two habits or more (sheet 024)
+  const swipeTip = useGestureTip('swipe', statsList.filter(s => s.habit.status === 'ACTIVE').length);
 
   const loadData = useCallback(async () => {
     try {
@@ -218,12 +222,13 @@ export default function HabitsListScreen({ embedded = false }: { embedded?: bool
             </View>
           </GlowCard>
         ) : (
-          activeHabits.map(item => {
+          activeHabits.map((item, index) => {
             const habitColor = resolveHabitColor(item.habit.color, palette);
             return (
               /* SwipeableItem : swipe gauche → Modifier + Supprimer (LiquidGlass) */
               <SwipeableItem
                 key={item.habit.id}
+                peek={swipeTip.peeking && index === 0}
                 containerStyle={styles.swipeableContainer}
                 rightActions={makeStandardRightActions({
                   palette,
@@ -277,6 +282,7 @@ export default function HabitsListScreen({ embedded = false }: { embedded?: bool
                       <Ionicons name="flame" size={18} color="#FF9800" />
                       <Text style={styles.streakText}>{t('habits.streakDays', { days: item.currentStreak })}</Text>
                     </View>
+                    <CardMenuButton title={item.habit.title} />
                   </View>
                 </GlowCard>
               </SwipeableItem>
@@ -321,6 +327,7 @@ export default function HabitsListScreen({ embedded = false }: { embedded?: bool
         bottomOffset={insets.bottom + 16}
         onPress={() => router.push('/habits/new')}
       />
+      {swipeTip.element}
     </View>
   );
 }

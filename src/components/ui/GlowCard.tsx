@@ -34,6 +34,7 @@ import Animated, {
 
 import { Glow, GlowCardTokens, type GlowTone } from '@/constants/theme';
 import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility';
+import { useCardMenu } from '@/components/ui/CardMenu';
 import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
 import { hexToRgba } from '@/utils/color';
@@ -94,6 +95,8 @@ function GlowCardInner({
   const { isDark } = useTheme();
   const reduceTransparency = useReduceTransparency();
   const swipeAccessibility = useSwipeAccessibilityProps();
+  // In a row with actions, a long press opens them in a menu (sheet 024)
+  const openMenu = useCardMenu(accessibilityLabel ?? '');
   const reducedMotion = useReducedMotion();
   const isReduced = !!reducedMotion || !!disableEntranceAnimation;
 
@@ -328,6 +331,7 @@ function GlowCardInner({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={openMenu}
       onPressIn={() => {
         if (reducedMotion) return;
         pressScale.value = withTiming(0.98, { duration: 100 });

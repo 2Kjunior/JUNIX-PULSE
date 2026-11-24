@@ -171,6 +171,13 @@ export const MASCOT_MESSAGES = {
     ["Ici, je garde mes propositions. Vous décidez toujours : je donne seulement une idée.", "{name}, ici, je garde mes propositions. Vous décidez toujours : je donne seulement une idée."],
     ["Les propositions sont ici. Vous décidez toujours de la suite.", "{name}, les propositions sont ici. Vous décidez toujours de la suite."],
   ),
+  // The gesture tip of the lists (sheet 024), once, when a list has two cards or more
+  TIP_SWIPE: entry(
+    ["Astuce : glisse une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil.", "{name}, astuce : glisse une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil."],
+    ["Glisse une carte, ou touche ⋯, pour la modifier ou la supprimer.", "{name}, glisse une carte, ou touche ⋯, pour la modifier ou la supprimer."],
+    ["Astuce : faites glisser une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil.", "{name}, astuce : faites glisser une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil."],
+    ["Faites glisser une carte, ou touchez ⋯, pour la modifier ou la supprimer.", "{name}, faites glisser une carte, ou touchez ⋯, pour la modifier ou la supprimer."],
+  ),
 
   // ─── Proposals P1 to P12 ──────────────────────────────────────────────────
   FORGOTTEN_CONTACT: entry(

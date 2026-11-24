@@ -531,6 +531,7 @@ export const REST_EN: Record<keyof typeof REST_FR, string> = {
   'alertDefaults.moment': "Moments",
   'alertDefaults.habit': "Habits",
   'alertDefaults.saved': "Level saved",
+  'cardMenu.open': "Actions: {title}",
   'itemForm.customRepeatKept': "Custom repeat: it stays as it is unless you choose another one.",
   'itemForm.save': "Add",
   'itemForm.saving': "Adding…",

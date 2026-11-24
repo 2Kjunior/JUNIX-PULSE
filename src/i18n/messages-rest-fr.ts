@@ -529,6 +529,7 @@ export const REST_FR = {
   'alertDefaults.moment': "Moments",
   'alertDefaults.habit': "Habitudes",
   'alertDefaults.saved': "Niveau enregistré",
+  'cardMenu.open': "Actions : {title}",
   'itemForm.customRepeatKept': "Répétition personnalisée : elle reste telle quelle si tu n'en choisis pas une autre.",
   'itemForm.save': "Ajouter",
   'itemForm.saving': "Ajout…",

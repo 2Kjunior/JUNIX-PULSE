@@ -10,6 +10,8 @@ import React from 'react';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 import { TagSummary } from '@/components/tags/TagChip';
+import { CardMenuButton, useCardMenu } from '@/components/ui/CardMenu';
+import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { Tag } from '@/domain/entities';
@@ -32,6 +34,9 @@ export function TodoRow({
   const locale = useDateLocale();
   const { palette } = useTheme();
   const accent = itemFamilyColor(palette, 'todo');
+  // The actions of the swipe, also by a long press, "⋯" and the screen reader (sheet 024)
+  const openMenu = useCardMenu(entry.title);
+  const swipeAccessibility = useSwipeAccessibilityProps();
   const rings = entry.kind === 'reminder';
   // A reminder done cannot be reopened from here: its box is greyed
   const canToggle = !(rings && entry.done);
@@ -50,6 +55,8 @@ export function TodoRow({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={openMenu}
+      {...swipeAccessibility}
       accessibilityRole="button"
       accessibilityLabel={`${entry.title}. ${whenLabel}${rings ? `. ${t('todoTab.ringsA11y')}` : ''}`}
       testID={`todo-row-${entry.id}`}
@@ -112,6 +119,7 @@ export function TodoRow({
           <TagSummary tags={tags} />
         </View>
       </View>
+      <CardMenuButton title={entry.title} testID={`todo-menu-${entry.id}`} />
     </Pressable>
   );
 }

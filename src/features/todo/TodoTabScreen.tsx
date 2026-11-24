@@ -18,6 +18,7 @@ import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionBu
 import { HeaderIconButton, SettingsButton } from '@/components/ui/HeaderIconButton';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { SwipeableItem, makeStandardRightActions, type SwipeAction } from '@/components/ui/SwipeableItem';
+import { useGestureTip } from '@/features/mascot/GestureTip';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Spacing, TAB_BAR_TOTAL_HEIGHT, Typography } from '@/constants/theme';
 import type { Reminder, Tag, Task } from '@/domain/entities';
@@ -112,6 +113,11 @@ export function TodoTabScreen() {
   ];
   const sections = todoSections(entries, filter, new Date(), tagFilter);
   const counts = todoCounts(entries);
+  // The swipe tip (sheet 024): once, when two cards or more show; the first one opens by itself
+  const shownCount = sections.reduce((sum, section) => sum + section.entries.length, 0);
+  const swipeTip = useGestureTip('swipe', shownCount);
+  const firstShown = sections[0]?.entries[0];
+  const firstKey = firstShown ? `${firstShown.kind}-${firstShown.id}` : null;
 
   const openEntry = (entry: TodoEntry) => router.push(entry.kind === 'task' ? `/tasks/${entry.id}` : `/reminders/${entry.id}`);
 
@@ -252,6 +258,7 @@ export function TodoTabScreen() {
               {section.entries.map(entry => (
                 <SwipeableItem
                   key={`${entry.kind}-${entry.id}`}
+                  peek={swipeTip.peeking && `${entry.kind}-${entry.id}` === firstKey}
                   rightActions={rightActionsOf(entry)}
                   leftActions={
                     entry.done
@@ -278,6 +285,7 @@ export function TodoTabScreen() {
         icon="add"
         onPress={() => router.push(addPath as never)}
       />
+      {swipeTip.element}
     </View>
   );
 }

@@ -113,6 +113,10 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Here I keep my suggestions. You always decide: I only offer an idea.", "{name}, here I keep my suggestions. You always decide: I only offer an idea."],
     ["The suggestions are here. You always decide what happens next.", "{name}, the suggestions are here. You always decide what happens next."],
   ),
+  TIP_SWIPE: entry(
+    ["Tip: swipe a card to edit or delete it. The ⋯ button does the same.", "{name}, tip: swipe a card to edit or delete it. The ⋯ button does the same."],
+    ["Swipe a card, or tap ⋯, to edit or delete it.", "{name}, swipe a card, or tap ⋯, to edit or delete it."],
+  ),
 
   // ─── Proposals P1 to P12 ──────────────────────────────────────────────────
   FORGOTTEN_CONTACT: entry(

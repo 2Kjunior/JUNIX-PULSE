@@ -21,7 +21,7 @@
  * Accessibilité : WCAG 2.2 AA — rôles et labels explicites.
  */
 
-import React, { useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -34,9 +34,11 @@ import ReanimatedSwipeable, {
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
+  useReducedMotion,
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
+import { PEEK_DELAY_MS, PEEK_OPEN_MS } from '@/domain/rules/gesture-tip-rules';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassActionButton } from '@/components/ui/GlassActionButton';
 import { SwipeAccessibilityContext } from '@/components/ui/swipe-accessibility';
@@ -68,6 +70,11 @@ export interface SwipeableItemProps {
   leftActions?: SwipeAction[];
   /** Désactive entièrement le swipe si false */
   enabled?: boolean;
+  /**
+   * Opens the right actions by itself for a moment, to show that the card can be swiped
+   * (sheet 024, the gesture tip). Not with reduced motion.
+   */
+  peek?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
 }
 
@@ -188,8 +195,21 @@ export function SwipeableItem({
   leftActions,
   enabled = true,
   containerStyle,
+  peek = false,
 }: SwipeableItemProps) {
   const swipeableRef = useRef<SwipeableMethods>(null);
+  const reducedMotion = useReducedMotion();
+
+  // The gesture tip: the card opens a moment after the list shows, then closes
+  useEffect(() => {
+    if (!peek || reducedMotion || !rightActions?.length) return;
+    const open = setTimeout(() => swipeableRef.current?.openRight(), PEEK_DELAY_MS);
+    const close = setTimeout(() => swipeableRef.current?.close(), PEEK_DELAY_MS + PEEK_OPEN_MS);
+    return () => {
+      clearTimeout(open);
+      clearTimeout(close);
+    };
+  }, [peek, reducedMotion, rightActions?.length]);
 
   const hasActions =
     (rightActions && rightActions.length > 0) ||

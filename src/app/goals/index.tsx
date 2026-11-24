@@ -34,6 +34,8 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { SwipeableItem, makeStandardRightActions } from '@/components/ui/SwipeableItem';
+import { CardMenuButton } from '@/components/ui/CardMenu';
+import { useGestureTip } from '@/features/mascot/GestureTip';
 import { useT } from '@/i18n';
 
 export default function GoalsListScreen({ embedded = false }: { embedded?: boolean } = {}) {
@@ -47,6 +49,8 @@ export default function GoalsListScreen({ embedded = false }: { embedded?: boole
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [goalsList, setGoalsList] = useState<GoalDetails[]>([]);
+  // The swipe tip, once, when the list has two goals or more (sheet 024)
+  const swipeTip = useGestureTip('swipe', goalsList.filter(g => g.goal.status === 'ACTIVE').length);
 
   const loadData = useCallback(async () => {
     try {
@@ -173,10 +177,11 @@ export default function GoalsListScreen({ embedded = false }: { embedded?: boole
             </View>
           </GlowCard>
         ) : (
-          activeGoals.map(item => (
+          activeGoals.map((item, index) => (
             /* SwipeableItem : swipe gauche → Modifier + Supprimer (LiquidGlass) */
             <SwipeableItem
               key={item.goal.id}
+              peek={swipeTip.peeking && index === 0}
               containerStyle={styles.swipeableContainer}
               rightActions={makeStandardRightActions({
                 palette,
@@ -198,6 +203,7 @@ export default function GoalsListScreen({ embedded = false }: { embedded?: boole
                         <Text style={styles.overdueText}>{t('goals.overdueBadge')}</Text>
                       </View>
                     )}
+                    <CardMenuButton title={item.goal.title} />
                   </View>
 
                   {item.goal.description ? (
@@ -291,6 +297,7 @@ export default function GoalsListScreen({ embedded = false }: { embedded?: boole
         bottomOffset={insets.bottom + 16}
         onPress={() => router.push('/goals/new')}
       />
+      {swipeTip.element}
     </View>
   );
 }
