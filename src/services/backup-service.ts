@@ -28,6 +28,8 @@ const BACKUP_TABLES = [
   'goals',
   'goal_tasks',
   'goal_habits',
+  // Since sheet 025: who an item was sent to
+  'item_invites',
   'personal_schedules',
   'planning_blocks',
   'interactions',
@@ -61,6 +63,7 @@ const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   goals: ['id', 'title', 'description', 'status', 'deadline', 'created_at', 'updated_at', 'deleted_at'],
   goal_tasks: ['goal_id', 'task_id', 'added_at'],
   goal_habits: ['goal_id', 'habit_id', 'added_at'],
+  item_invites: ['item_type', 'item_id', 'person_id', 'status', 'updated_at'],
   personal_schedules: ['id', 'name', 'valid_from', 'valid_until', 'status', 'created_at', 'updated_at'],
   planning_blocks: ['id', 'schedule_id', 'label', 'type', 'day_of_week', 'start_time', 'end_time', 'color', 'created_at', 'updated_at'],
   interactions: ['id', 'person_id', 'type', 'occurred_at', 'notes', 'reminder_id', 'task_id', 'event_id', 'created_at'],
@@ -90,6 +93,7 @@ const REQUIRED_COLUMNS: Partial<Record<BackupTable, readonly string[]>> = {
   goals: ['id', 'title', 'status', 'created_at', 'updated_at'],
   goal_tasks: ['goal_id', 'task_id', 'added_at'],
   goal_habits: ['goal_id', 'habit_id', 'added_at'],
+  item_invites: ['item_type', 'item_id', 'person_id', 'status', 'updated_at'],
   personal_schedules: ['id', 'name', 'valid_from', 'status', 'created_at', 'updated_at'],
   planning_blocks: ['id', 'schedule_id', 'label', 'type', 'day_of_week', 'start_time', 'end_time', 'created_at', 'updated_at'],
   interactions: ['id', 'person_id', 'type', 'occurred_at', 'created_at'],
@@ -134,6 +138,7 @@ const ENUM_COLUMNS: Partial<Record<BackupTable, Record<string, readonly string[]
     status: ['ACTIVE', 'PAUSED', 'ARCHIVED'],
   },
   goals: { status: ['ACTIVE', 'COMPLETED', 'ARCHIVED'] },
+  item_invites: { item_type: ['task', 'reminder', 'event'], status: ['invited', 'joined'] },
   personal_schedules: { status: ['ACTIVE', 'INACTIVE', 'DELETED'] },
   planning_blocks: { type: ['WORK', 'STUDY', 'REST', 'SPORT', 'HOUSE', 'FREE', 'OTHER'] },
   interactions: { type: ['CALL', 'SMS', 'WHATSAPP', 'EMAIL', 'IN_PERSON', 'OTHER'] },
@@ -185,6 +190,8 @@ const BackupDataSchema = z.object({
   goal_tasks: z.array(BackupRowSchema),
   // Since sheet 018: an older backup has none, and still restores
   goal_habits: z.array(BackupRowSchema).default([]),
+  // Since sheet 025: an older backup has none, and still restores
+  item_invites: z.array(BackupRowSchema).default([]),
   personal_schedules: z.array(BackupRowSchema),
   planning_blocks: z.array(BackupRowSchema),
   interactions: z.array(BackupRowSchema),

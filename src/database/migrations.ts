@@ -655,5 +655,22 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN alert_levels TEXT;
     `,
   },
+  {
+    version: 38,
+    name: 'add_item_invites',
+    sql: `
+      -- A qui un element a ete envoye, et qui participe (fiche 025, etude 5-A et 12.5).
+      -- item_type : task, reminder ou event ; status : invited ou joined. Pas de ligne : jamais envoye.
+      CREATE TABLE IF NOT EXISTS item_invites (
+        item_type TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        person_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (item_type, item_id, person_id),
+        FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE
+      );
+    `,
+  },
 ];
 

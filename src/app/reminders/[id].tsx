@@ -30,6 +30,7 @@ import {
 } from '@/use-cases/reminder-use-cases';
 import { Reminder, ReminderChecklistItem, Person, type Tag } from '@/domain/entities';
 import { KINDS_WITH_SUBTASKS } from '@/constants/item-kinds';
+import { ShareItemCard } from '@/features/share/ShareItemCard';
 import { TagChip } from '@/components/tags/TagChip';
 import { TagRepository } from '@/repositories/tag-repository';
 import { tagsOf } from '@/domain/rules/tag-rules';
@@ -386,6 +387,9 @@ export default function ReminderDetailScreen() {
           </View>
           </GlowCard>
         )}
+
+        {/* Send it to someone, without an account (sheet 025) */}
+        <ShareItemCard kind="reminder" itemId={reminder.id} />
       </ScrollView>
 
       {/* ─── Barre d'actions fixes en bas (R-06) ─────────────────────────────── */}

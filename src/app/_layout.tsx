@@ -529,6 +529,8 @@ export default function RootLayout() {
               <Stack.Screen name="events/[id]" options={{ presentation: "card" }} />
               <Stack.Screen name="events/new" options={{ presentation: "modal" }} />
               <Stack.Screen name="events/edit/[id]" options={{ presentation: "modal" }} />
+              {/* A received invitation (sheet 025): junixpulse://invite?… or a pasted message */}
+              <Stack.Screen name="invite" options={{ presentation: "modal" }} />
               {/* Habitudes */}
               <Stack.Screen
                 name="habits/index"

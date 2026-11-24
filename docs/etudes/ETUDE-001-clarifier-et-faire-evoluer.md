@@ -434,6 +434,7 @@ Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leu
   - **chez l'envoyeur** : la personne à qui tu envoies est déjà dans l'élément (tu l'as ajoutée), et passe à « invitée » puis « participe » quand elle accepte ;
   - **chez le destinataire** : l'élément arrive avec **l'envoyeur comme personne liée**. Junix le reconnaît dans ses proches par son **numéro** ou son **e-mail** ; s'il ne le trouve pas, il propose « Ajouter Paul à tes proches ? ». Les autres personnes de l'élément sont proposées de la même façon, jamais ajoutées sans accord.
 - Les **réglages du partage** (nom affiché, envoi proposé, QR) iront dans les Paramètres (12.8).
+- **Fait le 24 novembre 2026 (5-A, fiche 025)** : texte lisible et lien Junix, pour les moments, les tâches et les rappels ; QR plus tard ; « Invitation envoyée » à l'envoi, « Participe » à la main. Les notes ne sont pas envoyées. L'envoyeur est reconnu par son **nom** (sans compte, ni numéro ni e-mail ne voyagent). Limite : WhatsApp et la plupart des SMS ne rendent cliquables que les liens `https://` ; un lien toujours cliquable attend 5-B (une petite page web). Restent pour plus tard : le réglage « proposer l'envoi dès qu'on ajoute quelqu'un » et l'astuce de Pulse « Tu peux lui envoyer l'invitation ».
 
 ### 12.6 Notifications (point 6 et 10.6) : 6-A à 6-D, pour les trois types
 

@@ -140,6 +140,21 @@ export function NewItemChooser({ visible, onClose, date = null, hour = null, wit
               </View>
             );
           })}
+
+          {/* A received invitation (sheet 025): the message is pasted there */}
+          <TouchableOpacity
+            onPress={() => {
+              close();
+              router.push('/invite');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('create.invite')}
+            testID="new-item-invite"
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.xs, minHeight: 44 }}
+          >
+            <Ionicons name="mail-open-outline" size={16} color={palette.onSurface.variant} />
+            <Text style={styles.rule}>{t('create.invite')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { makeTaskDetailStyles } from '@/styles/tasks/task-detail-styles';
+import { ShareItemCard } from '@/features/share/ShareItemCard';
 import { useDateLocale, useT, type MessageKey } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
@@ -326,6 +327,9 @@ export default function TaskDetailScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Send it to someone, without an account (sheet 025) */}
+        <ShareItemCard kind="task" itemId={task.id} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

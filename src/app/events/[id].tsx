@@ -34,6 +34,7 @@ import { makeEventDetailStyles } from '@/styles/events/event-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
 import { mapsDirectionsUrl } from '@/domain/rules/maps-links';
 import { momentKindColor, momentKindLook } from '@/constants/moment-kinds';
+import { ShareItemCard } from '@/features/share/ShareItemCard';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -365,6 +366,9 @@ export default function EventDetailScreen() {
           </View>
           <TagField selectedIds={tagIds} onChange={changeTags} look="bare" />
         </View>
+
+        {/* Send it to someone, without an account (sheet 025); follows the people changed above */}
+        <ShareItemCard kind="event" itemId={event.id} refreshKey={associatedPersons.map(person => person.id).join(',')} />
       </ScrollView>
       <PersonPicker
         visible={pickingPersons}
