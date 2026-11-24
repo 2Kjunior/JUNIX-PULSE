@@ -8,7 +8,7 @@
 
 import type { MascotMessageId } from './mascot-message-catalog';
 
-export type GestureTipId = 'swipe';
+export type GestureTipId = 'swipe' | 'planDrag';
 
 export interface GestureTip {
   id: GestureTipId;
@@ -19,6 +19,8 @@ export interface GestureTip {
 
 export const GESTURE_TIPS: Readonly<Record<GestureTipId, GestureTip>> = {
   swipe: { id: 'swipe', message: 'TIP_SWIPE', minCards: 2 },
+  // The Planning (sheet 026): as soon as one card can move
+  planDrag: { id: 'planDrag', message: 'TIP_PLAN_DRAG', minCards: 1 },
 };
 
 /** Where the day of the last tip is kept, with the tips seen ("Oublier les astuces vues" clears it too). */

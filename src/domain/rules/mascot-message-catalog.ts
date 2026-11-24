@@ -178,6 +178,13 @@ export const MASCOT_MESSAGES = {
     ["Astuce : faites glisser une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil.", "{name}, astuce : faites glisser une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil."],
     ["Faites glisser une carte, ou touchez ⋯, pour la modifier ou la supprimer.", "{name}, faites glisser une carte, ou touchez ⋯, pour la modifier ou la supprimer."],
   ),
+  // The tip of the Planning (sheet 026), once, when a card can move
+  TIP_PLAN_DRAG: entry(
+    ["Astuce : garde le doigt sur une carte, puis glisse-la pour changer son heure ou son jour.", "{name}, astuce : garde le doigt sur une carte, puis glisse-la pour changer son heure ou son jour."],
+    ["Un appui long sur une carte, et tu peux la déplacer.", "{name}, un appui long sur une carte, et tu peux la déplacer."],
+    ["Astuce : gardez le doigt sur une carte, puis faites-la glisser pour changer son heure ou son jour.", "{name}, astuce : gardez le doigt sur une carte, puis faites-la glisser pour changer son heure ou son jour."],
+    ["Un appui long sur une carte, et vous pouvez la déplacer.", "{name}, un appui long sur une carte, et vous pouvez la déplacer."],
+  ),
 
   // ─── Proposals P1 to P12 ──────────────────────────────────────────────────
   FORGOTTEN_CONTACT: entry(

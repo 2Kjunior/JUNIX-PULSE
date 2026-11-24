@@ -22,6 +22,8 @@ import {
   addDays,
   subDays,
   addMinutes,
+  addMonths,
+  subMonths,
   startOfWeek,
   isSameDay,
   isToday,
@@ -43,7 +45,11 @@ import { LoadingState, ErrorState } from '@/components/feedback/States';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { PillTopBar } from '@/components/ui/PillTopBar';
-import { CalendarTimetable } from '@/components/calendar/CalendarTimetable';
+import { DayTimeGrid } from '@/components/planning/DayTimeGrid';
+import { MonthView, type MonthItem } from '@/components/planning/MonthView';
+import { usePlanningMove } from '@/features/planning/use-planning-move';
+import { useGestureTip } from '@/features/mascot/GestureTip';
+import { dayFromKey, dayKey, monthGridRange } from '@/domain/rules/planning-move-rules';
 import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
@@ -51,7 +57,17 @@ import { momentKindColor } from '@/constants/moment-kinds';
 import { useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
-type CalendarViewMode = 'agenda' | 'timetable' | 'week';
+type CalendarViewMode = 'agenda' | 'timetable' | 'week' | 'month';
+
+/** The things of the month, kept to move them (sheet 026). */
+interface MonthThings {
+  items: MonthItem[];
+  events: Map<string, Event>;
+  reminders: Map<string, Reminder>;
+  tasks: Map<string, Task>;
+}
+
+const NO_MONTH: MonthThings = { items: [], events: new Map(), reminders: new Map(), tasks: new Map() };
 
 export default function CalendarScreen() {
   const t = useT();
@@ -73,6 +89,11 @@ export default function CalendarScreen() {
   const [tasksCountByDay, setTasksCountByDay] = useState<Record<number, number>>({});
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  // The moments and reminders of the week, to move them from the Week view (sheet 026)
+  const [weekEventsById, setWeekEventsById] = useState<Map<string, Event>>(new Map());
+  const [weekRemindersById, setWeekRemindersById] = useState<Map<string, Reminder>>(new Map());
+  const [month, setMonth] = useState<MonthThings>(NO_MONTH);
+  const [weekLifted, setWeekLifted] = useState(false);
 
   // Semaine courante basée sur la date sélectionnée
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -105,6 +126,8 @@ export default function CalendarScreen() {
       ]);
 
       setEvents(evts);
+      setWeekEventsById(new Map(weekEvts.flat().map(e => [e.id, e])));
+      setWeekRemindersById(new Map(weekRems.flat().map(r => [r.id, r])));
       setDeviceEvents(deviceEventsForDay(weekDeviceEvts, selectedDate));
       setReminders(rems);
       setTasks(tsks);
@@ -180,12 +203,49 @@ export default function CalendarScreen() {
 
       // 100% vraies données : uniquement les événements réels et rappels de la semaine
       setAllWeeklyBlocks([...eventBlocks, ...reminderBlocks, ...deviceBlocks]);
+
+      // The month, only when it is shown: its moments, reminders and tasks (sheet 026)
+      if (viewMode === 'month') {
+        const range = monthGridRange(selectedDate);
+        const from = dayFromKey(range.from);
+        const to = addDays(dayFromKey(range.to), 1);
+        const inRange = (at: Date) => at >= from && at < to;
+        const [monthEvents, allReminders, activeTasks, monthDevice] = await Promise.all([
+          EventRepository.findForRange(subDays(from, 1).toISOString(), addDays(to, 1).toISOString()),
+          ReminderRepository.findAll(),
+          TaskRepository.findAllActive(),
+          SettingsRepository.get().then(settings => (settings.deviceCalendarEnabled ? loadDeviceEvents(from, to) : [])),
+        ]);
+        const things: MonthThings = { items: [], events: new Map(), reminders: new Map(), tasks: new Map() };
+        for (const e of monthEvents) {
+          const at = new Date(e.startAt);
+          if (!inRange(at)) continue;
+          things.events.set(e.id, e);
+          things.items.push({ key: `e-${e.id}`, kind: 'event', title: e.title, time: format(at, 'HH:mm'), color: momentKindColor(theme, e.momentKind), day: dayKey(at) });
+        }
+        for (const r of allReminders) {
+          const at = new Date(r.scheduledAt);
+          if (r.status === 'COMPLETED' || r.status === 'DELETED' || !inRange(at)) continue;
+          things.reminders.set(r.id, r);
+          things.items.push({ key: `r-${r.id}`, kind: 'reminder', title: r.title, time: format(at, 'HH:mm'), color: r.priority === 'URGENT' ? theme.error.default : theme.primary.default, day: dayKey(at) });
+        }
+        for (const task of activeTasks) {
+          if (!task.scheduledDate || task.status === 'COMPLETED' || task.scheduledDate < range.from || task.scheduledDate > range.to) continue;
+          things.tasks.set(task.id, task);
+          things.items.push({ key: `t-${task.id}`, kind: 'task', title: task.title, time: null, color: theme.tertiary.default, day: task.scheduledDate });
+        }
+        for (const d of monthDevice) {
+          things.items.push({ key: `d-${d.id}`, kind: 'device', title: d.title, time: d.allDay ? null : format(d.startAt, 'HH:mm'), color: theme.success.default, day: dayKey(d.startAt) });
+        }
+        things.items.sort((a, b) => a.day.localeCompare(b.day) || (a.time ?? '').localeCompare(b.time ?? ''));
+        setMonth(things);
+      }
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [dateYmd, theme, weekDays, t, selectedDate]);
+  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -199,12 +259,36 @@ export default function CalendarScreen() {
     setRefreshing(false);
   }, [load]);
 
+  // The arrows go a month at a time in the Month view, a week otherwise
   const handlePrevWeek = () => {
-    setSelectedDate(prev => subDays(prev, 7));
+    setSelectedDate(prev => (viewMode === 'month' ? subMonths(prev, 1) : subDays(prev, 7)));
   };
 
   const handleNextWeek = () => {
-    setSelectedDate(prev => addDays(prev, 7));
+    setSelectedDate(prev => (viewMode === 'month' ? addMonths(prev, 1) : addDays(prev, 7)));
+  };
+
+  // Moving a card (sheet 026): saved at once, "Annuler" in the banner
+  const { moveEventBy, moveReminderBy, moveTaskTo } = usePlanningMove(load);
+  const movableCount = viewMode === 'timetable' ? events.length + reminders.length : viewMode === 'week' ? weekEventsById.size + weekRemindersById.size : viewMode === 'month' ? month.items.filter(i => i.kind !== 'device').length : 0;
+  const dragTip = useGestureTip('planDrag', movableCount);
+
+  const openMonthItem = (item: MonthItem) => {
+    const id = item.key.slice(2);
+    if (item.kind === 'event') router.push({ pathname: '/events/[id]', params: { id } });
+    else if (item.kind === 'reminder') router.push({ pathname: '/reminders/[id]', params: { id } });
+    else if (item.kind === 'task') router.push({ pathname: '/tasks/[id]', params: { id } });
+  };
+
+  const moveMonthItem = (item: MonthItem, toDay: Date) => {
+    const id = item.key.slice(2);
+    const days = Math.round((toDay.getTime() - dayFromKey(item.day).getTime()) / 86400000);
+    const event = month.events.get(id);
+    const reminder = month.reminders.get(id);
+    const task = month.tasks.get(id);
+    if (item.kind === 'event' && event) moveEventBy(event, 0, days);
+    else if (item.kind === 'reminder' && reminder) moveReminderBy(reminder, 0, days);
+    else if (item.kind === 'task' && task) moveTaskTo(task, toDay);
   };
 
   const handleGoToday = () => {
@@ -238,7 +322,9 @@ export default function CalendarScreen() {
           <Text style={styles.subtitle} numberOfLines={2}>
             {viewMode === 'week'
               ? weekLabel
-              : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
+              : viewMode === 'month'
+                ? format(selectedDate, 'MMMM yyyy', { locale: dateLocale })
+                : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
           </Text>
         </View>
 
@@ -267,7 +353,7 @@ export default function CalendarScreen() {
             style={styles.navArrowBtn}
             onPress={handlePrevWeek}
             accessibilityRole="button"
-            accessibilityLabel={t('calendar.prevWeekA11y')}
+            accessibilityLabel={t(viewMode === 'month' ? 'planning.prevMonthA11y' : 'calendar.prevWeekA11y')}
           >
             <Ionicons name="chevron-back" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
@@ -276,7 +362,7 @@ export default function CalendarScreen() {
             style={styles.navArrowBtn}
             onPress={handleNextWeek}
             accessibilityRole="button"
-            accessibilityLabel={t('calendar.nextWeekA11y')}
+            accessibilityLabel={t(viewMode === 'month' ? 'planning.nextMonthA11y' : 'calendar.nextWeekA11y')}
           >
             <Ionicons name="chevron-forward" size={18} color={theme.onSurface.primary} />
           </TouchableOpacity>
@@ -301,13 +387,17 @@ export default function CalendarScreen() {
             key: 'week',
             label: t('calendar.view.week'),
           },
+          {
+            key: 'month',
+            label: t('planning.view.month'),
+          },
         ]}
         activeTab={viewMode}
         onTabChange={(tab) => setViewMode(tab as CalendarViewMode)}
       />
 
       {/* Bandeau des 7 jours (affiché pour les vues quotidiennes) */}
-      {viewMode !== 'week' && (
+      {viewMode !== 'week' && viewMode !== 'month' && (
         <View style={styles.weekStrip}>
           {weekDays.map((d, index) => {
             const isSelected = isSameDay(d, selectedDate);
@@ -351,6 +441,7 @@ export default function CalendarScreen() {
       {/* Rendu conditionnel selon le mode choisi */}
       {viewMode === 'week' ? (
         <ScrollView
+          scrollEnabled={!weekLifted}
           contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />
@@ -378,6 +469,13 @@ export default function CalendarScreen() {
               setShowActionModal(true);
             }}
             onDeleteBlock={(id, label) => handleDeleteWeeklyBlock(id, label)}
+            onLift={setWeekLifted}
+            onMoveBlock={(block, minutes, days) => {
+              const event = weekEventsById.get(block.id);
+              const reminder = weekRemindersById.get(block.id);
+              if (block.scheduleId === 'event' && event) moveEventBy(event, minutes, days);
+              else if (block.scheduleId === 'reminder' && reminder) moveReminderBy(reminder, minutes, days);
+            }}
             onSelectBlock={(block) => {
               if (block.scheduleId === 'event') {
                 router.push({ pathname: '/events/[id]', params: { id: block.id } });
@@ -391,13 +489,37 @@ export default function CalendarScreen() {
             }}
           />
         </ScrollView>
+      ) : viewMode === 'month' ? (
+        <MonthView
+          month={selectedDate}
+          selected={selectedDate}
+          items={month.items}
+          onSelectDay={setSelectedDate}
+          onOpenDay={day => {
+            setSelectedDate(day);
+            setViewMode('timetable');
+          }}
+          onOpenItem={openMonthItem}
+          onMoveItem={moveMonthItem}
+          onDeviceTouched={title => handleDeleteWeeklyBlock('', title)}
+        />
       ) : viewMode === 'timetable' ? (
-        <CalendarTimetable
-          selectedDate={selectedDate}
+        <DayTimeGrid
+          date={selectedDate}
           events={events}
           reminders={reminders}
           tasks={tasks}
-          onRefresh={load}
+          deviceEvents={deviceEvents}
+          onOpenEvent={e => router.push({ pathname: '/events/[id]', params: { id: e.id } })}
+          onOpenReminder={r => router.push({ pathname: '/reminders/[id]', params: { id: r.id } })}
+          onOpenTask={task => router.push({ pathname: '/tasks/[id]', params: { id: task.id } })}
+          onMoveEvent={moveEventBy}
+          onMoveReminder={moveReminderBy}
+          onAddAt={hour => {
+            setSelectedSlotHour(hour);
+            setShowActionModal(true);
+          }}
+          onDeviceTouched={title => handleDeleteWeeklyBlock('', title)}
         />
       ) : (
         /* Agenda synthétique */
@@ -611,6 +733,9 @@ export default function CalendarScreen() {
         date={selectedDate}
         hour={selectedSlotHour}
       />
+
+      {/* Pulse shows the long press once (sheet 026) */}
+      {dragTip.element}
     </View>
   );
 }

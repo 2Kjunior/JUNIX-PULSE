@@ -117,6 +117,10 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Tip: swipe a card to edit or delete it. The ⋯ button does the same.", "{name}, tip: swipe a card to edit or delete it. The ⋯ button does the same."],
     ["Swipe a card, or tap ⋯, to edit or delete it.", "{name}, swipe a card, or tap ⋯, to edit or delete it."],
   ),
+  TIP_PLAN_DRAG: entry(
+    ["Tip: keep your finger on a card, then drag it to change its time or its day.", "{name}, tip: keep your finger on a card, then drag it to change its time or its day."],
+    ["Long press a card and you can move it.", "{name}, long press a card and you can move it."],
+  ),
 
   // ─── Proposals P1 to P12 ──────────────────────────────────────────────────
   FORGOTTEN_CONTACT: entry(

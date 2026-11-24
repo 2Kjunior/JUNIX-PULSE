@@ -11,7 +11,7 @@
  * - Carte IA "Junix Pulse IA" avec score de rythme et zones tampons.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,8 @@ import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Spacing, Radius } from '@/constants/theme';
+import { DraggableBlock } from '@/components/planning/DraggableBlock';
+import { columnsForOffset, minutesForOffset, SNAP_MINUTES } from '@/domain/rules/planning-move-rules';
 
 export interface WeeklyTimetableGridProps {
   blocks: PlanningBlock[];
@@ -38,6 +40,10 @@ export interface WeeklyTimetableGridProps {
   weekDays?: Date[];
   tasksCountByDay?: Record<number, number>;
   onPressTasksDay?: (dayNum: number) => void;
+  /** A moment or a reminder let go elsewhere (sheet 026): minutes and days; the others do not move. */
+  onMoveBlock?: (block: PlanningBlock, minutes: number, days: number) => void;
+  /** A card is lifted: the page stops scrolling meanwhile. */
+  onLift?: (lifted: boolean) => void;
 }
 
 const DEFAULT_START_HOUR = 7;   // 07:00 par défaut
@@ -180,11 +186,19 @@ export function WeeklyTimetableGrid({
   weekDays,
   tasksCountByDay,
   onPressTasksDay,
+  onMoveBlock,
+  onLift,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeTimetableStyles);
   const t = useT();
   const dateLocale = useDateLocale();
+  // While a card is lifted (sheet 026), the grid does not scroll sideways
+  const [lifted, setLifted] = useState(false);
+  const lift = (value: boolean) => {
+    setLifted(value);
+    onLift?.(value);
+  };
 
   // Détection s'il y a des tâches réparties sur la semaine
   const hasAnyTasks = useMemo(() => {
@@ -377,6 +391,7 @@ export function WeeklyTimetableGrid({
       <View style={styles.gridCard}>
         <ScrollView
           horizontal
+          scrollEnabled={!lifted}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ minWidth: gridContentWidth }}
         >
@@ -563,7 +578,7 @@ export function WeeklyTimetableGrid({
                           const config = getBlockStyleConfig(block.type);
 
                           return (
-                            <TouchableOpacity
+                            <DraggableBlock
                               key={`fg-${block.id}-${d.num}-${item.colIndex}-${itemIdx}`}
                               style={[
                                 styles.blockCard,
@@ -576,10 +591,13 @@ export function WeeklyTimetableGrid({
                                   borderColor: config.border,
                                 },
                               ]}
-                              activeOpacity={0.85}
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
-                              onLongPress={() => onDeleteBlock(block.id, block.label)}
-                              accessibilityRole="button"
+                              movable={!!onMoveBlock && block.scheduleId === 'event'}
+                              stepY={(HOUR_HEIGHT * SNAP_MINUTES) / 60}
+                              stepX={DAY_COL_WIDTH}
+                              onLift={lift}
+                              onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, HOUR_HEIGHT), columnsForOffset(drop.dx, DAY_COL_WIDTH))}
+                              onMoveBy={(minutes, days) => onMoveBlock?.(block, minutes, days)}
                               accessibilityLabel={t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })}
                             >
                               <LinearGradient
@@ -615,7 +633,7 @@ export function WeeklyTimetableGrid({
                                   </Text>
                                 </View>
                               )}
-                            </TouchableOpacity>
+                            </DraggableBlock>
                           );
                         })}
 
@@ -626,7 +644,7 @@ export function WeeklyTimetableGrid({
                           const clampedTop = Math.max(0, topPx);
 
                           return (
-                            <TouchableOpacity
+                            <DraggableBlock
                               key={`rem-${block.id}-${d.num}-${rIdx}`}
                               style={[
                                 styles.reminderPillMarker,
@@ -636,17 +654,20 @@ export function WeeklyTimetableGrid({
                                   borderColor: '#F59E0B',
                                 },
                               ]}
-                              activeOpacity={0.85}
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
-                              onLongPress={() => onDeleteBlock(block.id, block.label)}
-                              accessibilityRole="button"
+                              movable={!!onMoveBlock}
+                              stepY={(HOUR_HEIGHT * SNAP_MINUTES) / 60}
+                              stepX={DAY_COL_WIDTH}
+                              onLift={lift}
+                              onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, HOUR_HEIGHT), columnsForOffset(drop.dx, DAY_COL_WIDTH))}
+                              onMoveBy={(minutes, days) => onMoveBlock?.(block, minutes, days)}
                               accessibilityLabel={t('weekGrid.reminderA11y', { label: block.label, time: block.startTime })}
                             >
                               <Ionicons name="notifications" size={10} color="#F59E0B" />
                               <Text style={styles.reminderPillText} numberOfLines={1}>
                                 {block.startTime} {block.label}
                               </Text>
-                            </TouchableOpacity>
+                            </DraggableBlock>
                           );
                         })}
                       </View>
