@@ -345,10 +345,13 @@ export const makeSettingsStyles = (t: ThemePalette) => {
       color: t.onSurface.primary,
       marginBottom: Spacing.lg,
     },
+    // Two buttons share the row, as in every window of the app (sheet 030)
     modalActions: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
-      gap: Spacing.md,
+      gap: Spacing.sm,
+    },
+    modalAction: {
+      flex: 1,
     },
     segmentedControl: {
       flexDirection: 'row',

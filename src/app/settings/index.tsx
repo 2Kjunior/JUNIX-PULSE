@@ -14,9 +14,7 @@ import {
   Switch,
   TouchableOpacity,
   TextInput,
-  Modal,
   Platform,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -69,6 +67,7 @@ import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
 import { PlanningSetting } from '@/components/settings/PlanningSetting';
+import { GlassDialog } from '@/components/feedback/GlassDialog';
 import { DEFAULT_ALERT_DEFAULTS, type AlertFamily } from '@/domain/rules/notification-level-rules';
 import { DEFAULT_PLANNING_PREFS, type PlanningPrefs } from '@/domain/rules/planning-settings-rules';
 import type { AlertLevel } from '@/domain/entities';
@@ -949,9 +948,8 @@ export default function SettingsScreen() {
       {section === null ? renderHub() : PAGES[section]()}
 
       {/* Modal d'édition du prénom */}
-      <Modal visible={editingName} animationType="fade" transparent>
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <View style={styles.modalCard}>
+      {/* The window of the app (sheet 030): touching outside, or back, cancels */}
+      <GlassDialog visible={editingName} onDismiss={() => setEditingName(false)} busy={saving}>
             <Text style={styles.modalTitle}>{t('settingsScreen.editName')}</Text>
             <TextInput
               style={styles.input}
@@ -962,17 +960,15 @@ export default function SettingsScreen() {
               autoFocus
             />
             <View style={styles.modalActions}>
-              <Button label={t('common.cancel')} onPress={() => setEditingName(false)} variant="ghost" size="sm" />
+              <Button label={t('common.cancel')} onPress={() => setEditingName(false)} variant="secondary" style={styles.modalAction} />
               <Button
                 label={saving ? t('settingsScreen.saving') : t('settingsScreen.save')}
                 onPress={handleSaveName}
                 disabled={saving}
-                size="sm"
+                style={styles.modalAction}
               />
             </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      </GlassDialog>
 
       {section === null && <Text style={styles.version}>Junix Pulse v{Constants.expoConfig?.version ?? ''}</Text>}
       {restoreModal}

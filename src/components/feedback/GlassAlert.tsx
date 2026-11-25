@@ -2,13 +2,19 @@
  * Alert windows in the glass style of the app, in place of the native Android and iOS alerts.
  * Same call as React Native: GlassAlert.alert(title, message, buttons). Alerts wait in line, so
  * one opened from a button of another shows once the first is closed.
+ *
+ * The window (sheet 030) is a GlowCard: the glass, the lit border and the violet glow of the app
+ * (opaque when "Effet verre" is off). Two buttons share their row, "Annuler" on the left; three or
+ * more take the whole width one under the other, a destructive one just above "Annuler" at the
+ * bottom. Touching outside the window, or the Android back button, acts as "Annuler".
  */
 
 import { useEffect, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Button, type ButtonVariant } from '@/components/ui/Button';
+import { GlowCard } from '@/components/ui/GlowCard';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
@@ -22,7 +28,10 @@ export interface GlassAlertButton {
 }
 
 export interface GlassAlertOptions {
-  /** Android back button closes the window, as its cancel button would. */
+  /**
+   * Touching outside the window or the Android back button closes it, as its cancel button would
+   * (true unless said otherwise, sheet 030). False keeps it open until a button is touched.
+   */
   cancelable?: boolean;
 }
 
@@ -72,8 +81,30 @@ export function pressGlassAlertButton(id: number, button: GlassAlertButton): voi
   void button.onPress?.();
 }
 
+/**
+ * The order the buttons are drawn in, by their index (sheet 030), and whether they stack. Two
+ * buttons share a row, "Annuler" first (on the left). From three, one under the other: the
+ * actions as given, then the destructive ones, then "Annuler" at the bottom.
+ */
+export function alertButtonOrder(buttons: readonly GlassAlertButton[]): { order: number[]; stacked: boolean } {
+  const indexes = buttons.map((_, index) => index);
+  const cancel = indexes.filter(index => buttons[index].style === 'cancel');
+  const destructive = indexes.filter(index => buttons[index].style === 'destructive');
+  const others = indexes.filter(index => buttons[index].style !== 'cancel' && buttons[index].style !== 'destructive');
+  if (buttons.length <= 2) return { order: [...cancel, ...others, ...destructive], stacked: false };
+  return { order: [...others, ...destructive, ...cancel], stacked: true };
+}
+
+/** What touching outside does: the cancel button, or closing; nothing when the alert says so. */
+export function dismissGlassAlert(id: number, buttons: readonly GlassAlertButton[], options?: GlassAlertOptions): void {
+  if (options?.cancelable === false) return;
+  const cancel = buttons.find(button => button.style === 'cancel');
+  if (cancel) pressGlassAlertButton(id, cancel);
+  else close(id);
+}
+
 function variantOf(button: GlassAlertButton, isMain: boolean): ButtonVariant {
-  if (button.style === 'cancel') return 'ghost';
+  if (button.style === 'cancel') return 'secondary';
   if (button.style === 'destructive') return 'destructive';
   return isMain ? 'primary' : 'secondary';
 }
@@ -118,10 +149,10 @@ export function GlassAlertHost({ paused = false }: { paused?: boolean }) {
   const shown = current ?? lastShown;
   if (!shown) return null;
 
-  const cancelButton = shown.buttons.find(button => button.style === 'cancel');
   // The last button that is not a cancel one is the main action, as on the native alerts
   const mainIndex = shown.buttons.map(button => button.style !== 'cancel').lastIndexOf(true);
-  const stacked = shown.buttons.length > 2;
+  const { order, stacked } = alertButtonOrder(shown.buttons);
+  const dismiss = () => dismissGlassAlert(shown.id, shown.buttons, shown.options);
 
   return (
     <Modal
@@ -129,32 +160,41 @@ export function GlassAlertHost({ paused = false }: { paused?: boolean }) {
       transparent
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={() => {
-        if (cancelButton) pressGlassAlertButton(shown.id, cancelButton);
-        else if (shown.options?.cancelable) close(shown.id);
-      }}
+      onRequestClose={dismiss}
     >
       <View style={styles.overlay}>
-        <Animated.View style={[styles.dialog, dialogMotion]} accessibilityViewIsModal accessibilityRole="alert">
-          <Text style={styles.title}>{shown.title}</Text>
-          {!!shown.message && (
-            <ScrollView style={styles.messageScroll}>
-              <Text style={styles.message}>{shown.message}</Text>
-            </ScrollView>
-          )}
-          <View style={[styles.actions, stacked && styles.actionsStacked]}>
-            {shown.buttons.map((button, index) => (
-              <Button
-                key={`${shown.id}-${index}`}
-                label={button.text ?? t('common.close')}
-                variant={variantOf(button, index === mainIndex)}
-                size="sm"
-                onPress={() => pressGlassAlertButton(shown.id, button)}
-                style={stacked ? styles.actionStacked : styles.action}
-                testID={`glass-alert-button-${index}`}
-              />
-            ))}
-          </View>
+        {/* Touching outside the window acts as "Annuler" (sheet 030) */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={dismiss}
+          importantForAccessibility="no"
+          testID="glass-alert-backdrop"
+        />
+        <Animated.View style={[styles.dialogBox, dialogMotion]} accessibilityViewIsModal accessibilityRole="alert">
+          <GlowCard tone="primary" size="hero" disableEntranceAnimation style={styles.backing} contentStyle={styles.dialogContent}>
+            <Text style={styles.title}>{shown.title}</Text>
+            {!!shown.message && (
+              <ScrollView style={styles.messageScroll}>
+                <Text style={styles.message}>{shown.message}</Text>
+              </ScrollView>
+            )}
+            <View style={[styles.actions, stacked && styles.actionsStacked]}>
+              {order.map(index => {
+                const button = shown.buttons[index];
+                return (
+                  <Button
+                    key={`${shown.id}-${index}`}
+                    label={button.text ?? t('common.close')}
+                    variant={variantOf(button, index === mainIndex)}
+                    size="md"
+                    onPress={() => pressGlassAlertButton(shown.id, button)}
+                    style={stacked ? styles.actionStacked : styles.action}
+                    testID={`glass-alert-button-${index}`}
+                  />
+                );
+              })}
+            </View>
+          </GlowCard>
         </Animated.View>
       </View>
     </Modal>
@@ -166,25 +206,30 @@ const makeGlassAlertStyles = (theme: ThemePalette) =>
     overlay: {
       flex: 1,
       justifyContent: 'center',
-      padding: Spacing.xl,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      padding: Spacing.lg,
+      backgroundColor: theme.mode === 'light' ? 'rgba(20, 16, 40, 0.42)' : 'rgba(0, 0, 0, 0.62)',
     },
-    dialog: {
+    dialogBox: {
       // Phone width; on a tablet or the web, a readable window rather than a band
       width: '100%',
       maxWidth: 440,
       alignSelf: 'center',
-      gap: Spacing.md,
-      padding: Spacing.xl,
-      borderRadius: Radius.lg,
-      borderWidth: 1,
-      borderColor: theme.glass.nav.borderColor,
-      backgroundColor: theme.glass.nav.backgroundColor,
       maxHeight: '80%',
+    },
+    // Under the glass, a nearly solid backing: what is behind never shows through the words
+    backing: {
+      borderRadius: Radius.xl,
+      backgroundColor: theme.mode === 'light' ? 'rgba(255, 255, 255, 0.94)' : 'rgba(22, 20, 34, 0.94)',
+    },
+    dialogContent: {
+      gap: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.lg,
     },
     title: {
       ...Typography.titleLarge,
       color: theme.onSurface.primary,
+      fontWeight: '700',
     },
     messageScroll: {
       flexGrow: 0,
@@ -195,19 +240,19 @@ const makeGlassAlertStyles = (theme: ThemePalette) =>
     },
     actions: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
-      flexWrap: 'wrap',
       gap: Spacing.sm,
       marginTop: Spacing.xs,
     },
     actionsStacked: {
-      flexDirection: 'column-reverse',
+      flexDirection: 'column',
       alignItems: 'stretch',
     },
+    // Two buttons share the row equally
     action: {
-      minWidth: 96,
+      flex: 1,
     },
+    // Stacked, each takes the whole width
     actionStacked: {
-      alignSelf: 'stretch',
+      width: '100%',
     },
   });

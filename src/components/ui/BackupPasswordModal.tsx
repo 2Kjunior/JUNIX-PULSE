@@ -7,15 +7,13 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { GlassDialog } from '@/components/feedback/GlassDialog';
 import { Button } from '@/components/ui/Button';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
@@ -83,12 +81,8 @@ export function BackupPasswordModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={styles.dialog}>
+    // The window of the app (sheet 030): touching outside cancels, except while it works
+    <GlassDialog visible={visible} onDismiss={onCancel} busy={busy}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description}>{t('backupPassword.notice')}</Text>
 
@@ -137,7 +131,7 @@ export function BackupPasswordModal({
           )}
 
           <View style={styles.actions}>
-            <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} disabled={busy} style={styles.action} />
+            <Button label={t('common.cancel')} variant="secondary" onPress={onCancel} disabled={busy} style={styles.action} />
             <Button
               label={busy ? t('backupPassword.busy') : confirmLabel}
               variant="primary"
@@ -148,9 +142,7 @@ export function BackupPasswordModal({
               testID="backup-password-submit"
             />
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </GlassDialog>
   );
 }
 

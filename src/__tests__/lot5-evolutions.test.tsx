@@ -9,7 +9,7 @@ import { Text, Vibration, Platform } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import * as SecureStore from 'expo-secure-store';
 
-import { GlassAlert, GlassAlertHost } from '@/components/feedback/GlassAlert';
+import { alertButtonOrder, GlassAlert, GlassAlertHost } from '@/components/feedback/GlassAlert';
 import {
   AUTO_BACKUP_INTERVAL_MS,
   AUTO_BACKUP_KEPT_FILES,
@@ -69,7 +69,7 @@ describe('GlassAlert', () => {
       ])
     );
     const buttons = renderer.root.findAll(node => typeof node.props.testID === 'string' && node.props.variant);
-    expect(buttons.map(button => button.props.variant)).toEqual(['ghost', 'destructive']);
+    expect(buttons.map(button => button.props.variant)).toEqual(['secondary', 'destructive']);
 
     act(() => renderer.root.findByProps({ testID: 'glass-alert-button-1' }).props.onPress());
     expect(onDelete).toHaveBeenCalledTimes(1);
@@ -90,13 +90,38 @@ describe('GlassAlert', () => {
     const variants = [0, 1, 2].map(
       index => renderer.root.findByProps({ testID: `glass-alert-button-${index}` }).props.variant
     );
-    expect(variants).toEqual(['ghost', 'destructive', 'primary']);
+    expect(variants).toEqual(['secondary', 'destructive', 'primary']);
 
     const modal = renderer.root.findByProps({ statusBarTranslucent: true });
     act(() => modal.props.onRequestClose());
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(GlassAlert._current()).toBeNull();
     act(() => renderer.unmount());
+  });
+
+  it('closes as "Annuler" when touched outside, unless it must stay open (sheet 030)', () => {
+    const renderer = mountHost();
+    const onCancel = jest.fn();
+    act(() => GlassAlert.alert('Menu', undefined, [{ text: 'Modifier' }, { text: 'Annuler', style: 'cancel', onPress: onCancel }]));
+    act(() => renderer.root.findByProps({ testID: 'glass-alert-backdrop' }).props.onPress());
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(GlassAlert._current()).toBeNull();
+
+    // An information alert closes too; one that must stay open does not
+    act(() => GlassAlert.alert('Info'));
+    act(() => renderer.root.findByProps({ testID: 'glass-alert-backdrop' }).props.onPress());
+    expect(GlassAlert._current()).toBeNull();
+    act(() => GlassAlert.alert('Obligatoire', undefined, [{ text: 'OK' }], { cancelable: false }));
+    act(() => renderer.root.findByProps({ testID: 'glass-alert-backdrop' }).props.onPress());
+    expect(GlassAlert._current()?.title).toBe('Obligatoire');
+    act(() => renderer.unmount());
+  });
+
+  it('puts two buttons side by side, Annuler first, and stacks three with Annuler last (sheet 030)', () => {
+    expect(alertButtonOrder([{ text: 'Supprimer', style: 'destructive' }, { text: 'Annuler', style: 'cancel' }])).toEqual({ order: [1, 0], stacked: false });
+    expect(
+      alertButtonOrder([{ text: 'Supprimer', style: 'destructive' }, { text: 'Modifier' }, { text: 'Annuler', style: 'cancel' }])
+    ).toEqual({ order: [1, 0, 2], stacked: true });
   });
 });
 
