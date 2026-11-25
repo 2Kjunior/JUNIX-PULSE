@@ -629,6 +629,6 @@ Attendu : `Tests: 3 passed` ; toute la suite passe ; `tsc` et `eslint` n'affiche
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Lu avant d'écrire : les boutons d'en-tête des 5 écrans (formes proches, mais chaque écran dessinait le sien ; Pulse avec d'autres couleurs ; « À faire » sans bouton Paramètres depuis la fiche 015) ; la liste d'un rappel ne s'affichait que pour les rappels qui en avaient déjà une.
-- Étapes 1 à 6 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-017.js`), du premier coup.
+- Étapes 1 à 6 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-017.js`), du premier coup.
 - Tests : `Tests: 3 passed` ; toute la suite `Test Suites: 92 passed`, `Tests: 1950 passed` ; `tsc` et `eslint` sans erreur.
 - **Pas vérifié à l'écran** (le panneau du navigateur était caché) : à voir avec le prochain APK. Rien n'est encore enregistré dans git.

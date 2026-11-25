@@ -2498,7 +2498,7 @@ devient :
 Depuis le dossier du projet, dans PowerShell :
 
 ```powershell
-node docs/tutoriel-suite/outils/appliquer-fiche-026.js .
+node docs/fiches/outils/appliquer-fiche-026.js .
 ```
 
 Sortie attendue : `applied`. Si un passage n'est pas trouvé exactement une fois, **rien n'est écrit** et l'outil dit lequel.

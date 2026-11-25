@@ -660,7 +660,7 @@ Attendu : `Tests: 6 passed` ; toute la suite passe ; `tsc` et `eslint` n'affiche
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Lu avant d'écrire : le moteur des propositions de Pulse (les faits du jour, la règle pure des candidats, Accepter / Refuser, le délai avant de reproposer) et toutes les tables qui listent les types.
-- Étapes 1 à 5 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-020.js`).
+- Étapes 1 à 5 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-020.js`).
 - **Écarts corrigés** (étape 4 bis) : TypeScript a signalé deux tables de plus (la famille de P13, le titre traduit de la proposition) ; un ancien test comptait exactement douze propositions, il connaît maintenant P13.
 - Tests : `Tests: 6 passed` ; toute la suite `Test Suites: 95 passed`, `Tests: 1981 passed` ; `tsc` et `eslint` sans erreur.
 - **Pas vérifié à l'écran** : la proposition dans l'onglet Pulse et « Accepter » (création de l'habitude, retrait du rappel répété). À voir sur le téléphone. Rien n'est encore enregistré dans git.

@@ -1,25 +1,32 @@
-// Applies sheet 013 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 018 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-013.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-018.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-013-dicter-tout-et-y-aller.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-018-progres-habitudes-et-objectifs.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  'src/domain/rules/form-dictation-rules.ts': 'dictation-rules',
-  'src/domain/rules/maps-links.ts': 'maps-links',
-  'src/domain/rules/__tests__/form-dictation-rules.test.ts': 'test',
+  'src/features/goals/GoalHabitsSection.tsx': 'section',
+  'src/features/progress/ProgressCard.tsx': 'card',
+  'src/app/progress.tsx': 'page',
+  'src/domain/rules/__tests__/goal-habit-rules.test.ts': 'test',
 };
 const edits = {
-  'src/components/create/form/FormBricks.tsx': ['bricks'],
-  'src/features/create/TodoForm.tsx': ['todo-1', 'todo-2', 'todo-3', 'todo-4', 'todo-5', 'todo-6'],
-  'src/features/create/MomentForm.tsx': ['moment-1', 'moment-2', 'moment-3', 'moment-4', 'moment-5', 'moment-6'],
-  'src/app/events/[id].tsx': ['event-1', 'event-2'],
+  'src/database/migrations.ts': ['mig'],
+  'src/services/backup-service.ts': ['bk-1', 'bk-2', 'bk-3', 'bk-4'],
+  'src/repositories/goal-repository.ts': ['repo'],
+  'src/domain/rules/goal-rules.ts': ['rules'],
+  'src/__tests__/stats-follow-up.test.ts': ['mock'],
+  'src/use-cases/goal-use-cases.ts': ['uc-1', 'uc-2', 'uc-3', 'uc-4', 'uc-5', 'uc-6', 'uc-7', 'uc-8'],
+  'src/app/goals/[id].tsx': ['detail-1', 'detail-2'],
+  'src/app/habits/index.tsx': ['habits-1', 'habits-2'],
+  'src/app/goals/index.tsx': ['goals-1', 'goals-2'],
+  'src/app/(tabs)/index.tsx': ['home-1', 'home-2', 'home-3'],
   'src/i18n/messages-rest-fr.ts': ['fr'],
   'src/i18n/messages-rest-en.ts': ['en'],
 };

@@ -2197,7 +2197,7 @@ devient :
 L'outil supprime `src/styles/reminders/edit-reminder-styles.ts` (plus personne ne l'utilise).
 
 ```powershell
-node docs/tutoriel-suite/outils/appliquer-fiche-022.js .
+node docs/fiches/outils/appliquer-fiche-022.js .
 ```
 
 ```powershell

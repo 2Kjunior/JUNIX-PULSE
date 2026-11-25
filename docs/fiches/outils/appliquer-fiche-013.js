@@ -1,68 +1,28 @@
-// Applies sheet 022 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 013 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-022.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-013.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-022-modifier-avec-les-memes-formulaires.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-013-dicter-tout-et-y-aller.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  "src/domain/rules/item-edit-rules.ts": "rules",
-  "src/domain/rules/__tests__/item-edit-rules.test.ts": "rules-test",
-  "src/features/create/edit-loaders.ts": "loaders",
-  "src/features/create/TodoForm.tsx": "todo-form",
-  "src/features/create/MomentForm.tsx": "moment-form",
-  "src/app/reminders/edit/[id].tsx": "route-reminder",
-  "src/app/tasks/edit/[id].tsx": "route-task",
-  "src/app/events/edit/[id].tsx": "route-event",
-  "src/app/tasks/[id].tsx": "task-page"
+  'src/domain/rules/form-dictation-rules.ts': 'dictation-rules',
+  'src/domain/rules/maps-links.ts': 'maps-links',
+  'src/domain/rules/__tests__/form-dictation-rules.test.ts': 'test',
 };
 const edits = {
-  "src/components/create/form/FormBricks.tsx": [
-    "shell-1",
-    "shell-2",
-    "shell-3",
-    "shell-4"
-  ],
-  "src/use-cases/reminder-use-cases.ts": [
-    "uc-1",
-    "uc-2"
-  ],
-  "src/repositories/reminder-repository.ts": [
-    "repo-1",
-    "repo-2"
-  ],
-  "src/use-cases/task-use-cases.ts": [
-    "task"
-  ],
-  "src/app/_layout.tsx": [
-    "routes",
-    "routes-2"
-  ],
-  "src/app/events/[id].tsx": [
-    "ev-1",
-    "ev-2",
-    "ev-3",
-    "ev-4",
-    "ev-5"
-  ],
-  "src/app/reminders/[id].tsx": [
-    "rm-1",
-    "rm-2",
-    "rm-3"
-  ],
-  "src/i18n/messages-rest-fr.ts": [
-    "fr"
-  ],
-  "src/i18n/messages-rest-en.ts": [
-    "en"
-  ]
+  'src/components/create/form/FormBricks.tsx': ['bricks'],
+  'src/features/create/TodoForm.tsx': ['todo-1', 'todo-2', 'todo-3', 'todo-4', 'todo-5', 'todo-6'],
+  'src/features/create/MomentForm.tsx': ['moment-1', 'moment-2', 'moment-3', 'moment-4', 'moment-5', 'moment-6'],
+  'src/app/events/[id].tsx': ['event-1', 'event-2'],
+  'src/i18n/messages-rest-fr.ts': ['fr'],
+  'src/i18n/messages-rest-en.ts': ['en'],
 };
-const removed = ["src/styles/reminders/edit-reminder-styles.ts"];
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 
 const edited = {};
@@ -94,5 +54,4 @@ for (const [file, name] of Object.entries(whole)) {
   fs.writeFileSync(path.join(root, file), blocks[name] + '\n');
 }
 for (const [file, text] of Object.entries(edited)) fs.writeFileSync(path.join(root, file), text);
-for (const file of removed) if (fs.existsSync(path.join(root, file))) fs.unlinkSync(path.join(root, file));
 console.log('applied');

@@ -780,6 +780,6 @@ Résultat attendu : `Tests: 10 passed` pour le nouveau fichier ; toute la suite 
 
 - Décisions prises avant d'écrire (23 novembre) : « Dicter tout » dans les deux formulaires ; pour le lieu, des boutons Maps gratuits plutôt qu'une carte (clé payante) ; les applis de course notées pour la version 2.0 (étude, section 13).
 - Code lu avant d'écrire : l'analyse de phrase de la saisie rapide (`parseQuickCapture` : elle garde la phrase entière comme titre et ne dit pas si une heure a été prononcée, d'où la petite règle en plus) ; la page d'un moment, qui avait **déjà** « Ouvrir dans Maps » : seul « Y aller » manquait.
-- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-013.js`) : toutes les modifications trouvées une seule fois.
+- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-013.js`) : toutes les modifications trouvées une seule fois.
 - Tests : `Tests: 10 passed` du premier coup ; toute la suite `Test Suites: 90 passed`, `Tests: 1936 passed` ; `tsc` et `eslint` sans erreur.
 - **Pas vérifié** : « Dicter tout » (n'existe que sur Android : à essayer sur le téléphone), et « Y aller » à l'écran (pas regardé sur le web, pour économiser ; c'est le même type de lien que « Ouvrir dans Maps », qui marche déjà). Rien n'est encore enregistré dans git.

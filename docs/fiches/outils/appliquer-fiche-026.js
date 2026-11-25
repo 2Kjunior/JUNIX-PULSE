@@ -1,60 +1,72 @@
-// Applies sheet 025 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 026 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-025.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-026.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-025-partager-sans-compte.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-026-planning-jour-semaine-mois.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  "src/domain/rules/invite-rules.ts": "rules",
-  "src/domain/rules/__tests__/invite-rules.test.ts": "rules-test",
-  "src/repositories/invite-repository.ts": "repo",
-  "src/use-cases/invite-use-cases.ts": "use-cases",
-  "src/features/share/ShareItemCard.tsx": "share-card",
-  "src/app/invite.tsx": "invite-screen"
+  "src/domain/rules/planning-move-rules.ts": "rules",
+  "src/domain/rules/__tests__/planning-move-rules.test.ts": "rules-test",
+  "src/use-cases/planning-move-use-cases.ts": "use-cases",
+  "src/features/planning/use-planning-move.ts": "move-hook",
+  "src/components/planning/DraggableBlock.tsx": "draggable",
+  "src/components/planning/DayTimeGrid.tsx": "day-grid",
+  "src/components/planning/MonthView.tsx": "month-view"
 };
 const edits = {
-  "src/database/migrations.ts": [
-    "migration"
+  "src/components/schedule/WeeklyTimetableGrid.tsx": [
+    "wk-1",
+    "wk-2",
+    "wk-3",
+    "wk-4",
+    "wk-5",
+    "wk-6",
+    "wk-7",
+    "wk-8",
+    "wk-9",
+    "wk-10"
   ],
-  "src/services/backup-service.ts": [
-    "bk-table",
-    "bk-cols",
-    "bk-required",
-    "bk-enum",
-    "bk-zod"
+  "src/app/(tabs)/calendar.tsx": [
+    "cal-1",
+    "cal-2",
+    "cal-3",
+    "cal-4",
+    "cal-5",
+    "cal-6",
+    "cal-7",
+    "cal-8",
+    "cal-9",
+    "cal-10",
+    "cal-11",
+    "cal-12",
+    "cal-13",
+    "cal-14",
+    "cal-15"
   ],
-  "src/app/_layout.tsx": [
-    "route"
+  "src/domain/rules/gesture-tip-rules.ts": [
+    "tip-1",
+    "tip-2"
   ],
-  "src/app/reminders/[id].tsx": [
-    "rm-import",
-    "rm-card"
+  "src/domain/rules/mascot-message-catalog.ts": [
+    "cat-fr-1"
   ],
-  "src/app/tasks/[id].tsx": [
-    "tk-import",
-    "tk-card"
-  ],
-  "src/app/events/[id].tsx": [
-    "ev-import",
-    "ev-card"
-  ],
-  "src/components/create/NewItemChooser.tsx": [
-    "nc-link"
+  "src/domain/rules/mascot-message-catalog-en.ts": [
+    "cat-en-1"
   ],
   "src/i18n/messages-rest-fr.ts": [
-    "fr"
+    "fr-1"
   ],
   "src/i18n/messages-rest-en.ts": [
-    "en"
+    "en-1"
   ]
 };
-const removed = [];
+const removed = ["src/components/calendar/CalendarTimetable.tsx"];
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 
 const edited = {};

@@ -1338,7 +1338,7 @@ Résultat attendu : `Tests: 15 passed` pour les règles ; toute la suite passe ;
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Problèmes d'abord **reproduits** sur le web à 360 px de large : le sous-titre long poussait « Ajouter » hors de l'écran (le milieu de l'en-tête n'avait aucune limite de largeur).
-- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-014.js`) : toutes les modifications trouvées une seule fois.
+- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-014.js`) : toutes les modifications trouvées une seule fois.
 - **Écart corrigé** (la fiche décrit maintenant la version corrigée) : pour « Rapport à rendre… » (aucun jour dit), la règle de la saisie rapide propose **demain** toute seule quand 9 h est passé ; « un jour est dit » se décide maintenant sur les mots de la phrase (`saysADay` : un jour, un mois, « demain », « le 12 », « dans 3 jours », aujourd'hui).
 - Tests : `Tests: 21 passed` (15 de la dictée, 6 du choix « Nouveau ») ; toute la suite `Test Suites: 90 passed`, `Tests: 1941 passed` ; `tsc` et `eslint` sans erreur.
 - **Vu sur le web à 360 px** : « Ajouter » visible dans les deux formulaires ; l'alerte activée change l'en-tête (cloche, « À faire · alerte », « Ton téléphone te préviendra ») ; sous-titres courts.

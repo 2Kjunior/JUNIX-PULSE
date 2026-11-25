@@ -968,7 +968,7 @@ Résultat attendu : `Tests: 6 passed` ; toute la suite passe ; `tsc` et `eslint`
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Lu avant d'écrire : les deux anciens onglets, la barre du bas, ce qui mène à l'onglet Rappels (Accueil, mascotte). Trouvé : la barre allumait l'onglet **par sa place** ; en retirer un aurait allumé le mauvais (corrigé à l'étape 5).
-- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-015.js`). Avant d'appliquer : `Typography.titleSmall` n'existe pas dans le thème, remplacé par `titleMedium` dans la fiche.
+- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-015.js`). Avant d'appliquer : `Typography.titleSmall` n'existe pas dans le thème, remplacé par `titleMedium` dans la fiche.
 - Tests : `Tests: 6 passed` ; toute la suite `Test Suites: 91 passed`, `Tests: 1947 passed` ; `tsc` et `eslint` sans erreur.
 - **Vu sur le web à 360 px** : 4 onglets (Accueil, À faire, Planning, Proches), « À faire » allumé ; sections En retard, Sans date, Fait ; cartes cyan avec cloche et heure ; filtre « Avec alerte » : seulement les rappels.
 - **Écart corrigé après l'avoir vu** (étape 5 bis) : la barre de filtre donnait la même largeur aux trois boutons, « Avec alerte » était coupé ; chaque bouton prend maintenant sa largeur naturelle, sans icônes dans cette barre. La barre est commune : Planning et Proches en profitent.

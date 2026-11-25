@@ -1,50 +1,32 @@
-// Applies sheet 021 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 012 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-021.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-012.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-021-presentation-et-bulles-de-pulse.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-012-formulaires-a-faire-et-moment.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  "src/constants/pulse-concepts.ts": "concepts",
-  "src/features/onboarding/ConceptCard.tsx": "card",
-  "src/app/(onboarding)/discover.tsx": "discover",
-  "src/__tests__/coherence-021.test.ts": "test"
+  'src/constants/item-forms.ts': 'forms-registry',
+  'src/components/create/form/FormBricks.tsx': 'bricks',
+  'src/features/create/TodoForm.tsx': 'todo-form',
+  'src/features/create/MomentForm.tsx': 'moment-form',
+  'src/app/tasks/new.tsx': 'route-task',
+  'src/app/reminders/new.tsx': 'route-reminder',
+  'src/app/events/new.tsx': 'route-event',
+  'src/__tests__/item-forms.test.ts': 'test',
 };
 const edits = {
-  "src/i18n/messages.ts": [
-    "badges-fr",
-    "badges-en",
-    "discover-fr",
-    "discover-en"
-  ],
-  "src/app/(onboarding)/index.tsx": [
-    "icon"
-  ],
-  "src/domain/rules/mascot-message-catalog.ts": [
-    "guide-fr",
-    "tour-fr",
-    "tip-fr"
-  ],
-  "src/domain/rules/mascot-message-catalog-en.ts": [
-    "guide-en",
-    "tour-en",
-    "tip-en"
-  ],
-  "src/domain/rules/mascot-guide-rules.ts": [
-    "cards"
-  ],
-  "src/domain/rules/__tests__/mascot-guide-rules.test.ts": [
-    "guidetest"
-  ],
-  "src/domain/rules/__tests__/mascot-message-rules.test.ts": [
-    "msgtest"
-  ]
+  'src/domain/rules/focus-rules.ts': ['focus-1'],
+  'src/app/focus.tsx': ['focus-2', 'focus-3'],
+  'src/app/tasks/[id].tsx': ['focus-4'],
+  'src/i18n/messages.ts': ['dur-fr', 'dur-en'],
+  'src/i18n/messages-rest-fr.ts': ['fr'],
+  'src/i18n/messages-rest-en.ts': ['en'],
 };
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 

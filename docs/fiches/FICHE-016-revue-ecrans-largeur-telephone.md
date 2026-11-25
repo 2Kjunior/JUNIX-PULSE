@@ -250,7 +250,7 @@ Le tutoriel avant l'APK, puis l'APK de test.
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Revue faite avec le détecteur de la section 2 sur 24 écrans à 360 px, et à l'œil sur ceux qu'il signalait.
-- Étapes 1 à 5 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-016.js`).
+- Étapes 1 à 5 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-016.js`).
 - **Écart corrigé après l'avoir vu** : la date sous « Planning » était coupée (« Lundi 23 Nove… ») une fois les boutons protégés ; elle passe sur deux lignes au plus (étape 1).
 - Après : le détecteur ne trouve plus rien sur le Planning ni sur À faire ; les boutons du Planning sont tous visibles ; « Agenda · Journée · Semaine » tiennent ; la barre de filtre dit aux lecteurs d'écran quel bouton est choisi.
 - Tests : toute la suite `Test Suites: 91 passed`, `Tests: 1947 passed` ; `tsc` et `eslint` sans erreur.

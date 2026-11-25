@@ -1,72 +1,68 @@
-// Applies sheet 026 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 022 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-026.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-022.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-026-planning-jour-semaine-mois.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-022-modifier-avec-les-memes-formulaires.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  "src/domain/rules/planning-move-rules.ts": "rules",
-  "src/domain/rules/__tests__/planning-move-rules.test.ts": "rules-test",
-  "src/use-cases/planning-move-use-cases.ts": "use-cases",
-  "src/features/planning/use-planning-move.ts": "move-hook",
-  "src/components/planning/DraggableBlock.tsx": "draggable",
-  "src/components/planning/DayTimeGrid.tsx": "day-grid",
-  "src/components/planning/MonthView.tsx": "month-view"
+  "src/domain/rules/item-edit-rules.ts": "rules",
+  "src/domain/rules/__tests__/item-edit-rules.test.ts": "rules-test",
+  "src/features/create/edit-loaders.ts": "loaders",
+  "src/features/create/TodoForm.tsx": "todo-form",
+  "src/features/create/MomentForm.tsx": "moment-form",
+  "src/app/reminders/edit/[id].tsx": "route-reminder",
+  "src/app/tasks/edit/[id].tsx": "route-task",
+  "src/app/events/edit/[id].tsx": "route-event",
+  "src/app/tasks/[id].tsx": "task-page"
 };
 const edits = {
-  "src/components/schedule/WeeklyTimetableGrid.tsx": [
-    "wk-1",
-    "wk-2",
-    "wk-3",
-    "wk-4",
-    "wk-5",
-    "wk-6",
-    "wk-7",
-    "wk-8",
-    "wk-9",
-    "wk-10"
+  "src/components/create/form/FormBricks.tsx": [
+    "shell-1",
+    "shell-2",
+    "shell-3",
+    "shell-4"
   ],
-  "src/app/(tabs)/calendar.tsx": [
-    "cal-1",
-    "cal-2",
-    "cal-3",
-    "cal-4",
-    "cal-5",
-    "cal-6",
-    "cal-7",
-    "cal-8",
-    "cal-9",
-    "cal-10",
-    "cal-11",
-    "cal-12",
-    "cal-13",
-    "cal-14",
-    "cal-15"
+  "src/use-cases/reminder-use-cases.ts": [
+    "uc-1",
+    "uc-2"
   ],
-  "src/domain/rules/gesture-tip-rules.ts": [
-    "tip-1",
-    "tip-2"
+  "src/repositories/reminder-repository.ts": [
+    "repo-1",
+    "repo-2"
   ],
-  "src/domain/rules/mascot-message-catalog.ts": [
-    "cat-fr-1"
+  "src/use-cases/task-use-cases.ts": [
+    "task"
   ],
-  "src/domain/rules/mascot-message-catalog-en.ts": [
-    "cat-en-1"
+  "src/app/_layout.tsx": [
+    "routes",
+    "routes-2"
+  ],
+  "src/app/events/[id].tsx": [
+    "ev-1",
+    "ev-2",
+    "ev-3",
+    "ev-4",
+    "ev-5"
+  ],
+  "src/app/reminders/[id].tsx": [
+    "rm-1",
+    "rm-2",
+    "rm-3"
   ],
   "src/i18n/messages-rest-fr.ts": [
-    "fr-1"
+    "fr"
   ],
   "src/i18n/messages-rest-en.ts": [
-    "en-1"
+    "en"
   ]
 };
-const removed = ["src/components/calendar/CalendarTimetable.tsx"];
+const removed = ["src/styles/reminders/edit-reminder-styles.ts"];
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 
 const edited = {};

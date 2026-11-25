@@ -1,65 +1,75 @@
-// Applies sheet 027 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 024 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-027.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-024.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-027-planning-glowcards-et-mois.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-024-gestes-decouvrables.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  "src/constants/planning-look.ts": "look",
-  "src/components/planning/PlanningCard.tsx": "card",
-  "src/components/planning/DayTimeGrid.tsx": "day-grid",
-  "src/components/planning/MonthView.tsx": "month-view"
+  "src/domain/rules/gesture-tip-rules.ts": "rules",
+  "src/domain/rules/__tests__/gesture-tip-rules.test.ts": "rules-test",
+  "src/components/ui/CardMenu.tsx": "card-menu",
+  "src/features/mascot/TipBubbleLayer.tsx": "bubble",
+  "src/features/mascot/FirstVisitTip.tsx": "first-visit",
+  "src/services/mascot/mascot-tips-service.ts": "tips-service",
+  "src/features/mascot/GestureTip.tsx": "gesture-tip"
 };
 const edits = {
+  "src/components/ui/SwipeableItem.tsx": [
+    "sw-import",
+    "sw-import-2",
+    "sw-prop",
+    "sw-args"
+  ],
   "src/components/ui/GlowCard.tsx": [
-    "glow-1",
-    "glow-2",
-    "glow-3",
-    "glow-4",
-    "glow-5"
+    "gc-import",
+    "gc-hook",
+    "gc-press"
   ],
-  "src/domain/rules/planning-move-rules.ts": [
-    "rules-1",
-    "rules-2",
-    "rules-3",
-    "rules-4"
+  "src/components/todo/TodoRow.tsx": [
+    "tr-import",
+    "tr-hooks",
+    "tr-press",
+    "tr-button"
   ],
-  "src/domain/rules/__tests__/planning-move-rules.test.ts": [
-    "test-1",
-    "test-2"
+  "src/app/habits/index.tsx": [
+    "hb-import",
+    "hb-hook",
+    "hb-map",
+    "hb-peek",
+    "hb-button",
+    "hb-element"
   ],
-  "src/components/planning/DraggableBlock.tsx": [
-    "drag-1",
-    "drag-2",
-    "drag-3",
-    "drag-4",
-    "drag-5"
+  "src/app/goals/index.tsx": [
+    "gl-import",
+    "gl-hook",
+    "gl-map",
+    "gl-peek",
+    "gl-button",
+    "gl-element"
   ],
-  "src/app/(tabs)/calendar.tsx": [
-    "cal-1",
-    "cal-2",
-    "cal-3",
-    "cal-4",
-    "cal-5",
-    "cal-6",
-    "cal-7",
-    "cal-8",
-    "cal-9",
-    "cal-10",
-    "cal-11",
-    "cal-12"
+  "src/features/todo/TodoTabScreen.tsx": [
+    "tt-import",
+    "tt-hook",
+    "tt-peek",
+    "tt-element"
+  ],
+  "src/domain/rules/mascot-message-catalog.ts": [
+    "msg-fr"
+  ],
+  "src/domain/rules/mascot-message-catalog-en.ts": [
+    "msg-en"
   ],
   "src/i18n/messages-rest-fr.ts": [
-    "fr-1"
+    "fr"
   ],
   "src/i18n/messages-rest-en.ts": [
-    "en-1"
+    "en"
   ]
 };
 const removed = [];

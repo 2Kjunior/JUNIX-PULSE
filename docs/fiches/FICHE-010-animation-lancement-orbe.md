@@ -1292,7 +1292,7 @@ Résultat attendu : `Tests: 13 passed` (7 + 3 + 3) ; `tsc` et `eslint` n'affiche
 
 ## Compte rendu d'exécution (23 novembre 2026)
 
-- Étapes 1 à 7 appliquées **à partir des blocs de cette fiche** (outil `docs/tutoriel-suite/outils/appliquer-fiche-010.js`), après la fin de la compilation de l'APK du 23 novembre (le code n'a pas été touché pendant qu'elle emballait le JavaScript).
+- Étapes 1 à 7 appliquées **à partir des blocs de cette fiche** (outil `docs/fiches/outils/appliquer-fiche-010.js`), après la fin de la compilation de l'APK du 23 novembre (le code n'a pas été touché pendant qu'elle emballait le JavaScript).
 - Étape 6b : `node scripts/logo/generer-icones.js` ; seule `assets/images/splash-icon.png` a changé (devenue transparente).
 - **Écarts corrigés pendant l'exécution** (la fiche décrit maintenant la version qui marche) :
   1. `expo-audio` ne se charge pas dans les tests (`Cannot read properties of undefined (reading 'prototype')`) : ajout d'un faux lecteur (`jest.mock('expo-audio', …)`) en tête du test, comme dans `notification-sound-service.test.ts` ;

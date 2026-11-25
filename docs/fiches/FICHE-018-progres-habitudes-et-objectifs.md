@@ -1089,7 +1089,7 @@ Attendu : `Tests: 5 passed` ; toute la suite passe ; `tsc` et `eslint` n'affiche
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Lu avant d'écrire : les listes et la page d'un objectif, le dépôt, les règles d'habitude (la semaine) et d'objectif, la sauvegarde. Trouvé : un objectif **se termine tout seul** à 100 % ; avec les habitudes dans le calcul, une bonne semaine l'aurait terminé par erreur, d'où `taskProgress` pour l'achèvement.
-- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-018.js`), du premier coup.
+- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-018.js`), du premier coup.
 - **Écart corrigé** : un ancien test remplaçait le dépôt des objectifs par une doublure sans la nouvelle fonction ; ajoutée (étape 3 bis de cette fiche, bloc `mock`).
 - Tests : `Tests: 5 passed` ; toute la suite `Test Suites: 93 passed`, `Tests: 1956 passed` ; `tsc` et `eslint` sans erreur.
 - **Pas vérifié à l'écran** (panneau du navigateur caché) : la carte de l'Accueil, la page Progrès, la section Habitudes liées. À voir avec le prochain APK. Rien n'est encore enregistré dans git.

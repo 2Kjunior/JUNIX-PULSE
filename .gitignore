@@ -49,3 +49,7 @@ example
 .agents/
 AUDIT_IHM/
 
+
+# The tutorial books stay on the PC and in the Desktop zips, never on GitHub (25 November 2026)
+docs/tutoriel-suite/
+docs/tutoriel-a-z/

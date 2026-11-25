@@ -1252,7 +1252,7 @@ devient :
 ### Étape 7 — Appliquer d'un coup, puis vérifier
 
 ```powershell
-node docs/tutoriel-suite/outils/appliquer-fiche-025.js .
+node docs/fiches/outils/appliquer-fiche-025.js .
 ```
 
 La nouvelle route `/invite` doit être connue des routes typées : lancer une fois le serveur web (`npx expo start --web`), qui réécrit `.expo/types/router.d.ts`, puis :

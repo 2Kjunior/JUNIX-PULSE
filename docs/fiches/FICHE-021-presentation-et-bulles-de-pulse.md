@@ -954,7 +954,7 @@ describe('the five things of Junix Pulse (study 001, 15.1; sheet 021)', () => {
 ### Étape 8 — Appliquer d'un coup, puis vérifier
 
 ```powershell
-node docs/tutoriel-suite/outils/appliquer-fiche-021.js .
+node docs/fiches/outils/appliquer-fiche-021.js .
 ```
 
 ```powershell
@@ -985,7 +985,7 @@ npx eslint src
 ## Compte rendu d'exécution (24 novembre 2026)
 
 - Lu avant d'écrire : les cinq écrans de la présentation, l'endroit où Pulse montre les cartes (`OnboardingGuide`), la visite de l'accueil et les astuces de première visite, et les deux catalogues de phrases (FR à quatre formes, EN à deux).
-- Étapes 1 à 7 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-021.js`) ; rejouées sur une copie propre du code enregistré : résultat identique fichier par fichier.
+- Étapes 1 à 7 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-021.js`) ; rejouées sur une copie propre du code enregistré : résultat identique fichier par fichier.
 - **Écart corrigé** (étape 7) : un ancien test citait mot pour mot la phrase « Un rappel vous prévient à l'heure. » ; il cite maintenant la nouvelle.
 - Choix : pas de page « Comprendre » dans les Paramètres (l'app doit se comprendre seule) ; la carte `ConceptCard` est prête si on en veut une plus tard.
 - Tests : toute la suite `Test Suites: 96 passed`, `Tests: 2009 passed` ; `tsc` et `eslint` sans erreur.

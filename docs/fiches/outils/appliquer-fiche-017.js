@@ -1,37 +1,31 @@
-// Applies sheet 011 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 017 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-011.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-017.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-011-notifications-trois-types.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-017-coherence-parametres-et-mots.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  'src/domain/rules/notification-level-rules.ts': 'level-rules',
-  'src/domain/rules/item-notification-rules.ts': 'item-rules',
-  'src/services/item-notification-service.ts': 'item-service',
-  'src/domain/rules/__tests__/notification-level-rules.test.ts': 'test-levels',
-  'src/domain/rules/__tests__/item-notification-rules.test.ts': 'test-items',
+  'src/components/ui/HeaderIconButton.tsx': 'button',
+  'src/__tests__/coherence-017.test.ts': 'test',
 };
 const edits = {
-  'src/services/notification-service.ts': ['ns-1', 'ns-2', 'ns-3', 'ns-4', 'ns-5'],
-  'src/domain/rules/reminder-notification-rules.ts': ['rr-1', 'rr-2', 'rr-3', 'rr-4', 'rr-5', 'rr-6', 'rr-7', 'rr-8'],
-  'src/services/reminder-notification-service.ts': ['rs-1', 'rs-2', 'rs-3', 'rs-4', 'rs-5'],
-  'src/database/migrations.ts': ['mig'],
-  'src/__tests__/coloured-tags.test.ts': ['tag-test'],
-  'src/domain/entities/index.ts': ['ent'],
-  'src/repositories/settings-repository.ts': ['repo-1', 'repo-2'],
-  'src/services/backup-service.ts': ['bk-1', 'bk-2'],
-  'src/app/settings/index.tsx': ['set-1', 'set-2'],
-  'src/i18n/messages-rest-fr.ts': ['fr'],
-  'src/i18n/messages-rest-en.ts': ['en'],
-  'src/use-cases/task-use-cases.ts': ['tu-1', 'tu-2', 'tu-3', 'tu-4', 'tu-5', 'tu-6', 'tu-7'],
-  'src/use-cases/event-use-cases.ts': ['eu-1', 'eu-2', 'eu-3', 'eu-4', 'eu-5'],
-  'src/app/_layout.tsx': ['lay'],
+  'src/app/(tabs)/index.tsx': ['home-1', 'home-2'],
+  'src/app/(tabs)/calendar.tsx': ['cal-1', 'cal-2'],
+  'src/app/(tabs)/people.tsx': ['people-1', 'people-2'],
+  'src/app/(tabs)/pulse.tsx': ['pulse-1', 'pulse-2'],
+  'src/features/todo/TodoTabScreen.tsx': ['todo-1', 'todo-2', 'todo-3'],
+  'src/features/create/TodoForm.tsx': ['form'],
+  'src/constants/item-kinds.ts': ['kinds'],
+  'src/app/reminders/[id].tsx': ['rem-1', 'rem-2'],
+  'src/i18n/messages.ts': ['home-fr', 'home-en'],
+  'src/i18n/messages-rest-fr.ts': ['fr-1', 'fr-2', 'fr-3', 'fr-4', 'fr-5', 'fr-6'],
+  'src/i18n/messages-rest-en.ts': ['en-1', 'en-2', 'en-3', 'en-4', 'en-5', 'en-6'],
 };
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 

@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1024 1024">
-  <!-- Écran de démarrage du système : volontairement vide (transparent), posé sur le fond sombre #141317.
-       L'animation de lancement dessine ensuite l'orbe. Avec l'orbe ici, on le verrait apparaître,
-       disparaître, puis se redessiner. Voir FICHE-010. -->
-</svg>

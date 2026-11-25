@@ -1124,7 +1124,7 @@ devient :
 ### Étape 6 — Appliquer d'un coup, puis vérifier
 
 ```powershell
-node docs/tutoriel-suite/outils/appliquer-fiche-024.js .
+node docs/fiches/outils/appliquer-fiche-024.js .
 ```
 
 ```powershell

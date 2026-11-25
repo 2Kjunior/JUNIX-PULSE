@@ -1676,7 +1676,7 @@ Résultat attendu : `Tests: 8 passed` pour le nouveau fichier ; toute la suite p
 
 - Décisions prises avant d'écrire et notées dans l'étude 001, section 12.2 : création d'abord ; priorité sous l'Alerte ; options des rappels sous l'Alerte ; la durée devient « Temps pour le faire », reliée au minuteur de Focus (elle ne servait à rien, d'où l'incompréhension : seulement une étiquette « 30 min » sur les cartes).
 - Code lu avant d'écrire : les trois anciens formulaires en entier, la dictée de la saisie rapide (`use-dictation.ts`), les routes du choix « Nouveau », Focus et son lancement depuis une tâche.
-- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-012.js`) : toutes les modifications trouvées une seule fois.
+- Étapes 1 à 8 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-012.js`) : toutes les modifications trouvées une seule fois.
 - Tests : `Tests: 8 passed` (nouveau fichier) ; toute la suite `Test Suites: 89 passed`, `Tests: 1926 passed` ; `tsc` et `eslint` sans erreur, du premier coup.
 - **Vu sur le web** : « À faire » en cyan, sections dans l'ordre de l'étude ; l'Alerte activée fait disparaître « Sans date », choisit Aujourd'hui, montre l'heure, la priorité avec son explication, l'action, la répétition et « à confirmer » ; « Moment » en ambre ; « Partir … min avant » n'apparaît qu'après avoir écrit un lieu.
 - **Deux écarts corrigés après les avoir vus à l'écran** (la fiche décrit maintenant la version corrigée) :

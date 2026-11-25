@@ -1,78 +1,51 @@
-// Applies sheet 024 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 021 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-024.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-021.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-024-gestes-decouvrables.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-021-presentation-et-bulles-de-pulse.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
 const whole = {
-  "src/domain/rules/gesture-tip-rules.ts": "rules",
-  "src/domain/rules/__tests__/gesture-tip-rules.test.ts": "rules-test",
-  "src/components/ui/CardMenu.tsx": "card-menu",
-  "src/features/mascot/TipBubbleLayer.tsx": "bubble",
-  "src/features/mascot/FirstVisitTip.tsx": "first-visit",
-  "src/services/mascot/mascot-tips-service.ts": "tips-service",
-  "src/features/mascot/GestureTip.tsx": "gesture-tip"
+  "src/constants/pulse-concepts.ts": "concepts",
+  "src/features/onboarding/ConceptCard.tsx": "card",
+  "src/app/(onboarding)/discover.tsx": "discover",
+  "src/__tests__/coherence-021.test.ts": "test"
 };
 const edits = {
-  "src/components/ui/SwipeableItem.tsx": [
-    "sw-import",
-    "sw-import-2",
-    "sw-prop",
-    "sw-args"
+  "src/i18n/messages.ts": [
+    "badges-fr",
+    "badges-en",
+    "discover-fr",
+    "discover-en"
   ],
-  "src/components/ui/GlowCard.tsx": [
-    "gc-import",
-    "gc-hook",
-    "gc-press"
-  ],
-  "src/components/todo/TodoRow.tsx": [
-    "tr-import",
-    "tr-hooks",
-    "tr-press",
-    "tr-button"
-  ],
-  "src/app/habits/index.tsx": [
-    "hb-import",
-    "hb-hook",
-    "hb-map",
-    "hb-peek",
-    "hb-button",
-    "hb-element"
-  ],
-  "src/app/goals/index.tsx": [
-    "gl-import",
-    "gl-hook",
-    "gl-map",
-    "gl-peek",
-    "gl-button",
-    "gl-element"
-  ],
-  "src/features/todo/TodoTabScreen.tsx": [
-    "tt-import",
-    "tt-hook",
-    "tt-peek",
-    "tt-element"
+  "src/app/(onboarding)/index.tsx": [
+    "icon"
   ],
   "src/domain/rules/mascot-message-catalog.ts": [
-    "msg-fr"
+    "guide-fr",
+    "tour-fr",
+    "tip-fr"
   ],
   "src/domain/rules/mascot-message-catalog-en.ts": [
-    "msg-en"
+    "guide-en",
+    "tour-en",
+    "tip-en"
   ],
-  "src/i18n/messages-rest-fr.ts": [
-    "fr"
+  "src/domain/rules/mascot-guide-rules.ts": [
+    "cards"
   ],
-  "src/i18n/messages-rest-en.ts": [
-    "en"
+  "src/domain/rules/__tests__/mascot-guide-rules.test.ts": [
+    "guidetest"
+  ],
+  "src/domain/rules/__tests__/mascot-message-rules.test.ts": [
+    "msgtest"
   ]
 };
-const removed = [];
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 
 const edited = {};
@@ -104,5 +77,4 @@ for (const [file, name] of Object.entries(whole)) {
   fs.writeFileSync(path.join(root, file), blocks[name] + '\n');
 }
 for (const [file, text] of Object.entries(edited)) fs.writeFileSync(path.join(root, file), text);
-for (const file of removed) if (fs.existsSync(path.join(root, file))) fs.unlinkSync(path.join(root, file));
 console.log('applied');

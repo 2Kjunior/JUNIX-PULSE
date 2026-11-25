@@ -1597,7 +1597,7 @@ Résultat attendu : `Tests: 13 passed` pour les deux nouveaux fichiers ; toute l
 
 - Décisions prises avant d'écrire (les quatre réponses du 23 novembre) et notées dans l'étude 001, section 12.6 : nuit 22 h - 7 h réglable, échéances la veille 18 h et le jour 9 h, moments 15 min avant, découpage « niveaux et trois types d'abord ».
 - Code lu avant d'écrire : `notification-service.ts`, `reminder-notification-service.ts`, `reminder-notification-rules.ts`, les entités, les cas d'usage des tâches et des moments, les réglages, la sauvegarde. Le champ « Partir … min avant » existait déjà (`travelBufferMinutes`).
-- Étapes 1 à 12 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-011.js`) : les 47 remplacements ont été trouvés une seule fois chacun.
+- Étapes 1 à 12 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-011.js`) : les 47 remplacements ont été trouvés une seule fois chacun.
 - Tests : les deux nouveaux fichiers `Tests: 13 passed` ; `tsc --noEmit` sans erreur (les options des canaux existent bien dans cette version d'Expo) ; eslint sans erreur sur les fichiers touchés.
 - **Écart corrigé** : `src/__tests__/coloured-tags.test.ts` exigeait que la migration 33 soit la dernière ; remplacé par ce qu'il protège vraiment (33 juste après 32, versions dans l'ordre), ajouté à l'étape 7a. Ensuite toute la suite : `Test Suites: 88 passed`, `Tests: 1918 passed`.
 - **Vu sur le web** : Réglages › Notifications montre « Nuit plus calme », Début 21/22/23 h et Fin 6/7/8 h, 22 h et 7 h choisis par défaut ; 23 h choisi puis la page rechargée : 23 h est resté (la migration 34 a tourné, le réglage est bien écrit et relu) ; remis à 22 h ensuite. Aucune erreur dans la console.

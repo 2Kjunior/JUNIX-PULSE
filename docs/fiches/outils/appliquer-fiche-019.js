@@ -1,6 +1,6 @@
 // Applies sheet 019 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-019.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-019.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');

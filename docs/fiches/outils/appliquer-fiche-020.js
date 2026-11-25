@@ -1,22 +1,32 @@
-// Applies sheet 016 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
+// Applies sheet 020 from its own code blocks (each block follows a "<!-- bloc: name -->" marker).
 // Every replacement is checked first (found exactly once); nothing is written if one fails.
-// Usage, from the project folder: node docs/tutoriel-suite/outils/appliquer-fiche-016.js .
+// Usage, from the project folder: node docs/fiches/outils/appliquer-fiche-020.js .
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(process.argv[2] || '.');
 const sheet = fs
-  .readFileSync(path.join(root, 'docs/fiches/FICHE-016-revue-ecrans-largeur-telephone.md'), 'utf8')
+  .readFileSync(path.join(root, 'docs/fiches/FICHE-020-pulse-propose-une-habitude.md'), 'utf8')
   .replace(/\r\n/g, '\n');
 const blocks = {};
 for (const m of sheet.matchAll(/<!-- bloc: ([\w-]+) -->\n+```[a-z]*\n([\s\S]*?)\n```/g)) blocks[m[1]] = m[2];
 
-const whole = {};
+const whole = {
+  'src/domain/rules/habit-candidate-rules.ts': 'rules',
+  'src/domain/rules/__tests__/habit-candidate-rules.test.ts': 'test',
+};
 const edits = {
-  'src/styles/tabs/calendar-styles.ts': ['cal-style-1', 'cal-style-2'],
-  'src/app/(tabs)/calendar.tsx': ['cal-1', 'cal-2'],
-  'src/i18n/messages.ts': ['week-fr', 'week-en'],
-  'src/features/todo/TodoTabScreen.tsx': ['fab'],
-  'src/components/ui/PillTopBar.tsx': ['pill'],
+  'src/domain/enums/index.ts': ['enum'],
+  'src/domain/rules/mascot-suggestion-rules.ts': ['sr-1', 'sr-2', 'sr-3', 'sr-4'],
+  'src/domain/rules/mascot-message-catalog.ts': ['msg-fr'],
+  'src/domain/rules/mascot-message-catalog-en.ts': ['msg-en'],
+  'src/domain/rules/mascot-candidate-rules.ts': ['cand-1', 'cand-2', 'cand-3'],
+  'src/use-cases/suggestion-use-cases.ts': ['uc-1', 'uc-2', 'uc-3', 'uc-4'],
+  'src/services/backup-service.ts': ['bk'],
+  'src/domain/rules/mascot-preferences.ts': ['pref', 'fam'],
+  'src/i18n/suggestion-text.ts': ['text'],
+  'src/domain/rules/__tests__/mascot-preferences.test.ts': ['famtest'],
+  'src/i18n/messages-rest-fr.ts': ['fr'],
+  'src/i18n/messages-rest-en.ts': ['en'],
 };
 for (const name of Object.values(whole)) if (!(name in blocks)) throw new Error('missing block ' + name);
 

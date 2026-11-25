@@ -1205,6 +1205,6 @@ Attendu : `Tests: 6 passed` ; toute la suite passe ; `tsc` et `eslint` n'affiche
 ## Compte rendu d'exécution (23 novembre 2026)
 
 - Lu avant d'écrire : les boutons des notifications de rappel (« Terminer », « Dans 1 h ») et la tâche de fond qui les reçoit appli fermée ; la création, la modification et le cochage des habitudes ; le formulaire et la page d'une habitude.
-- Étapes 1 à 10 appliquées **à partir des blocs de cette fiche** (`docs/tutoriel-suite/outils/appliquer-fiche-019.js`), du premier coup.
+- Étapes 1 à 10 appliquées **à partir des blocs de cette fiche** (`docs/fiches/outils/appliquer-fiche-019.js`), du premier coup.
 - Tests : `Tests: 6 passed` ; toute la suite `Test Suites: 94 passed`, `Tests: 1963 passed` ; `tsc` et `eslint` sans erreur.
 - **Pas vérifié** : la notification, le bouton « Fait » et le champ « Me le rappeler » à l'écran (le web n'a pas de notifications locales). À voir sur le téléphone. Rien n'est encore enregistré dans git.

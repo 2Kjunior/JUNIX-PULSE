@@ -2276,7 +2276,7 @@ devient :
 ### Étape 8 — Appliquer d'un coup, puis vérifier
 
 ```powershell
-node docs/tutoriel-suite/outils/appliquer-fiche-027.js .
+node docs/fiches/outils/appliquer-fiche-027.js .
 ```
 
 Sortie attendue : `applied`.
@@ -2352,3 +2352,4 @@ npx eslint src
   - toucher une carte de la liste ouvre l'élément ;
   - les trois éléments d'essai ont été supprimés et le thème remis en Sombre.
 - **Pas vérifié** : la Semaine (inchangée), le bord gauche, TalkBack, et tout sur le téléphone. Rien n'est encore enregistré dans git.
+- **Revérifié après le commit** (25 novembre 2026) : le serveur web, lancé avant les dernières retouches, servait encore un ancien `DraggableBlock` (`useRef is not defined` dans la console : il n'avait pas vu une modification faite par `sed`). Le code commité, lui, était juste. Après un redémarrage avec `--clear`, le glisser au bord a été refait avec le code actuel : une seule page tournée (décembre), lâché le 16 → « Déplacé : mer. 16 déc., 14:00 », le mois reste stable ensuite ; le moment d'essai a été supprimé. À retenir (dépannage) : après des modifications faites hors de l'éditeur, relancer le serveur web avec `npx expo start --web --clear`.
