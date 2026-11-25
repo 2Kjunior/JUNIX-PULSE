@@ -424,6 +424,7 @@ Deux familles à l'écran, **À faire** et **Moment** ; les données gardent leu
 - **Léger** : pas de nouvelle bibliothèque (gestes et animations sont déjà installés et tournent hors du fil principal, donc sans ralentir l'appli) ; seule la carte qui bouge est redessinée.
 - Découverte : astuce de 12.3.
 - **Fait le 24 novembre 2026 (fiche 026)** : **4 vues** (Agenda gardée · Journée · Semaine · Mois) ; un rappel répétitif glissé déplace **toute la série** après une question ; le déplacement est enregistré tout de suite avec un bandeau **« Annuler »** ; le Mois montre **des points de couleur**, toucher un jour montre ses choses en dessous (« Voir la journée » ouvre la Journée) et on les glisse sur une autre case. Les rendez-vous du téléphone ne bougent pas ; les tâches changent de jour dans le Mois. Même gestes en actions TalkBack. Astuce de Pulse `planDrag`.
+- **Revu le 25 novembre 2026 (fiche 027)**, après l'APK : la Journée reprend **le design de l'ancienne vue** (résumé et légende, tâches du jour, créneaux libres, MAINTENANT, « Options » sur les rappels) avec les **GlowCards et leurs couleurs** (moment `info` et couleur de son type, rappel `primary` ou `urgent`, tâche `success`), mais **à l'échelle** : hauteur selon la durée, cartes qui se chevauchent côte à côte. Le Mois a un **bandeau des mois**, ses choses en GlowCards, et pendant un glisser **le bord de la grille tourne une page** (une fois par entrée au bord).
 
 ### 12.5 Partage (point 5 et 10.5) : hybride, par étapes, le plus léger possible
 

@@ -6,12 +6,16 @@ import {
   dayHours,
   dayKey,
   daysBetween,
+  freeHours,
   layoutDay,
+  minCardMinutes,
   minutesForOffset,
   monthGrid,
   monthGridRange,
+  monthStrip,
   movedRange,
   movedStart,
+  sameDayInMonth,
   shiftedRecurrence,
   snapMinutes,
 } from '../planning-move-rules';
@@ -104,6 +108,22 @@ describe('planning-move-rules (sheet 026)', () => {
     const byId = Object.fromEntries(boxes.map(box => [box.id, box]));
     expect(byId.a).toMatchObject({ top: 128, column: 0, columns: 2 });
     expect(byId.b).toMatchObject({ column: 1, columns: 2 });
-    expect(byId.c).toMatchObject({ top: 320, column: 0, columns: 1, height: 28 });
+    expect(byId.c).toMatchObject({ top: 320, column: 0, columns: 1, height: 46 });
+  });
+
+  it('keeps every card as tall as a finger, and finds the free hours (sheet 027)', () => {
+    expect(minCardMinutes(96)).toBe(30);
+    expect(minCardMinutes(64)).toBe(45);
+    // Two reminders 15 minutes apart meet on the screen: side by side
+    const boxes = layoutDay([{ id: 'a', startMin: 600, endMin: 600 }, { id: 'b', startMin: 615, endMin: 615 }], 7, 96);
+    expect(boxes.map(b => b.columns)).toEqual([2, 2]);
+    expect(boxes[0].height).toBe(46);
+    expect(freeHours([{ startMin: 9 * 60 + 45, endMin: 9 * 60 + 45 }], 8, 12, 96)).toEqual([8, 11]);
+  });
+
+  it('lists the months around and keeps a day inside a shorter month', () => {
+    const strip = monthStrip(new Date(2026, 10, 24), 1, 2);
+    expect(strip).toEqual([new Date(2026, 9, 1), new Date(2026, 10, 1), new Date(2026, 11, 1), new Date(2027, 0, 1)]);
+    expect(sameDayInMonth(new Date(2027, 0, 31), new Date(2027, 1, 1))).toEqual(new Date(2027, 1, 28));
   });
 });

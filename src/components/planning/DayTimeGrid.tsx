@@ -1,27 +1,41 @@
 /**
- * The Day view of the Planning (study 001, 12.4; sheet 026): a grid of hours at a fixed scale,
- * the things without a time in a band at the top, and each card at its exact time and length.
+ * The Day view of the Planning (study 001, 12.4; sheets 026 and 027), with the design of the
+ * earlier Day view: the summary and its legend, the tasks of the day in small GlowCards, the free
+ * hours in dashed lines ("Créneau disponible"), the "MAINTENANT" badge, and every moment and
+ * reminder as a GlowCard in the colours of its kind. What is new is the scale: each card is at
+ * its exact time, its height follows its length, and cards that meet share the width side by side.
  * A long press on a moment or a reminder lifts it; it moves by quarters of an hour.
- * Touching a free place offers to add something at that hour.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday } from 'date-fns';
 import { memo, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { TAB_BAR_TOTAL_HEIGHT, Radius, Spacing, Typography } from '@/constants/theme';
+import { GlowCard } from '@/components/ui/GlowCard';
+import { planningLook, taskAccent, eventAccent } from '@/constants/planning-look';
 import type { ThemePalette } from '@/constants/palettes';
-import { momentKindColor, momentKindLook } from '@/constants/moment-kinds';
+import { Radius, Spacing, TAB_BAR_TOTAL_HEIGHT, Typography } from '@/constants/theme';
 import type { Event, Reminder, Task } from '@/domain/entities';
 import type { DeviceEvent } from '@/domain/rules/device-calendar-rules';
-import { DAY_HOUR_HEIGHT, dayHours, layoutDay, minutesForOffset, minutesOfDay, SNAP_MINUTES } from '@/domain/rules/planning-move-rules';
+import {
+  DAY_HOUR_HEIGHT,
+  dayHours,
+  freeHours,
+  layoutDay,
+  minutesForOffset,
+  minutesOfDay,
+  SNAP_MINUTES,
+} from '@/domain/rules/planning-move-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT } from '@/i18n';
 
 import { DraggableBlock } from './DraggableBlock';
+import { PlanningCard } from './PlanningCard';
 
-const HOURS_WIDTH = 48;
+const HOURS_WIDTH = 52;
+/** Under this width a card shows its badge as an icon and its time under the title. */
+const NARROW_CARD_WIDTH = 150;
 
 export interface DayTimeGridProps {
   date: Date;
@@ -73,12 +87,17 @@ export const DayTimeGrid = memo(function DayTimeGrid({
   const cards = useMemo<DayCard[]>(() => {
     const list: DayCard[] = [];
     for (const event of events) {
-      const startMin = minutesWithin(new Date(event.startAt), date);
-      list.push({ key: `e-${event.id}`, kind: 'event', event, startMin, endMin: minutesWithin(new Date(event.endAt), date) });
+      list.push({
+        key: `e-${event.id}`,
+        kind: 'event',
+        event,
+        startMin: minutesWithin(new Date(event.startAt), date),
+        endMin: minutesWithin(new Date(event.endAt), date),
+      });
     }
     for (const reminder of reminders) {
       const startMin = minutesOfDay(new Date(reminder.scheduledAt));
-      list.push({ key: `r-${reminder.id}`, kind: 'reminder', reminder, startMin, endMin: startMin + 30 });
+      list.push({ key: `r-${reminder.id}`, kind: 'reminder', reminder, startMin, endMin: startMin });
     }
     for (const device of deviceEvents.filter(d => !d.allDay)) {
       list.push({
@@ -98,17 +117,13 @@ export const DayTimeGrid = memo(function DayTimeGrid({
     () => new Map(layoutDay(cards.map(c => ({ id: c.key, startMin: c.startMin, endMin: c.endMin })), first, DAY_HOUR_HEIGHT).map(b => [b.id, b])),
     [cards, first]
   );
+  const free = freeHours(cards, first, last, DAY_HOUR_HEIGHT);
+  const occupied = hours.length - free.length;
   const allDay = deviceEvents.filter(d => d.allDay);
   const now = new Date();
   const nowTop = isToday(date) ? ((minutesOfDay(now) - first * 60) / 60) * DAY_HOUR_HEIGHT : null;
   const quarter = (DAY_HOUR_HEIGHT * SNAP_MINUTES) / 60;
-
-  const colorOf = (card: DayCard) =>
-    card.kind === 'event'
-      ? momentKindColor(theme, card.event.momentKind)
-      : card.kind === 'reminder'
-        ? card.reminder.priority === 'URGENT' ? theme.error.default : theme.primary.default
-        : theme.success.default;
+  const taskColor = taskAccent(theme);
 
   return (
     <ScrollView
@@ -116,81 +131,122 @@ export const DayTimeGrid = memo(function DayTimeGrid({
       contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_TOTAL_HEIGHT + 110 }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Without a time: the tasks of the day and the whole-day events of the phone */}
+      {/* The summary and the legend, as on the earlier Day view */}
+      <View style={styles.summaryBar}>
+        <View style={styles.summaryInfo}>
+          <Text style={styles.summaryTitle}>
+            {t(occupied > 1 ? 'timetable.occupiedMany' : 'timetable.occupiedOne', { count: occupied })}
+          </Text>
+          <Text style={styles.summarySub}>
+            {t('timetable.counts', { events: events.length, reminders: reminders.length, tasks: tasks.length })}
+          </Text>
+        </View>
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: eventAccent(theme) }]} />
+            <Text style={styles.legendText}>{t('search.type.event')}</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: theme.primary.default }]} />
+            <Text style={styles.legendText}>{t('search.type.reminder')}</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: taskColor }]} />
+            <Text style={styles.legendText}>{t('search.type.task')}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Without a time: the tasks of the day, and the whole-day events of the phone */}
       {(tasks.length > 0 || allDay.length > 0) && (
-        <View style={styles.band}>
-          <Text style={styles.bandTitle}>{t('planning.noTime')}</Text>
-          <View style={styles.bandRow}>
-            {tasks.map(task => (
-              <TouchableOpacity
+        <View style={styles.tasksSection}>
+          <View style={styles.tasksHeader}>
+            <Ionicons name="checkbox-outline" size={16} color={taskColor} />
+            <Text style={[styles.tasksTitle, { color: taskColor }]}>{t('planning.noTimeCount', { count: tasks.length + allDay.length })}</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tasksRow}>
+            {tasks.map((task, index) => (
+              <GlowCard
                 key={task.id}
-                style={[styles.chip, { borderColor: theme.tertiary.default }]}
+                index={index}
+                tone="success"
+                intensity="soft"
+                style={styles.taskMiniCard}
+                contentStyle={styles.taskMiniInner}
                 onPress={() => onOpenTask(task)}
-                accessibilityRole="button"
-                accessibilityLabel={task.title}
+                accessibilityLabel={t('timetable.taskA11y', { title: task.title, done: task.status === 'COMPLETED' ? t('timetable.doneSuffix') : '' })}
               >
-                <Ionicons name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'} size={14} color={theme.tertiary.default} />
-                <Text style={styles.chipText} numberOfLines={1}>{task.title}</Text>
-              </TouchableOpacity>
+                <View style={styles.taskMiniContent}>
+                  <Ionicons name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={taskColor} />
+                  <Text style={styles.taskMiniTitle} numberOfLines={1}>{task.title}</Text>
+                  {task.estimatedMinutes ? (
+                    <Text style={[styles.taskMiniDuration, { color: taskColor }]}>{task.estimatedMinutes}m</Text>
+                  ) : null}
+                </View>
+              </GlowCard>
             ))}
             {allDay.map(device => (
-              <TouchableOpacity
+              <GlowCard
                 key={device.id}
-                style={[styles.chip, { borderColor: theme.success.default }]}
+                tone="neutral"
+                style={styles.taskMiniCard}
+                contentStyle={styles.taskMiniInner}
                 onPress={() => onDeviceTouched(device.title)}
-                accessibilityRole="button"
                 accessibilityLabel={device.title}
               >
-                <Ionicons name="phone-portrait-outline" size={14} color={theme.success.default} />
-                <Text style={styles.chipText} numberOfLines={1}>{device.title}</Text>
-              </TouchableOpacity>
+                <View style={styles.taskMiniContent}>
+                  <Ionicons name="phone-portrait-outline" size={16} color={theme.success.default} />
+                  <Text style={styles.taskMiniTitle} numberOfLines={1}>{device.title}</Text>
+                </View>
+              </GlowCard>
             ))}
-          </View>
+          </ScrollView>
         </View>
       )}
 
       <View style={styles.grid}>
         <View style={{ width: HOURS_WIDTH }}>
-          {hours.map(hour => (
-            <View key={hour} style={{ height: DAY_HOUR_HEIGHT }}>
-              <Text style={styles.hourText}>{String(hour).padStart(2, '0')}:00</Text>
-            </View>
-          ))}
+          {hours.map(hour => {
+            const current = isToday(date) && now.getHours() === hour;
+            return (
+              <View key={hour} style={{ height: DAY_HOUR_HEIGHT }}>
+                <Text style={[styles.hourText, current && styles.hourTextCurrent]}>{String(hour).padStart(2, '0')}:00</Text>
+              </View>
+            );
+          })}
         </View>
 
-        <View
-          style={[styles.area, { height: hours.length * DAY_HOUR_HEIGHT }]}
-          onLayout={event => setWidth(event.nativeEvent.layout.width)}
-        >
+        <View style={[styles.area, { height: hours.length * DAY_HOUR_HEIGHT }]} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
           {hours.map((hour, index) => (
             <View key={hour} pointerEvents="none" style={[styles.hourLine, { top: index * DAY_HOUR_HEIGHT }]} />
           ))}
 
-          {/* A free place: add something at that hour */}
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={event => {
-              // The phone gives locationY; a web browser gives offsetY instead
-              const native = event.nativeEvent as { locationY?: number; offsetY?: number };
-              const y = Number.isFinite(native.locationY) ? Number(native.locationY) : Number(native.offsetY ?? 0);
-              onAddAt(Math.min(23, first + Math.max(0, Math.floor(y / DAY_HOUR_HEIGHT))));
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={t('planning.addHere')}
-          />
-
-          {nowTop !== null && nowTop >= 0 && (
-            <View pointerEvents="none" style={[styles.nowLine, { top: nowTop }]}>
-              <View style={styles.nowDot} />
-            </View>
-          )}
+          {/* A free hour: "Créneau disponible", touch it to add something at that hour */}
+          {free.map(hour => (
+            <TouchableOpacity
+              key={`free-${hour}`}
+              style={[styles.freeSlot, { top: (hour - first) * DAY_HOUR_HEIGHT + 6 }]}
+              onPress={() => onAddAt(hour)}
+              activeOpacity={0.65}
+              accessibilityRole="button"
+              accessibilityLabel={t('timetable.freeA11y', { hour })}
+            >
+              <Text style={styles.freeSlotText} numberOfLines={1}>{t('timetable.free')}</Text>
+              <Ionicons name="add" size={14} color={theme.primary.default} />
+            </TouchableOpacity>
+          ))}
 
           {width > 0 &&
-            cards.map(card => {
+            cards.map((card, index) => {
               const box = boxes.get(card.key);
               if (!box) return null;
-              const columnWidth = (width - 4) / box.columns;
-              const color = colorOf(card);
+              const columnWidth = (width - 2) / box.columns;
+              const look =
+                card.kind === 'event'
+                  ? planningLook(theme, 'event', { momentKind: card.event.momentKind })
+                  : card.kind === 'reminder'
+                    ? planningLook(theme, 'reminder', { priority: card.reminder.priority })
+                    : planningLook(theme, 'device');
               const title = card.kind === 'event' ? card.event.title : card.kind === 'reminder' ? card.reminder.title : card.device.title;
               const time =
                 card.kind === 'event'
@@ -198,23 +254,12 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                   : card.kind === 'reminder'
                     ? format(new Date(card.reminder.scheduledAt), 'HH:mm')
                     : `${format(card.device.startAt, 'HH:mm')} – ${format(card.device.endAt, 'HH:mm')}`;
-              const icon =
-                card.kind === 'event'
-                  ? momentKindLook(card.event.momentKind).icon
-                  : card.kind === 'reminder' ? 'notifications' : 'phone-portrait-outline';
               return (
                 <DraggableBlock
                   key={card.key}
                   style={[
-                    styles.card,
-                    {
-                      top: box.top + 1,
-                      height: box.height,
-                      left: 2 + box.column * columnWidth,
-                      width: columnWidth - 3,
-                      borderLeftColor: color,
-                      backgroundColor: color + (theme.mode === 'light' ? '1F' : '2E'),
-                    },
+                    styles.cardBox,
+                    { top: box.top + 1, height: box.height, left: box.column * columnWidth, width: columnWidth - 4 },
                   ]}
                   stepY={quarter}
                   movable={card.kind !== 'device'}
@@ -236,14 +281,31 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                     else if (card.kind === 'reminder') onMoveReminder(card.reminder, minutes, days);
                   }}
                 >
-                  <View style={styles.cardHead}>
-                    <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={11} color={color} />
-                    <Text style={[styles.cardTime, { color }]} numberOfLines={1}>{time}</Text>
-                  </View>
-                  <Text style={styles.cardTitle} numberOfLines={box.height > 52 ? 2 : 1}>{title}</Text>
+                  <PlanningCard
+                    look={look}
+                    title={title}
+                    time={time}
+                    index={index}
+                    height={box.height}
+                    place={card.kind === 'event' ? card.event.location : card.kind === 'device' ? card.device.location : null}
+                    note={card.kind === 'reminder' ? card.reminder.notes : null}
+                    showOptions={card.kind === 'reminder' && box.columns <= 2}
+                    narrow={columnWidth < NARROW_CARD_WIDTH}
+                  />
                 </DraggableBlock>
               );
             })}
+
+          {/* "MAINTENANT", over the cards */}
+          {nowTop !== null && nowTop >= 0 && (
+            <View pointerEvents="none" style={[styles.nowLineContainer, { top: nowTop - 8 }]}>
+              <View style={styles.nowBadge}>
+                <View style={styles.nowPulseDot} />
+                <Text style={styles.nowBadgeText}>{t('timetable.now', { time: format(now, 'HH:mm') })}</Text>
+              </View>
+              <View style={styles.nowLine} />
+            </View>
+          )}
         </View>
       </View>
       <Text style={styles.hint}>{t('planning.dragHint')}</Text>
@@ -252,50 +314,81 @@ export const DayTimeGrid = memo(function DayTimeGrid({
 });
 
 function makeDayGridStyles(theme: ThemePalette) {
-  const light = theme.mode === 'light';
-  const line = light ? 'rgba(76, 52, 120, 0.12)' : 'rgba(255, 255, 255, 0.08)';
+  const isLight = theme.mode === 'light';
   return StyleSheet.create({
     content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.xs },
-    band: {
-      backgroundColor: theme.glass.card.backgroundColor,
-      borderColor: theme.glass.card.borderColor,
-      borderWidth: 1,
-      borderRadius: Radius.lg,
-      padding: Spacing.sm,
-      marginBottom: Spacing.md,
-      gap: Spacing.xs,
-    },
-    bandTitle: { ...Typography.labelMedium, color: theme.onSurface.variant, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-    bandRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-    chip: {
+    summaryBar: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      minHeight: 44,
-      maxWidth: '100%',
-      paddingHorizontal: Spacing.sm,
-      borderRadius: Radius.full,
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: Spacing.xs,
+      backgroundColor: isLight ? theme.surface.container : 'rgba(26, 30, 46, 0.85)',
+      borderRadius: Radius.lg,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm + 2,
       borderWidth: 1,
-      backgroundColor: theme.glass.control.backgroundColor,
+      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.16)',
+      marginBottom: Spacing.md,
     },
-    chipText: { ...Typography.bodySmall, color: theme.onSurface.primary, fontWeight: '600', flexShrink: 1 },
+    summaryInfo: { gap: 2 },
+    summaryTitle: { ...Typography.titleMedium, color: theme.onSurface.primary, fontWeight: '700' },
+    summarySub: { ...Typography.labelSmall, color: theme.onSurface.variant, fontSize: 10 },
+    legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    legendDot: { width: 6, height: 6, borderRadius: 3 },
+    legendText: { ...Typography.labelSmall, color: theme.onSurface.variant, fontSize: 10 },
+    tasksSection: { marginBottom: Spacing.md, gap: Spacing.xs },
+    tasksHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 },
+    tasksTitle: { ...Typography.labelMedium, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+    tasksRow: { paddingVertical: 4, gap: Spacing.sm },
+    taskMiniCard: { minWidth: 140, maxWidth: 220 },
+    taskMiniInner: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
+    taskMiniContent: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    taskMiniTitle: { ...Typography.bodySmall, color: theme.onSurface.primary, fontWeight: '600', flexShrink: 1 },
+    taskMiniDuration: { ...Typography.labelSmall, fontSize: 10, fontWeight: '600' },
     grid: { flexDirection: 'row' },
-    hourText: { ...Typography.labelSmall, color: theme.onSurface.variant, fontVariant: ['tabular-nums'], marginTop: -6 },
+    hourText: { ...Typography.labelMedium, color: theme.onSurface.variant, fontWeight: '600', fontVariant: ['tabular-nums'], marginTop: -2 },
+    hourTextCurrent: { color: theme.primary.default, fontWeight: '800' },
     area: { flex: 1, position: 'relative' },
-    hourLine: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: line },
-    nowLine: { position: 'absolute', left: 0, right: 0, height: 2, backgroundColor: theme.primary.default, zIndex: 20 },
-    nowDot: { position: 'absolute', left: -4, top: -3, width: 8, height: 8, borderRadius: 4, backgroundColor: theme.primary.default },
-    card: {
+    hourLine: {
       position: 'absolute',
-      borderRadius: Radius.md,
-      borderLeftWidth: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-      overflow: 'hidden',
+      left: 0,
+      right: 0,
+      height: 1,
+      backgroundColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.08)',
     },
-    cardHead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    cardTime: { fontSize: 10, fontWeight: '700', fontVariant: ['tabular-nums'], flexShrink: 1 },
-    cardTitle: { ...Typography.bodySmall, color: theme.onSurface.primary, fontWeight: '700' },
+    freeSlot: {
+      position: 'absolute',
+      left: 0,
+      right: 2,
+      height: DAY_HOUR_HEIGHT - 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.sm,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.08)',
+      backgroundColor: isLight ? theme.surface.high : 'rgba(255, 255, 255, 0.015)',
+    },
+    freeSlotText: { ...Typography.labelSmall, color: theme.onSurface.disabled, fontSize: 11, flexShrink: 1 },
+    cardBox: { position: 'absolute' },
+    nowLineContainer: { position: 'absolute', left: 0, right: 0, zIndex: 60, flexDirection: 'row', alignItems: 'center' },
+    nowBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.primary.default,
+      borderRadius: Radius.full,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      marginRight: 4,
+    },
+    nowPulseDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FFFFFF' },
+    nowBadgeText: { ...Typography.labelSmall, color: '#FFFFFF', fontWeight: '800', fontSize: 9 },
+    nowLine: { flex: 1, height: 2, backgroundColor: theme.primary.default },
     hint: { ...Typography.labelSmall, color: theme.onSurface.variant, textAlign: 'center', marginTop: Spacing.md },
   });
 }

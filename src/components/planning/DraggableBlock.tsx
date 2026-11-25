@@ -5,7 +5,7 @@
  * Only this card moves and is drawn again; the movement runs off the main thread.
  * With a screen reader, the same moves are actions of the card ("15 minutes plus tard"…).
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { GestureDetector, useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -41,6 +41,8 @@ export interface DraggableBlockProps {
   accessibilityLabel: string;
   /** Lets the parent know a card is lifted (for the scroll). */
   onLift?: (lifted: boolean) => void;
+  /** Where the finger is while the card moves, on the screen (the Month view turns the page at its edges, sheet 027). */
+  onDragMove?: (x: number, y: number) => void;
 }
 
 export function DraggableBlock({
@@ -54,14 +56,22 @@ export function DraggableBlock({
   movable = true,
   accessibilityLabel,
   onLift,
+  onDragMove,
 }: DraggableBlockProps) {
   const t = useT();
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
   const lifted = useSharedValue(0);
 
-  const drop = useCallback((point: DropPoint) => onDrop?.(point), [onDrop]);
-  const lift = useCallback((value: boolean) => onLift?.(value), [onLift]);
+  // The gesture always calls the same functions, which read the latest props: a parent drawn again
+  // during a move (the Month view turning a page, sheet 027) never changes the gesture under the finger
+  const latest = useRef({ onPress, onDrop, onLift, onDragMove });
+  latest.current = { onPress, onDrop, onLift, onDragMove };
+  const press = useCallback(() => latest.current.onPress(), []);
+  const drop = useCallback((point: DropPoint) => latest.current.onDrop?.(point), []);
+  const lift = useCallback((value: boolean) => latest.current.onLift?.(value), []);
+  const follow = useCallback((x: number, y: number) => latest.current.onDragMove?.(x, y), []);
+  const following = !!onDragMove;
 
   const pan = usePanGesture({
     enabled: movable && !!onDrop,
@@ -76,6 +86,7 @@ export function DraggableBlock({
       // The card jumps from quarter to quarter: what you see is where it will land
       offsetY.value = stepY > 0 ? Math.round(event.translationY / stepY) * stepY : event.translationY;
       offsetX.value = stepX > 0 ? Math.round(event.translationX / stepX) * stepX : event.translationX;
+      if (following) runOnJS(follow)(event.absoluteX, event.absoluteY);
     },
     onDeactivate: event => {
       'worklet';
@@ -95,7 +106,7 @@ export function DraggableBlock({
   const tap = useTapGesture({
     onActivate: () => {
       'worklet';
-      runOnJS(onPress)();
+      runOnJS(press)();
     },
   });
 

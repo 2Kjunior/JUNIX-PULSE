@@ -26,6 +26,7 @@ import {
   subMonths,
   startOfWeek,
   isSameDay,
+  isSameMonth,
   isToday,
 } from 'date-fns';
 
@@ -49,25 +50,16 @@ import { DayTimeGrid } from '@/components/planning/DayTimeGrid';
 import { MonthView, type MonthItem } from '@/components/planning/MonthView';
 import { usePlanningMove } from '@/features/planning/use-planning-move';
 import { useGestureTip } from '@/features/mascot/GestureTip';
-import { dayFromKey, dayKey, monthGridRange } from '@/domain/rules/planning-move-rules';
+import { dayFromKey, dayKey, monthGridRange, sameDayInMonth } from '@/domain/rules/planning-move-rules';
 import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
 import { momentKindColor } from '@/constants/moment-kinds';
+import { planningLook } from '@/constants/planning-look';
 import { useDateLocale, useT } from '@/i18n';
 
 type ScreenState = 'loading' | 'content' | 'error';
 type CalendarViewMode = 'agenda' | 'timetable' | 'week' | 'month';
-
-/** The things of the month, kept to move them (sheet 026). */
-interface MonthThings {
-  items: MonthItem[];
-  events: Map<string, Event>;
-  reminders: Map<string, Reminder>;
-  tasks: Map<string, Task>;
-}
-
-const NO_MONTH: MonthThings = { items: [], events: new Map(), reminders: new Map(), tasks: new Map() };
 
 export default function CalendarScreen() {
   const t = useT();
@@ -92,7 +84,9 @@ export default function CalendarScreen() {
   // The moments and reminders of the week, to move them from the Week view (sheet 026)
   const [weekEventsById, setWeekEventsById] = useState<Map<string, Event>>(new Map());
   const [weekRemindersById, setWeekRemindersById] = useState<Map<string, Reminder>>(new Map());
-  const [month, setMonth] = useState<MonthThings>(NO_MONTH);
+  // The Month view: the things of the month shown, and that month, apart from the chosen day (sheet 027)
+  const [monthItems, setMonthItems] = useState<MonthItem[]>([]);
+  const [shownMonth, setShownMonth] = useState<Date>(() => new Date());
   const [weekLifted, setWeekLifted] = useState(false);
 
   // Semaine courante basée sur la date sélectionnée
@@ -204,9 +198,9 @@ export default function CalendarScreen() {
       // 100% vraies données : uniquement les événements réels et rappels de la semaine
       setAllWeeklyBlocks([...eventBlocks, ...reminderBlocks, ...deviceBlocks]);
 
-      // The month, only when it is shown: its moments, reminders and tasks (sheet 026)
+      // The month, only when it is shown: its moments, reminders and tasks (sheets 026 and 027)
       if (viewMode === 'month') {
-        const range = monthGridRange(selectedDate);
+        const range = monthGridRange(shownMonth);
         const from = dayFromKey(range.from);
         const to = addDays(dayFromKey(range.to), 1);
         const inRange = (at: Date) => at >= from && at < to;
@@ -216,36 +210,59 @@ export default function CalendarScreen() {
           TaskRepository.findAllActive(),
           SettingsRepository.get().then(settings => (settings.deviceCalendarEnabled ? loadDeviceEvents(from, to) : [])),
         ]);
-        const things: MonthThings = { items: [], events: new Map(), reminders: new Map(), tasks: new Map() };
+        // Each thing keeps its look (the colours of the Day view) and itself, to be moved later
+        const items: MonthItem[] = [];
         for (const e of monthEvents) {
           const at = new Date(e.startAt);
           if (!inRange(at)) continue;
-          things.events.set(e.id, e);
-          things.items.push({ key: `e-${e.id}`, kind: 'event', title: e.title, time: format(at, 'HH:mm'), color: momentKindColor(theme, e.momentKind), day: dayKey(at) });
+          items.push({
+            key: `e-${e.id}`,
+            kind: 'event',
+            title: e.title,
+            time: `${format(at, 'HH:mm')} – ${format(new Date(e.endAt), 'HH:mm')}`,
+            look: planningLook(theme, 'event', { momentKind: e.momentKind }),
+            place: e.location,
+            day: dayKey(at),
+            event: e,
+          });
         }
         for (const r of allReminders) {
           const at = new Date(r.scheduledAt);
           if (r.status === 'COMPLETED' || r.status === 'DELETED' || !inRange(at)) continue;
-          things.reminders.set(r.id, r);
-          things.items.push({ key: `r-${r.id}`, kind: 'reminder', title: r.title, time: format(at, 'HH:mm'), color: r.priority === 'URGENT' ? theme.error.default : theme.primary.default, day: dayKey(at) });
+          items.push({
+            key: `r-${r.id}`,
+            kind: 'reminder',
+            title: r.title,
+            time: format(at, 'HH:mm'),
+            look: planningLook(theme, 'reminder', { priority: r.priority }),
+            day: dayKey(at),
+            reminder: r,
+          });
         }
         for (const task of activeTasks) {
           if (!task.scheduledDate || task.status === 'COMPLETED' || task.scheduledDate < range.from || task.scheduledDate > range.to) continue;
-          things.tasks.set(task.id, task);
-          things.items.push({ key: `t-${task.id}`, kind: 'task', title: task.title, time: null, color: theme.tertiary.default, day: task.scheduledDate });
+          items.push({ key: `t-${task.id}`, kind: 'task', title: task.title, time: null, look: planningLook(theme, 'task'), day: task.scheduledDate, task });
         }
         for (const d of monthDevice) {
-          things.items.push({ key: `d-${d.id}`, kind: 'device', title: d.title, time: d.allDay ? null : format(d.startAt, 'HH:mm'), color: theme.success.default, day: dayKey(d.startAt) });
+          items.push({
+            key: `d-${d.id}`,
+            kind: 'device',
+            title: d.title,
+            time: d.allDay ? null : format(d.startAt, 'HH:mm'),
+            look: planningLook(theme, 'device'),
+            place: d.location,
+            day: dayKey(d.startAt),
+          });
         }
-        things.items.sort((a, b) => a.day.localeCompare(b.day) || (a.time ?? '').localeCompare(b.time ?? ''));
-        setMonth(things);
+        items.sort((a, b) => a.day.localeCompare(b.day) || (a.time ?? '').localeCompare(b.time ?? ''));
+        setMonthItems(items);
       }
       setScreenState('content');
     } catch (e) {
       setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode]);
+  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode, shownMonth]);
 
   useFocusEffect(
     useCallback(() => {
@@ -260,17 +277,25 @@ export default function CalendarScreen() {
   }, [load]);
 
   // The arrows go a month at a time in the Month view, a week otherwise
+  /** Another month by the arrows or the strip: the chosen day follows (the same day in that month). */
+  const showMonth = (m: Date) => {
+    setShownMonth(m);
+    setSelectedDate(prev => sameDayInMonth(prev, m));
+  };
+
   const handlePrevWeek = () => {
-    setSelectedDate(prev => (viewMode === 'month' ? subMonths(prev, 1) : subDays(prev, 7)));
+    if (viewMode === 'month') showMonth(subMonths(shownMonth, 1));
+    else setSelectedDate(prev => subDays(prev, 7));
   };
 
   const handleNextWeek = () => {
-    setSelectedDate(prev => (viewMode === 'month' ? addMonths(prev, 1) : addDays(prev, 7)));
+    if (viewMode === 'month') showMonth(addMonths(shownMonth, 1));
+    else setSelectedDate(prev => addDays(prev, 7));
   };
 
   // Moving a card (sheet 026): saved at once, "Annuler" in the banner
   const { moveEventBy, moveReminderBy, moveTaskTo } = usePlanningMove(load);
-  const movableCount = viewMode === 'timetable' ? events.length + reminders.length : viewMode === 'week' ? weekEventsById.size + weekRemindersById.size : viewMode === 'month' ? month.items.filter(i => i.kind !== 'device').length : 0;
+  const movableCount = viewMode === 'timetable' ? events.length + reminders.length : viewMode === 'week' ? weekEventsById.size + weekRemindersById.size : viewMode === 'month' ? monthItems.filter(i => i.kind !== 'device').length : 0;
   const dragTip = useGestureTip('planDrag', movableCount);
 
   const openMonthItem = (item: MonthItem) => {
@@ -280,19 +305,19 @@ export default function CalendarScreen() {
     else if (item.kind === 'task') router.push({ pathname: '/tasks/[id]', params: { id } });
   };
 
+  // The thing travels with its item: it can be let go in another month than the one it came from
   const moveMonthItem = (item: MonthItem, toDay: Date) => {
-    const id = item.key.slice(2);
     const days = Math.round((toDay.getTime() - dayFromKey(item.day).getTime()) / 86400000);
-    const event = month.events.get(id);
-    const reminder = month.reminders.get(id);
-    const task = month.tasks.get(id);
-    if (item.kind === 'event' && event) moveEventBy(event, 0, days);
-    else if (item.kind === 'reminder' && reminder) moveReminderBy(reminder, 0, days);
-    else if (item.kind === 'task' && task) moveTaskTo(task, toDay);
+    if (item.event) moveEventBy(item.event, 0, days);
+    else if (item.reminder) moveReminderBy(item.reminder, 0, days);
+    else if (item.task) moveTaskTo(item.task, toDay);
+    // The day it went to becomes the chosen day: the card is seen there at once
+    setSelectedDate(toDay);
   };
 
   const handleGoToday = () => {
     setSelectedDate(new Date());
+    setShownMonth(new Date());
   };
 
   const handleDeleteWeeklyBlock = useCallback((blockId: string, label: string) => {
@@ -306,6 +331,8 @@ export default function CalendarScreen() {
   if (screenState === 'loading') return <LoadingState />;
   if (screenState === 'error') return <ErrorState message={error} onRetry={load} />;
 
+  // "Aujourd'hui" is useful when the day, or in the Month view the month, is not the current one
+  const atToday = isToday(selectedDate) && (viewMode !== 'month' || isSameMonth(shownMonth, new Date()));
   const hasItems = events.length > 0 || reminders.length > 0 || tasks.length > 0 || deviceEvents.length > 0;
   const weekEnd = addDays(weekStart, 6);
   const weekLabel = t('calendar.weekLabel', {
@@ -323,7 +350,7 @@ export default function CalendarScreen() {
             {viewMode === 'week'
               ? weekLabel
               : viewMode === 'month'
-                ? format(selectedDate, 'MMMM yyyy', { locale: dateLocale })
+                ? format(shownMonth, 'MMMM yyyy', { locale: dateLocale })
                 : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
           </Text>
         </View>
@@ -332,17 +359,17 @@ export default function CalendarScreen() {
           <TouchableOpacity
             style={[
               styles.todayBtn,
-              isToday(selectedDate) && styles.todayBtnDisabled,
+              atToday && styles.todayBtnDisabled,
             ]}
             onPress={handleGoToday}
-            disabled={isToday(selectedDate)}
+            disabled={atToday}
             activeOpacity={0.7}
             accessibilityLabel={t('calendar.todayA11y')}
           >
             <Text
               style={[
                 styles.todayBtnText,
-                isToday(selectedDate) && styles.todayBtnTextDisabled,
+                atToday && styles.todayBtnTextDisabled,
               ]}
             >
               {t('common.today')}
@@ -393,7 +420,11 @@ export default function CalendarScreen() {
           },
         ]}
         activeTab={viewMode}
-        onTabChange={(tab) => setViewMode(tab as CalendarViewMode)}
+        onTabChange={(tab) => {
+          // The Month view opens on the month of the chosen day
+          if (tab === 'month') setShownMonth(selectedDate);
+          setViewMode(tab as CalendarViewMode);
+        }}
       />
 
       {/* Bandeau des 7 jours (affiché pour les vues quotidiennes) */}
@@ -491,10 +522,14 @@ export default function CalendarScreen() {
         </ScrollView>
       ) : viewMode === 'month' ? (
         <MonthView
-          month={selectedDate}
+          month={shownMonth}
           selected={selectedDate}
-          items={month.items}
-          onSelectDay={setSelectedDate}
+          items={monthItems}
+          onSelectDay={day => {
+            setSelectedDate(day);
+            if (!isSameMonth(day, shownMonth)) setShownMonth(day);
+          }}
+          onShowMonth={(m, by) => (by === 'edge' ? setShownMonth(m) : showMonth(m))}
           onOpenDay={day => {
             setSelectedDate(day);
             setViewMode('timetable');

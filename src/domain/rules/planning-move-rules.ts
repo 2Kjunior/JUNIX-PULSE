@@ -8,8 +8,20 @@ import type { RecurrenceRule } from '../entities';
 /** A card lands on a quarter of an hour: 19:00 or 19:15, never 19:07. */
 export const SNAP_MINUTES = 15;
 
-/** The height of one hour in the Day view, in points (the Week view keeps its own 48). */
-export const DAY_HOUR_HEIGHT = 64;
+/**
+ * The height of one hour in the Day view, in points (the Week view keeps its own 48): 96 gives a
+ * quarter of an hour 24 points, and room for the GlowCards (sheet 027).
+ */
+export const DAY_HOUR_HEIGHT = 96;
+
+/** A card is never shorter than a finger (44 points), even for a reminder or a short moment. */
+export const MIN_CARD_HEIGHT = 44;
+
+/** The minutes a card takes at least on the screen, on a quarter of an hour (44 points at 96 an hour: 30 min). */
+export function minCardMinutes(hourHeight: number): number {
+  if (hourHeight <= 0) return SNAP_MINUTES;
+  return Math.ceil(((MIN_CARD_HEIGHT / hourHeight) * 60) / SNAP_MINUTES) * SNAP_MINUTES;
+}
 
 /** The Day view shows at least 07:00 to 22:00, more when something is earlier or later. */
 export const DAY_FIRST_HOUR = 7;
@@ -159,12 +171,14 @@ export interface DayLayoutBox {
 }
 
 /**
- * Where each card of a day goes: its height follows its length (at least a quarter of an hour),
- * and cards at the same time share the width side by side (at most 3 columns on a phone).
+ * Where each card of a day goes: its height follows its length (at least a finger, 44 points),
+ * and cards that meet on the screen, at the same start or not, share the width side by side
+ * (at most 3 columns on a phone).
  */
 export function layoutDay(items: readonly DayLayoutItem[], firstHour: number, hourHeight: number): DayLayoutBox[] {
+  const shortest = minCardMinutes(hourHeight);
   const sorted = [...items]
-    .map(item => ({ ...item, endMin: Math.max(item.endMin, item.startMin + SNAP_MINUTES) }))
+    .map(item => ({ ...item, endMin: Math.max(item.endMin, item.startMin + shortest) }))
     .sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
   const boxes: DayLayoutBox[] = [];
   let group: { item: (typeof sorted)[number]; column: number }[] = [];
@@ -177,7 +191,7 @@ export function layoutDay(items: readonly DayLayoutItem[], firstHour: number, ho
       boxes.push({
         id: item.id,
         top: ((item.startMin - firstHour * 60) / 60) * hourHeight,
-        height: Math.max(28, ((item.endMin - item.startMin) / 60) * hourHeight - 2),
+        height: Math.max(MIN_CARD_HEIGHT, ((item.endMin - item.startMin) / 60) * hourHeight - 2),
         column: Math.min(column, columns - 1),
         columns,
       });
@@ -205,4 +219,36 @@ export function layoutDay(items: readonly DayLayoutItem[], firstHour: number, ho
 /** Minutes since midnight of a date. */
 export function minutesOfDay(date: Date): number {
   return date.getHours() * 60 + date.getMinutes();
+}
+
+/**
+ * The hours with nothing in them, between the first and the last hour shown: each one shows
+ * "Créneau disponible" and adds something at that hour when touched (as on the earlier Day view).
+ */
+export function freeHours(
+  items: readonly { startMin: number; endMin: number }[],
+  first: number,
+  last: number,
+  hourHeight: number
+): number[] {
+  const shortest = minCardMinutes(hourHeight);
+  const hours: number[] = [];
+  for (let hour = first; hour < last; hour += 1) {
+    const from = hour * 60;
+    const to = from + 60;
+    const busy = items.some(item => item.startMin < to && Math.max(item.endMin, item.startMin + shortest) > from);
+    if (!busy) hours.push(hour);
+  }
+  return hours;
+}
+
+/** The months of the strip of the Month view: some before and after the one shown, first days. */
+export function monthStrip(shown: Date, before = 6, after = 12): Date[] {
+  return Array.from({ length: before + after + 1 }, (_, i) => new Date(shown.getFullYear(), shown.getMonth() - before + i, 1));
+}
+
+/** The same day in another month, kept inside that month (31 January plus one month: 28 February). */
+export function sameDayInMonth(day: Date, month: Date): Date {
+  const last = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  return new Date(month.getFullYear(), month.getMonth(), Math.min(day.getDate(), last));
 }

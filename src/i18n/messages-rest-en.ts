@@ -358,6 +358,11 @@ export const REST_EN: Record<keyof typeof REST_FR, string> = {
   'planning.a11y.earlier': '15 minutes earlier',
   'planning.a11y.nextDay': 'The next day',
   'planning.a11y.previousDay': 'The previous day',
+  // The Day and Month views with the GlowCards of the earlier Day view (sheet 027)
+  'planning.noTimeCount': 'No time ({count})',
+  'planning.options': 'Options · Later',
+  'planning.taskBadge': 'Task',
+  'planning.deviceBadge': 'Phone calendar',
   'step.a11y': 'Step {current} of {total}',
   'step.label': 'STEP {current} OF {total}',
   'states.retry': 'Try again',

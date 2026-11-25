@@ -356,6 +356,11 @@ export const REST_FR = {
   'planning.a11y.earlier': '15 minutes plus tôt',
   'planning.a11y.nextDay': 'Le jour suivant',
   'planning.a11y.previousDay': 'Le jour précédent',
+  // The Day and Month views with the GlowCards of the earlier Day view (sheet 027)
+  'planning.noTimeCount': 'Sans heure ({count})',
+  'planning.options': 'Options · Plus tard',
+  'planning.taskBadge': 'Tâche',
+  'planning.deviceBadge': 'Agenda du téléphone',
   'step.a11y': 'Étape {current} sur {total}',
   'step.label': 'ÉTAPE {current} SUR {total}',
   'states.retry': 'Réessayer',

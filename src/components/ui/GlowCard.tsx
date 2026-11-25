@@ -59,6 +59,10 @@ export interface GlowCardProps {
   footer?: ReactNode;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  /** The inside padding, for a small card at its time in the Planning (sheet 027); default 15 x 14. */
+  contentStyle?: StyleProp<ViewStyle>;
+  /** The card takes the whole height it is given (a card sized by its length, sheet 027). */
+  fill?: boolean;
   accessibilityLabel?: string;
   /** Index de la carte dans une liste pour orchestrer la cascade (stagger) */
   index?: number;
@@ -87,6 +91,8 @@ function GlowCardInner({
   footer,
   style,
   testID,
+  contentStyle,
+  fill = false,
   accessibilityLabel,
   index,
   delay,
@@ -236,8 +242,8 @@ function GlowCardInner({
       }) as ViewStyle);
 
   const content = (
-    <View style={[styles.outerWrapper, shadowStyle, { borderRadius: radius }, haloStyle]}>
-      <View style={[styles.inner, borderStyle, { backgroundColor: innerBg, borderRadius: radius }]}>
+    <View style={[styles.outerWrapper, shadowStyle, { borderRadius: radius }, haloStyle, fill && styles.fill]}>
+      <View style={[styles.inner, borderStyle, { backgroundColor: innerBg, borderRadius: radius }, fill && styles.fill]}>
         {showBlur && (
           <BlurView
             intensity={GlowCardTokens.glass.blurIntensity}
@@ -302,7 +308,7 @@ function GlowCardInner({
           />
         )}
 
-        <View style={styles.content}>{children}</View>
+        <View style={[styles.content, contentStyle]}>{children}</View>
 
         {footer ? (
           <View style={styles.footer}>
@@ -377,6 +383,10 @@ const styles = StyleSheet.create({
     width: 1,
     height: '60%',
     zIndex: 2,
+  },
+  fill: {
+    flex: 1,
+    minHeight: 0,
   },
   content: {
     paddingHorizontal: 15,
