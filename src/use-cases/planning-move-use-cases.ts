@@ -14,10 +14,15 @@ import { updateReminder } from './reminder-use-cases';
 export type Undo = () => Promise<void>;
 
 /** A moment moves: the start by minutes and days, the length stays. */
-export async function moveEvent(event: Event, minutes: number, days: number): Promise<{ undo: Undo; start: Date } | null> {
+export async function moveEvent(
+  event: Event,
+  minutes: number,
+  days: number,
+  step?: number
+): Promise<{ undo: Undo; start: Date } | null> {
   const start = new Date(event.startAt);
   const end = new Date(event.endAt);
-  const next = movedRange(start, end, minutes, days);
+  const next = movedRange(start, end, minutes, days, step);
   if (next.start.getTime() === start.getTime()) return null;
   await EventUseCases.updateEvent({ id: event.id, startAt: next.start, endAt: next.end });
   return {
@@ -40,10 +45,11 @@ export async function moveReminder(
   reminder: Reminder,
   minutes: number,
   days: number,
-  repeat: RecurrenceRule | null
+  repeat: RecurrenceRule | null,
+  step?: number
 ): Promise<{ undo: Undo; start: Date } | null> {
   const before = new Date(reminder.scheduledAt);
-  const after = movedStart(before, minutes, days);
+  const after = movedStart(before, minutes, days, step);
   if (after.getTime() === before.getTime()) return null;
   const newRule = repeat ? shiftedRecurrence(repeat, before, after) : null;
   await updateReminder({ id: reminder.id, scheduledAt: after, ...(newRule ? { recurrenceRule: newRule } : {}) });

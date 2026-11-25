@@ -68,7 +68,9 @@ import { timezoneLabel } from '@/constants/timezones';
 import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
+import { PlanningSetting } from '@/components/settings/PlanningSetting';
 import { DEFAULT_ALERT_DEFAULTS, type AlertFamily } from '@/domain/rules/notification-level-rules';
+import { DEFAULT_PLANNING_PREFS, type PlanningPrefs } from '@/domain/rules/planning-settings-rules';
 import type { AlertLevel } from '@/domain/entities';
 import { makeSettingsStyles } from '@/styles/settings/settings-styles';
 
@@ -83,7 +85,7 @@ const APPEARANCE_OPTIONS: {
 ];
 
 /** The pages of the settings: the summary lists them, each opens on its own. */
-type SettingsSection = 'notifications' | 'mascot' | 'security' | 'data';
+type SettingsSection = 'notifications' | 'planning' | 'mascot' | 'security' | 'data';
 type SettingsPage = SettingsSection;
 
 const HUB_SECTIONS: readonly {
@@ -93,6 +95,8 @@ const HUB_SECTIONS: readonly {
   color: 'primary' | 'tertiary' | 'success' | 'error';
 }[] = [
   { id: 'notifications', titleKey: 'settingsHub.notifications', icon: 'notifications-outline', color: 'tertiary' },
+  // The Planning (sheet 028): its view, the week, the step, and the phone's calendar
+  { id: 'planning', titleKey: 'tab.calendar', icon: 'calendar-outline', color: 'primary' },
   { id: 'mascot', titleKey: 'mascotSettings.title', icon: 'happy-outline', color: 'primary' },
   { id: 'security', titleKey: 'settingsHub.security', icon: 'shield-checkmark-outline', color: 'success' },
   { id: 'data', titleKey: 'settingsHub.data', icon: 'cloud-outline', color: 'tertiary' },
@@ -387,6 +391,16 @@ export default function SettingsScreen() {
     }
   };
 
+  // The Planning settings (sheet 028): saved at once, read by the Planning when it is shown again
+  const handleUpdatePlanning = async (planningPrefs: PlanningPrefs) => {
+    try {
+      await SettingsRepository.update({ planningPrefs, updatedAt: new Date().toISOString() });
+      setSettings(s => (s ? { ...s, planningPrefs } : s));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+
   // The default level of each family (sheet 023): the planned notifications follow at once
   const handleUpdateAlertDefault = async (family: AlertFamily, level: AlertLevel) => {
     if (!settings) return;
@@ -490,6 +504,15 @@ export default function SettingsScreen() {
   });
 
 
+  // The Planning in one line, for the summary
+  const planningPrefs = settings.planningPrefs ?? DEFAULT_PLANNING_PREFS;
+  const planningViewKeys = { agenda: 'calendar.view.agenda', timetable: 'calendar.view.day', week: 'calendar.view.week', month: 'planning.view.month' } as const;
+  const planningSummary = [
+    t(planningViewKeys[planningPrefs.openView]),
+    t(planningPrefs.weekStart === 0 ? 'planningSettings.sunday' : 'planningSettings.monday'),
+    t('planningSettings.minutes', { minutes: planningPrefs.dragStep }),
+  ].join(' · ');
+
   const summaries: Record<SettingsSection, string> = {
     notifications: settings.notificationsEnabled
       ? [
@@ -507,6 +530,7 @@ export default function SettingsScreen() {
       isSanctumPinConfigured ? t('settingsHub.sanctumOn') : t('settingsHub.sanctumOff'),
     ].join(' · '),
     data: autoBackup ? autoBackupStatus : t('settingsHub.backupOff'),
+    planning: planningSummary,
   };
 
   const renderHub = () => (
@@ -825,6 +849,31 @@ export default function SettingsScreen() {
     </View>
   );
 
+  // The Planning page (sheet 028): how it opens, the week, the step of a move, the phone's calendar
+  const renderPlanning = () => (
+    <View>
+      <View style={styles.rowCol}>
+        <Text style={styles.rowSub}>{t('planningSettings.hint')}</Text>
+        <PlanningSetting value={planningPrefs} onChange={handleUpdatePlanning} />
+      </View>
+      {Platform.OS !== 'web' && (
+        <View style={styles.row}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('deviceCalendar.label')}</Text>
+            <Text style={styles.rowSub}>{t('deviceCalendar.hint')}</Text>
+          </View>
+          <Switch
+            value={settings.deviceCalendarEnabled}
+            onValueChange={handleToggleDeviceCalendar}
+            {...switchColors(settings.deviceCalendarEnabled)}
+            accessibilityLabel={t('deviceCalendar.label')}
+            testID="settings-device-calendar"
+          />
+        </View>
+      )}
+    </View>
+  );
+
   const renderData = () => (
     <View style={styles.section}>
       {/* Sauvegarde automatique d'abord : c'est celle qui protège sans y penser */}
@@ -855,22 +904,6 @@ export default function SettingsScreen() {
         <Ionicons name="cloud-upload-outline" size={20} color={palette.primary.default} />
       </TouchableOpacity>
 
-      {Platform.OS !== 'web' && (
-        <View style={styles.row}>
-          <View style={styles.rowTextFill}>
-            <Text style={styles.rowLabel}>{t('deviceCalendar.label')}</Text>
-            <Text style={styles.rowSub}>{t('deviceCalendar.hint')}</Text>
-          </View>
-          <Switch
-            value={settings.deviceCalendarEnabled}
-            onValueChange={handleToggleDeviceCalendar}
-            {...switchColors(settings.deviceCalendarEnabled)}
-            accessibilityLabel={t('deviceCalendar.label')}
-            testID="settings-device-calendar"
-          />
-        </View>
-      )}
-
       {/* Zone sensible : tout en bas, et en rouge pour ce qui efface */}
       <Text style={[styles.sectionLabel, styles.dangerLabel]}>{t('settingsHub.dangerZone')}</Text>
       <TouchableOpacity style={styles.row} onPress={handleResetApp} accessibilityRole="button">
@@ -892,6 +925,7 @@ export default function SettingsScreen() {
 
   const PAGES: Record<SettingsPage, () => ReactElement> = {
     notifications: renderNotifications,
+    planning: renderPlanning,
     mascot: renderMascot,
     security: renderSecurity,
     data: renderData,

@@ -137,3 +137,31 @@ export function isBirthdaySoon(
 
   return diffNextYear >= 0 && diffNextYear <= withinDays;
 }
+
+/** A label written without case, accents, spaces or the middle dot of « Ami·e ». */
+function normalizedLabel(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[·.\s]/g, '');
+}
+
+/**
+ * The known relation a stored text names, in any language of the app (sheet 028). A relation is
+ * kept as the words chosen at the time (« Friend » if the app was in English then); shown again,
+ * a known one is translated into the language of today. A free text (« Maman ») gives null and
+ * stays as written. « Ami·e » is also recognised as « Ami » and « Amie ».
+ */
+export function knownRelationKey<K extends string>(stored: string | null | undefined, labels: Readonly<Record<K, readonly string[]>>): K | null {
+  if (!stored) return null;
+  const wanted = normalizedLabel(stored);
+  if (!wanted) return null;
+  for (const key of Object.keys(labels) as K[]) {
+    for (const label of labels[key]) {
+      const variants = [label, label.replace(/·e\b/g, ''), label.replace(/·/g, '')];
+      if (variants.some(variant => normalizedLabel(variant) === wanted)) return key;
+    }
+  }
+  return null;
+}

@@ -4,7 +4,7 @@
  * Respect strict du design system Junix Pulse, zéro emoji, dégradé unique sur le FAB.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,7 @@ import { DayTimeGrid } from '@/components/planning/DayTimeGrid';
 import { MonthView, type MonthItem } from '@/components/planning/MonthView';
 import { usePlanningMove } from '@/features/planning/use-planning-move';
 import { useGestureTip } from '@/features/mascot/GestureTip';
+import { DEFAULT_PLANNING_PREFS, type PlanningPrefs } from '@/domain/rules/planning-settings-rules';
 import { dayFromKey, dayKey, monthGridRange, sameDayInMonth } from '@/domain/rules/planning-move-rules';
 import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
@@ -70,6 +71,10 @@ export default function CalendarScreen() {
 
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [viewMode, setViewMode] = useState<CalendarViewMode>('agenda');
+  // The Planning settings (sheet 028): the view it opens on (once per visit of the app), the
+  // first day of the week, the step of a move
+  const [prefs, setPrefs] = useState<PlanningPrefs>(DEFAULT_PLANNING_PREFS);
+  const openedOnRef = useRef(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
@@ -90,7 +95,7 @@ export default function CalendarScreen() {
   const [weekLifted, setWeekLifted] = useState(false);
 
   // Semaine courante basée sur la date sélectionnée
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: prefs.weekStart });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const dateYmd = format(selectedDate, 'yyyy-MM-dd');
@@ -200,7 +205,7 @@ export default function CalendarScreen() {
 
       // The month, only when it is shown: its moments, reminders and tasks (sheets 026 and 027)
       if (viewMode === 'month') {
-        const range = monthGridRange(shownMonth);
+        const range = monthGridRange(shownMonth, prefs.weekStart);
         const from = dayFromKey(range.from);
         const to = addDays(dayFromKey(range.to), 1);
         const inRange = (at: Date) => at >= from && at < to;
@@ -262,12 +267,33 @@ export default function CalendarScreen() {
       setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode, shownMonth]);
+  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode, shownMonth, prefs.weekStart]);
 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
+  );
+
+  // The settings are read each time the Planning is shown: a change in the Paramètres follows
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void SettingsRepository.get()
+        .then(settings => {
+          if (!active) return;
+          const next = settings.planningPrefs ?? DEFAULT_PLANNING_PREFS;
+          setPrefs(next);
+          if (!openedOnRef.current) {
+            openedOnRef.current = true;
+            setViewMode(next.openView);
+          }
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [])
   );
 
   const onRefresh = useCallback(async () => {
@@ -294,9 +320,18 @@ export default function CalendarScreen() {
   };
 
   // Moving a card (sheet 026): saved at once, "Annuler" in the banner
-  const { moveEventBy, moveReminderBy, moveTaskTo } = usePlanningMove(load);
+  const { moveEventBy, moveReminderBy, moveTaskTo } = usePlanningMove(load, prefs.dragStep);
   const movableCount = viewMode === 'timetable' ? events.length + reminders.length : viewMode === 'week' ? weekEventsById.size + weekRemindersById.size : viewMode === 'month' ? monthItems.filter(i => i.kind !== 'device').length : 0;
   const dragTip = useGestureTip('planDrag', movableCount);
+  // The Week view draws its moments and reminders as the Day view does (sheet 028)
+  const weekLooks = useMemo(() => {
+    const looks: Record<string, ReturnType<typeof planningLook>> = {};
+    weekEventsById.forEach((e, id) => (looks[id] = planningLook(theme, 'event', { momentKind: e.momentKind })));
+    weekRemindersById.forEach((r, id) => (looks[id] = planningLook(theme, 'reminder', { priority: r.priority })));
+    return looks;
+  }, [weekEventsById, weekRemindersById, theme]);
+  // The Month view has its own tip, the first time it shows something to move (sheet 028)
+  const monthTip = useGestureTip('monthDrag', viewMode === 'month' ? movableCount : 0);
 
   const openMonthItem = (item: MonthItem) => {
     const id = item.key.slice(2);
@@ -480,6 +515,8 @@ export default function CalendarScreen() {
           showsVerticalScrollIndicator={false}
         >
           <WeeklyTimetableGrid
+            step={prefs.dragStep}
+            looks={weekLooks}
             blocks={allWeeklyBlocks}
             weekDays={weekDays}
             tasksCountByDay={tasksCountByDay}
@@ -522,6 +559,7 @@ export default function CalendarScreen() {
         </ScrollView>
       ) : viewMode === 'month' ? (
         <MonthView
+          weekStart={prefs.weekStart}
           month={shownMonth}
           selected={selectedDate}
           items={monthItems}
@@ -540,6 +578,7 @@ export default function CalendarScreen() {
         />
       ) : viewMode === 'timetable' ? (
         <DayTimeGrid
+          step={prefs.dragStep}
           date={selectedDate}
           events={events}
           reminders={reminders}
@@ -771,6 +810,7 @@ export default function CalendarScreen() {
 
       {/* Pulse shows the long press once (sheet 026) */}
       {dragTip.element}
+      {monthTip.element}
     </View>
   );
 }

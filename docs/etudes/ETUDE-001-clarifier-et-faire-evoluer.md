@@ -578,3 +578,45 @@ Tâche et Rappel forment la famille **« À faire »** (l'onglet, la couleur cya
 5. **Fiche 021 — Onboarding, visite de l'Accueil et astuces**, refaits au design actuel (en dernier, pour qu'ils décrivent l'appli terminée) ; page « Comprendre » dans les Réglages.
 
 Puis la suite de la feuille de route 12.10 (types de moments, gestes, partage, planning, sons).
+
+## 16. Décisions du 25 novembre 2026 : la suite, et la personnalisation du design
+
+Après la fiche 027, ta liste (avec les remarques d'un ami qui a vu l'appli) : les fonctions sont jugées suffisantes pour l'instant ; ce qui manque est surtout du **design au choix de chacun**, et un **onboarding** plus clair.
+
+### 16.1 Nouvel ordre de travail
+
+| Ordre | Chantier | Contenu |
+|---|---|---|
+| 1 | **Finitions** (fiche 028) | vue Semaine en GlowCards ; astuces du Mois et de l'invitation (12.3) ; réglages du Planning (12.8) ; badge « Friend » traduit ; **thème clair par défaut pour un nouvel utilisateur** (16.3) |
+| 2 | **n° 9 — Sons et alarme** | voir 12.6 et 6-D |
+| 3 | **n° 10 — Compte facultatif et synchronisation**, puis espaces de travail | voir 5-B et 5-C ; demande un choix d'hébergement |
+| 4 | **n° 11 — Personnaliser le design** | voir 16.2 |
+| 5 | **n° 12 — Refaire l'onboarding** | voir 16.4 ; d'abord une **étude des onboardings connus** et une **maquette** |
+
+### 16.2 Le n° 11 : personnaliser le design
+
+- **Au départ, rien ne change** : un nouvel utilisateur a les GlowCards et leurs couleurs actuelles (sens des tons, couleurs des familles et des types de moment). Tout ce qui suit est **au choix**, dans les **Paramètres**.
+- **Choisir les couleurs des GlowCards** dans les Paramètres, appliquées **partout** (toutes les pages), et suivies par :
+  - les **notifications** (leur couleur d'accent) ;
+  - les **widgets** de l'écran d'accueil du téléphone.
+- **Choisir la couleur d'un élément** dans les **formulaires** (une tâche, un rappel, un moment) : les couleurs de base restent proposées en premier.
+- **Un mode « neutre »** (la demande de l'ami, qui n'aime pas le mode sombre actuel) : des couleurs **simples**, ni sombres ni ternes ; fond, barre du bas et pages en couleurs unies.
+- **Désactiver le fond d'ambiance** (les halos violet et cyan, qui ne bougent pas).
+- **Désactiver le verre (liquid glass)** : à brancher sur ce qui existe déjà (« Réduire la transparence » rend déjà les cartes opaques) et à proposer dans les Paramètres.
+- À la conception : garder l'accessibilité (contraste 4,5:1 vérifié pour chaque couleur choisie), et le registre unique des couleurs (`item-kinds.ts`, `moment-kinds.ts`, `planning-look.ts`) comme point de départ.
+
+### 16.3 Le thème d'un nouvel utilisateur
+
+Un nouvel utilisateur arrive en **thème clair** (aujourd'hui : sombre). Il peut passer en sombre ou en automatique dans les Paramètres. Ceux qui ont déjà choisi gardent leur choix (le réglage enregistré ne change pas).
+
+### 16.4 Le n° 12 : refaire l'onboarding
+
+- Ressenti actuel : **trop d'informations**, et une impression d'« évasif » ; le bouton pour avancer **change de place** (en bas, puis en haut).
+- Avant de dessiner : **étudier des onboardings connus** (combien de pages, où est le bouton, ce qu'on montre ou demande), puis une **maquette** à valider.
+- Après l'onboarding, sur l'Accueil : les **tuiles** (« les petits carrés ») doivent pouvoir **s'expliquer** (ce que chacune montre et ce qu'on peut y faire).
+
+### 16.5 Plus tard, après la mise en production (noté, rien à faire maintenant)
+
+- **Thèmes de saison** : icônes et couleurs qui suivent les fêtes (Noël, Halloween, Thanksgiving…), fond et mode qui s'adaptent.
+- **Plusieurs thèmes de couleurs**, comme Telegram ou WhatsApp, et la possibilité de **créer les siens** ; peut-être une **communauté** qui en partage.
+

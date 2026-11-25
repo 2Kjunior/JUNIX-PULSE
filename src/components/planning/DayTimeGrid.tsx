@@ -50,6 +50,8 @@ export interface DayTimeGridProps {
   onMoveReminder: (reminder: Reminder, minutes: number, days: number) => void;
   onAddAt: (hour: number) => void;
   onDeviceTouched: (title: string) => void;
+  /** The step of a move, in minutes (Planning settings, sheet 028); a quarter of an hour by default. */
+  step?: number;
 }
 
 type DayCard =
@@ -77,6 +79,7 @@ export const DayTimeGrid = memo(function DayTimeGrid({
   onMoveReminder,
   onAddAt,
   onDeviceTouched,
+  step = SNAP_MINUTES,
 }: DayTimeGridProps) {
   const t = useT();
   const { theme } = useTheme();
@@ -122,7 +125,7 @@ export const DayTimeGrid = memo(function DayTimeGrid({
   const allDay = deviceEvents.filter(d => d.allDay);
   const now = new Date();
   const nowTop = isToday(date) ? ((minutesOfDay(now) - first * 60) / 60) * DAY_HOUR_HEIGHT : null;
-  const quarter = (DAY_HOUR_HEIGHT * SNAP_MINUTES) / 60;
+  const quarter = (DAY_HOUR_HEIGHT * step) / 60;
   const taskColor = taskAccent(theme);
 
   return (
@@ -271,14 +274,16 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                     else onDeviceTouched(card.device.title);
                   }}
                   onDrop={drop => {
-                    const minutes = minutesForOffset(drop.dy, DAY_HOUR_HEIGHT);
+                    const minutes = minutesForOffset(drop.dy, DAY_HOUR_HEIGHT, step);
                     if (minutes === 0) return;
                     if (card.kind === 'event') onMoveEvent(card.event, minutes, 0);
                     else if (card.kind === 'reminder') onMoveReminder(card.reminder, minutes, 0);
                   }}
                   onMoveBy={(minutes, days) => {
-                    if (card.kind === 'event') onMoveEvent(card.event, minutes, days);
-                    else if (card.kind === 'reminder') onMoveReminder(card.reminder, minutes, days);
+                    // With a screen reader, a move is one step
+                    const by = Math.sign(minutes) * step;
+                    if (card.kind === 'event') onMoveEvent(card.event, by, days);
+                    else if (card.kind === 'reminder') onMoveReminder(card.reminder, by, days);
                   }}
                 >
                   <PlanningCard

@@ -28,6 +28,7 @@ import {
 } from '../enums';
 import type { LanguageSetting } from '../rules/language-rules';
 import type { AlertDefaults } from '../rules/notification-level-rules';
+import type { PlanningPrefs } from '../rules/planning-settings-rules';
 import type { TagColor } from '../rules/tag-rules';
 
 export * from '../enums';
@@ -316,9 +317,11 @@ export interface Settings {
   quietHoursEnd?: number;
   /** The default level of reminders, deadlines, moments and habits (sheet 023); all normal at first. */
   alertLevels?: AlertDefaults;
+  /** The view the Planning opens on, the first day of the week and the step of a move (sheet 028). */
+  planningPrefs?: PlanningPrefs;
   /**
    * Mode d'apparence choisi : suit le système, clair, ou sombre.
-   * Valeur par défaut : 'dark'.
+   * Valeur par défaut : 'light' pour un appareil neuf depuis la fiche 028 ('dark' avant).
    */
   appearanceMode: AppearanceMode;
   /** Cards and bars on a plain background instead of glass. False by default. */

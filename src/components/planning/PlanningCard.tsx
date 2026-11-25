@@ -42,6 +42,8 @@ export interface PlanningCardProps {
    * the grid already says the time).
    */
   narrow?: boolean;
+  /** A very narrow card (three side by side in a day of the Week view): its icon and its title only. */
+  tiny?: boolean;
 }
 
 export const PlanningCard = memo(function PlanningCard({
@@ -55,6 +57,7 @@ export const PlanningCard = memo(function PlanningCard({
   showOptions = false,
   index,
   narrow = false,
+  tiny = false,
 }: PlanningCardProps) {
   const t = useT();
   const { theme } = useTheme();
@@ -80,9 +83,16 @@ export const PlanningCard = memo(function PlanningCard({
       index={index}
       fill={sized}
       style={sized ? styles.fill : undefined}
-      contentStyle={oneLine ? styles.oneLine : sized ? styles.sized : undefined}
+      contentStyle={tiny ? styles.tiny : oneLine ? styles.oneLine : sized ? styles.sized : undefined}
     >
-      {oneLine ? (
+      {tiny ? (
+        <View style={styles.tinyContent}>
+          <Ionicons name={done ? 'checkmark-circle' : look.icon} size={13} color={look.color} />
+          <Text style={[styles.tinyTitle, done && styles.done]} numberOfLines={!sized ? 2 : height > 80 ? 4 : height < ONE_LINE_HEIGHT ? 1 : 2}>
+            {title}
+          </Text>
+        </View>
+      ) : oneLine ? (
         <View style={styles.row}>
           <Ionicons name={done ? 'checkmark-circle' : look.icon} size={13} color={look.color} />
           {!narrow && <Text style={[styles.time, { color: look.color }]}>{time}</Text>}
@@ -125,6 +135,9 @@ function makePlanningCardStyles(theme: ThemePalette) {
     sized: { paddingHorizontal: 10, paddingVertical: 7, flex: 1 },
     oneLine: { paddingHorizontal: 10, paddingVertical: 0, flex: 1, justifyContent: 'center' },
     row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    tiny: { paddingHorizontal: 5, paddingVertical: 5, flex: 1 },
+    tinyContent: { gap: 2 },
+    tinyTitle: { ...Typography.labelSmall, fontSize: 10, lineHeight: 12, color: theme.onSurface.primary, fontWeight: '700' },
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 3 },
     badge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: Radius.sm, paddingHorizontal: 6, paddingVertical: 2, flexShrink: 1 },
     badgeText: { ...Typography.labelSmall, fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },

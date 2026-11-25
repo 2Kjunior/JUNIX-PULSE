@@ -178,6 +178,19 @@ export const MASCOT_MESSAGES = {
     ["Astuce : faites glisser une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil.", "{name}, astuce : faites glisser une carte pour la modifier ou la supprimer. Le bouton ⋯ fait pareil."],
     ["Faites glisser une carte, ou touchez ⋯, pour la modifier ou la supprimer.", "{name}, faites glisser une carte, ou touchez ⋯, pour la modifier ou la supprimer."],
   ),
+  // The tips of the Month view and of the invitation (sheet 028), once each
+  TIP_MONTH_DRAG: entry(
+    ["Astuce : touche un jour, puis fais glisser une de ses choses sur un autre jour. Au bord de la grille, le mois tourne.", "{name}, astuce : touche un jour, puis fais glisser une de ses choses sur un autre jour. Au bord de la grille, le mois tourne."],
+    ["Fais glisser une chose du jour sur un autre jour du mois.", "{name}, fais glisser une chose du jour sur un autre jour du mois."],
+    ["Astuce : touchez un jour, puis faites glisser une de ses choses sur un autre jour. Au bord de la grille, le mois tourne.", "{name}, astuce : touchez un jour, puis faites glisser une de ses choses sur un autre jour. Au bord de la grille, le mois tourne."],
+    ["Faites glisser une chose du jour sur un autre jour du mois.", "{name}, faites glisser une chose du jour sur un autre jour du mois."],
+  ),
+  TIP_INVITE: entry(
+    ["Tu peux lui envoyer l'invitation : touche « Envoyer ».", "{name}, tu peux lui envoyer l'invitation : touche « Envoyer »."],
+    ["« Envoyer » lui transmet l'invitation.", "{name}, « Envoyer » lui transmet l'invitation."],
+    ["Vous pouvez lui envoyer l'invitation : touchez « Envoyer ».", "{name}, vous pouvez lui envoyer l'invitation : touchez « Envoyer »."],
+    ["« Envoyer » lui transmet l'invitation.", "{name}, « Envoyer » lui transmet l'invitation."],
+  ),
   // The tip of the Planning (sheet 026), once, when a card can move
   TIP_PLAN_DRAG: entry(
     ["Astuce : garde le doigt sur une carte, puis glisse-la pour changer son heure ou son jour.", "{name}, astuce : garde le doigt sur une carte, puis glisse-la pour changer son heure ou son jour."],

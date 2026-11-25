@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Share, Text, TouchableOpacity, View } from 'react-native';
 
 import { PersonAvatar } from '@/components/people/PersonAvatar';
+import { useGestureTip } from '@/features/mascot/GestureTip';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { inviteMessage, nextInviteStatus, type InviteKind } from '@/domain/rules/invite-rules';
@@ -73,8 +74,12 @@ export function ShareItemCard({
   };
 
   const sendLabel = people.length === 1 ? t('share.sendTo', { name: people[0].person.displayName }) : t('share.send');
+  // The first time an item has someone in it, Pulse says the invitation can be sent (study 12.3; sheet 028)
+  const inviteTip = useGestureTip('invite', people.length);
 
   return (
+    <>
+    {inviteTip.element}
     <GlowCard tone="neutral">
       <View style={{ gap: Spacing.sm }}>
         <TouchableOpacity
@@ -127,5 +132,6 @@ export function ShareItemCard({
         })}
       </View>
     </GlowCard>
+    </>
   );
 }

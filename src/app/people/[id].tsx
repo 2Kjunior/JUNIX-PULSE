@@ -37,6 +37,7 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { makePersonDetailStyles } from '@/styles/people/person-detail-styles';
 import { useDateLocale, useT } from '@/i18n';
 import { useContactFollowUp } from '@/features/people/use-contact-follow-up';
+import { relationLabel } from '@/features/people/relation-label';
 
 type ScreenState = 'loading' | 'content' | 'error';
 
@@ -240,7 +241,7 @@ export default function PersonDetailScreen() {
               <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 {!!person.relationship && (
                   <View style={styles.relationshipBadge}>
-                    <Text style={styles.relationshipText}>{person.relationship}</Text>
+                    <Text style={styles.relationshipText}>{relationLabel(person.relationship, t)}</Text>
                   </View>
                 )}
                 {person.importedFromContacts && (

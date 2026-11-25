@@ -117,6 +117,14 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Tip: swipe a card to edit or delete it. The ⋯ button does the same.", "{name}, tip: swipe a card to edit or delete it. The ⋯ button does the same."],
     ["Swipe a card, or tap ⋯, to edit or delete it.", "{name}, swipe a card, or tap ⋯, to edit or delete it."],
   ),
+  TIP_MONTH_DRAG: entry(
+    ["Tip: touch a day, then drag one of its things onto another day. At the edge of the grid, the month turns.", "{name}, tip: touch a day, then drag one of its things onto another day. At the edge of the grid, the month turns."],
+    ["Drag a thing of the day onto another day of the month.", "{name}, drag a thing of the day onto another day of the month."],
+  ),
+  TIP_INVITE: entry(
+    ["You can send them the invitation: tap “Send”.", "{name}, you can send them the invitation: tap “Send”."],
+    ["“Send” passes the invitation on.", "{name}, “Send” passes the invitation on."],
+  ),
   TIP_PLAN_DRAG: entry(
     ["Tip: keep your finger on a card, then drag it to change its time or its day.", "{name}, tip: keep your finger on a card, then drag it to change its time or its day."],
     ["Long press a card and you can move it.", "{name}, long press a card and you can move it."],

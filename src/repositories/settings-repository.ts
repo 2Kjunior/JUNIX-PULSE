@@ -16,6 +16,7 @@ import { DEFAULT_MASCOT_SETTINGS } from '../domain/rules/mascot-preferences';
 import { DEFAULT_LANGUAGE_SETTING, isLanguageSetting } from '../domain/rules/language-rules';
 import { isAppLockDelay } from '../domain/rules/app-lock-rules';
 import { alertDefaultsOf, alertDefaultsText } from '../domain/rules/notification-level-rules';
+import { planningPrefsOf, planningPrefsText } from '../domain/rules/planning-settings-rules';
 
 const VALID_APPEARANCE_MODES: ReadonlySet<AppearanceMode> = new Set(['system', 'light', 'dark']);
 const VALID_MASCOT_PRESENCE: ReadonlySet<string> = new Set<MascotPresence>(['full', 'discreet', 'off']);
@@ -51,6 +52,7 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     quietHoursStart: (row.quiet_hours_start as number | undefined) ?? 22,
     quietHoursEnd: (row.quiet_hours_end as number | undefined) ?? 7,
     alertLevels: alertDefaultsOf(row.alert_levels as string | null | undefined),
+    planningPrefs: planningPrefsOf(row.planning_prefs as string | null | undefined),
     appearanceMode,
     reduceTransparency: (row.reduce_transparency as number) === 1,
     appearanceDark: row.appearance_dark !== undefined ? (row.appearance_dark as number) === 1 : true,
@@ -154,6 +156,10 @@ export const SettingsRepository = {
     if (params.alertLevels !== undefined) {
       setClauses.push('alert_levels = ?');
       values.push(alertDefaultsText(params.alertLevels));
+    }
+    if (params.planningPrefs !== undefined) {
+      setClauses.push('planning_prefs = ?');
+      values.push(planningPrefsText(params.planningPrefs));
     }
 
     if (params.mascotPresence !== undefined && VALID_MASCOT_PRESENCE.has(params.mascotPresence)) {

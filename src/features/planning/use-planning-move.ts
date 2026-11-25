@@ -15,7 +15,7 @@ import { moveEvent, moveReminder, moveTask, repeatOf, type Undo } from '@/use-ca
 /** How long the banner with "Annuler" stays. */
 export const MOVE_UNDO_MS = 6000;
 
-export function usePlanningMove(reload: () => void | Promise<void>) {
+export function usePlanningMove(reload: () => void | Promise<void>, step?: number) {
   const t = useT();
   const dateLocale = useDateLocale();
   const { showSnackbar } = useAppStore();
@@ -48,16 +48,16 @@ export function usePlanningMove(reload: () => void | Promise<void>) {
 
   const moveEventBy = useCallback(
     (event: Event, minutes: number, days: number) => {
-      moveEvent(event, minutes, days).then(result => done(result, true), failed);
+      moveEvent(event, minutes, days, step).then(result => done(result, true), failed);
     },
-    [done, failed]
+    [done, failed, step]
   );
 
   const moveReminderBy = useCallback(
     (reminder: Reminder, minutes: number, days: number) => {
       void repeatOf(reminder)
         .then(repeat => {
-          const go = () => moveReminder(reminder, minutes, days, repeat).then(result => done(result, true), failed);
+          const go = () => moveReminder(reminder, minutes, days, repeat, step).then(result => done(result, true), failed);
           if (!repeat) return go();
           GlassAlert.alert(t('planning.seriesTitle'), t('planning.seriesBody'), [
             { text: t('common.cancel'), style: 'cancel' },
@@ -66,7 +66,7 @@ export function usePlanningMove(reload: () => void | Promise<void>) {
         })
         .catch(failed);
     },
-    [done, failed, t]
+    [done, failed, t, step]
   );
 
   const moveTaskTo = useCallback(

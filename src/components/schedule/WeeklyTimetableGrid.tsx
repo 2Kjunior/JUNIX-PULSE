@@ -20,7 +20,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { format, isToday } from 'date-fns';
 import { useDateLocale, useT } from '@/i18n';
 
@@ -30,7 +29,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Spacing, Radius } from '@/constants/theme';
 import { DraggableBlock } from '@/components/planning/DraggableBlock';
-import { columnsForOffset, minutesForOffset, SNAP_MINUTES } from '@/domain/rules/planning-move-rules';
+import { PlanningCard } from '@/components/planning/PlanningCard';
+import { eventAccent, planningLook, taskAccent, type PlanningLook } from '@/constants/planning-look';
+import { columnsForOffset, MIN_CARD_HEIGHT, minutesForOffset, SNAP_MINUTES } from '@/domain/rules/planning-move-rules';
 
 export interface WeeklyTimetableGridProps {
   blocks: PlanningBlock[];
@@ -44,13 +45,21 @@ export interface WeeklyTimetableGridProps {
   onMoveBlock?: (block: PlanningBlock, minutes: number, days: number) => void;
   /** A card is lifted: the page stops scrolling meanwhile. */
   onLift?: (lifted: boolean) => void;
+  /** The step of a move, in minutes (Planning settings, sheet 028). */
+  step?: number;
+  /** The look of each moment and reminder, by id: the GlowCard and the colours of the Day view (sheet 028). */
+  looks?: Readonly<Record<string, PlanningLook>>;
 }
 
 const DEFAULT_START_HOUR = 7;   // 07:00 par défaut
 const DEFAULT_END_HOUR = 22;    // 22:00 par défaut
-const HOUR_HEIGHT = 48; // 48px par tranche de 60 minutes (exactement comme dans Stitch)
+// 88 points an hour (sheet 028): a card of 30 minutes is as tall as a finger, as a GlowCard needs
+const HOUR_HEIGHT = 88;
 const TIME_COL_WIDTH = 54;
-const DAY_COL_WIDTH = 84;
+/** Under this width (three cards in a day) a card keeps its icon and its title only. */
+const TINY_CARD_WIDTH = 72;
+// 128 points a day (sheet 028): two GlowCards side by side stay readable; the grid scrolls sideways
+const DAY_COL_WIDTH = 128;
 
 const DAYS_DEFINITION = [
   { num: 1, label: 'LUN', full: 'Lundi', dateNum: '01' },
@@ -94,11 +103,12 @@ function layoutForegroundBlocks(
     .map(block => {
       const startMin = timeToMinutes(block.startTime);
       const endMin = timeToMinutes(block.endTime);
-      const durationMin = Math.max(15, endMin - startMin);
+      // At least 30 minutes on the screen (a finger), as in the Day view (sheet 028)
+      const durationMin = Math.max(30, endMin - startMin);
       return {
         block,
         startMin,
-        endMin,
+        endMin: startMin + Math.max(30, endMin - startMin),
         durationMin,
       };
     })
@@ -160,7 +170,7 @@ function layoutForegroundBlocks(
       const topPx = ((a.item.startMin - startHour * 60) / 60) * HOUR_HEIGHT;
       const heightPx = (a.item.durationMin / 60) * HOUR_HEIGHT;
       const clampedTop = Math.max(0, topPx);
-      const clampedHeight = Math.max(24, heightPx - 2);
+      const clampedHeight = Math.max(MIN_CARD_HEIGHT, heightPx - 2);
 
       result.push({
         block: a.item.block,
@@ -188,6 +198,8 @@ export function WeeklyTimetableGrid({
   onPressTasksDay,
   onMoveBlock,
   onLift,
+  step = SNAP_MINUTES,
+  looks,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeTimetableStyles);
@@ -509,11 +521,9 @@ export function WeeklyTimetableGrid({
                     const backgroundBlocks = dayBlocks.filter(
                       b => b.scheduleId !== 'event' && b.scheduleId !== 'reminder' && b.scheduleId !== 'task'
                     );
+                    // Moments and reminders together, side by side when they meet (sheet 028)
                     const foregroundBlocks = dayBlocks.filter(
-                      b => b.scheduleId === 'event' || b.scheduleId === 'task'
-                    );
-                    const reminderBlocks = dayBlocks.filter(
-                      b => b.scheduleId === 'reminder'
+                      b => b.scheduleId === 'event' || b.scheduleId === 'task' || b.scheduleId === 'reminder'
                     );
                     const positionedForeground = layoutForegroundBlocks(foregroundBlocks, DAY_COL_WIDTH, startHour);
 
@@ -572,101 +582,37 @@ export function WeeklyTimetableGrid({
                           );
                         })}
 
-                        {/* 2. LAYER 1 : Événements réels avec Column Splitting côte-à-côte */}
+                        {/* 2. LAYER 1 : moments and reminders as GlowCards, side by side (sheet 028) */}
                         {positionedForeground.map((item, itemIdx) => {
                           const { block } = item;
-                          const config = getBlockStyleConfig(block.type);
-
+                          const isReminder = block.scheduleId === 'reminder';
+                          const look = looks?.[block.id] ?? planningLook(palette, isReminder ? 'reminder' : 'event');
                           return (
                             <DraggableBlock
                               key={`fg-${block.id}-${d.num}-${item.colIndex}-${itemIdx}`}
-                              style={[
-                                styles.blockCard,
-                                {
-                                  top: item.topPx + 1,
-                                  height: item.heightPx,
-                                  left: item.leftPx,
-                                  width: item.widthPx,
-                                  backgroundColor: isDark ? 'rgba(28, 24, 40, 0.72)' : 'rgba(255, 255, 255, 0.72)',
-                                  borderColor: config.border,
-                                },
-                              ]}
+                              style={[styles.blockBox, { top: item.topPx + 1, height: item.heightPx, left: item.leftPx, width: item.widthPx }]}
                               onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
-                              movable={!!onMoveBlock && block.scheduleId === 'event'}
-                              stepY={(HOUR_HEIGHT * SNAP_MINUTES) / 60}
+                              movable={!!onMoveBlock && (block.scheduleId === 'event' || isReminder)}
+                              stepY={(HOUR_HEIGHT * step) / 60}
                               stepX={DAY_COL_WIDTH}
                               onLift={lift}
-                              onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, HOUR_HEIGHT), columnsForOffset(drop.dx, DAY_COL_WIDTH))}
-                              onMoveBy={(minutes, days) => onMoveBlock?.(block, minutes, days)}
-                              accessibilityLabel={t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })}
+                              onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, HOUR_HEIGHT, step), columnsForOffset(drop.dx, DAY_COL_WIDTH))}
+                              onMoveBy={(minutes, days) => onMoveBlock?.(block, Math.sign(minutes) * step, days)}
+                              accessibilityLabel={
+                                isReminder
+                                  ? t('weekGrid.reminderA11y', { label: block.label, time: block.startTime })
+                                  : t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })
+                              }
                             >
-                              <LinearGradient
-                                colors={[config.accent + '33', 'transparent']}
-                                start={{ x: 1, y: 0 }}
-                                end={{ x: 0, y: 1 }}
-                                style={styles.cardCornerGlow}
-                                pointerEvents="none"
+                              <PlanningCard
+                                look={look}
+                                title={block.label}
+                                time={isReminder ? block.startTime : `${block.startTime} – ${block.endTime}`}
+                                height={item.heightPx}
+                                narrow
+                                tiny={item.widthPx < TINY_CARD_WIDTH}
+                                index={itemIdx}
                               />
-
-                              {isDark && (
-                                <View style={styles.topSpecularHighlight} pointerEvents="none" />
-                              )}
-
-                              <View style={styles.blockCardHeader}>
-                                {item.hasConflict ? (
-                                  <View style={styles.conflictDot} />
-                                ) : (
-                                  <View style={[styles.workPulseDot, { backgroundColor: config.accent }]} />
-                                )}
-                                <Text
-                                  style={[styles.blockTitle, { color: config.text }]}
-                                  numberOfLines={item.heightPx > 50 ? 2 : 1}
-                                >
-                                  {block.label}
-                                </Text>
-                              </View>
-
-                              {item.heightPx >= 36 && item.totalCols <= 2 && (
-                                <View style={[styles.timeBadge, { backgroundColor: config.badgeBg }]}>
-                                  <Text style={[styles.timeBadgeText, { color: config.accent }]}>
-                                    {block.startTime.replace(':00', 'h')}
-                                  </Text>
-                                </View>
-                              )}
-                            </DraggableBlock>
-                          );
-                        })}
-
-                        {/* 3. LAYER 2 : Rappels ponctuels (Pastilles compactes sans durée artificielle) */}
-                        {reminderBlocks.map((block, rIdx) => {
-                          const startMin = timeToMinutes(block.startTime);
-                          const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT;
-                          const clampedTop = Math.max(0, topPx);
-
-                          return (
-                            <DraggableBlock
-                              key={`rem-${block.id}-${d.num}-${rIdx}`}
-                              style={[
-                                styles.reminderPillMarker,
-                                {
-                                  top: clampedTop - 9,
-                                  backgroundColor: isDark ? 'rgba(245, 158, 11, 0.25)' : 'rgba(254, 243, 199, 0.95)',
-                                  borderColor: '#F59E0B',
-                                },
-                              ]}
-                              onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
-                              movable={!!onMoveBlock}
-                              stepY={(HOUR_HEIGHT * SNAP_MINUTES) / 60}
-                              stepX={DAY_COL_WIDTH}
-                              onLift={lift}
-                              onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, HOUR_HEIGHT), columnsForOffset(drop.dx, DAY_COL_WIDTH))}
-                              onMoveBy={(minutes, days) => onMoveBlock?.(block, minutes, days)}
-                              accessibilityLabel={t('weekGrid.reminderA11y', { label: block.label, time: block.startTime })}
-                            >
-                              <Ionicons name="notifications" size={10} color="#F59E0B" />
-                              <Text style={styles.reminderPillText} numberOfLines={1}>
-                                {block.startTime} {block.label}
-                              </Text>
                             </DraggableBlock>
                           );
                         })}
@@ -683,15 +629,15 @@ export function WeeklyTimetableGrid({
       {/* ─── Synthèse hebdomadaire compacte & sobre ─────────────────────────── */}
       <View style={styles.summaryBar}>
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryDot, { backgroundColor: palette.primary.default }]} />
+          <View style={[styles.summaryDot, { backgroundColor: eventAccent(palette) }]} />
           <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>{t('search.filter.events')}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryDot, { backgroundColor: '#F59E0B' }]} />
+          <View style={[styles.summaryDot, { backgroundColor: palette.primary.default }]} />
           <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>{t('tab.reminders')}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryDot, { backgroundColor: palette.tertiary.default }]} />
+          <View style={[styles.summaryDot, { backgroundColor: taskAccent(palette) }]} />
           <Text style={[styles.summaryText, { color: palette.onSurface.variant }]}>{t('tab.tasks')}</Text>
         </View>
         <Text style={[styles.summaryTotalText, { color: palette.primary.default }]}>
@@ -714,6 +660,9 @@ const makeTimetableStyles = (theme: ThemePalette) => {
       paddingHorizontal: Spacing.md,
       paddingTop: Spacing.sm,
       paddingBottom: 40,
+    },
+    blockBox: {
+      position: 'absolute',
     },
     summaryBar: {
       flexDirection: 'row',

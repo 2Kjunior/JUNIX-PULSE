@@ -17,7 +17,7 @@ import type { PlanningKind, PlanningLook } from '@/constants/planning-look';
 import type { ThemePalette } from '@/constants/palettes';
 import { Radius, Spacing, TAB_BAR_TOTAL_HEIGHT, Typography } from '@/constants/theme';
 import type { Event, Reminder, Task } from '@/domain/entities';
-import { dayDots, dayKey, monthGrid, monthStrip } from '@/domain/rules/planning-move-rules';
+import { dayDots, dayKey, monthGrid, monthStrip, type WeekStart } from '@/domain/rules/planning-move-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useDateLocale, useT } from '@/i18n';
@@ -55,6 +55,8 @@ export interface MonthViewProps {
   /** Go to a month: by the strip ('strip'), or by the edge of the grid during a move ('edge'). */
   onShowMonth: (month: Date, by: 'strip' | 'edge') => void;
   onDeviceTouched: (title: string) => void;
+  /** Monday (1) or Sunday (0), from the Planning settings (sheet 028). */
+  weekStart?: WeekStart;
 }
 
 const CELL_HEIGHT = 54;
@@ -72,6 +74,7 @@ export const MonthView = memo(function MonthView({
   onMoveItem,
   onShowMonth,
   onDeviceTouched,
+  weekStart = 1,
 }: MonthViewProps) {
   const t = useT();
   const dateLocale = useDateLocale();
@@ -89,7 +92,7 @@ export const MonthView = memo(function MonthView({
   const [frozen, setFrozen] = useState<MonthItem[] | null>(null);
   shownRef.current = month;
 
-  const days = useMemo(() => monthGrid(month), [month]);
+  const days = useMemo(() => monthGrid(month, weekStart), [month, weekStart]);
   const strip = useMemo(() => monthStrip(month), [month]);
   const byDay = useMemo(() => {
     const map = new Map<string, MonthItem[]>();
@@ -161,7 +164,7 @@ export const MonthView = memo(function MonthView({
       const column = Math.floor(((drop.x - x) / width) * 7);
       const row = Math.floor(((drop.y - y) / height) * 6);
       if (column < 0 || column > 6 || row < 0 || row > 5) return;
-      const target = monthGrid(shownRef.current)[row * 7 + column];
+      const target = monthGrid(shownRef.current, weekStart)[row * 7 + column];
       if (dayKey(target) !== item.day) onMoveItem(item, target);
     });
   };

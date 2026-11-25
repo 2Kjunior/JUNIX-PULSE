@@ -672,5 +672,18 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 39,
+    name: 'light_theme_for_new_devices_and_planning_prefs',
+    sql: `
+      -- Un appareil neuf commence en theme clair (fiche 028, etude 16.3).
+      -- Seul un appareil dont la presentation n est pas terminee change :
+      -- celui qui utilise deja l appli garde son theme.
+      UPDATE settings SET appearance_mode = 'light' WHERE onboarding_completed = 0;
+      -- Les reglages du Planning (fiche 028, etude 12.8) : vue d ouverture,
+      -- premier jour de la semaine, pas du glisser. Vide : les valeurs d avant.
+      ALTER TABLE settings ADD COLUMN planning_prefs TEXT;
+    `,
+  },
 ];
 

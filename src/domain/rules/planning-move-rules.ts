@@ -5,8 +5,11 @@
  */
 import type { RecurrenceRule } from '../entities';
 
-/** A card lands on a quarter of an hour: 19:00 or 19:15, never 19:07. */
+/** A card lands on a quarter of an hour: 19:00 or 19:15, never 19:07 (the default step). */
 export const SNAP_MINUTES = 15;
+
+/** The first day of the week: Monday (1) or Sunday (0), as in Date.getDay(). */
+export type WeekStart = 0 | 1;
 
 /**
  * The height of one hour in the Day view, in points (the Week view keeps its own 48): 96 gives a
@@ -30,16 +33,20 @@ export const DAY_LAST_HOUR = 22;
 /** The dots of a day in the Month view; beyond, "+2". */
 export const MONTH_DOTS_MAX = 3;
 
-/** The nearest quarter of an hour (0 stays 0, -7 becomes -0 and is given as 0). */
-export function snapMinutes(minutes: number): number {
-  const snapped = Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
+/**
+ * The nearest step (a quarter of an hour unless the Planning settings say 5, 10 or 30 minutes,
+ * sheet 028). 0 stays 0, -7 becomes -0 and is given as 0.
+ */
+export function snapMinutes(minutes: number, step: number = SNAP_MINUTES): number {
+  const size = step > 0 ? step : SNAP_MINUTES;
+  const snapped = Math.round(minutes / size) * size;
   return snapped === 0 ? 0 : snapped;
 }
 
-/** How many minutes a vertical move of the finger means, already on a quarter of an hour. */
-export function minutesForOffset(offsetY: number, hourHeight: number): number {
+/** How many minutes a vertical move of the finger means, already on a step. */
+export function minutesForOffset(offsetY: number, hourHeight: number, step: number = SNAP_MINUTES): number {
   if (hourHeight <= 0) return 0;
-  return snapMinutes((offsetY / hourHeight) * 60);
+  return snapMinutes((offsetY / hourHeight) * 60, step);
 }
 
 /** How many columns (days) a horizontal move means: half a column is enough to change day. */
@@ -54,21 +61,27 @@ export function clampColumn(column: number, count = 7): number {
   return Math.min(count - 1, Math.max(0, column));
 }
 
-/** A start moved by minutes and days; the time of day is put back on a quarter of an hour. */
-export function movedStart(start: Date, minutes: number, days: number): Date {
+/** A start moved by minutes and days; the time of day is put back on a step (a quarter of an hour by default). */
+export function movedStart(start: Date, minutes: number, days: number, step: number = SNAP_MINUTES): Date {
   const next = new Date(start.getTime());
   next.setDate(next.getDate() + days);
   next.setMinutes(next.getMinutes() + minutes);
   const sinceMidnight = next.getHours() * 60 + next.getMinutes();
-  const snapped = snapMinutes(sinceMidnight);
+  const snapped = snapMinutes(sinceMidnight, step);
   next.setHours(0, 0, 0, 0);
   next.setMinutes(snapped);
   return next;
 }
 
 /** A moment moved: the start moves, the length stays the same. */
-export function movedRange(start: Date, end: Date, minutes: number, days: number): { start: Date; end: Date } {
-  const nextStart = movedStart(start, minutes, days);
+export function movedRange(
+  start: Date,
+  end: Date,
+  minutes: number,
+  days: number,
+  step: number = SNAP_MINUTES
+): { start: Date; end: Date } {
+  const nextStart = movedStart(start, minutes, days, step);
   const length = Math.max(0, end.getTime() - start.getTime());
   return { start: nextStart, end: new Date(nextStart.getTime() + length) };
 }
@@ -124,17 +137,20 @@ export function shiftedRecurrence(
   return null;
 }
 
-/** The 42 days (6 weeks, Monday first) that show a month, with the days of the months around. */
-export function monthGrid(anyDayOfMonth: Date): Date[] {
+/**
+ * The 42 days (6 weeks) that show a month, with the days of the months around. The week starts on
+ * Monday (1) unless the Planning settings say Sunday (0), sheet 028.
+ */
+export function monthGrid(anyDayOfMonth: Date, weekStart: WeekStart = 1): Date[] {
   const first = new Date(anyDayOfMonth.getFullYear(), anyDayOfMonth.getMonth(), 1);
-  const back = (first.getDay() + 6) % 7; // Monday = 0
+  const back = (first.getDay() - weekStart + 7) % 7;
   const start = new Date(first.getFullYear(), first.getMonth(), 1 - back);
   return Array.from({ length: 42 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
 }
 
 /** The first and last day shown by a month grid, as YYYY-MM-DD. */
-export function monthGridRange(anyDayOfMonth: Date): { from: string; to: string } {
-  const days = monthGrid(anyDayOfMonth);
+export function monthGridRange(anyDayOfMonth: Date, weekStart: WeekStart = 1): { from: string; to: string } {
+  const days = monthGrid(anyDayOfMonth, weekStart);
   return { from: dayKey(days[0]), to: dayKey(days[days.length - 1]) };
 }
 

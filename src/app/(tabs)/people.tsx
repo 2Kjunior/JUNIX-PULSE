@@ -36,6 +36,7 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { makePeopleStyles } from '@/styles/tabs/people-styles';
 import { useT } from '@/i18n';
+import { relationLabel } from '@/features/people/relation-label';
 
 type FilterTab = 'all' | 'forgotten';
 type ScreenState = 'loading' | 'content' | 'error';
@@ -201,7 +202,7 @@ function PersonCardR09({
             <Text style={styles.displayName} numberOfLines={1}>{person.displayName}</Text>
             {!!person.relationship && (
               <View style={styles.relationshipBadge}>
-                <Text style={styles.relationshipText}>{person.relationship}</Text>
+                <Text style={styles.relationshipText}>{relationLabel(person.relationship, t)}</Text>
               </View>
             )}
           </View>
