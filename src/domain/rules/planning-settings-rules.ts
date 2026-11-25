@@ -1,7 +1,9 @@
 /**
- * The Planning settings (study 001, 12.8; sheet 028): the view it opens on, the first day of the
- * week and the step of a move. Kept as one short text in the settings row, read strictly: a value
- * missing, old or damaged falls back to the default, so nothing breaks.
+ * The Planning settings (study 001, 12.8; sheets 028 and 029), kept as one short text in the
+ * settings row and read strictly: a value missing, old or damaged falls back to the default.
+ *  - the step of a move: chosen in the Paramètres;
+ *  - the view it opens on: the one used last, kept by the Planning itself;
+ *  - the first day of the week: no longer read here; it follows the language (weekStartOf).
  */
 import type { WeekStart } from './planning-move-rules';
 
@@ -41,4 +43,12 @@ export function planningPrefsOf(text: string | null | undefined): PlanningPrefs 
 /** The settings as the text kept in the settings row. */
 export function planningPrefsText(prefs: PlanningPrefs): string {
   return JSON.stringify({ openView: prefs.openView, weekStart: prefs.weekStart, dragStep: prefs.dragStep });
+}
+
+/**
+ * The first day of the week from the language of the app (sheet 029): the language says it
+ * (date-fns: 1 in French, 0 in American English); anything else is taken as Monday.
+ */
+export function weekStartOf(fromLanguage: number | undefined): WeekStart {
+  return fromLanguage === 0 ? 0 : 1;
 }

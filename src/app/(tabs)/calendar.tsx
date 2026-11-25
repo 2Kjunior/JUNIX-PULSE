@@ -50,7 +50,7 @@ import { DayTimeGrid } from '@/components/planning/DayTimeGrid';
 import { MonthView, type MonthItem } from '@/components/planning/MonthView';
 import { usePlanningMove } from '@/features/planning/use-planning-move';
 import { useGestureTip } from '@/features/mascot/GestureTip';
-import { DEFAULT_PLANNING_PREFS, type PlanningPrefs } from '@/domain/rules/planning-settings-rules';
+import { DEFAULT_PLANNING_PREFS, weekStartOf, type PlanningPrefs } from '@/domain/rules/planning-settings-rules';
 import { dayFromKey, dayKey, monthGridRange, sameDayInMonth } from '@/domain/rules/planning-move-rules';
 import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
@@ -75,6 +75,9 @@ export default function CalendarScreen() {
   // first day of the week, the step of a move
   const [prefs, setPrefs] = useState<PlanningPrefs>(DEFAULT_PLANNING_PREFS);
   const openedOnRef = useRef(false);
+  // The first day of the week follows the language (Monday in French, Sunday in American English);
+  // nothing to choose (sheet 029)
+  const weekStartsOn = weekStartOf(dateLocale.options?.weekStartsOn);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
@@ -95,7 +98,7 @@ export default function CalendarScreen() {
   const [weekLifted, setWeekLifted] = useState(false);
 
   // Semaine courante basée sur la date sélectionnée
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: prefs.weekStart });
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const dateYmd = format(selectedDate, 'yyyy-MM-dd');
@@ -205,7 +208,7 @@ export default function CalendarScreen() {
 
       // The month, only when it is shown: its moments, reminders and tasks (sheets 026 and 027)
       if (viewMode === 'month') {
-        const range = monthGridRange(shownMonth, prefs.weekStart);
+        const range = monthGridRange(shownMonth, weekStartsOn);
         const from = dayFromKey(range.from);
         const to = addDays(dayFromKey(range.to), 1);
         const inRange = (at: Date) => at >= from && at < to;
@@ -267,7 +270,7 @@ export default function CalendarScreen() {
       setError(e instanceof Error ? e.message : t('common.loadError'));
       setScreenState('error');
     }
-  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode, shownMonth, prefs.weekStart]);
+  }, [dateYmd, theme, weekDays, t, selectedDate, viewMode, shownMonth, weekStartsOn]);
 
   useFocusEffect(
     useCallback(() => {
@@ -459,6 +462,10 @@ export default function CalendarScreen() {
           // The Month view opens on the month of the chosen day
           if (tab === 'month') setShownMonth(selectedDate);
           setViewMode(tab as CalendarViewMode);
+          // The view used last is the one the Planning opens on next time (sheet 029)
+          const next = { ...prefs, openView: tab as PlanningPrefs['openView'] };
+          setPrefs(next);
+          void SettingsRepository.update({ planningPrefs: next, updatedAt: new Date().toISOString() }).catch(() => undefined);
         }}
       />
 
@@ -559,7 +566,7 @@ export default function CalendarScreen() {
         </ScrollView>
       ) : viewMode === 'month' ? (
         <MonthView
-          weekStart={prefs.weekStart}
+          weekStart={weekStartsOn}
           month={shownMonth}
           selected={selectedDate}
           items={monthItems}

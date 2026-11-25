@@ -364,11 +364,6 @@ export const REST_EN: Record<keyof typeof REST_FR, string> = {
   'planning.taskBadge': 'Task',
   'planning.deviceBadge': 'Phone calendar',
   // The Planning settings (sheet 028)
-  'planningSettings.hint': 'The view it opens on, the first day of the week, and the step when you drag a card.',
-  'planningSettings.openView': 'Opens on',
-  'planningSettings.weekStart': 'The week starts on',
-  'planningSettings.monday': 'Monday',
-  'planningSettings.sunday': 'Sunday',
   'planningSettings.dragStep': 'A card moves by',
   'planningSettings.minutes': '{minutes} min',
   'step.a11y': 'Step {current} of {total}',

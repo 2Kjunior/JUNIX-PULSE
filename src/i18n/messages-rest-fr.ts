@@ -362,11 +362,6 @@ export const REST_FR = {
   'planning.taskBadge': 'Tâche',
   'planning.deviceBadge': 'Agenda du téléphone',
   // The Planning settings (sheet 028)
-  'planningSettings.hint': 'La vue qui s’ouvre, le premier jour de la semaine, et le pas quand on fait glisser une carte.',
-  'planningSettings.openView': 'S’ouvre sur',
-  'planningSettings.weekStart': 'La semaine commence le',
-  'planningSettings.monday': 'Lundi',
-  'planningSettings.sunday': 'Dimanche',
   'planningSettings.dragStep': 'Une carte glisse par',
   'planningSettings.minutes': '{minutes} min',
   'step.a11y': 'Étape {current} sur {total}',

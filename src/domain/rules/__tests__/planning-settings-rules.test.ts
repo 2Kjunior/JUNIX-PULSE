@@ -1,6 +1,6 @@
 import { knownRelationKey } from '../person-rules';
 import { monthGrid, movedStart, snapMinutes } from '../planning-move-rules';
-import { DEFAULT_PLANNING_PREFS, planningPrefsOf, planningPrefsText } from '../planning-settings-rules';
+import { DEFAULT_PLANNING_PREFS, planningPrefsOf, planningPrefsText, weekStartOf } from '../planning-settings-rules';
 
 describe('planning settings (sheet 028)', () => {
   it('reads the settings strictly and falls back on each value', () => {
@@ -45,5 +45,14 @@ describe('knownRelationKey (sheet 028)', () => {
     expect(knownRelationKey('Maman', labels)).toBeNull();
     expect(knownRelationKey('', labels)).toBeNull();
     expect(knownRelationKey(undefined, labels)).toBeNull();
+  });
+});
+
+describe('weekStartOf (sheet 029)', () => {
+  it('takes the first day of the week from the language', () => {
+    expect(weekStartOf(1)).toBe(1);
+    expect(weekStartOf(0)).toBe(0);
+    expect(weekStartOf(6)).toBe(1);
+    expect(weekStartOf(undefined)).toBe(1);
   });
 });

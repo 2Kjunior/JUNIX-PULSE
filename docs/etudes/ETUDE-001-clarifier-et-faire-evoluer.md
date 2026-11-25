@@ -620,3 +620,6 @@ Un nouvel utilisateur arrive en **thème clair** (aujourd'hui : sombre). Il peut
 - **Thèmes de saison** : icônes et couleurs qui suivent les fêtes (Noël, Halloween, Thanksgiving…), fond et mode qui s'adaptent.
 - **Plusieurs thèmes de couleurs**, comme Telegram ou WhatsApp, et la possibilité de **créer les siens** ; peut-être une **communauté** qui en partage.
 
+### 16.6 Corrections du 25 novembre 2026 (fiche 029)
+
+Après l'APK de la fiche 028 : les réglages du Planning sont jugés **vagues**. On garde seulement **« Une carte glisse par »** et **« Agenda du téléphone »**, sur la **première page** des Paramètres. **Le premier jour de la semaine** suit la langue, et le Planning **rouvre sur la dernière vue utilisée** : l'appli s'en occupe, l'utilisateur n'a rien à choisir. La grille du Mois, décalée sur Android, est refaite en 6 lignes de 7.

@@ -202,7 +202,11 @@ export const MonthView = memo(function MonthView({
           ))}
         </View>
         <View ref={gridRef} collapsable={false} style={styles.grid}>
-          {days.map(day => {
+          {/* Six rows of seven days (sheet 029): each day takes a seventh of its row, so no rounding
+              of a percentage can push the seventh day to the next row, as it did on Android */}
+          {[0, 1, 2, 3, 4, 5].map(row => (
+          <View key={row} style={styles.gridRow}>
+          {days.slice(row * 7, row * 7 + 7).map(day => {
             const key = dayKey(day);
             const things = byDay.get(key) ?? [];
             const { dots, more } = dayDots(things.map(thing => thing.look.color));
@@ -232,6 +236,8 @@ export const MonthView = memo(function MonthView({
               </TouchableOpacity>
             );
           })}
+          </View>
+          ))}
 
           {/* While a card is lifted: the two edges that turn the page */}
           {lifted && (
@@ -319,8 +325,9 @@ function makeMonthStyles(theme: ThemePalette) {
     },
     weekRow: { flexDirection: 'row' },
     weekday: { flex: 1, textAlign: 'center', ...Typography.labelSmall, color: theme.onSurface.variant, fontWeight: '700', paddingVertical: 4 },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', position: 'relative' },
-    cell: { width: `${100 / 7}%`, height: CELL_HEIGHT, alignItems: 'center', paddingTop: 3 },
+    grid: { position: 'relative' },
+    gridRow: { flexDirection: 'row' },
+    cell: { flex: 1, minWidth: 0, height: CELL_HEIGHT, alignItems: 'center', paddingTop: 3 },
     dayCircle: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
     dayCircleToday: { borderWidth: 1.5, borderColor: theme.primary.default },
     dayCircleSelected: { backgroundColor: theme.primary.default, borderColor: theme.primary.default },

@@ -85,7 +85,7 @@ const APPEARANCE_OPTIONS: {
 ];
 
 /** The pages of the settings: the summary lists them, each opens on its own. */
-type SettingsSection = 'notifications' | 'planning' | 'mascot' | 'security' | 'data';
+type SettingsSection = 'notifications' | 'mascot' | 'security' | 'data';
 type SettingsPage = SettingsSection;
 
 const HUB_SECTIONS: readonly {
@@ -95,8 +95,6 @@ const HUB_SECTIONS: readonly {
   color: 'primary' | 'tertiary' | 'success' | 'error';
 }[] = [
   { id: 'notifications', titleKey: 'settingsHub.notifications', icon: 'notifications-outline', color: 'tertiary' },
-  // The Planning (sheet 028): its view, the week, the step, and the phone's calendar
-  { id: 'planning', titleKey: 'tab.calendar', icon: 'calendar-outline', color: 'primary' },
   { id: 'mascot', titleKey: 'mascotSettings.title', icon: 'happy-outline', color: 'primary' },
   { id: 'security', titleKey: 'settingsHub.security', icon: 'shield-checkmark-outline', color: 'success' },
   { id: 'data', titleKey: 'settingsHub.data', icon: 'cloud-outline', color: 'tertiary' },
@@ -504,14 +502,8 @@ export default function SettingsScreen() {
   });
 
 
-  // The Planning in one line, for the summary
+  // The Planning settings: only the step of a move is chosen here (sheet 029)
   const planningPrefs = settings.planningPrefs ?? DEFAULT_PLANNING_PREFS;
-  const planningViewKeys = { agenda: 'calendar.view.agenda', timetable: 'calendar.view.day', week: 'calendar.view.week', month: 'planning.view.month' } as const;
-  const planningSummary = [
-    t(planningViewKeys[planningPrefs.openView]),
-    t(planningPrefs.weekStart === 0 ? 'planningSettings.sunday' : 'planningSettings.monday'),
-    t('planningSettings.minutes', { minutes: planningPrefs.dragStep }),
-  ].join(' · ');
 
   const summaries: Record<SettingsSection, string> = {
     notifications: settings.notificationsEnabled
@@ -530,7 +522,6 @@ export default function SettingsScreen() {
       isSanctumPinConfigured ? t('settingsHub.sanctumOn') : t('settingsHub.sanctumOff'),
     ].join(' · '),
     data: autoBackup ? autoBackupStatus : t('settingsHub.backupOff'),
-    planning: planningSummary,
   };
 
   const renderHub = () => (
@@ -568,6 +559,9 @@ export default function SettingsScreen() {
 
       {/* Apparence : choisie ici même, sans page à ouvrir */}
       {renderAppearance()}
+
+      {/* The Planning, on this first page (sheet 029): the step of a move and the phone's calendar */}
+      {renderPlanning()}
 
       <View style={styles.hubGroup}>
         {HUB_SECTIONS.map((section, index) => (
@@ -849,13 +843,12 @@ export default function SettingsScreen() {
     </View>
   );
 
-  // The Planning page (sheet 028): how it opens, the week, the step of a move, the phone's calendar
+  // The Planning (sheets 028 and 029): the step of a move, and the phone's calendar. The first day
+  // of the week follows the language, and the Planning opens on the view used last: no choice here
   const renderPlanning = () => (
-    <View>
-      <View style={styles.rowCol}>
-        <Text style={styles.rowSub}>{t('planningSettings.hint')}</Text>
-        <PlanningSetting value={planningPrefs} onChange={handleUpdatePlanning} />
-      </View>
+    <View style={[styles.hubGroup, styles.appearanceGroup]}>
+      <Text style={styles.sectionLabel}>{t('tab.calendar')}</Text>
+      <PlanningSetting value={planningPrefs} onChange={handleUpdatePlanning} />
       {Platform.OS !== 'web' && (
         <View style={styles.row}>
           <View style={styles.rowTextFill}>
@@ -925,7 +918,6 @@ export default function SettingsScreen() {
 
   const PAGES: Record<SettingsPage, () => ReactElement> = {
     notifications: renderNotifications,
-    planning: renderPlanning,
     mascot: renderMascot,
     security: renderSecurity,
     data: renderData,
