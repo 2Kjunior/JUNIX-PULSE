@@ -416,13 +416,14 @@ export default function RootLayout() {
       const reminderId = data?.reminderId as string | undefined;
 
       // Jouer le son Junix Pulse en foreground (le système ne joue pas de son car shouldPlaySound: false)
-      // A discreet notification stays silent, in the app too (sheet 011)
-      if (data?.level !== "discreet") NotificationSoundService.play(!splashFinishedRef.current);
+      // The sound it was planned with (sheet 031); without one, as before: discreet stays silent
+      const sound = typeof data?.sound === "string" ? data.sound : undefined;
+      if (sound || data?.level !== "discreet") NotificationSoundService.play(!splashFinishedRef.current, sound);
 
       if (reminderId) {
         void announceReminderArrived(reminderId);
         GlassAlert.alert(
-          `🔔 ${title}`,
+          title,
           body || tNow("layout.reminderDue"),
           [
             { text: tNow("layout.later"), style: "cancel" },

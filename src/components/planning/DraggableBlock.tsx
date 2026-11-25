@@ -12,6 +12,9 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 
 
 import { useT } from '@/i18n';
 
+/** How far a finger may move during a tap, in points: beyond it, the card does not open. */
+export const TAP_MAX_DISTANCE = 10;
+
 /** How long the finger stays before the card lifts. */
 export const LIFT_DELAY_MS = 350;
 
@@ -103,7 +106,9 @@ export function DraggableBlock({
     },
   });
 
+  // A touch that moves more than a finger's width is a scroll, not a tap (sheet 031)
   const tap = useTapGesture({
+    maxDistance: TAP_MAX_DISTANCE,
     onActivate: () => {
       'worklet';
       runOnJS(press)();

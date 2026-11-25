@@ -9,7 +9,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday } from 'date-fns';
 import { memo, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// The ScrollView of the gestures: a scroll cancels the tap of a card under the finger (sheet 031)
+import { ScrollView } from 'react-native-gesture-handler';
 
 import { GlowCard } from '@/components/ui/GlowCard';
 import { planningLook, taskAccent, eventAccent } from '@/constants/planning-look';
@@ -296,6 +298,7 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                     note={card.kind === 'reminder' ? card.reminder.notes : null}
                     showOptions={card.kind === 'reminder' && box.columns <= 2}
                     narrow={columnWidth < NARROW_CARD_WIDTH}
+                    alarm={(card.kind === 'reminder' ? card.reminder.alertLevel : card.kind === 'event' ? card.event.alertLevel : undefined) === 'alarm'}
                   />
                 </DraggableBlock>
               );

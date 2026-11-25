@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 
 import { SwipeableItem } from '../components/ui/SwipeableItem';
@@ -89,9 +90,14 @@ describe('timetable grid', () => {
     let root: ReactTestRenderer.ReactTestRenderer;
     act(() => {
       root = ReactTestRenderer.create(
-        <WeeklyTimetableGrid blocks={[]} onAddBlock={jest.fn()} onDeleteBlock={jest.fn()} />
+        // Its scroll is the one of the gestures (sheet 031): under their root, as in the app
+        <GestureHandlerRootView>
+          <WeeklyTimetableGrid blocks={[]} onAddBlock={jest.fn()} onDeleteBlock={jest.fn()} />
+        </GestureHandlerRootView>
       );
     });
     expect(root!.toJSON()).toBeTruthy();
+    // Its scroll measures itself after the render: unmounted, nothing updates once the test is done
+    act(() => root!.unmount());
   });
 });

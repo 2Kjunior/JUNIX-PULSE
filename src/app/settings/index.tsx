@@ -66,6 +66,10 @@ import { timezoneLabel } from '@/constants/timezones';
 import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
+import { SoundSetting } from '@/components/settings/SoundSetting';
+import { offerExactAlarmsForAlarmLevel } from '@/features/reminders/offer-exact-alarms';
+import { DEFAULT_SOUND_PREFS, type SoundChoice, type SoundPrefs } from '@/domain/rules/sound-rules';
+import { NotificationSoundService } from '@/services/sound/NotificationSoundService';
 import { PlanningSetting } from '@/components/settings/PlanningSetting';
 import { GlassDialog } from '@/components/feedback/GlassDialog';
 import { DEFAULT_ALERT_DEFAULTS, type AlertFamily } from '@/domain/rules/notification-level-rules';
@@ -398,6 +402,22 @@ export default function SettingsScreen() {
     }
   };
 
+  // The sound of each level (sheet 031): the planned notifications move to the channels of their new sound
+  const handleUpdateSounds = async (soundPrefs: SoundPrefs) => {
+    try {
+      await SettingsRepository.update({ soundPrefs, updatedAt: new Date().toISOString() });
+      setSettings(s => (s ? { ...s, soundPrefs } : s));
+      await syncReminderNotifications({ force: true });
+      showSnackbar(t('soundSettings.saved'));
+    } catch (e) {
+      GlassAlert.alert(t('common.error'), e instanceof Error ? e.message : t('common.genericError'));
+    }
+  };
+  // Listening before choosing: up to six seconds, the length of a turn of the long alarms
+  const handlePreviewSound = (sound: SoundChoice) => {
+    void NotificationSoundService.preview(sound, 6000);
+  };
+
   // The default level of each family (sheet 023): the planned notifications follow at once
   const handleUpdateAlertDefault = async (family: AlertFamily, level: AlertLevel) => {
     if (!settings) return;
@@ -405,6 +425,8 @@ export default function SettingsScreen() {
     try {
       await SettingsRepository.update({ alertLevels, updatedAt: new Date().toISOString() });
       setSettings(s => (s ? { ...s, alertLevels } : s));
+      // An Alarm by default needs exact alarms to ring at the minute (sheet 031)
+      if (level === 'alarm') void offerExactAlarmsForAlarmLevel();
       await syncReminderNotifications();
       showSnackbar(t('alertDefaults.saved'));
     } catch (e) {
@@ -700,6 +722,33 @@ export default function SettingsScreen() {
         </View>
       )}
 
+      {settings.notificationsEnabled && settings.notificationSoundEnabled && (
+        <View style={styles.rowCol}>
+          <Text style={styles.rowLabel}>{t('soundSettings.title')}</Text>
+          <Text style={styles.rowSub}>{t('soundSettings.hint')}</Text>
+          <SoundSetting
+            value={settings.soundPrefs ?? DEFAULT_SOUND_PREFS}
+            onChange={handleUpdateSounds}
+            onPreview={handlePreviewSound}
+          />
+        </View>
+      )}
+      {settings.notificationsEnabled && settings.notificationSoundEnabled && (
+        <View style={styles.row}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('soundSettings.tones')}</Text>
+            <Text style={styles.rowSub}>{t('soundSettings.tonesHint')}</Text>
+          </View>
+          <Switch
+            value={(settings.soundPrefs ?? DEFAULT_SOUND_PREFS).momentTones}
+            onValueChange={momentTones => handleUpdateSounds({ ...(settings.soundPrefs ?? DEFAULT_SOUND_PREFS), momentTones })}
+            {...switchColors((settings.soundPrefs ?? DEFAULT_SOUND_PREFS).momentTones)}
+            accessibilityLabel={t('soundSettings.tones')}
+            testID="sound-tones"
+          />
+        </View>
+      )}
+
       {settings.notificationsEnabled && (
         <View style={styles.rowCol}>
           <Text style={styles.rowLabel}>{t('alertDefaults.title')}</Text>
@@ -848,8 +897,9 @@ export default function SettingsScreen() {
     <View style={[styles.hubGroup, styles.appearanceGroup]}>
       <Text style={styles.sectionLabel}>{t('tab.calendar')}</Text>
       <PlanningSetting value={planningPrefs} onChange={handleUpdatePlanning} />
+      {/* Set apart from the chips of the step by a line, as in the Appearance group (sheet 031) */}
       {Platform.OS !== 'web' && (
-        <View style={styles.row}>
+        <View style={[styles.glassRow, styles.groupRowApart]}>
           <View style={styles.rowTextFill}>
             <Text style={styles.rowLabel}>{t('deviceCalendar.label')}</Text>
             <Text style={styles.rowSub}>{t('deviceCalendar.hint')}</Text>

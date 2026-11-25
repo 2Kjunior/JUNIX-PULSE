@@ -64,7 +64,16 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#8B5CF6",
           "sounds": [
-            "./assets/sounds/junix_pulse_notification.wav"
+            "./assets/sounds/junix_pulse_notification.wav",
+            "./assets/sounds/junix_soft.wav",
+            "./assets/sounds/junix_festive.wav",
+            "./assets/sounds/junix_sober.wav",
+            "./assets/sounds/junix_alarm.wav",
+            "./assets/sounds/junix_wake.wav",
+            "./assets/sounds/junix_crystal.wav",
+            "./assets/sounds/junix_drop.wav",
+            "./assets/sounds/junix_dawn.wav",
+            "./assets/sounds/junix_march.wav"
           ],
           "androidChannels": [
             {

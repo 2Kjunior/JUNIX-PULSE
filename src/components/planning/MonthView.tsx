@@ -11,7 +11,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { format, isSameDay, isSameMonth, isToday } from 'date-fns';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// The ScrollView of the gestures: a scroll cancels the tap of a card under the finger (sheet 031)
+import { ScrollView } from 'react-native-gesture-handler';
 
 import type { PlanningKind, PlanningLook } from '@/constants/planning-look';
 import type { ThemePalette } from '@/constants/palettes';
@@ -286,6 +288,7 @@ export const MonthView = memo(function MonthView({
                 place={item.place}
                 done={item.done}
                 index={index}
+                alarm={(item.reminder?.alertLevel ?? item.event?.alertLevel) === 'alarm'}
               />
             </DraggableBlock>
           ))}

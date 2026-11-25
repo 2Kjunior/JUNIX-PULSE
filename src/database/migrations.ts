@@ -685,5 +685,14 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN planning_prefs TEXT;
     `,
   },
+  {
+    version: 40,
+    name: 'add_sound_prefs',
+    sql: `
+      -- Les sons choisis (fiche 031, etude 16.7) : discret, normal, alarme, et les tons
+      -- des moments. Vide : les sons par defaut (Leger, Pulse, Alarme, tons gardes).
+      ALTER TABLE settings ADD COLUMN sound_prefs TEXT;
+    `,
+  },
 ];
 

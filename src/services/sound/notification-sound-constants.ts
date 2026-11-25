@@ -7,6 +7,23 @@
 export const NOTIFICATION_SOUND_MP3 = require("../../../assets/sounds/junix-pulse-notification.mp3") as number;
 
 /**
+ * The file each sound of Junix plays in the app (sheet 031). A require must be static for the
+ * bundler: one line per sound of sound-rules. Pulse keeps its MP3 of before.
+ */
+export const IN_APP_SOUND_FILES: Readonly<Record<string, number>> = {
+  pulse: NOTIFICATION_SOUND_MP3,
+  soft: require("../../../assets/sounds/junix_soft.wav") as number,
+  festive: require("../../../assets/sounds/junix_festive.wav") as number,
+  sober: require("../../../assets/sounds/junix_sober.wav") as number,
+  alarm: require("../../../assets/sounds/junix_alarm.wav") as number,
+  wake: require("../../../assets/sounds/junix_wake.wav") as number,
+  crystal: require("../../../assets/sounds/junix_crystal.wav") as number,
+  drop: require("../../../assets/sounds/junix_drop.wav") as number,
+  dawn: require("../../../assets/sounds/junix_dawn.wav") as number,
+  march: require("../../../assets/sounds/junix_march.wav") as number,
+};
+
+/**
  * WAV filename declared in app.json expo-notifications plugin (iOS + Android).
  * The file must exist at assets/sounds/<NOTIFICATION_SOUND_WAV_FILENAME>.
  * iOS requires WAV/AIFF/CAF, duration < 30 s.

@@ -4,7 +4,8 @@
  * and only touches what differs, so it is safe to call after any change.
  */
 
-import { ITEM_IDENTIFIER_PREFIX, planItemNotifications } from '@/domain/rules/item-notification-rules';
+import { ITEM_IDENTIFIER_PREFIX, planItemNotifications, type PlannedItemNotification } from '@/domain/rules/item-notification-rules';
+import { soundFor } from '@/domain/rules/sound-rules';
 import { levelOf, quietHoursOf } from '@/domain/rules/notification-level-rules';
 import { EventRepository } from '@/repositories/event-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
@@ -29,6 +30,10 @@ async function sync(force: boolean): Promise<void> {
         })
       : [];
 
+    // The sound of each notification: its level, the tone of its moment, the settings (sheet 031)
+    const soundOf = (item: { level: PlannedItemNotification['level']; tone?: PlannedItemNotification['tone'] }) =>
+      soundFor({ level: item.level, tone: item.tone, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled });
+
     const held = (await NotificationService.getAllScheduled()).filter(request =>
       request.identifier.startsWith(ITEM_IDENTIFIER_PREFIX)
     );
@@ -42,7 +47,9 @@ async function sync(force: boolean): Promise<void> {
         item &&
         item.title === request.content.title &&
         item.body === request.content.body &&
-        levelOf(request.content.data?.level) === item.level
+        levelOf(request.content.data?.level) === item.level &&
+        // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
+        request.content.data?.sound === soundOf(item)
       ) {
         upToDate.add(request.identifier);
       } else {
@@ -64,6 +71,7 @@ async function sync(force: boolean): Promise<void> {
         scheduledAt: item.scheduledAt,
         level: item.level,
         soundOn: settings.notificationSoundEnabled,
+        sound: soundOf(item),
       });
     }
   } catch {

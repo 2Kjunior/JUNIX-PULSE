@@ -10,9 +10,21 @@ import { NotificationService } from '@/services/notification-service';
 import { syncReminderNotifications } from '@/services/reminder-notification-service';
 
 export async function offerExactAlarmsForConfirmation(): Promise<void> {
+  await offerExactAlarms(t('confirmReminder.exactTitle'), t('confirmReminder.exactBody'));
+}
+
+/**
+ * An Alarm rings at the minute or not at all (sheet 031): choosing it offers exact alarms, once,
+ * when they are not allowed yet. Nothing is asked when they are, or when Android cannot ask.
+ */
+export async function offerExactAlarmsForAlarmLevel(): Promise<void> {
+  await offerExactAlarms(t('alertLevel.exactTitle'), t('alertLevel.exactBody'));
+}
+
+async function offerExactAlarms(title: string, body: string): Promise<void> {
   const { granted, canAsk } = await NotificationService.getExactAlarmStatus();
   if (granted || !canAsk) return;
-  GlassAlert.alert(t('confirmReminder.exactTitle'), t('confirmReminder.exactBody'), [
+  GlassAlert.alert(title, body, [
     { text: t('permissions.exactAlarms.later'), style: 'cancel' },
     {
       text: t('permissions.exactAlarms.allow'),

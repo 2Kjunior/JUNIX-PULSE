@@ -15,10 +15,11 @@ import { useMemo, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+// The ScrollView of the gestures: a scroll cancels the tap of a card under the finger (sheet 031)
+import { ScrollView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday } from 'date-fns';
 import { useDateLocale, useT } from '@/i18n';

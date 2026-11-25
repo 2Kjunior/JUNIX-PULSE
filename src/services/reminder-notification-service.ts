@@ -18,6 +18,8 @@ import { syncItemNotifications } from '@/services/item-notification-service';
 import { syncHabitNotifications } from '@/services/habit-notification-service';
 import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
+import { soundFor } from '@/domain/rules/sound-rules';
+import type { NotificationLevel } from '@/domain/rules/notification-level-rules';
 
 export interface ReminderSyncOptions {
   /** After a user action: may ask for the permission, and reports problems to the user. */
@@ -59,6 +61,9 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
   const report: ReminderSyncReport = { scheduled: 0, failed: 0, permissionDenied: false };
   try {
     const settings = await SettingsRepository.get();
+    // The sound of each notification, from its level and the settings (sheet 031)
+    const soundOf = (level: NotificationLevel) =>
+      soundFor({ level, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled });
     const planned = settings.notificationsEnabled
       ? planReminderNotifications(
           await loadReminders(),
@@ -84,6 +89,8 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         item.body === request.content.body &&
         // A reminder whose level changed (night, urgency) moves to the channel of its new level
         levelOf(request.content.data?.level) === item.level &&
+        // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
+        request.content.data?.sound === soundOf(item.level) &&
         // Notifications planned before the buttons existed are planned again with them
         request.content.categoryIdentifier === REMINDER_CATEGORY_ID
       ) {
@@ -113,6 +120,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         scheduledAt: item.scheduledAt,
         silent: !settings.notificationSoundEnabled,
         level: item.level,
+        sound: soundOf(item.level),
       });
       if (scheduled) report.scheduled += 1;
       else report.failed += 1;

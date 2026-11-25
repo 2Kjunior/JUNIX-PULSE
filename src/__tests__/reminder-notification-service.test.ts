@@ -30,9 +30,10 @@ const REMINDER = {
   status: 'UPCOMING',
 };
 
-const held = (identifier: string, title = 'Appeler', body = 'Rappel Junix Pulse') => ({
+// A notification held by the phone, planned with the sound of its level (sheet 031)
+const held = (identifier: string, title = 'Appeler', body = 'Rappel Junix Pulse', sound = 'pulse') => ({
   identifier,
-  content: { title, body, categoryIdentifier: 'reminder_actions' },
+  content: { title, body, categoryIdentifier: 'reminder_actions', data: { sound } },
 });
 
 const scheduled = NotificationService.scheduleReminder as jest.Mock;
@@ -63,6 +64,15 @@ describe('syncReminderNotifications', () => {
 
     expect(scheduled).not.toHaveBeenCalled();
     expect(cancelled).not.toHaveBeenCalled();
+  });
+
+  it('replaces a notification whose sound changed in the settings (sheet 031)', async () => {
+    (NotificationService.getAllScheduled as jest.Mock).mockResolvedValue([held(IDENTIFIER, 'Appeler', 'Rappel Junix Pulse', 'crystal')]);
+
+    await syncReminderNotifications();
+
+    expect(cancelled).toHaveBeenCalledWith(IDENTIFIER);
+    expect(scheduled).toHaveBeenCalledWith(expect.objectContaining({ sound: 'pulse' }));
   });
 
   it('replaces a notification whose text changed', async () => {

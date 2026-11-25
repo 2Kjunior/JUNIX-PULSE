@@ -111,7 +111,8 @@ export function TodoRow({
           {entry.title}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Ionicons name={rings ? 'notifications' : 'calendar-outline'} size={13} color={rings ? accent : palette.onSurface.variant} />
+          {/* An Alarm shows its alarm clock (sheet 031) */}
+          <Ionicons name={rings ? (entry.alarm ? 'alarm' : 'notifications') : 'calendar-outline'} size={13} color={rings ? accent : palette.onSurface.variant} />
           <Text style={{ ...Typography.labelMedium, color: palette.onSurface.variant }} numberOfLines={1}>
             {whenLabel}
           </Text>

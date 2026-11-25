@@ -9,6 +9,7 @@
 import { Event, Task } from '../entities';
 import { translate } from '../../i18n/translate';
 import type { AppLanguage } from './language-rules';
+import { MOMENT_KIND_TONES, momentKindOf, type MomentTone } from './moment-kind-rules';
 import {
   AlertDefaults,
   DEFAULT_ALERT_DEFAULTS,
@@ -39,6 +40,8 @@ export interface PlannedItemNotification {
   body: string;
   scheduledAt: Date;
   level: NotificationLevel;
+  /** The tone of a moment (festive, neutral, sober): its sound follows it (sheet 031). */
+  tone?: MomentTone;
 }
 
 export interface ItemPlanInput {
@@ -74,7 +77,7 @@ export function planItemNotifications({
 }: ItemPlanInput): PlannedItemNotification[] {
   const planned: PlannedItemNotification[] = [];
   const add = (
-    item: Omit<PlannedItemNotification, 'identifier' | 'level'>,
+    item: Omit<PlannedItemNotification, 'identifier' | 'level' | 'tone'>,
     priority?: Task['priority'],
     // A moment: its type and the level chosen for it (sheet 023)
     moment?: Pick<Event, 'momentKind' | 'alertLevel'>
@@ -93,6 +96,7 @@ export function planItemNotifications({
         chosen: moment?.alertLevel,
         momentKind: moment?.momentKind,
       }),
+      ...(item.itemType === 'EVENT' ? { tone: MOMENT_KIND_TONES[momentKindOf(moment?.momentKind)] } : {}),
     });
   };
 

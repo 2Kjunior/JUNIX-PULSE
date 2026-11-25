@@ -22,6 +22,7 @@ import {
   NOTIFICATION_SOUND_MP3,
   NOTIFICATION_SOUND_VOLUME,
   NOTIFICATION_SOUND_MIN_INTERVAL_MS,
+  IN_APP_SOUND_FILES,
 } from "./notification-sound-constants";
 
 // ─── Internal state ──────────────────────────────────────────────────────────
@@ -32,6 +33,9 @@ let _lastPlayedAt = 0;
 /** Whether a play is already in progress (prevents concurrent plays). */
 let _isPlaying = false;
 
+/** The sound being heard in the settings, stopped by the next one (sheet 031). */
+let _previewPlayer: ReturnType<typeof createAudioPlayer> | null = null;
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 export const NotificationSoundService = {
@@ -40,8 +44,13 @@ export const NotificationSoundService = {
    *
    * @param splashVisible - Pass `true` while the launch animation is running
    *   to prevent overlap with the launch sound.
+   * @param sound - The sound the notification was planned with (sheet 031): "none" stays
+   *   silent, an unknown or missing one plays the Pulse of before.
+   * @param timeoutMs - How long it may ring: a preview of an alarm plays a few seconds.
    */
-  async play(splashVisible = false): Promise<void> {
+  async play(splashVisible = false, sound?: string, timeoutMs = 3000): Promise<void> {
+    if (sound === "none") return;
+
     // Guard: do not play during the splash animation.
     if (splashVisible) {
       logger.info("[NotificationSoundService] Splash visible — skipping sound");
@@ -78,7 +87,7 @@ export const NotificationSoundService = {
     let player: ReturnType<typeof createAudioPlayer> | null = null;
 
     try {
-      player = createAudioPlayer(NOTIFICATION_SOUND_MP3);
+      player = createAudioPlayer((sound && IN_APP_SOUND_FILES[sound]) || NOTIFICATION_SOUND_MP3);
 
       // Respect the system volume and do not interrupt other audio (duck only).
       // expo-audio respects silent mode on iOS by default (AudioSession).
@@ -91,7 +100,7 @@ export const NotificationSoundService = {
 
       // Wait for the MP3 to finish before releasing the player.
       // The notification sound is ~1.5 s; we wait up to 3 s then release anyway.
-      await _waitForPlayback(player, 3000);
+      await _waitForPlayback(player, timeoutMs);
     } catch (err) {
       logger.warn("[NotificationSoundService] Playback failed (silent)", err);
     } finally {
@@ -100,6 +109,33 @@ export const NotificationSoundService = {
         player?.remove();
       } catch {
         // Ignore cleanup errors.
+      }
+    }
+  },
+
+  /**
+   * Plays a sound to hear it before choosing it (settings, sheet 031): no anti-spam and no check of
+   * the settings, and a new preview stops the one still ringing.
+   */
+  async preview(sound: string, timeoutMs = 6000): Promise<void> {
+    if (sound === "none") return;
+    _previewPlayer?.remove();
+    const player = createAudioPlayer(IN_APP_SOUND_FILES[sound] ?? NOTIFICATION_SOUND_MP3);
+    _previewPlayer = player;
+    try {
+      player.volume = NOTIFICATION_SOUND_VOLUME;
+      await player.play();
+      await _waitForPlayback(player, timeoutMs);
+    } catch (err) {
+      logger.warn("[NotificationSoundService] Preview failed (silent)", err);
+    } finally {
+      if (_previewPlayer === player) {
+        _previewPlayer = null;
+        try {
+          player.remove();
+        } catch {
+          // Ignore cleanup errors.
+        }
       }
     }
   },

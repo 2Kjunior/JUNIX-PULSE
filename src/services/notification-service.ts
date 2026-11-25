@@ -19,6 +19,7 @@ import {
 } from "@/domain/rules/reminder-notification-rules";
 import { Platform } from "react-native";
 import { NOTIFICATION_CHANNEL_ID, NOTIFICATION_SOUND_WAV_FILENAME } from "@/services/sound/notification-sound-constants";
+import { SOUNDS, soundChannelId, soundChannels, type SoundChoice } from "@/domain/rules/sound-rules";
 import { HABIT_ACTION_DONE, HABIT_CATEGORY_ID } from "@/domain/rules/habit-notification-rules";
 import {
   notificationChannelFor,
@@ -43,7 +44,8 @@ try {
 }
 
 // Canal distinct des rappels : importance normale, désactivable séparément dans Android
-const DAILY_RECAP_CHANNEL_ID = "junix-pulse-daily-recap";
+// The second one, with the light sound of Junix (sheet 031): a channel's sound cannot change
+const DAILY_RECAP_CHANNEL_ID = "junix-pulse-daily-recap-v2";
 const NOTIFICATION_SILENT_CHANNEL_ID = "junix-pulse-reminders-silent-v1";
 // The levels of study 001 (12.6). A channel's sound and importance are fixed when it is created:
 // other settings mean a new identifier, never a change to these
@@ -79,6 +81,8 @@ export interface ScheduleReminderParams {
   data?: Record<string, unknown>;
   /** How loud it rings (sheet 011); normal when not given. */
   level?: NotificationLevel;
+  /** The sound it rings with (sheet 031); without it, the sound of Junix of before. */
+  sound?: SoundChoice;
 }
 
 export interface ScheduleItemParams {
@@ -90,6 +94,8 @@ export interface ScheduleItemParams {
   scheduledAt: Date;
   level: NotificationLevel;
   soundOn: boolean;
+  /** The sound it rings with (sheet 031). */
+  sound?: SoundChoice;
 }
 
 export interface ScheduleHabitParams {
@@ -100,6 +106,18 @@ export interface ScheduleHabitParams {
   scheduledAt: Date;
   level: NotificationLevel;
   soundOn: boolean;
+  /** The sound it rings with (sheet 031). */
+  sound?: SoundChoice;
+}
+
+/** The file a sound plays, for iOS (Android takes the sound of the channel); false: silence. */
+function soundFileOf(sound: SoundChoice): string | false {
+  return sound === "none" ? false : `${SOUNDS[sound].file}.wav`;
+}
+
+/** The channel of a task, a moment or a habit: the one of its sound, or of its level as before. */
+function itemChannelOf(params: { level: NotificationLevel; soundOn: boolean; sound?: SoundChoice }): string {
+  return params.sound ? soundChannelId(params.level, params.sound) : channelIdFor(params.level, params.soundOn);
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -201,7 +219,29 @@ export const NotificationService = {
           importance: Notifications.AndroidImportance.DEFAULT,
           lightColor: "#8B3DF0",
           showBadge: false,
+          sound: `${SOUNDS.soft.file}.wav`,
         });
+
+        // One channel for each level and each sound of Junix (sheet 031): the sound chosen in the
+        // settings picks the channel when a notification is planned
+        const importances = {
+          discreet: Notifications.AndroidImportance.DEFAULT,
+          normal: Notifications.AndroidImportance.HIGH,
+          alarm: Notifications.AndroidImportance.MAX,
+        };
+        for (const { level, sound } of soundChannels()) {
+          await Notifications.setNotificationChannelAsync(soundChannelId(level, sound), {
+            name: t('notifChannel.soundName', { level: t(`alertLevel.${level}`), sound: t(SOUNDS[sound].labelKey) }),
+            description: t(`notifChannel.soundDesc.${level}`),
+            importance: importances[level],
+            vibrationPattern: level === "alarm" ? [0, 600, 300, 600, 300, 600] : [0, 250, 250, 250],
+            enableVibrate: level !== "discreet",
+            lightColor: level === "alarm" ? "#FFB4AB" : "#8B3DF0",
+            showBadge: false,
+            sound: `${SOUNDS[sound].file}.wav`,
+            ...(level === "alarm" ? { lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC, bypassDnd: false } : {}),
+          });
+        }
       }
       // On Android the buttons act without opening the app: expo-notifications hands the tap to the
       // background task, even when the app was closed. Elsewhere they open the app, which acts.
@@ -271,17 +311,25 @@ export const NotificationService = {
             reminderId: params.id,
             type: "REMINDER",
             level: params.level ?? "normal",
+            ...(params.sound ? { sound: params.sound } : {}),
             ...params.data,
           },
           // iOS uses the filename; Android uses the channel's configured sound.
-          sound: params.silent || params.level === "discreet" ? false : NOTIFICATION_SOUND_WAV_FILENAME,
+          sound: params.sound
+            ? soundFileOf(params.sound)
+            : params.silent || params.level === "discreet" ? false : NOTIFICATION_SOUND_WAV_FILENAME,
           categoryIdentifier: REMINDER_CATEGORY_ID,
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: triggerDate,
-          channelId: Platform.OS === "android" ? channelIdFor(params.level ?? "normal", !params.silent) : undefined,
+          channelId:
+            Platform.OS === "android"
+              ? params.sound
+                ? soundChannelId(params.level ?? "normal", params.sound)
+                : channelIdFor(params.level ?? "normal", !params.silent)
+              : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
     } catch {
@@ -311,14 +359,17 @@ export const NotificationService = {
             type: params.itemType,
             [params.itemType === "TASK" ? "taskId" : "eventId"]: params.itemId,
             level: params.level,
+            ...(params.sound ? { sound: params.sound } : {}),
           },
-          sound: params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,
+          sound: params.sound
+            ? soundFileOf(params.sound)
+            : params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,
           priority: priorities[params.level],
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: params.scheduledAt,
-          channelId: Platform.OS === "android" ? channelIdFor(params.level, params.soundOn) : undefined,
+          channelId: Platform.OS === "android" ? itemChannelOf(params) : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
     } catch {
@@ -339,8 +390,10 @@ export const NotificationService = {
         content: {
           title: params.title,
           body: params.body,
-          data: { type: "HABIT", habitId: params.habitId, level: params.level },
-          sound: params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,
+          data: { type: "HABIT", habitId: params.habitId, level: params.level, ...(params.sound ? { sound: params.sound } : {}) },
+          sound: params.sound
+            ? soundFileOf(params.sound)
+            : params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,
           categoryIdentifier: HABIT_CATEGORY_ID,
           priority:
             params.level === "discreet"
@@ -350,7 +403,7 @@ export const NotificationService = {
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: params.scheduledAt,
-          channelId: Platform.OS === "android" ? channelIdFor(params.level, params.soundOn) : undefined,
+          channelId: Platform.OS === "android" ? itemChannelOf(params) : undefined,
         } as import("expo-notifications").DateTriggerInput,
       });
     } catch {

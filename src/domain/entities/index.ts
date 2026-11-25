@@ -29,6 +29,7 @@ import {
 import type { LanguageSetting } from '../rules/language-rules';
 import type { AlertDefaults } from '../rules/notification-level-rules';
 import type { PlanningPrefs } from '../rules/planning-settings-rules';
+import type { SoundPrefs } from '../rules/sound-rules';
 import type { TagColor } from '../rules/tag-rules';
 
 export * from '../enums';
@@ -319,6 +320,8 @@ export interface Settings {
   alertLevels?: AlertDefaults;
   /** The view the Planning opens on, the first day of the week and the step of a move (sheet 028). */
   planningPrefs?: PlanningPrefs;
+  /** The sound of each level, and whether moments keep the sound of their tone (sheet 031). */
+  soundPrefs?: SoundPrefs;
   /**
    * Mode d'apparence choisi : suit le système, clair, ou sombre.
    * Valeur par défaut : 'light' pour un appareil neuf depuis la fiche 028 ('dark' avant).

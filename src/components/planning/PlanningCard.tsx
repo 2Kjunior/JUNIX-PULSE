@@ -44,6 +44,8 @@ export interface PlanningCardProps {
   narrow?: boolean;
   /** A very narrow card (three side by side in a day of the Week view): its icon and its title only. */
   tiny?: boolean;
+  /** It rings as an Alarm (sheet 031): a small alarm clock next to its time. */
+  alarm?: boolean;
 }
 
 export const PlanningCard = memo(function PlanningCard({
@@ -58,6 +60,7 @@ export const PlanningCard = memo(function PlanningCard({
   index,
   narrow = false,
   tiny = false,
+  alarm = false,
 }: PlanningCardProps) {
   const t = useT();
   const { theme } = useTheme();
@@ -96,6 +99,7 @@ export const PlanningCard = memo(function PlanningCard({
         <View style={styles.row}>
           <Ionicons name={done ? 'checkmark-circle' : look.icon} size={13} color={look.color} />
           {!narrow && <Text style={[styles.time, { color: look.color }]}>{time}</Text>}
+          {alarm && <Ionicons name="alarm" size={12} color={look.color} accessibilityLabel={t('alertLevel.alarm')} />}
           <Text style={[styles.title, done && styles.done]} numberOfLines={1}>{title}</Text>
         </View>
       ) : (
@@ -103,6 +107,7 @@ export const PlanningCard = memo(function PlanningCard({
           <View style={styles.head}>
             {badge}
             {!narrow && <Text style={styles.headTime} numberOfLines={1}>{time}</Text>}
+            {alarm && <Ionicons name="alarm" size={12} color={look.color} accessibilityLabel={t('alertLevel.alarm')} />}
           </View>
           <Text style={[styles.title, done && styles.done]} numberOfLines={narrow || !sized || height >= DETAILS_HEIGHT ? 2 : 1}>
             {title}

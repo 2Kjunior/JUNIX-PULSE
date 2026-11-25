@@ -9,6 +9,7 @@ import { View } from 'react-native';
 
 import { ChoiceChips, FieldLabel, type Choice } from '@/components/create/form/FormBricks';
 import type { AlertLevel } from '@/domain/entities';
+import { offerExactAlarmsForAlarmLevel } from '@/features/reminders/offer-exact-alarms';
 import { useT } from '@/i18n';
 
 type Value = AlertLevel | 'auto';
@@ -38,7 +39,11 @@ export function AlertLevelField({
       <ChoiceChips
         options={options}
         value={current}
-        onChange={next => onChange(next === 'auto' ? null : next)}
+        onChange={next => {
+          onChange(next === 'auto' ? null : next);
+          // An Alarm needs exact alarms to ring at the minute (sheet 031)
+          if (next === 'alarm' && current !== 'alarm') void offerExactAlarmsForAlarmLevel();
+        }}
         accent={accent}
         testIDPrefix={testIDPrefix}
       />

@@ -57,6 +57,10 @@ jest.mock('react-native-reanimated', () => {
       exp: (t) => t,
     },
     runOnJS: (fn) => fn,
+    // The ScrollView of the gestures composes its scroll handlers with it (sheet 031)
+    useComposedEventHandler: () => undefined,
+    useEvent: () => undefined,
+    isSharedValue: () => false,
     // Animated components
     View,
   };

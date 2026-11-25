@@ -10,6 +10,7 @@ import { SettingsRepository } from '@/repositories/settings-repository';
 import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
+import { soundFor } from '@/domain/rules/sound-rules';
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -32,6 +33,10 @@ async function sync(force: boolean): Promise<void> {
       alertDefaults: settings.alertLevels,
     });
 
+    // The sound of each notification, from its level and the settings (sheet 031)
+    const soundOf = (level: (typeof planned)[number]['level']) =>
+      soundFor({ level, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled });
+
     const held = (await NotificationService.getAllScheduled()).filter(request =>
       request.identifier.startsWith(HABIT_IDENTIFIER_PREFIX)
     );
@@ -44,7 +49,9 @@ async function sync(force: boolean): Promise<void> {
         item &&
         item.title === request.content.title &&
         item.body === request.content.body &&
-        levelOf(request.content.data?.level) === item.level
+        levelOf(request.content.data?.level) === item.level &&
+        // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
+        request.content.data?.sound === soundOf(item.level)
       ) {
         upToDate.add(request.identifier);
       } else {
@@ -55,7 +62,7 @@ async function sync(force: boolean): Promise<void> {
     const missing = planned.filter(item => !upToDate.has(item.identifier));
     if (missing.length === 0 || !(await NotificationService.checkPermissions())) return;
     for (const item of missing) {
-      await NotificationService.scheduleHabit({ ...item, soundOn: settings.notificationSoundEnabled });
+      await NotificationService.scheduleHabit({ ...item, soundOn: settings.notificationSoundEnabled, sound: soundOf(item.level) });
     }
   } catch {
     logger.error('[HabitNotificationService] Erreur lors de la synchronisation');

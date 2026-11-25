@@ -623,3 +623,11 @@ Un nouvel utilisateur arrive en **thème clair** (aujourd'hui : sombre). Il peut
 ### 16.6 Corrections du 25 novembre 2026 (fiche 029)
 
 Après l'APK de la fiche 028 : les réglages du Planning sont jugés **vagues**. On garde seulement **« Une carte glisse par »** et **« Agenda du téléphone »**, sur la **première page** des Paramètres. **Le premier jour de la semaine** suit la langue, et le Planning **rouvre sur la dernière vue utilisée** : l'appli s'en occupe, l'utilisateur n'a rien à choisir. La grille du Mois, décalée sur Android, est refaite en 6 lignes de 7.
+
+### 16.7 Le n° 9, sons et alarme : décisions du 25 novembre 2026
+
+- **Découpage** : **9-A** les sons de Junix (un par niveau et par ton de moment), leur réglage, et un son quand l'appli est ouverte ; **9-B** l'alarme (sonnerie continue jusqu'à « Arrêter » ou « Plus tard », plein écran si Android l'autorise, sinon notification prioritaire : 10.6) ; **9-C** sonneries et musiques du téléphone. Un APK à essayer à chaque étape.
+- **Le natif** : un **module Android à nous** (Kotlin, avec l'outil officiel d'Expo pour les modules), sans bibliothèque ajoutée, expliqué dans les fiches. Il sert à 9-B et 9-C.
+- **Les sons** : **composés pour Junix** (fabriqués par programme, originaux, libres de droits), dans l'esprit du son de lancement ; **écoutés et validés** avant d'entrer dans l'appli.
+- **9-A fait (fiche 031)** : 10 sons (Pulse, Léger, Festif, Sobre, Alarme, Réveil de 8 s, Cristal, Goutte, Aube, Marche). Défauts : Léger pour les discrètes, Pulse pour les normales, Alarme pour les alarmes, « Sons des moments » allumé (Festif pour anniversaire et fête au niveau normal, Sobre pour deuil et cérémonie ; une alarme garde toujours son son). Réglage dans **Notifications et vibrations → Sons**, avec écoute ▶ ; un canal Android par couple (niveau, son). Choisir « Alarme » propose les alarmes exactes ; un réveil marque les cartes en Alarme. Les 5 premiers sons et Réveil sont validés à l'écoute ; Cristal, Goutte, Aube et Marche **restent à valider**.
+

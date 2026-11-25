@@ -49,6 +49,22 @@ beforeEach(() => {
 });
 
 describe("NotificationSoundService", () => {
+  describe("le son de chaque notification (fiche 031)", () => {
+    it("ne joue rien pour un son « aucun »", async () => {
+      await NotificationSoundService.play(false, "none");
+      expect(mockCreateAudioPlayer).not.toHaveBeenCalled();
+    });
+
+    it("joue le fichier du son choisi, et le Pulse d'avant sans son connu", async () => {
+      const { IN_APP_SOUND_FILES, NOTIFICATION_SOUND_MP3 } = jest.requireActual("@/services/sound/notification-sound-constants");
+      await NotificationSoundService.play(false, "crystal");
+      expect(mockCreateAudioPlayer).toHaveBeenLastCalledWith(IN_APP_SOUND_FILES.crystal);
+      NotificationSoundService._resetLastPlayedAt();
+      await NotificationSoundService.play(false, "inconnu");
+      expect(mockCreateAudioPlayer).toHaveBeenLastCalledWith(NOTIFICATION_SOUND_MP3);
+    });
+  });
+
   describe("splash guard", () => {
     it("ne joue pas de son quand splashActive = true", async () => {
       await NotificationSoundService.play(true);

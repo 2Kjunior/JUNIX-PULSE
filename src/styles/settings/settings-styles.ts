@@ -403,6 +403,10 @@ export const makeSettingsStyles = (t: ThemePalette) => {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: rowBorder,
     },
+    /** A row of a group under chips: room above its line (sheet 031). */
+    groupRowApart: {
+      marginTop: Spacing.md,
+    },
     version: {
       ...Typography.labelSmall,
       color: t.onSurface.disabled,

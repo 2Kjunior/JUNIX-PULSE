@@ -29,6 +29,8 @@ export interface TodoEntry {
   doneAt?: string;
   priority: ReminderPriority;
   tagIds: readonly string[];
+  /** A reminder set to ring as an Alarm (sheet 031): its card shows the alarm clock. */
+  alarm?: boolean;
 }
 
 export interface TodoSection {
@@ -73,6 +75,7 @@ export function entryFromReminder(reminder: Reminder, tagIds: readonly string[] 
     done: reminder.status === 'COMPLETED',
     doneAt: reminder.completedAt,
     priority: reminder.priority,
+    alarm: reminder.alertLevel === 'alarm',
     tagIds,
   };
 }
