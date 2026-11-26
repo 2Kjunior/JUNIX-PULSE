@@ -21,6 +21,14 @@ jest.mock('../services/notification-service', () => ({
   },
 }));
 
+// The alarm of Junix (sheet 034): off at first, as on the web and in old builds
+const mockHandOver = jest.fn().mockResolvedValue(true);
+let mockNativeOn = false;
+jest.mock('../services/alarm-bridge', () => ({
+  nativeAlarmsOn: () => mockNativeOn,
+  handOverAlarms: (...args: unknown[]) => (mockNativeOn ? mockHandOver(...args) : Promise.resolve(false)),
+}));
+
 const AT = '2030-01-15T18:00:00.000Z';
 const IDENTIFIER = `reminder-r1-${new Date(AT).getTime()}`;
 const REMINDER = {
@@ -48,6 +56,30 @@ describe('syncReminderNotifications', () => {
     (NotificationService.checkPermissions as jest.Mock).mockResolvedValue(true);
     (NotificationService.requestPermissions as jest.Mock).mockResolvedValue(true);
     scheduled.mockResolvedValue('id');
+    mockNativeOn = false;
+    mockHandOver.mockResolvedValue(true);
+  });
+
+  it('hands an urgent reminder to the alarm of Junix, not to a notification (sheet 034)', async () => {
+    mockNativeOn = true;
+    (ReminderRepository.findAll as jest.Mock).mockResolvedValue([{ ...REMINDER, priority: 'URGENT' }]);
+
+    await syncReminderNotifications();
+
+    expect(mockHandOver).toHaveBeenCalledWith('reminder', [
+      expect.objectContaining({ id: IDENTIFIER, title: 'Appeler', sound: 'junix_alarm', url: 'junixpulse://reminders/r1' }),
+    ]);
+    expect(scheduled).not.toHaveBeenCalled();
+  });
+
+  it('keeps an urgent reminder as a notification when Android does not take it (sheet 034)', async () => {
+    mockNativeOn = true;
+    mockHandOver.mockResolvedValue(false);
+    (ReminderRepository.findAll as jest.Mock).mockResolvedValue([{ ...REMINDER, priority: 'URGENT' }]);
+
+    await syncReminderNotifications();
+
+    expect(scheduled).toHaveBeenCalledWith(expect.objectContaining({ id: 'r1', level: 'alarm' }));
   });
 
   it('schedules what the phone does not hold yet', async () => {

@@ -643,3 +643,17 @@ Après l'APK de la fiche 031, tu as relevé un malentendu : le son devait suivre
 - **Découpage** : fiche 032 pour A, B et E (la priorité et les sons) ; fiche 033 pour C et D (le temps pour le faire, le Planning, Focus).
 - **Fait le 25 novembre 2026** : fiches 032 (migration 41) et 033 (migration 42), testées et vues sur le web ; à essayer sur le téléphone.
 
+### 16.9 Le n° 9-B, l'alarme continue : décisions du 26 novembre 2026
+
+Proposition et maquette validées (« Oui, on valide »), après vérification de la documentation d'Android et d'Expo.
+
+- **Ce qui sonne en continu** : tout ce qui est au **niveau Alarme** (Urgente, départ d'un voyage, famille réglée sur Alarme). Discret et normal ne changent pas.
+- **L'écran d'alarme** : une page pleine qui allume l'écran même verrouillé : l'heure en grand, le titre, le type ; deux gros boutons **Arrêter** et **Plus tard · 10 min** ; un lien « Ouvrir dans Junix ». Appli ouverte : la même page.
+- **Sans l'autorisation « notifications plein écran »** (Android 14 la réserve aux applis de réveil et d'appel ; avec l'APK installé à la main, on peut l'activer soi-même) : une **notification prioritaire** qui sonne en continu, avec les mêmes boutons.
+- **Le son** : le son d'alarme choisi (Alarme, Réveil, Aube, Marche), en boucle, **volume qui monte doucement** sur 20 s, sur le volume « alarme » du téléphone : **il sonne même en mode silencieux**, comme le réveil ; vibration en même temps.
+- **Sans geste** : la sonnerie s'arrête après **5 minutes** et laisse une notification « Alarme manquée ». **Plus tard** : 10 minutes, même appli fermée. Durées fixes.
+- **Après un redémarrage** du téléphone, les alarmes sont replanifiées sans ouvrir Junix.
+- **Paramètres → Notifications et vibrations** : une ligne « Alarmes en plein écran » (Autorisé, ou À autoriser › vers la page d'Android).
+- **Construction** : un module local `modules/junix-alarm` en Kotlin (outil officiel d'Expo), sans bibliothèque ajoutée ; un service Android qui joue le son (type « lecture multimédia »), lancé par l'alarme exacte ; la synchronisation confie les notifications de niveau Alarme à ce module.
+- **Découpage** : fiche 034 (le module, la sonnerie continue en notification prioritaire, Plus tard, le redémarrage, branché à la synchronisation) ; fiche 035 (la page plein écran, la ligne des Paramètres). Un APK après chaque fiche ; le vrai test se fait sur le téléphone.
+

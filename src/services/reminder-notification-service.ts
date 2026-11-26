@@ -20,6 +20,8 @@ import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 import { soundFor } from '@/domain/rules/sound-rules';
 import type { NotificationLevel } from '@/domain/rules/notification-level-rules';
+import { alarmOf, splitAlarms } from '@/domain/rules/alarm-handover-rules';
+import { handOverAlarms, nativeAlarmsOn } from '@/services/alarm-bridge';
 
 export interface ReminderSyncOptions {
   /** After a user action: may ask for the permission, and reports problems to the user. */
@@ -64,7 +66,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
     // The sound of each notification, from its level and the settings (sheet 031)
     const soundOf = (level: NotificationLevel) =>
       soundFor({ level, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled });
-    const planned = settings.notificationsEnabled
+    const allPlanned = settings.notificationsEnabled
       ? planReminderNotifications(
           await loadReminders(),
           new Date(),
@@ -73,6 +75,15 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
           settings.alertLevels
         )
       : [];
+    // The Alarm level rings until a gesture, through the alarm of Junix (sheet 034); if Android
+    // does not take them, they stay notifications
+    const language = useAppStore.getState().language;
+    const split = splitAlarms(allPlanned, nativeAlarmsOn());
+    const handed = await handOverAlarms(
+      'reminder',
+      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/reminders/${item.reminderId}`, language))
+    );
+    const planned = handed ? split.notifications : allPlanned;
 
     const held = (await NotificationService.getAllScheduled()).filter(request =>
       request.identifier.startsWith(REMINDER_IDENTIFIER_PREFIX)

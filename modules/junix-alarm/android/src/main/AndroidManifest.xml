@@ -1,0 +1,34 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- The alarm of Junix Pulse (sheet 034). Android merges this file into the app's. -->
+
+  <!-- Ring in a service while the phone sleeps: a sound that plays (media playback) -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.VIBRATE" />
+  <!-- Plan the alarms again after the phone restarts -->
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+  <application>
+    <!-- Wakes up at the time of an alarm and starts the ringing -->
+    <receiver android:name="expo.modules.junixalarm.AlarmReceiver" android:exported="false" />
+
+    <!-- "Arrêter" and "Plus tard" of the notification -->
+    <receiver android:name="expo.modules.junixalarm.AlarmActionReceiver" android:exported="false" />
+
+    <!-- The phone restarted, or the app was updated: the alarms are planned again -->
+    <receiver android:name="expo.modules.junixalarm.BootReceiver" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
+
+    <!-- Plays the sound in a loop until "Arrêter", "Plus tard" or 5 minutes -->
+    <service
+      android:name="expo.modules.junixalarm.AlarmService"
+      android:exported="false"
+      android:foregroundServiceType="mediaPlayback" />
+  </application>
+</manifest>

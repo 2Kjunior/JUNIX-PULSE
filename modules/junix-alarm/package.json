@@ -1,0 +1,9 @@
+{
+  "name": "junix-alarm",
+  "version": "1.0.0",
+  "description": "The alarm of Junix Pulse that keeps ringing (study 001, 16.9; sheet 034): an Android module of our own.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "private": true,
+  "license": "UNLICENSED"
+}

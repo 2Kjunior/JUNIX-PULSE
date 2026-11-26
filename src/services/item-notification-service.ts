@@ -13,13 +13,15 @@ import { TaskRepository } from '@/repositories/task-repository';
 import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
+import { alarmOf, splitAlarms } from '@/domain/rules/alarm-handover-rules';
+import { handOverAlarms, nativeAlarmsOn } from '@/services/alarm-bridge';
 
 let queue: Promise<unknown> = Promise.resolve();
 
 async function sync(force: boolean): Promise<void> {
   try {
     const settings = await SettingsRepository.get();
-    const planned = settings.notificationsEnabled
+    const allPlanned = settings.notificationsEnabled
       ? planItemNotifications({
           tasks: await TaskRepository.findAllActive(),
           events: await EventRepository.findAll(),
@@ -33,6 +35,18 @@ async function sync(force: boolean): Promise<void> {
     // The sound of each notification: its level, the tone of its moment, the settings (sheet 031)
     const soundOf = (item: { level: PlannedItemNotification['level']; tone?: PlannedItemNotification['tone'] }) =>
       soundFor({ level: item.level, tone: item.tone, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled });
+
+    // The Alarm level rings until a gesture, through the alarm of Junix (sheet 034); if Android
+    // does not take them, they stay notifications
+    const language = useAppStore.getState().language;
+    const split = splitAlarms(allPlanned, nativeAlarmsOn());
+    const handed = await handOverAlarms(
+      'item',
+      split.alarms.map(item =>
+        alarmOf(item, soundOf(item), item.itemType === 'TASK' ? `/tasks/${item.itemId}` : `/events/${item.itemId}`, language)
+      )
+    );
+    const planned = handed ? split.notifications : allPlanned;
 
     const held = (await NotificationService.getAllScheduled()).filter(request =>
       request.identifier.startsWith(ITEM_IDENTIFIER_PREFIX)

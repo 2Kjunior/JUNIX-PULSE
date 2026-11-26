@@ -53,3 +53,8 @@ AUDIT_IHM/
 # The tutorial books stay on the PC and in the Desktop zips, never on GitHub (25 November 2026)
 docs/tutoriel-suite/
 docs/tutoriel-a-z/
+
+# What Gradle builds for the local native modules (sheet 034)
+modules/*/android/build/
+modules/*/android/.cxx/
+modules/*/android/.gradle/

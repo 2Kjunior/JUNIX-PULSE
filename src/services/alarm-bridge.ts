@@ -1,0 +1,27 @@
+/**
+ * The bridge to the alarm of Junix (sheet 034): on Android with the module, the sync services hand
+ * it the notifications of the Alarm level, which then ring until a gesture. Elsewhere, or if the
+ * handover fails, nothing changes: they stay ordinary notifications, never lost.
+ */
+import { Platform } from 'react-native';
+
+import { JunixAlarm } from '../../modules/junix-alarm';
+import type { AlarmHandover } from '../domain/rules/alarm-handover-rules';
+import { logger } from '../utils/logger';
+
+/** Whether this phone has the alarm of Junix. */
+export function nativeAlarmsOn(): boolean {
+  return Platform.OS === 'android' && JunixAlarm.available;
+}
+
+/** The alarms of one group become exactly these; true when Android took them. */
+export async function handOverAlarms(group: 'reminder' | 'item' | 'habit', alarms: AlarmHandover[]): Promise<boolean> {
+  if (!nativeAlarmsOn()) return false;
+  try {
+    await JunixAlarm.replaceGroup(group, alarms);
+    return true;
+  } catch (error) {
+    logger.warn('[AlarmBridge] Les alarmes restent des notifications', error);
+    return false;
+  }
+}

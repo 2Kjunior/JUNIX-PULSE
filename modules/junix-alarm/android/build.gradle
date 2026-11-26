@@ -1,0 +1,16 @@
+// The alarm of Junix Pulse (sheet 034): built like the Expo modules of the project (expo-contacts)
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.junix.pulse'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.junixalarm"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
