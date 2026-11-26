@@ -7,10 +7,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, isTomorrow } from 'date-fns';
 import React from 'react';
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, Text, TouchableOpacity, View, Platform } from 'react-native';
 
 import { TagSummary } from '@/components/tags/TagChip';
 import { CardMenuButton, useCardMenu } from '@/components/ui/CardMenu';
+import { useDurationLabel } from '@/components/create/form/DurationField';
+import { openFocusForTask } from '@/features/focus/open-focus';
 import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Radius, Spacing, Typography } from '@/constants/theme';
@@ -38,6 +40,7 @@ export function TodoRow({
   const openMenu = useCardMenu(entry.title);
   const swipeAccessibility = useSwipeAccessibilityProps();
   const rings = entry.kind === 'reminder';
+  const durationLabel = useDurationLabel();
   // A reminder done cannot be reopened from here: its box is greyed
   const canToggle = !(rings && entry.done);
 
@@ -118,6 +121,31 @@ export function TodoRow({
           </Text>
           {dot ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
           <TagSummary tags={tags} />
+          {/* A task with a time to do it: Focus from the card, in sessions (sheet 033) */}
+          {!rings && !entry.done && entry.estimatedMinutes ? (
+            <TouchableOpacity
+              onPress={() => openFocusForTask({ ...entry, title: entry.title })}
+              hitSlop={8}
+              // On the web a <button> may not sit inside the card, itself a <button> (as "⋯")
+              accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
+              accessibilityLabel={t('todoTab.focusFor', { title: entry.title })}
+              testID={`todo-focus-${entry.id}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 999,
+                backgroundColor: `${accent}1F`,
+              }}
+            >
+              <Ionicons name="play" size={11} color={accent} />
+              <Text style={{ ...Typography.labelMedium, color: accent }}>
+                {t('todoTab.focus')} · {durationLabel(entry.estimatedMinutes)}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
       <CardMenuButton title={entry.title} testID={`todo-menu-${entry.id}`} />

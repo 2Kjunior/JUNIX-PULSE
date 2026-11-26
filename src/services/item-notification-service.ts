@@ -49,7 +49,9 @@ async function sync(force: boolean): Promise<void> {
         item.body === request.content.body &&
         levelOf(request.content.data?.level) === item.level &&
         // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
-        request.content.data?.sound === soundOf(item)
+        request.content.data?.sound === soundOf(item) &&
+        // Haute moves it to the insisting channel, and back (sheet 032)
+        Boolean(request.content.data?.insists) === Boolean(item.insists)
       ) {
         upToDate.add(request.identifier);
       } else {
@@ -72,6 +74,7 @@ async function sync(force: boolean): Promise<void> {
         level: item.level,
         soundOn: settings.notificationSoundEnabled,
         sound: soundOf(item),
+        insists: item.insists,
       });
     }
   } catch {

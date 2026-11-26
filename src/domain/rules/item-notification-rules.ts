@@ -16,6 +16,7 @@ import {
   DEFAULT_QUIET_HOURS,
   NotificationLevel,
   NotificationMoment,
+  insistsFor,
   notificationLevelFor,
   QuietHours,
 } from './notification-level-rules';
@@ -42,6 +43,8 @@ export interface PlannedItemNotification {
   level: NotificationLevel;
   /** The tone of a moment (festive, neutral, sober): its sound follows it (sheet 031). */
   tone?: MomentTone;
+  /** Haute: it insists, with a longer vibration (sheet 032). */
+  insists?: boolean;
 }
 
 export interface ItemPlanInput {
@@ -77,26 +80,28 @@ export function planItemNotifications({
 }: ItemPlanInput): PlannedItemNotification[] {
   const planned: PlannedItemNotification[] = [];
   const add = (
-    item: Omit<PlannedItemNotification, 'identifier' | 'level' | 'tone'>,
+    item: Omit<PlannedItemNotification, 'identifier' | 'level' | 'tone' | 'insists'>,
     priority?: Task['priority'],
     // A moment: its type and the level chosen for it (sheet 023)
     moment?: Pick<Event, 'momentKind' | 'alertLevel'>
   ) => {
     if (item.scheduledAt <= now) return;
+    const level = notificationLevelFor({
+      moment: item.moment,
+      priority,
+      at: item.scheduledAt,
+      quietHours,
+      defaults: alertDefaults,
+      chosen: moment?.alertLevel,
+      momentKind: moment?.momentKind,
+    });
     planned.push({
       ...item,
       // The time is in the identifier: a new date gives a new notification, and the old one is cancelled
       identifier: `${ITEM_IDENTIFIER_PREFIX}${item.itemType.toLowerCase()}-${item.itemId}-${item.moment}-${item.scheduledAt.getTime()}`,
-      level: notificationLevelFor({
-        moment: item.moment,
-        priority,
-        at: item.scheduledAt,
-        quietHours,
-        defaults: alertDefaults,
-        chosen: moment?.alertLevel,
-        momentKind: moment?.momentKind,
-      }),
+      level,
       ...(item.itemType === 'EVENT' ? { tone: MOMENT_KIND_TONES[momentKindOf(moment?.momentKind)] } : {}),
+      ...(insistsFor(priority, level) ? { insists: true } : {}),
     });
   };
 
@@ -123,7 +128,7 @@ export function planItemNotifications({
         moment: 'momentLeave',
         scheduledAt: new Date(start.getTime() - travel * MINUTE),
         body: translate(language, 'itemNotif.momentLeave', { place, time: clock(start) }),
-      }, undefined, event);
+      }, event.priority, event);
     }
     // Leaving already warns this early or earlier: a second notice would only repeat it
     if (!leaves || travel < MOMENT_BEFORE_MINUTES) {
@@ -132,7 +137,7 @@ export function planItemNotifications({
         moment: 'momentBefore',
         scheduledAt: new Date(start.getTime() - MOMENT_BEFORE_MINUTES * MINUTE),
         body: translate(language, 'itemNotif.momentBefore', { time: clock(start) }),
-      }, undefined, event);
+      }, event.priority, event);
     }
   }
 

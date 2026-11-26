@@ -26,7 +26,8 @@ import {
   type Choice,
   type IconName,
 } from '@/components/create/form/FormBricks';
-import { AlertLevelField } from '@/components/create/form/AlertLevelField';
+import { PriorityField } from '@/components/create/form/PriorityField';
+import { DurationField, useDurationLabel } from '@/components/create/form/DurationField';
 import { LoadingState } from '@/components/feedback/States';
 import { PersonField } from '@/components/people/PersonField';
 import { TagField } from '@/components/tags/TagField';
@@ -35,7 +36,6 @@ import {
   alertMoment,
   dayParam,
   hourParam,
-  TODO_DURATION_OPTIONS,
   visibleMoreFields,
   visibleSections,
   type FormSectionId,
@@ -43,7 +43,7 @@ import {
 } from '@/constants/item-forms';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Radius, Spacing } from '@/constants/theme';
-import type { AlertLevel, Person, Reminder, ReminderPriority, TaskStatus } from '@/domain/entities';
+import type { Person, Reminder, ReminderPriority, TaskStatus } from '@/domain/entities';
 import { todoFromSentence } from '@/domain/rules/form-dictation-rules';
 import { alertTimeRefused, taskStatusAfterEdit, type SimpleRecurrence } from '@/domain/rules/item-edit-rules';
 import { loadTodoForEdit, type TodoEditTarget } from '@/features/create/edit-loaders';
@@ -127,7 +127,6 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   const [recurrenceTouched, setRecurrenceTouched] = useState(false);
   const [confirm, setConfirm] = useState(false);
   // How it warns (sheet 023): null is "Auto"
-  const [alertLevel, setAlertLevel] = useState<AlertLevel | null>(null);
   const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>(undefined);
   const [subtasks, setSubtasks] = useState<string[]>([]);
@@ -168,7 +167,6 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
         setRepeat(values.repeat);
         setRecurrence(values.repeat ? values.recurrence : 'DAILY');
         setConfirm(values.confirm);
-        setAlertLevel(values.alertLevel);
         setDueDate(values.dueDate);
         setEstimatedMinutes(values.estimatedMinutes);
         setPersonIds(values.personIds);
@@ -256,13 +254,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
       icon: 'calendar-number-outline',
     },
   ];
-  const priorityOptions: Choice<ReminderPriority>[] = PRIORITIES.map(option => ({ value: option.value, label: t(option.labelKey) }));
-  const durationLabel = (minutes: number | undefined) => {
-    if (minutes === undefined) return t('form.none');
-    if (minutes === 60) return t('taskNew.hours1');
-    if (minutes === 120) return t('taskNew.hours2');
-    return `${minutes} min`;
-  };
+  // "45 min", "1 h 30", "5 h" (sheet 033)
+  const durationLabel = useDurationLabel();
 
   const toggleAlert = (on: boolean) => {
     setAlert(on);
@@ -308,7 +301,10 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           tagIds,
           requiresConfirmation: confirm,
           recurrenceRule: recurrenceToSave(scheduledAt),
-          alertLevel,
+          // The priority chooses how it rings now (sheet 032): a level chosen before is let go
+          alertLevel: null,
+          // Its time in the Planning (sheet 033)
+          estimatedMinutes: estimatedMinutes ?? null,
         });
         showSnackbar(t('remEdit.updated'));
       } else if (editing?.kind === 'task') {
@@ -338,7 +334,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           tagIds,
           requiresConfirmation: confirm,
           recurrenceRule: recurrenceToSave(scheduledAt) ?? undefined,
-          alertLevel,
+          // Its time in the Planning (sheet 033)
+          estimatedMinutes,
         });
         showSnackbar(t('remNew.created'));
       } else {
@@ -368,8 +365,14 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
       case 'priority':
         return (
           <View key={field}>
-            <FieldLabel label={t('itemForm.priority')} />
-            <ChoiceChips options={priorityOptions} value={priority} onChange={setPriority} accent={accent} testIDPrefix="todo-priority" />
+            {/* A task rings on its deadline: the line says how, once there is one (sheet 032) */}
+            <PriorityField
+              value={priority}
+              onChange={setPriority}
+              accent={accent}
+              rings={dueDate ? { moment: 'taskDay' } : undefined}
+              testIDPrefix="todo-priority"
+            />
           </View>
         );
       case 'deadline':
@@ -377,14 +380,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
       case 'duration':
         return (
           <View key={field}>
-            <FieldLabel label={t('taskNew.durationHeader')} hint={t('itemForm.durationHint')} />
-            <ChoiceChips
-              options={TODO_DURATION_OPTIONS.map(minutes => ({ value: minutes, label: durationLabel(minutes) }))}
-              value={estimatedMinutes}
-              onChange={setEstimatedMinutes}
-              accent={accent}
-              testIDPrefix="todo-duration"
-            />
+            {/* Shortcuts and "Autre", any time up to 12 h (sheet 033) */}
+            <DurationField value={estimatedMinutes} onChange={setEstimatedMinutes} accent={accent} hint={t('itemForm.durationHint')} />
           </View>
         );
       case 'subtasks':
@@ -511,8 +508,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
                 </TouchableOpacity>
-                <FieldLabel label={t('itemForm.priority')} hint={t('itemForm.priorityHint')} />
-                <ChoiceChips options={priorityOptions} value={priority} onChange={setPriority} accent={accent} testIDPrefix="todo-priority" />
+                {/* The priority chooses how it rings (sheet 032): one choice, and what will ring */}
+                <PriorityField value={priority} onChange={setPriority} accent={accent} rings={{ moment: 'reminder' }} testIDPrefix="todo-priority" />
                 <FieldLabel label={t('itemForm.action')} />
                 <ChoiceChips
                   options={ACTIONS.map(option => ({ value: option.value, label: t(option.labelKey), icon: option.icon }))}
@@ -544,7 +541,6 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
                   accent={accent}
                   testID="reminder-confirmation"
                 />
-                <AlertLevelField value={alertLevel} onChange={setAlertLevel} accent={accent} testIDPrefix="todo-alert-level" />
               </View>
             ) : null}
           </FormSection>

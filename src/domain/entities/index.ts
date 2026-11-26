@@ -60,6 +60,8 @@ export interface Reminder {
   requiresConfirmation?: boolean;
   /** The level chosen for it (sheet 023); absent is "Auto". */
   alertLevel?: AlertLevel;
+  /** Its time to do it (sheet 033): it fills this time in the Planning. Absent is a point. */
+  estimatedMinutes?: number;
   recurrenceRuleId?: string;
   notificationId?: string;     // ID fourni par expo-notifications (pour annulation)
   snoozedUntil?: string;       // ISO 8601 si snooze actif
@@ -87,6 +89,8 @@ export interface Task {
   scheduledDate?: string;      // ISO date (YYYY-MM-DD) — pas d'heure, c'est une journée
   dueDate?: string;            // ISO date (YYYY-MM-DD) — à rendre ce jour-là au plus tard
   estimatedMinutes?: number;   // Estimation en minutes (15, 30, 60, etc.)
+  /** The Focus minutes already done for it (sheet 033): "1 h 40 sur 5 h". */
+  focusMinutes?: number;
   priority: ReminderPriority;
   goalId?: string;
   personId?: string;
@@ -135,6 +139,8 @@ export interface Event {
   momentKind?: MomentKind;
   /** The level chosen for it (sheet 023); absent is "Auto". */
   alertLevel?: AlertLevel;
+  /** How much it matters (sheet 032): it chooses how it rings. Absent is Normale. */
+  priority?: ReminderPriority;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -264,6 +270,8 @@ export interface PlanningBlock {
   startTime: string;           // HH:MM (heure locale)
   endTime: string;             // HH:MM (heure locale)
   color?: string;
+  /** A reminder with a time to do it: the card shows its start and its end (sheet 033). */
+  fillsTime?: boolean;
   createdAt: string;
   updatedAt: string;
 }

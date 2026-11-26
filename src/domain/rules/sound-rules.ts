@@ -101,14 +101,16 @@ export function soundFor({
  * The Android channel of a level and a sound. A channel's sound cannot change once created
  * (Android): each pair has its own. Without sound, the channels that existed before keep serving.
  */
-export function soundChannelId(level: NotificationLevel, sound: SoundChoice): string {
+export function soundChannelId(level: NotificationLevel, sound: SoundChoice, insists = false): string {
   if (sound === 'none') return level === 'discreet' ? 'junix-pulse-level-discreet-v1' : 'junix-pulse-reminders-silent-v1';
+  // Haute (sheet 032): the same sound, a longer vibration; only the normal level insists
+  if (insists && level === 'normal') return `junix-pulse-sound-normal-${sound}-insist-v1`;
   return `junix-pulse-sound-${level}-${sound}-v1`;
 }
 
-/** Every pair of level and sound a notification can use: the channels to create. */
-export function soundChannels(): { level: NotificationLevel; sound: SoundId }[] {
-  const pairs: { level: NotificationLevel; sound: SoundId }[] = [];
+/** Every pair of level and sound a notification can use, and the insisting ones: the channels to create. */
+export function soundChannels(): { level: NotificationLevel; sound: SoundId; insists?: boolean }[] {
+  const pairs: { level: NotificationLevel; sound: SoundId; insists?: boolean }[] = [];
   const add = (level: NotificationLevel, sound: SoundChoice) => {
     if (sound !== 'none' && !pairs.some(pair => pair.level === level && pair.sound === sound)) pairs.push({ level, sound });
   };
@@ -117,5 +119,7 @@ export function soundChannels(): { level: NotificationLevel; sound: SoundId }[] 
   add('discreet', 'sober');
   add('normal', 'sober');
   add('normal', 'festive');
+  // Haute insists at the normal level, with each sound of that level (sheet 032)
+  for (const pair of pairs.filter(item => item.level === 'normal')) pairs.push({ ...pair, insists: true });
   return pairs;
 }

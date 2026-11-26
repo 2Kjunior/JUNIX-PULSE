@@ -162,7 +162,8 @@ export default function CalendarScreen() {
       weekRems.flat().forEach(r => {
         if (!reminderBlocksMap.has(r.id)) {
           const s = new Date(r.scheduledAt);
-          const end = addMinutes(s, 30);
+          // Its time to do it fills the week (sheet 033); without one, half an hour as before
+          const end = addMinutes(s, r.estimatedMinutes ?? 30);
           reminderBlocksMap.set(r.id, {
             id: r.id,
             scheduleId: 'reminder',
@@ -171,6 +172,7 @@ export default function CalendarScreen() {
             dayOfWeek: s.getDay(),
             startTime: format(s, 'HH:mm'),
             endTime: format(end, 'HH:mm'),
+            fillsTime: Boolean(r.estimatedMinutes),
             color: r.priority === 'HIGH' || r.priority === 'URGENT' ? theme.priority.HIGH : theme.tertiary.default,
             createdAt: r.createdAt,
             updatedAt: r.updatedAt,

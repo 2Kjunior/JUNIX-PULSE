@@ -5,7 +5,7 @@
 import { randomUUID } from 'expo-crypto';
 import { TagRepository } from '../repositories/tag-repository';
 import { EventRepository } from '../repositories/event-repository';
-import { AlertLevel, EventType, MomentKind } from '../domain/entities';
+import { AlertLevel, EventType, MomentKind, ReminderPriority } from '../domain/entities';
 import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import { syncItemNotifications } from '../services/item-notification-service';
@@ -25,6 +25,8 @@ export interface CreateEventInput {
   momentKind?: MomentKind;
   /** How it warns (sheet 023); null or absent is "Auto". */
   alertLevel?: AlertLevel | null;
+  /** It chooses how it rings (sheet 032). */
+  priority?: ReminderPriority;
   personIds?: string[];
   /** Its coloured tags. */
   tagIds?: string[];
@@ -42,6 +44,8 @@ export interface UpdateEventInput {
   momentKind?: MomentKind;
   /** null is "Auto", undefined keeps it. */
   alertLevel?: AlertLevel | null;
+  /** It chooses how it rings (sheet 032). */
+  priority?: ReminderPriority;
   personIds?: string[];
   /** Its coloured tags: replaces the ones it had. */
   tagIds?: string[];
@@ -73,6 +77,7 @@ export const EventUseCases = {
         // "Autre" is kept as nothing: a moment of before the types reads the same
         momentKind: input.momentKind && input.momentKind !== 'other' ? input.momentKind : undefined,
         alertLevel: input.alertLevel ?? undefined,
+        priority: input.priority,
         createdAt: now,
         updatedAt: now,
       },
@@ -106,6 +111,7 @@ export const EventUseCases = {
         travelBufferMinutes: input.travelBufferMinutes,
         momentKind: input.momentKind === undefined ? undefined : input.momentKind === 'other' ? null : input.momentKind,
         alertLevel: input.alertLevel,
+        priority: input.priority,
         updatedAt: now,
       },
       input.personIds

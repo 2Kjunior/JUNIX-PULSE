@@ -4,8 +4,10 @@
 
 import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
-import { Event, Person } from '../domain/entities';
+import { Event, Person, ReminderPriority } from '../domain/entities';
 import { chosenLevelOf } from '../domain/rules/notification-level-rules';
+
+const PRIORITIES: readonly ReminderPriority[] = ['LOW', 'NORMAL', 'HIGH', 'URGENT'];
 
 type NullableFields<T> = {
   [K in keyof T]?: T[K] | null;
@@ -26,6 +28,8 @@ function rowToEvent(row: Record<string, unknown>): Event {
     travelBufferMinutes: (row.travel_buffer_minutes as number | null) ?? undefined,
     momentKind: (row.moment_kind as Event['momentKind'] | null) ?? undefined,
     alertLevel: chosenLevelOf(row.alert_level) ?? undefined,
+    // Its priority (sheet 032); an unknown or empty one is Normale
+    priority: PRIORITIES.includes(row.priority as ReminderPriority) ? (row.priority as ReminderPriority) : undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     deletedAt: (row.deleted_at as string | null) ?? undefined,
@@ -54,8 +58,8 @@ export const EventRepository = {
   async create(event: Omit<Event, 'deletedAt'>, personIds?: string[]): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO events (id, title, notes, start_at, end_at, timezone, location, type, travel_buffer_minutes, moment_kind, alert_level, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO events (id, title, notes, start_at, end_at, timezone, location, type, travel_buffer_minutes, moment_kind, alert_level, priority, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       event.id,
       event.title,
       event.notes ?? null,
@@ -67,6 +71,7 @@ export const EventRepository = {
       event.travelBufferMinutes ?? 0,
       event.momentKind ?? null,
       event.alertLevel ?? null,
+      event.priority ?? null,
       event.createdAt,
       event.updatedAt
     );
@@ -124,6 +129,10 @@ export const EventRepository = {
     if (params.alertLevel !== undefined) {
       setClauses.push('alert_level = ?');
       values.push(params.alertLevel);
+    }
+    if (params.priority !== undefined) {
+      setClauses.push('priority = ?');
+      values.push(params.priority);
     }
     if (params.deletedAt !== undefined) {
       setClauses.push('deleted_at = ?');

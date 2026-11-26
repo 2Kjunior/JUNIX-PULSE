@@ -23,6 +23,7 @@ import { dayDots, dayKey, monthGrid, monthStrip, type WeekStart } from '@/domain
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useDateLocale, useT } from '@/i18n';
+import { ringsAsAlarm } from '@/domain/rules/notification-level-rules';
 
 import { DraggableBlock, type DropPoint } from './DraggableBlock';
 import { PlanningCard } from './PlanningCard';
@@ -288,7 +289,7 @@ export const MonthView = memo(function MonthView({
                 place={item.place}
                 done={item.done}
                 index={index}
-                alarm={(item.reminder?.alertLevel ?? item.event?.alertLevel) === 'alarm'}
+                alarm={item.reminder ? ringsAsAlarm(item.reminder) : item.event ? ringsAsAlarm(item.event) : false}
               />
             </DraggableBlock>
           ))}

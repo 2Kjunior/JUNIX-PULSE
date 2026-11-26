@@ -57,7 +57,11 @@ describe('sound-rules (sheet 031)', () => {
     }
     expect(pairs).toContainEqual({ level: 'normal', sound: 'festive' });
     expect(pairs).toContainEqual({ level: 'discreet', sound: 'sober' });
-    expect(new Set(pairs.map(pair => soundChannelId(pair.level, pair.sound))).size).toBe(pairs.length);
+    expect(new Set(pairs.map(pair => soundChannelId(pair.level, pair.sound, pair.insists))).size).toBe(pairs.length);
+    // Haute insists at the normal level only, with each of its sounds (sheet 032)
+    expect(soundChannelId('normal', 'pulse', true)).toBe('junix-pulse-sound-normal-pulse-insist-v1');
+    expect(soundChannelId('alarm', 'wake', true)).toBe('junix-pulse-sound-alarm-wake-v1');
+    expect(pairs).toContainEqual({ level: 'normal', sound: 'festive', insists: true });
   });
 
   it('names each file as Android wants it in res/raw', () => {

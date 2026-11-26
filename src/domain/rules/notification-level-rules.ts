@@ -2,9 +2,10 @@
  * How loud a notification is: discreet, normal or alarm (study 001, 6-B and 12.6; sheets 011 and 023).
  * In order:
  * 1. the level the person chose for this item, if any ("Auto" chooses none);
- * 2. otherwise the default level of its family, set in the settings (normal for all at first),
- *    the evening before a deadline one step quieter, moved one step by the type of a moment
- *    (a mourning stays discreet, leaving for a journey is an alarm), and urgent one step up;
+ * 2. otherwise its priority (sheet 032, study 16.8): Urgente is always an alarm, Basse is discreet;
+ *    Normale and Haute take the default level of the family (settings; normal at first), moved
+ *    one step by the type of a moment (a mourning stays discreet, leaving for a journey is an
+ *    alarm). The evening before a deadline is one step under its day;
  * 3. at night, everything goes down one step, except the alarm.
  * Pure: no phone, no database, so every case is tested. A new criterion belongs here.
  */
@@ -131,19 +132,41 @@ export function notificationLevelFor({
   if (chosen && isLevel(chosen)) {
     index = NOTIFICATION_LEVELS.indexOf(chosen);
   } else {
-    index = NOTIFICATION_LEVELS.indexOf(defaults[alertFamilyOf(moment)]);
+    if (priority === 'URGENT') {
+      // Urgente rings as an alarm, whatever the family and the type (sheet 032)
+      index = loudest;
+    } else if (priority === 'LOW') {
+      index = 0;
+    } else {
+      index = NOTIFICATION_LEVELS.indexOf(defaults[alertFamilyOf(moment)]);
+      if (momentKind && (moment === 'momentBefore' || moment === 'momentLeave')) {
+        const shift = MOMENT_KIND_ALERT_SHIFT[momentKind];
+        index = step(index, moment === 'momentLeave' ? shift.leave : shift.before);
+      }
+    }
     // The evening before a deadline only informs: one step below the day itself
     if (moment === 'taskEve') index = step(index, -1);
-    if (momentKind && (moment === 'momentBefore' || moment === 'momentLeave')) {
-      const shift = MOMENT_KIND_ALERT_SHIFT[momentKind];
-      index = step(index, moment === 'momentLeave' ? shift.leave : shift.before);
-    }
-    // Urgent goes up one level
-    if (priority === 'URGENT') index = step(index, 1);
   }
   // At night everything goes down one level, except the alarm
   if (index < loudest && isQuietTime(at, quietHours)) index = step(index, -1);
   return NOTIFICATION_LEVELS[index];
+}
+
+/**
+ * Haute rings at the normal level but insists (sheet 032): a longer vibration, on channels of
+ * their own. An alarm already insists; a discreet notification never does.
+ */
+export function insistsFor(priority: ReminderPriority | undefined, level: NotificationLevel): boolean {
+  return priority === 'HIGH' && level === 'normal';
+}
+
+/**
+ * Whether a thing rings as an alarm, for its alarm clock on the cards (sheets 031 and 033): a level
+ * chosen before sheet 032 decides; otherwise Urgente is an alarm.
+ */
+export function ringsAsAlarm(item: { alertLevel?: NotificationLevel | null; priority?: ReminderPriority }): boolean {
+  if (item.alertLevel) return item.alertLevel === 'alarm';
+  return item.priority === 'URGENT';
 }
 
 /** The kind of Android channel of a level. With the sound switched off, nothing rings. */

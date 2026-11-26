@@ -91,6 +91,8 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         levelOf(request.content.data?.level) === item.level &&
         // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
         request.content.data?.sound === soundOf(item.level) &&
+        // Haute moves it to the insisting channel, and back (sheet 032)
+        Boolean(request.content.data?.insists) === Boolean(item.insists) &&
         // Notifications planned before the buttons existed are planned again with them
         request.content.categoryIdentifier === REMINDER_CATEGORY_ID
       ) {
@@ -121,6 +123,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         silent: !settings.notificationSoundEnabled,
         level: item.level,
         sound: soundOf(item.level),
+        insists: item.insists,
       });
       if (scheduled) report.scheduled += 1;
       else report.failed += 1;

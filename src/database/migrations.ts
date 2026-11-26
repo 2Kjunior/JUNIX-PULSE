@@ -694,5 +694,25 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE settings ADD COLUMN sound_prefs TEXT;
     `,
   },
+  {
+    version: 41,
+    name: 'add_event_priority',
+    sql: `
+      -- La priorite du moment (fiche 032, etude 16.8) : elle choisit comment il sonne.
+      -- Vide : Normale, comme avant.
+      ALTER TABLE events ADD COLUMN priority TEXT;
+    `,
+  },
+  {
+    version: 42,
+    name: 'add_reminder_duration_and_task_focus',
+    sql: `
+      -- Le temps pour le faire, aussi pour une chose a faire avec une heure (fiche 033,
+      -- etude 16.8) : au Planning, elle occupe ce temps. Vide : un simple point, comme avant.
+      ALTER TABLE reminders ADD COLUMN estimated_minutes INTEGER;
+      -- Les minutes de Focus deja faites pour une tache : 1 h 40 sur 5 h. Vide : aucune.
+      ALTER TABLE tasks ADD COLUMN focus_minutes INTEGER;
+    `,
+  },
 ];
 

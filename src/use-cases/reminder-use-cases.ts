@@ -36,6 +36,8 @@ export interface CreateReminderInput {
   requiresConfirmation?: boolean;
   /** How it warns (sheet 023); null or absent is "Auto". */
   alertLevel?: AlertLevel | null;
+  /** Its time to do it, in minutes (sheet 033). */
+  estimatedMinutes?: number;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
   checklistItems?: { title: string; position: number }[];
 }
@@ -67,6 +69,7 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     personId: input.personIds?.[0] ?? input.personId,
     requiresConfirmation: input.requiresConfirmation,
     alertLevel: input.alertLevel ?? null,
+    estimatedMinutes: input.estimatedMinutes ?? null,
     recurrenceRuleId,
     createdAt: now,
     updatedAt: now,
@@ -114,6 +117,8 @@ export interface UpdateReminderInput {
   requiresConfirmation?: boolean;
   /** How it warns (sheet 023): null is "Auto", undefined keeps it. */
   alertLevel?: AlertLevel | null;
+  /** Its time to do it (sheet 033): null takes it off, undefined keeps it. */
+  estimatedMinutes?: number | null;
   /** A new repeat (a new rule; the old one stays in the data), null to stop it, undefined to keep it. */
   recurrenceRule?: Omit<RecurrenceRule, 'id'> | null;
 }
@@ -142,6 +147,7 @@ export async function updateReminder(input: UpdateReminderInput): Promise<void> 
     requiresConfirmation: input.requiresConfirmation,
     recurrenceRuleId,
     alertLevel: input.alertLevel,
+    estimatedMinutes: input.estimatedMinutes,
     updatedAt: now,
   });
 

@@ -1,5 +1,7 @@
 import {
   DEFAULT_QUIET_HOURS,
+  insistsFor,
+  ringsAsAlarm,
   isQuietTime,
   levelOf,
   notificationChannelFor,
@@ -53,5 +55,34 @@ describe('notification levels', () => {
     expect(levelOf(undefined)).toBe('normal');
     expect(levelOf('alarm')).toBe('alarm');
     expect(levelOf('loud')).toBe('normal');
+  });
+
+  it('lets the priority choose the level (sheet 032)', () => {
+    const loud = { reminder: 'alarm', deadline: 'alarm', moment: 'alarm', habit: 'alarm' } as const;
+    const quiet = { reminder: 'discreet', deadline: 'discreet', moment: 'discreet', habit: 'discreet' } as const;
+    // Basse is discreet, even when the family rings as an alarm
+    expect(notificationLevelFor({ moment: 'reminder', priority: 'LOW', at: at(10), defaults: loud })).toBe('discreet');
+    // Urgente is an alarm, even for a quiet family or a mourning
+    expect(notificationLevelFor({ moment: 'reminder', priority: 'URGENT', at: at(10), defaults: quiet })).toBe('alarm');
+    expect(notificationLevelFor({ moment: 'momentBefore', priority: 'URGENT', momentKind: 'mourning', at: at(10) })).toBe('alarm');
+    // Its deadline: an alarm on the day, normal the evening before
+    expect(notificationLevelFor({ moment: 'taskDay', priority: 'URGENT', at: at(9) })).toBe('alarm');
+    // Normale and Haute follow the family and the type
+    expect(notificationLevelFor({ moment: 'momentBefore', priority: 'HIGH', momentKind: 'mourning', at: at(10) })).toBe('discreet');
+  });
+
+  it('shows the alarm clock for an urgent thing, or a level chosen as alarm (sheet 033)', () => {
+    expect(ringsAsAlarm({ priority: 'URGENT' })).toBe(true);
+    expect(ringsAsAlarm({ priority: 'HIGH' })).toBe(false);
+    expect(ringsAsAlarm({ priority: 'NORMAL', alertLevel: 'alarm' })).toBe(true);
+    // A level chosen before sheet 032 still decides
+    expect(ringsAsAlarm({ priority: 'URGENT', alertLevel: 'discreet' })).toBe(false);
+  });
+
+  it('makes Haute insist at the normal level only', () => {
+    expect(insistsFor('HIGH', 'normal')).toBe(true);
+    expect(insistsFor('HIGH', 'discreet')).toBe(false);
+    expect(insistsFor('NORMAL', 'normal')).toBe(false);
+    expect(insistsFor(undefined, 'alarm')).toBe(false);
   });
 });

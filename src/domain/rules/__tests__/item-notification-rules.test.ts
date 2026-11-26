@@ -97,4 +97,16 @@ describe('notifications of tasks and moments', () => {
     const planned = planItemNotifications({ tasks: [task()], events: [], now, language: 'en' });
     expect(planned.map(item => item.body)).toEqual(['Due tomorrow.', 'Due today.']);
   });
+
+  it('rings a moment as its priority says (sheet 032)', () => {
+    const urgent = planItemNotifications({ tasks: [], events: [event({ priority: 'URGENT' })], now });
+    expect(urgent.map(item => item.level)).toEqual(['alarm']);
+    const high = planItemNotifications({ tasks: [], events: [event({ priority: 'HIGH' })], now });
+    expect(high.map(item => [item.level, item.insists])).toEqual([['normal', true]]);
+    const plain = planItemNotifications({ tasks: [], events: [event()], now });
+    expect(plain[0].insists).toBeUndefined();
+    // An urgent deadline: normal the evening before, an alarm on the day
+    const due = planItemNotifications({ tasks: [task({ priority: 'URGENT' })], events: [], now });
+    expect(due.map(item => item.level)).toEqual(['normal', 'alarm']);
+  });
 });

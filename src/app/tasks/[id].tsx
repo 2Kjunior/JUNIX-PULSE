@@ -7,6 +7,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { openFocusForTask } from '@/features/focus/open-focus';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -218,12 +219,8 @@ export default function TaskDetailScreen() {
               borderWidth: 1,
               borderColor: theme.outline.variant,
             }}
-            onPress={() =>
-              router.push({
-                pathname: '/focus' as never,
-                params: { taskId: task.id, taskTitle: task.title, minutes: String(task.estimatedMinutes ?? '') },
-              })
-            }
+            // Its next session, with the Focus time already done (sheet 033)
+            onPress={() => openFocusForTask(task)}
             accessibilityRole="button"
             accessibilityLabel={t('taskDetail.focusA11y')}
           >

@@ -11,6 +11,7 @@ import { getNextOccurrence } from './reminder-rules';
 import { HABIT_ACTION_DONE } from './habit-notification-rules';
 import {
   AlertDefaults,
+  insistsFor,
   DEFAULT_ALERT_DEFAULTS,
   DEFAULT_QUIET_HOURS,
   NotificationLevel,
@@ -35,6 +36,8 @@ export interface PlannedReminderNotification {
   scheduledAt: Date;
   /** How loud it rings (sheet 011). */
   level: NotificationLevel;
+  /** Haute: it insists, with a longer vibration (sheet 032). */
+  insists?: boolean;
 }
 
 export interface ReminderToPlan {
@@ -54,6 +57,17 @@ function occurrencesOf({ reminder, rule }: ReminderToPlan, now: Date): string[] 
     current = rule ? getNextOccurrence(current, rule) : null;
   }
   return occurrences;
+}
+
+/** Its level, and whether it insists (Haute, sheet 032). */
+function levelAndInsistOf(
+  reminder: Reminder,
+  at: Date,
+  quietHours: QuietHours,
+  defaults: AlertDefaults
+): { level: NotificationLevel; insists?: boolean } {
+  const level = levelOfReminder(reminder, at, quietHours, defaults);
+  return insistsFor(reminder.priority, level) ? { level, insists: true } : { level };
 }
 
 /** The level of a reminder: the one chosen for it, or its priority and the settings (sheet 023). */
@@ -97,7 +111,7 @@ function confirmationRepeats(
         title: item.reminder.title,
         body: translate(language, 'reminderNotif.confirmAgain'),
         scheduledAt,
-        level: levelOfReminder(item.reminder, scheduledAt, quietHours, defaults),
+        ...levelAndInsistOf(item.reminder, scheduledAt, quietHours, defaults),
       });
     }
   }
@@ -122,7 +136,7 @@ export function planReminderNotifications(
           title: item.reminder.title,
           body: bodyOf(item.reminder, language),
           scheduledAt,
-          level: levelOfReminder(item.reminder, scheduledAt, quietHours, defaults),
+          ...levelAndInsistOf(item.reminder, scheduledAt, quietHours, defaults),
         };
       })
     )

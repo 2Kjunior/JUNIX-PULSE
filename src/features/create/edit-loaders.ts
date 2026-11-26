@@ -64,7 +64,7 @@ export async function loadTodoForEdit(target: TodoEditTarget): Promise<TodoEditV
       confirm: Boolean(reminder.requiresConfirmation),
       alertLevel: chosenLevelOf(reminder.alertLevel),
       dueDate: undefined,
-      estimatedMinutes: undefined,
+      estimatedMinutes: reminder.estimatedMinutes,
       personIds,
       tagIds,
       scheduledAt,
@@ -108,6 +108,8 @@ export interface MomentEditValues {
   type: EventType;
   momentKind: MomentKind;
   alertLevel: AlertLevel | null;
+  /** Normale when none was chosen (sheet 032). */
+  priority: ReminderPriority;
   personIds: string[];
   tagIds: string[];
 }
@@ -126,6 +128,7 @@ export async function loadMomentForEdit(id: string): Promise<MomentEditValues | 
     type: event.type,
     momentKind: momentKindOf(event.momentKind),
     alertLevel: chosenLevelOf(event.alertLevel),
+    priority: event.priority ?? 'NORMAL',
     personIds: persons.map(person => person.id),
     tagIds,
   };

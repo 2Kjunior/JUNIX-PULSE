@@ -7,7 +7,7 @@
 import type { ItemFamily } from './item-kinds';
 
 export type FormSectionId = 'what' | 'kind' | 'when' | 'alert' | 'slot' | 'where' | 'leave' | 'who' | 'more';
-export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability' | 'alertLevel';
+export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability';
 
 export interface ItemFormDefinition {
   sections: readonly FormSectionId[];
@@ -22,12 +22,11 @@ export const ITEM_FORMS: Readonly<Record<ItemFamily, ItemFormDefinition>> = {
   moment: {
     // The type right under the title (sheet 023): it is often guessed from it
     sections: ['what', 'kind', 'slot', 'where', 'leave', 'who', 'more'],
-    more: ['alertLevel', 'availability', 'tags'],
+    // The priority chooses how it rings (sheet 032), in place of "How it warns you"
+    more: ['priority', 'availability', 'tags'],
   },
 };
 
-/** "Time to do it", in minutes; none at first. */
-export const TODO_DURATION_OPTIONS: readonly (number | undefined)[] = [undefined, 15, 30, 45, 60, 120];
 /** "Leave … min before", in minutes; 0 is no reminder to leave. */
 export const LEAVE_OPTIONS: readonly number[] = [0, 15, 30, 45, 60];
 
@@ -38,9 +37,10 @@ export interface FormState {
 
 /**
  * With an alert, a todo is saved as a reminder: the priority moves under the alert, and what a
- * reminder does not have (deadline, time to do it, subtasks) is not offered.
+ * reminder does not have (deadline, subtasks) is not offered. Its time to do it stays: it fills
+ * that time in the Planning (sheet 033).
  */
-const HIDDEN_WITH_ALERT: readonly MoreFieldId[] = ['priority', 'deadline', 'duration', 'subtasks'];
+const HIDDEN_WITH_ALERT: readonly MoreFieldId[] = ['priority', 'deadline', 'subtasks'];
 
 /** The sections to draw, in order: "Leave … min before" only once a place is written. */
 export function visibleSections(family: ItemFamily, state: FormState = {}): FormSectionId[] {

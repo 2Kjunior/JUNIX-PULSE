@@ -22,7 +22,7 @@ import {
   MoreOptions,
   type Choice,
 } from '@/components/create/form/FormBricks';
-import { AlertLevelField } from '@/components/create/form/AlertLevelField';
+import { PriorityField } from '@/components/create/form/PriorityField';
 import { LoadingState } from '@/components/feedback/States';
 import { PersonField } from '@/components/people/PersonField';
 import { TagField } from '@/components/tags/TagField';
@@ -38,7 +38,7 @@ import {
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { MOMENT_KIND_LOOKS } from '@/constants/moment-kinds';
 import { Spacing } from '@/constants/theme';
-import type { AlertLevel, EventType, MomentKind, Person } from '@/domain/entities';
+import type { EventType, MomentKind, Person, ReminderPriority } from '@/domain/entities';
 import { momentFromSentence } from '@/domain/rules/form-dictation-rules';
 import { guessMomentKind, MOMENT_KINDS } from '@/domain/rules/moment-kind-rules';
 import { loadMomentForEdit } from '@/features/create/edit-loaders';
@@ -88,7 +88,8 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
   // Its type (sheet 023): guessed from the title until the person picks one
   const [momentKind, setMomentKind] = useState<MomentKind>('other');
   const [kindPicked, setKindPicked] = useState(Boolean(editingId));
-  const [alertLevel, setAlertLevel] = useState<AlertLevel | null>(null);
+  // How much it matters: it chooses how it rings (sheet 032)
+  const [priority, setPriority] = useState<ReminderPriority>('NORMAL');
   const [personIds, setPersonIds] = useState<string[]>(() => (personId ? [personId] : []));
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [picker, setPicker] = useState<'start' | 'end' | null>(null);
@@ -123,7 +124,7 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
         setTravelBufferMinutes(values.travelBufferMinutes);
         setEventType(values.type);
         setMomentKind(values.momentKind);
-        setAlertLevel(values.alertLevel);
+        setPriority(values.priority);
         setPersonIds(values.personIds);
         setTagIds(values.tagIds);
         setReady(true);
@@ -193,7 +194,9 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
           type: eventType,
           travelBufferMinutes: place ? travelBufferMinutes : 0,
           momentKind,
-          alertLevel,
+          priority,
+          // The priority chooses how it rings now (sheet 032): a level chosen before is let go
+          alertLevel: null,
           personIds,
           tagIds,
         });
@@ -210,7 +213,7 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
           // Leaving only means something with a place
           travelBufferMinutes: place ? travelBufferMinutes : 0,
           momentKind,
-          alertLevel,
+          priority,
           personIds,
           tagIds,
         });
@@ -258,8 +261,17 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
           </View>
         );
       }
-      case 'alertLevel':
-        return <AlertLevelField key={field} value={alertLevel} onChange={setAlertLevel} accent={accent} testIDPrefix="moment-alert-level" />;
+      case 'priority':
+        return (
+          <PriorityField
+            key={field}
+            value={priority}
+            onChange={setPriority}
+            accent={accent}
+            rings={{ moment: 'momentBefore', momentKind }}
+            testIDPrefix="moment-priority"
+          />
+        );
       case 'tags':
         return <TagField key={field} selectedIds={tagIds} onChange={setTagIds} />;
       default:

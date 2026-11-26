@@ -83,6 +83,8 @@ export interface ScheduleReminderParams {
   level?: NotificationLevel;
   /** The sound it rings with (sheet 031); without it, the sound of Junix of before. */
   sound?: SoundChoice;
+  /** Haute: it insists, with a longer vibration (sheet 032). */
+  insists?: boolean;
 }
 
 export interface ScheduleItemParams {
@@ -96,6 +98,8 @@ export interface ScheduleItemParams {
   soundOn: boolean;
   /** The sound it rings with (sheet 031). */
   sound?: SoundChoice;
+  /** Haute: it insists, with a longer vibration (sheet 032). */
+  insists?: boolean;
 }
 
 export interface ScheduleHabitParams {
@@ -116,8 +120,8 @@ function soundFileOf(sound: SoundChoice): string | false {
 }
 
 /** The channel of a task, a moment or a habit: the one of its sound, or of its level as before. */
-function itemChannelOf(params: { level: NotificationLevel; soundOn: boolean; sound?: SoundChoice }): string {
-  return params.sound ? soundChannelId(params.level, params.sound) : channelIdFor(params.level, params.soundOn);
+function itemChannelOf(params: { level: NotificationLevel; soundOn: boolean; sound?: SoundChoice; insists?: boolean }): string {
+  return params.sound ? soundChannelId(params.level, params.sound, params.insists) : channelIdFor(params.level, params.soundOn);
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -229,12 +233,13 @@ export const NotificationService = {
           normal: Notifications.AndroidImportance.HIGH,
           alarm: Notifications.AndroidImportance.MAX,
         };
-        for (const { level, sound } of soundChannels()) {
-          await Notifications.setNotificationChannelAsync(soundChannelId(level, sound), {
-            name: t('notifChannel.soundName', { level: t(`alertLevel.${level}`), sound: t(SOUNDS[sound].labelKey) }),
-            description: t(`notifChannel.soundDesc.${level}`),
+        for (const { level, sound, insists } of soundChannels()) {
+          await Notifications.setNotificationChannelAsync(soundChannelId(level, sound, insists), {
+            name: t('notifChannel.soundName', { level: insists ? t('priority.high') : t(`alertLevel.${level}`), sound: t(SOUNDS[sound].labelKey) }),
+            description: insists ? t('notifChannel.soundDesc.insist') : t(`notifChannel.soundDesc.${level}`),
             importance: importances[level],
-            vibrationPattern: level === "alarm" ? [0, 600, 300, 600, 300, 600] : [0, 250, 250, 250],
+            // Haute insists: a longer vibration (sheet 032)
+            vibrationPattern: level === "alarm" ? [0, 600, 300, 600, 300, 600] : insists ? [0, 500, 200, 500, 200, 500, 200, 500] : [0, 250, 250, 250],
             enableVibrate: level !== "discreet",
             lightColor: level === "alarm" ? "#FFB4AB" : "#8B3DF0",
             showBadge: false,
@@ -312,6 +317,7 @@ export const NotificationService = {
             type: "REMINDER",
             level: params.level ?? "normal",
             ...(params.sound ? { sound: params.sound } : {}),
+            ...(params.insists ? { insists: true } : {}),
             ...params.data,
           },
           // iOS uses the filename; Android uses the channel's configured sound.
@@ -327,7 +333,7 @@ export const NotificationService = {
           channelId:
             Platform.OS === "android"
               ? params.sound
-                ? soundChannelId(params.level ?? "normal", params.sound)
+                ? soundChannelId(params.level ?? "normal", params.sound, params.insists)
                 : channelIdFor(params.level ?? "normal", !params.silent)
               : undefined,
         } as import("expo-notifications").DateTriggerInput,
@@ -360,6 +366,7 @@ export const NotificationService = {
             [params.itemType === "TASK" ? "taskId" : "eventId"]: params.itemId,
             level: params.level,
             ...(params.sound ? { sound: params.sound } : {}),
+            ...(params.insists ? { insists: true } : {}),
           },
           sound: params.sound
             ? soundFileOf(params.sound)

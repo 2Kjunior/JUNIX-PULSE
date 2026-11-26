@@ -21,6 +21,7 @@ function rowToTask(row: Record<string, unknown>): Task {
     scheduledDate: (row.scheduled_date as string | null) ?? undefined,
     dueDate: (row.due_date as string | null) ?? undefined,
     estimatedMinutes: (row.estimated_minutes as number | null) ?? undefined,
+    focusMinutes: (row.focus_minutes as number | null) ?? undefined,
     priority: row.priority as Task['priority'],
     goalId: (row.goal_id as string | null) ?? undefined,
     personId: (row.person_id as string | null) ?? undefined,
@@ -93,6 +94,10 @@ export const TaskRepository = {
     if (params.estimatedMinutes !== undefined) {
       setClauses.push('estimated_minutes = ?');
       values.push(params.estimatedMinutes);
+    }
+    if (params.focusMinutes !== undefined) {
+      setClauses.push('focus_minutes = ?');
+      values.push(params.focusMinutes);
     }
     if (params.priority !== undefined) {
       setClauses.push('priority = ?');

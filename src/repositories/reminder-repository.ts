@@ -22,6 +22,8 @@ export interface CreateReminderParams {
   personId?: string;
   requiresConfirmation?: boolean;
   alertLevel?: AlertLevel | null;
+  /** Its time to do it, in minutes (sheet 033). */
+  estimatedMinutes?: number | null;
   recurrenceRuleId?: string;
   createdAt: string;
   updatedAt: string;
@@ -41,6 +43,8 @@ export interface UpdateReminderParams {
   recurrenceRuleId?: string | null;
   /** null: "Auto". */
   alertLevel?: AlertLevel | null;
+  /** null: no time to do it (sheet 033). */
+  estimatedMinutes?: number | null;
   notificationId?: string | null;
   snoozedUntil?: string | null;
   updatedAt: string;
@@ -63,6 +67,7 @@ function rowToReminder(row: Record<string, unknown>): Reminder {
     personId: (row.person_id as string | null) ?? undefined,
     requiresConfirmation: (row.requires_confirmation as number | null) === 1,
     alertLevel: chosenLevelOf(row.alert_level) ?? undefined,
+    estimatedMinutes: (row.estimated_minutes as number | null) ?? undefined,
     recurrenceRuleId: (row.recurrence_rule_id as string | null) ?? undefined,
     notificationId: (row.notification_id as string | null) ?? undefined,
     snoozedUntil: (row.snoozed_until as string | null) ?? undefined,
@@ -94,8 +99,8 @@ export const ReminderRepository = {
     await db.runAsync(
       `INSERT INTO reminders (
         id, title, notes, scheduled_at, timezone, priority, status, action_type,
-        person_id, recurrence_rule_id, requires_confirmation, alert_level, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'UPCOMING', ?, ?, ?, ?, ?, ?, ?)`,
+        person_id, recurrence_rule_id, requires_confirmation, alert_level, estimated_minutes, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'UPCOMING', ?, ?, ?, ?, ?, ?, ?, ?)`,
       params.id,
       params.title,
       params.notes ?? null,
@@ -107,6 +112,7 @@ export const ReminderRepository = {
       params.recurrenceRuleId ?? null,
       params.requiresConfirmation ? 1 : 0,
       params.alertLevel ?? null,
+      params.estimatedMinutes ?? null,
       params.createdAt,
       params.updatedAt
     );
@@ -154,6 +160,10 @@ export const ReminderRepository = {
     if (params.alertLevel !== undefined) {
       setClauses.push('alert_level = ?');
       values.push(params.alertLevel);
+    }
+    if (params.estimatedMinutes !== undefined) {
+      setClauses.push('estimated_minutes = ?');
+      values.push(params.estimatedMinutes);
     }
     if (params.personId !== undefined) {
       setClauses.push('person_id = ?');

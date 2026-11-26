@@ -45,11 +45,11 @@ type BackupRow = Record<string, SqlValue>;
 const TABLE_COLUMNS: Record<BackupTable, readonly string[]> = {
   persons: ['id', 'display_name', 'relationship', 'phone', 'email', 'birth_date', 'notes', 'last_interaction_at', 'forgotten_threshold_days', 'imported_from_contacts', 'timezone', 'availability', 'created_at', 'updated_at', 'deleted_at'],
   recurrence_rules: ['id', 'type', 'interval_val', 'days_of_week', 'day_of_month', 'week_position', 'end_date'],
-  reminders: ['id', 'title', 'notes', 'scheduled_at', 'timezone', 'priority', 'status', 'action_type', 'person_id', 'recurrence_rule_id', 'requires_confirmation', 'alert_level', 'notification_id', 'snoozed_until', 'created_at', 'updated_at', 'completed_at', 'deleted_at'],
+  reminders: ['id', 'title', 'notes', 'scheduled_at', 'timezone', 'priority', 'status', 'action_type', 'person_id', 'recurrence_rule_id', 'requires_confirmation', 'alert_level', 'estimated_minutes', 'notification_id', 'snoozed_until', 'created_at', 'updated_at', 'completed_at', 'deleted_at'],
   reminder_checklist_items: ['id', 'reminder_id', 'title', 'is_completed', 'position'],
-  tasks: ['id', 'title', 'description', 'status', 'scheduled_date', 'due_date', 'estimated_minutes', 'priority', 'goal_id', 'person_id', 'tags', 'created_at', 'updated_at', 'completed_at', 'deleted_at'],
+  tasks: ['id', 'title', 'description', 'status', 'scheduled_date', 'due_date', 'estimated_minutes', 'focus_minutes', 'priority', 'goal_id', 'person_id', 'tags', 'created_at', 'updated_at', 'completed_at', 'deleted_at'],
   subtasks: ['id', 'task_id', 'title', 'is_completed', 'position', 'created_at', 'completed_at'],
-  events: ['id', 'title', 'notes', 'start_at', 'end_at', 'timezone', 'location', 'type', 'travel_buffer_minutes', 'moment_kind', 'alert_level', 'created_at', 'updated_at', 'deleted_at'],
+  events: ['id', 'title', 'notes', 'start_at', 'end_at', 'timezone', 'location', 'type', 'travel_buffer_minutes', 'moment_kind', 'alert_level', 'priority', 'created_at', 'updated_at', 'deleted_at'],
   event_persons: ['event_id', 'person_id'],
   reminder_persons: ['reminder_id', 'person_id'],
   task_persons: ['task_id', 'person_id'],
@@ -131,7 +131,7 @@ const ENUM_COLUMNS: Partial<Record<BackupTable, Record<string, readonly string[]
     status: ['INBOX', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'POSTPONED'],
     priority: ['URGENT', 'HIGH', 'NORMAL', 'LOW'],
   },
-  events: { type: ['FREE', 'BUSY'], alert_level: ['discreet', 'normal', 'alarm'] },
+  events: { type: ['FREE', 'BUSY'], alert_level: ['discreet', 'normal', 'alarm'], priority: ['URGENT', 'HIGH', 'NORMAL', 'LOW'] },
   tags: { color: TAG_COLORS },
   habits: {
     frequency: ['DAILY', 'WEEKLY'],

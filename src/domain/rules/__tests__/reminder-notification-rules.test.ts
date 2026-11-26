@@ -98,4 +98,11 @@ describe('notificationRoute', () => {
     expect(notificationRoute({ type: 'FOCUS_END' })).toBeNull();
     expect(notificationRoute(undefined)).toBeNull();
   });
+
+  it('makes Haute insist and Urgente ring as an alarm (sheet 032)', () => {
+    const [high] = planReminderNotifications([{ reminder: reminder({ priority: 'HIGH' }), rule: null }], NOW, 'fr', { startHour: 23, endHour: 6 });
+    expect([high.level, high.insists]).toEqual(['normal', true]);
+    const [urgent] = planReminderNotifications([{ reminder: reminder({ priority: 'URGENT' }), rule: null }], NOW, 'fr', { startHour: 23, endHour: 6 });
+    expect([urgent.level, urgent.insists]).toEqual(['alarm', undefined]);
+  });
 });

@@ -18,6 +18,7 @@ import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionBu
 import { HeaderIconButton, SettingsButton } from '@/components/ui/HeaderIconButton';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { SwipeableItem, makeStandardRightActions, type SwipeAction } from '@/components/ui/SwipeableItem';
+import { openFocusForTask } from '@/features/focus/open-focus';
 import { useGestureTip } from '@/features/mascot/GestureTip';
 import { itemFamilyColor } from '@/constants/item-kinds';
 import { Spacing, TAB_BAR_TOTAL_HEIGHT, Typography } from '@/constants/theme';
@@ -167,6 +168,10 @@ export function TodoTabScreen() {
   };
 
   const rightActionsOf = (entry: TodoEntry): SwipeAction[] => [
+    // A task not done: Focus, in its "⋯" and its swipe (sheet 033)
+    ...(entry.kind === 'task' && !entry.done
+      ? [{ key: 'focus', icon: 'timer-outline' as const, label: t('todoTab.focus'), color: palette.primary.default, onPress: () => openFocusForTask(entry) }]
+      : []),
     ...(entry.kind === 'reminder' && !entry.done
       ? [{ key: 'later', icon: 'time-outline' as const, label: t('todoTab.later'), color: palette.tertiary.default, onPress: () => void later(entry) }]
       : []),

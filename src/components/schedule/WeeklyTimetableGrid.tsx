@@ -608,7 +608,7 @@ export function WeeklyTimetableGrid({
                               <PlanningCard
                                 look={look}
                                 title={block.label}
-                                time={isReminder ? block.startTime : `${block.startTime} – ${block.endTime}`}
+                                time={isReminder && !block.fillsTime ? block.startTime : `${block.startTime} – ${block.endTime}`}
                                 height={item.heightPx}
                                 narrow
                                 tiny={item.widthPx < TINY_CARD_WIDTH}

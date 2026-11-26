@@ -31,6 +31,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT } from '@/i18n';
+import { ringsAsAlarm } from '@/domain/rules/notification-level-rules';
 
 import { DraggableBlock } from './DraggableBlock';
 import { PlanningCard } from './PlanningCard';
@@ -62,6 +63,13 @@ type DayCard =
   | { key: string; kind: 'device'; device: DeviceEvent; startMin: number; endMin: number };
 
 /** Minutes since the start of the day shown, kept inside the day for a card that starts or ends on another. */
+/** "14:00", or "14:00 – 16:30" when it has a time to do it (sheet 033). */
+function reminderTime(reminder: Reminder): string {
+  const start = new Date(reminder.scheduledAt);
+  if (!reminder.estimatedMinutes) return format(start, 'HH:mm');
+  return `${format(start, 'HH:mm')} – ${format(new Date(start.getTime() + reminder.estimatedMinutes * 60_000), 'HH:mm')}`;
+}
+
 function minutesWithin(date: Date, day: Date): number {
   const startOfDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   const diff = Math.round((date.getTime() - startOfDay.getTime()) / 60000);
@@ -102,7 +110,8 @@ export const DayTimeGrid = memo(function DayTimeGrid({
     }
     for (const reminder of reminders) {
       const startMin = minutesOfDay(new Date(reminder.scheduledAt));
-      list.push({ key: `r-${reminder.id}`, kind: 'reminder', reminder, startMin, endMin: startMin });
+      // Its time to do it fills the grid (sheet 033); without one, a point as before
+      list.push({ key: `r-${reminder.id}`, kind: 'reminder', reminder, startMin, endMin: startMin + (reminder.estimatedMinutes ?? 0) });
     }
     for (const device of deviceEvents.filter(d => !d.allDay)) {
       list.push({
@@ -257,7 +266,7 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                 card.kind === 'event'
                   ? `${format(new Date(card.event.startAt), 'HH:mm')} – ${format(new Date(card.event.endAt), 'HH:mm')}`
                   : card.kind === 'reminder'
-                    ? format(new Date(card.reminder.scheduledAt), 'HH:mm')
+                    ? reminderTime(card.reminder)
                     : `${format(card.device.startAt, 'HH:mm')} – ${format(card.device.endAt, 'HH:mm')}`;
               return (
                 <DraggableBlock
@@ -298,7 +307,7 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                     note={card.kind === 'reminder' ? card.reminder.notes : null}
                     showOptions={card.kind === 'reminder' && box.columns <= 2}
                     narrow={columnWidth < NARROW_CARD_WIDTH}
-                    alarm={(card.kind === 'reminder' ? card.reminder.alertLevel : card.kind === 'event' ? card.event.alertLevel : undefined) === 'alarm'}
+                    alarm={card.kind === 'reminder' ? ringsAsAlarm(card.reminder) : card.kind === 'event' ? ringsAsAlarm(card.event) : false}
                   />
                 </DraggableBlock>
               );

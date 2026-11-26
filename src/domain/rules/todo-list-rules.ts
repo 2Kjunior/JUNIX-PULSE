@@ -5,6 +5,7 @@
  */
 
 import type { Reminder, ReminderPriority, Task } from '../entities';
+import { ringsAsAlarm } from './notification-level-rules';
 
 export type TodoFilter = 'all' | 'alert' | 'noAlert';
 export const TODO_FILTERS: readonly TodoFilter[] = ['all', 'alert', 'noAlert'];
@@ -31,6 +32,9 @@ export interface TodoEntry {
   tagIds: readonly string[];
   /** A reminder set to ring as an Alarm (sheet 031): its card shows the alarm clock. */
   alarm?: boolean;
+  /** A task: its time to do it and its Focus time so far (sheet 033). */
+  estimatedMinutes?: number;
+  focusMinutes?: number;
 }
 
 export interface TodoSection {
@@ -60,6 +64,8 @@ export function entryFromTask(task: Task, tagIds: readonly string[] = []): TodoE
     done: task.status === 'COMPLETED',
     doneAt: task.completedAt,
     priority: task.priority,
+    estimatedMinutes: task.estimatedMinutes,
+    focusMinutes: task.focusMinutes,
     tagIds,
   };
 }
@@ -75,7 +81,7 @@ export function entryFromReminder(reminder: Reminder, tagIds: readonly string[] 
     done: reminder.status === 'COMPLETED',
     doneAt: reminder.completedAt,
     priority: reminder.priority,
-    alarm: reminder.alertLevel === 'alarm',
+    alarm: ringsAsAlarm(reminder),
     tagIds,
   };
 }

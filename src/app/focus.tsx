@@ -48,6 +48,11 @@ import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { setMascotFocusState } from '@/services/mascot/mascot-runtime';
 import { addFocusMinutes } from '@/services/focus-stats-service';
 import { PulseMascot } from '@/features/mascot/PulseMascot';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
+import { useDurationLabel } from '@/components/create/form/DurationField';
+import { focusPlan } from '@/domain/rules/duration-rules';
+import { TaskRepository } from '@/repositories/task-repository';
+import { TaskUseCases } from '@/use-cases/task-use-cases';
 import { useT } from '@/i18n';
 
 const CIRCLE_SIZE = 260;
@@ -62,12 +67,17 @@ export default function FocusScreen() {
   const styles = useThemedStyles(makeFocusStyles);
   const { showSnackbar } = useAppStore();
 
-  const params = useLocalSearchParams<{ taskId?: string; taskTitle?: string; minutes?: string }>();
+  const params = useLocalSearchParams<{ taskId?: string; taskTitle?: string; minutes?: string; done?: string }>();
+  // A task with a time to do it is done in sessions of 50 min (sheet 033); its Focus time so far
+  const taskMinutes = Number(params.minutes) || undefined;
+  const [doneMinutes, setDoneMinutes] = useState(() => Math.max(0, Number(params.done) || 0));
+  const plan = params.taskId ? focusPlan(taskMinutes, doneMinutes) : null;
+  const durationLabel = useDurationLabel();
 
   const [session, setSession] = useState<FocusSession>(() =>
     createFocusSession({
-      // From a task: its "time to do it" (sheet 012), otherwise 25 minutes
-      ...focusMinutesForTask(Number(params.minutes)),
+      // From a task: its next session (sheet 033), otherwise 25 minutes
+      ...focusMinutesForTask(focusPlan(taskMinutes, Math.max(0, Number(params.done) || 0))?.sessionMinutes ?? taskMinutes),
       taskId: params.taskId,
       taskTitle: params.taskTitle,
     })
@@ -88,16 +98,9 @@ export default function FocusScreen() {
           : t('focus.endNotif')
       );
       timerRef.current = setInterval(() => {
-        setSession((prev) => {
-          const next = syncFocusSessionWithClock(prev, endsAtRef.current);
-          if (next.state === 'completed' && prev.state === 'running') {
-            // Kept for the day, even if the app is closed afterwards
-            void addFocusMinutes(prev.durationMinutes).catch(() => {});
-            emitMascotEvent({ type: 'FOCUS_COMPLETED', durationMinutes: prev.durationMinutes });
-            showSnackbar(t('focus.done'));
-          }
-          return next;
-        });
+        // Only the clock here: what the end of a session does is in the effect below (sheet 033),
+        // never inside a state update, where it would update other components while rendering
+        setSession((prev) => syncFocusSessionWithClock(prev, endsAtRef.current));
       }, 1000);
     } else {
       if (session.state !== 'completed') NotificationService.cancelFocusEnd();
@@ -115,6 +118,56 @@ export default function FocusScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the timer follows the session state; the remaining seconds it reads change every second
   }, [session.state, showSnackbar]);
+
+  // The end of a session of a task (sheet 033): its Focus time is kept, then the person says whether
+  // the task is done. It is never ticked by itself: a session over is not the work over
+  const finishedRef = useRef(false);
+  useEffect(() => {
+    if (session.state !== 'completed') {
+      finishedRef.current = false;
+      return;
+    }
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    // Kept for the day, even if the app is closed afterwards
+    void addFocusMinutes(session.durationMinutes).catch(() => {});
+    emitMascotEvent({ type: 'FOCUS_COMPLETED', durationMinutes: session.durationMinutes });
+    if (!session.taskId) {
+      showSnackbar(t('focus.done'));
+      return;
+    }
+    const taskId = session.taskId;
+    const done = doneMinutes + session.durationMinutes;
+    setDoneMinutes(done);
+    void TaskRepository.update({ id: taskId, focusMinutes: done, updatedAt: new Date().toISOString() }).catch(() => {});
+    GlassAlert.alert(t('focus.taskDoneTitle'), t('focus.taskDoneBody'), [
+      {
+        text: t('focus.taskNotYet'),
+        style: 'cancel',
+        // The next session is ready, with what is left
+        onPress: () =>
+          setSession(
+            createFocusSession({
+              ...focusMinutesForTask(focusPlan(taskMinutes, done)?.sessionMinutes ?? session.durationMinutes),
+              taskId,
+              taskTitle: session.taskTitle,
+            })
+          ),
+      },
+      {
+        text: t('focus.taskTick'),
+        onPress: async () => {
+          const task = await TaskRepository.findById(taskId);
+          if (task && task.status !== 'COMPLETED') await TaskUseCases.toggleComplete(taskId);
+          showSnackbar(t('focus.taskTicked'));
+          // Back to where Focus was opened from; opened from a link, to the To do list
+          if (router.canGoBack()) router.back();
+          else router.replace('/(tabs)/tasks' as never);
+        },
+      },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when a session of a task ends
+  }, [session.state]);
 
   // La mascotte se tait pendant une session : elle doit savoir qu'elle est en cours
   useEffect(() => {
@@ -199,6 +252,17 @@ export default function FocusScreen() {
               {session.taskTitle}
             </Text>
           </View>
+        ) : null}
+        {/* "Séance 2 sur 6 · 1 h 40 sur 5 h" (sheet 033) */}
+        {plan && taskMinutes ? (
+          <Text style={styles.sessionLine} testID="focus-session-line">
+            {t('focus.sessionLine', {
+              session: plan.session,
+              sessions: plan.sessions,
+              done: durationLabel(Math.min(doneMinutes, taskMinutes)),
+              total: durationLabel(taskMinutes),
+            })}
+          </Text>
         ) : null}
 
         {/* ─── Pulse se concentre avec vous pendant la session, se réjouit à la fin ─── */}
@@ -445,6 +509,12 @@ function makeFocusStyles(palette: ThemePalette) {
       fontSize: Typography.labelLarge.fontSize,
       color: palette.onSurface.primary,
       fontWeight: Typography.labelLarge.fontWeight,
+    },
+    sessionLine: {
+      ...Typography.bodyMedium,
+      color: palette.onSurface.variant,
+      textAlign: 'center',
+      marginTop: Spacing.xs,
     },
     mascot: {
       alignItems: 'center',
