@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -34,6 +35,27 @@ class AlarmService : Service() {
     const val ACTION_STOP = "expo.modules.junixalarm.ACTION_STOP"
     const val ACTION_SNOOZE = "expo.modules.junixalarm.ACTION_SNOOZE"
     const val EXTRA_ALARM = "expo.modules.junixalarm.ALARM"
+    /** Sent inside the app when the ringing stops: the page of the alarm closes (sheet 035). */
+    const val ACTION_ENDED = "expo.modules.junixalarm.ACTION_ENDED"
+
+    /** The icon of the notifications of Junix, declared by the app (as expo-notifications reads it). */
+    fun smallIconOf(context: Context): Int {
+      val declared = try {
+        context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
+          .metaData?.getInt("expo.modules.notifications.default_notification_icon", 0) ?: 0
+      } catch (error: Exception) {
+        0
+      }
+      if (declared != 0) return declared
+      val icon = context.resources.getIdentifier("notification_icon", "drawable", context.packageName)
+      return if (icon != 0) icon else context.applicationInfo.icon
+    }
+
+    /** Whether Android lets the page of the alarm light the locked screen (Android 14 asks the person). */
+    fun canUseFullScreen(context: Context): Boolean {
+      if (Build.VERSION.SDK_INT < 34) return true
+      return (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).canUseFullScreenIntent()
+    }
 
     const val RINGING_CHANNEL = "junix-pulse-alarm-ringing-v1"
     const val MISSED_CHANNEL = "junix-pulse-alarm-missed-v1"
@@ -85,6 +107,9 @@ class AlarmService : Service() {
       startForeground(RINGING_ID, notification)
     }
     holdWakeLock()
+    // The app open on the screen: the page of the alarm shows at once (sheet 035); otherwise the
+    // full-screen intent of the notification lights the screen, when Android allows it
+    if (appInForeground()) showPage(alarm)
     playSound(alarm.sound)
     vibrate()
     handler.removeCallbacksAndMessages(null)
@@ -172,6 +197,8 @@ class AlarmService : Service() {
   private fun stopRinging() {
     stopSound()
     current = null
+    // The page of the alarm, if it is open, closes
+    sendBroadcast(Intent(ACTION_ENDED).setPackage(packageName))
     wakeLock?.let { if (it.isHeld) it.release() }
     wakeLock = null
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE) else {
@@ -200,7 +227,7 @@ class AlarmService : Service() {
   private fun missed(alarm: AlarmItem) {
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     val builder = builder(MISSED_CHANNEL)
-      .setSmallIcon(smallIcon())
+      .withJunixLook()
       .setContentTitle(alarm.missedTitle)
       .setContentText(alarm.title)
       .setAutoCancel(true)
@@ -236,9 +263,40 @@ class AlarmService : Service() {
       Notification.Builder(this)
     }
 
-  private fun smallIcon(): Int {
-    val icon = resources.getIdentifier("notification_icon", "drawable", packageName)
-    return if (icon != 0) icon else applicationInfo.icon
+  /**
+   * The icon and the colour of the other notifications of Junix (sheet 034, after the test on the
+   * phone): read from the app, as expo-notifications does. Without the colour, the white logo
+   * disappeared in a light circle.
+   */
+  private val appMetaData by lazy {
+    try {
+      packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA).metaData
+    } catch (error: Exception) {
+      null
+    }
+  }
+
+  private fun smallIcon(): Int = smallIconOf(this)
+
+  /** The violet of Junix, or null when the app declares none. */
+  private fun accentColor(): Int? {
+    val declared = appMetaData?.getInt("expo.modules.notifications.default_notification_color", 0) ?: 0
+    if (declared == 0) return null
+    return try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) resources.getColor(declared, null) else {
+        @Suppress("DEPRECATION")
+        resources.getColor(declared)
+      }
+    } catch (error: Exception) {
+      null
+    }
+  }
+
+  /** The icon and its colour on every notification of the alarm. */
+  private fun Notification.Builder.withJunixLook(): Notification.Builder {
+    setSmallIcon(smallIcon())
+    accentColor()?.let { setColor(it) }
+    return this
   }
 
   private fun actionIntent(action: String, alarm: AlarmItem): PendingIntent {
@@ -259,11 +317,38 @@ class AlarmService : Service() {
     return PendingIntent.getActivity(this, alarm.id.hashCode(), open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
   }
 
+  // ─── The page of the alarm (sheet 035) ───────────────────────────────────────
+
+  private fun pageIntent(alarm: AlarmItem): Intent =
+    Intent(this, AlarmActivity::class.java)
+      .putExtra(EXTRA_ALARM, alarm.toJson().toString())
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+
+  private fun pagePendingIntent(alarm: AlarmItem): PendingIntent =
+    PendingIntent.getActivity(this, ("page" + alarm.id).hashCode(), pageIntent(alarm), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+  private fun appInForeground(): Boolean {
+    val state = android.app.ActivityManager.RunningAppProcessInfo()
+    android.app.ActivityManager.getMyMemoryState(state)
+    return state.importance <= android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+  }
+
+  private fun showPage(alarm: AlarmItem) {
+    try {
+      startActivity(pageIntent(alarm))
+    } catch (error: Exception) {
+      // Android refused: the notification still rings, with its buttons
+    }
+  }
+
   private fun ringingNotification(alarm: AlarmItem): Notification {
     val stop = Notification.Action.Builder(null, alarm.stopLabel, actionIntent(ACTION_STOP, alarm)).build()
     val later = Notification.Action.Builder(null, alarm.snoozeLabel, actionIntent(ACTION_SNOOZE, alarm)).build()
+    // Locked screen: the page lights it when Android allows it; otherwise, Android shows the
+    // notification itself, at the top, still ringing (the fallback of the study, 10.6)
     return builder(RINGING_CHANNEL)
-      .setSmallIcon(smallIcon())
+      .setFullScreenIntent(pagePendingIntent(alarm), true)
+      .withJunixLook()
       .setContentTitle(alarm.title)
       .setContentText(alarm.body)
       .setCategory(Notification.CATEGORY_ALARM)

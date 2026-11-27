@@ -656,4 +656,5 @@ Proposition et maquette validées (« Oui, on valide »), après vérification d
 - **Paramètres → Notifications et vibrations** : une ligne « Alarmes en plein écran » (Autorisé, ou À autoriser › vers la page d'Android).
 - **Construction** : un module local `modules/junix-alarm` en Kotlin (outil officiel d'Expo), sans bibliothèque ajoutée ; un service Android qui joue le son (type « lecture multimédia »), lancé par l'alarme exacte ; la synchronisation confie les notifications de niveau Alarme à ce module.
 - **Découpage** : fiche 034 (le module, la sonnerie continue en notification prioritaire, Plus tard, le redémarrage, branché à la synchronisation) ; fiche 035 (la page plein écran, la ligne des Paramètres). Un APK après chaque fiche ; le vrai test se fait sur le téléphone.
+- **Fait** : fiche 034 (27 novembre 2026 : essayée sur le téléphone, « ça fonctionne » ; le logo manquait dans le cercle de la notification) et fiche 035 (la page plein écran, la ligne des Paramètres, le logo corrigé), à essayer sur le téléphone.
 

@@ -20,6 +20,10 @@ export interface NativeAlarm {
   snoozeLabel: string;
   missedTitle: string;
   channelName: string;
+  /** What it is, on the page of the alarm: "Rappel · Urgente" (sheet 035). */
+  kindLabel: string;
+  /** "Ouvrir dans Junix" (sheet 035). */
+  openLabel: string;
 }
 
 interface JunixAlarmNative {
@@ -28,6 +32,8 @@ interface JunixAlarmNative {
   canScheduleExact(): boolean;
   ringingId(): string | null;
   stopRinging(): void;
+  canUseFullScreen(): boolean;
+  openFullScreenSettings(): boolean;
 }
 
 const native = requireOptionalNativeModule<JunixAlarmNative>('JunixAlarm');
@@ -52,5 +58,15 @@ export const JunixAlarm = {
 
   stopRinging(): void {
     native?.stopRinging();
+  },
+
+  /** Whether the page of the alarm may light the locked screen; null without the module (sheet 035). */
+  canUseFullScreen(): boolean | null {
+    return native ? native.canUseFullScreen() : null;
+  },
+
+  /** Opens the page of Android to allow it; false when it could not be opened. */
+  openFullScreenSettings(): boolean {
+    return native ? native.openFullScreenSettings() : false;
   },
 };

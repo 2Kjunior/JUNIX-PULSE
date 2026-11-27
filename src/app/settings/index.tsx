@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  AppState,
 } from 'react-native';
 import { GlassAlert } from '@/components/feedback/GlassAlert';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -67,6 +68,7 @@ import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
 import { SoundSetting } from '@/components/settings/SoundSetting';
+import { fullScreenAlarmsAllowed, openFullScreenAlarmSettings } from '@/services/alarm-bridge';
 import { offerExactAlarmsForAlarmLevel } from '@/features/reminders/offer-exact-alarms';
 import { DEFAULT_SOUND_PREFS, type SoundChoice, type SoundPrefs } from '@/domain/rules/sound-rules';
 import { NotificationSoundService } from '@/services/sound/NotificationSoundService';
@@ -146,6 +148,8 @@ export default function SettingsScreen() {
   const [backupPasswordVisible, setBackupPasswordVisible] = useState(false);
   const [isSanctumPinConfigured, setIsSanctumPinConfigured] = useState(false);
   const [canEnableExactAlarms, setCanEnableExactAlarms] = useState(false);
+  // Whether the page of the alarm may light the locked screen (sheet 035); null: no alarm of Junix here
+  const [fullScreenAlarms, setFullScreenAlarms] = useState<boolean | null>(null);
 
   const loadSettings = useCallback(async () => {
     setAutoBackup(await getAutoBackupConfig());
@@ -155,6 +159,7 @@ export default function SettingsScreen() {
     setDisplayNameInput(s.displayName ?? '');
     const exactAlarms = await NotificationService.getExactAlarmStatus();
     setCanEnableExactAlarms(!exactAlarms.granted && exactAlarms.canAsk);
+    setFullScreenAlarms(fullScreenAlarmsAllowed());
     try {
       const pinConfigured = await SanctumAuthService.isPinConfigured();
       setIsSanctumPinConfigured(pinConfigured);
@@ -166,6 +171,14 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  // Back from the settings of Android: the row says at once whether it is allowed now (sheet 035)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') setFullScreenAlarms(fullScreenAlarmsAllowed());
+    });
+    return () => subscription.remove();
+  }, []);
 
   const refreshAutoBackup = async () => setAutoBackup(await getAutoBackupConfig());
 
@@ -690,6 +703,28 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>{t('settingsScreen.exactLabel')}</Text>
             <Text style={styles.rowSub}>{t('settingsScreen.exactHint')}</Text>
           </View>
+          <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+        </TouchableOpacity>
+      )}
+
+      {/* The page of the alarm over the locked screen (sheet 035): only where the alarm of Junix exists */}
+      {settings.notificationsEnabled && fullScreenAlarms !== null && (
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => {
+            if (!openFullScreenAlarmSettings()) GlassAlert.alert(t('alarm.fullScreen'), t('alarm.fullScreenHint'));
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('alarm.fullScreen')}, ${t(fullScreenAlarms ? 'alarm.fullScreenOn' : 'alarm.fullScreenOff')}`}
+          testID="settings-full-screen-alarms"
+        >
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('alarm.fullScreen')}</Text>
+            <Text style={styles.rowSub}>{t('alarm.fullScreenHint')}</Text>
+          </View>
+          <Text style={[styles.rowSub, { color: fullScreenAlarms ? palette.success.default : palette.primary.default }]}>
+            {t(fullScreenAlarms ? 'alarm.fullScreenOn' : 'alarm.fullScreenOff')}
+          </Text>
           <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
         </TouchableOpacity>
       )}

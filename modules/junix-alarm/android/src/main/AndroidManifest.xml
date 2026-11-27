@@ -9,6 +9,10 @@
   <!-- Plan the alarms again after the phone restarts -->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+  <!-- The page that lights the locked screen (sheet 035). Android 14 gives it only to alarm and
+       call apps; for the others, the person allows it in the settings of Android, or the alarm
+       rings as a priority notification -->
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
   <application>
     <!-- Wakes up at the time of an alarm and starts the ringing -->
@@ -24,6 +28,17 @@
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
       </intent-filter>
     </receiver>
+
+    <!-- The page of the alarm, over the locked screen (sheet 035) -->
+    <activity
+      android:name="expo.modules.junixalarm.AlarmActivity"
+      android:exported="false"
+      android:excludeFromRecents="true"
+      android:launchMode="singleInstance"
+      android:taskAffinity="com.junix.pulse.alarm"
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
     <!-- Plays the sound in a loop until "Arrêter", "Plus tard" or 5 minutes -->
     <service

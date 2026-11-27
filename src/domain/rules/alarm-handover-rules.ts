@@ -20,7 +20,13 @@ export interface AlarmHandover {
   snoozeLabel: string;
   missedTitle: string;
   channelName: string;
+  /** What it is, on the page of the alarm (sheet 035). */
+  kindLabel: string;
+  openLabel: string;
 }
+
+/** What rings, for the page of the alarm. */
+export type AlarmKind = 'reminder' | 'task' | 'moment' | 'habit';
 
 /** The planned notifications that ring as alarms, and the ones that stay notifications. */
 export function splitAlarms<T extends { level: NotificationLevel }>(
@@ -44,7 +50,8 @@ export function alarmOf(
   item: { identifier: string; title: string; body: string; scheduledAt: Date },
   sound: SoundChoice,
   route: string | null,
-  language: AppLanguage
+  language: AppLanguage,
+  kind: AlarmKind = 'reminder'
 ): AlarmHandover {
   return {
     id: item.identifier,
@@ -57,5 +64,7 @@ export function alarmOf(
     snoozeLabel: translate(language, 'alarm.snooze'),
     missedTitle: translate(language, 'alarm.missed'),
     channelName: translate(language, 'alarm.channel'),
+    kindLabel: translate(language, `alarm.kind.${kind}`),
+    openLabel: translate(language, 'alarm.open'),
   };
 }

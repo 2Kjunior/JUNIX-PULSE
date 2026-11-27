@@ -14,6 +14,24 @@ export function nativeAlarmsOn(): boolean {
   return Platform.OS === 'android' && JunixAlarm.available;
 }
 
+/**
+ * Whether the page of the alarm may light the locked screen (sheet 035); null when this phone has
+ * no alarm of Junix (web, old build): the settings then show nothing about it.
+ */
+export function fullScreenAlarmsAllowed(): boolean | null {
+  if (!nativeAlarmsOn()) return null;
+  try {
+    return JunixAlarm.canUseFullScreen();
+  } catch {
+    return null;
+  }
+}
+
+/** Opens the page of Android where the person allows it. */
+export function openFullScreenAlarmSettings(): boolean {
+  return nativeAlarmsOn() ? JunixAlarm.openFullScreenSettings() : false;
+}
+
 /** The alarms of one group become exactly these; true when Android took them. */
 export async function handOverAlarms(group: 'reminder' | 'item' | 'habit', alarms: AlarmHandover[]): Promise<boolean> {
   if (!nativeAlarmsOn()) return false;

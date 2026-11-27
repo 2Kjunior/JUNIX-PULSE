@@ -81,7 +81,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
     const split = splitAlarms(allPlanned, nativeAlarmsOn());
     const handed = await handOverAlarms(
       'reminder',
-      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/reminders/${item.reminderId}`, language))
+      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/reminders/${item.reminderId}`, language, 'reminder'))
     );
     const planned = handed ? split.notifications : allPlanned;
 

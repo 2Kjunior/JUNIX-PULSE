@@ -31,7 +31,11 @@ describe('alarm-handover-rules (sheet 034)', () => {
       stopLabel: 'Arrêter',
       snoozeLabel: 'Plus tard · 10 min',
       missedTitle: 'Alarme manquée',
+      // The page of the alarm (sheet 035)
+      kindLabel: 'Rappel',
+      openLabel: 'Ouvrir dans Junix',
     });
+    expect(alarmOf({ identifier: 'y', title: 't', body: 'b', scheduledAt: at }, 'alarm', '/events/e1', 'fr', 'moment').kindLabel).toBe('Moment');
     // The sound off: the vibration alone
     expect(alarmOf({ identifier: 'x', title: 't', body: 'b', scheduledAt: at }, 'none', null, 'en')).toMatchObject({ sound: '', url: '', stopLabel: 'Stop' });
   });

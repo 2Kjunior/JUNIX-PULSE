@@ -23,7 +23,11 @@ data class AlarmItem(
   val stopLabel: String,
   val snoozeLabel: String,
   val missedTitle: String,
-  val channelName: String
+  val channelName: String,
+  /** What it is, for the page of the alarm: "Rappel · Urgente" (sheet 035). */
+  val kindLabel: String = "",
+  /** "Ouvrir dans Junix", on the page of the alarm (sheet 035). */
+  val openLabel: String = ""
 ) {
   fun toJson(): JSONObject = JSONObject()
     .put("id", id)
@@ -37,6 +41,8 @@ data class AlarmItem(
     .put("snoozeLabel", snoozeLabel)
     .put("missedTitle", missedTitle)
     .put("channelName", channelName)
+    .put("kindLabel", kindLabel)
+    .put("openLabel", openLabel)
 
   companion object {
     fun fromJson(json: JSONObject): AlarmItem = AlarmItem(
@@ -50,7 +56,9 @@ data class AlarmItem(
       stopLabel = json.optString("stopLabel", "Stop"),
       snoozeLabel = json.optString("snoozeLabel", "Later"),
       missedTitle = json.optString("missedTitle", "Missed alarm"),
-      channelName = json.optString("channelName", "Alarms")
+      channelName = json.optString("channelName", "Alarms"),
+      kindLabel = json.optString("kindLabel", ""),
+      openLabel = json.optString("openLabel", "")
     )
 
     /** From what the app sends (a map of the JS object); null when something essential is missing. */
@@ -68,7 +76,9 @@ data class AlarmItem(
         stopLabel = map["stopLabel"] as? String ?: "Stop",
         snoozeLabel = map["snoozeLabel"] as? String ?: "Later",
         missedTitle = map["missedTitle"] as? String ?: "Missed alarm",
-        channelName = map["channelName"] as? String ?: "Alarms"
+        channelName = map["channelName"] as? String ?: "Alarms",
+        kindLabel = map["kindLabel"] as? String ?: "",
+        openLabel = map["openLabel"] as? String ?: ""
       )
     }
   }

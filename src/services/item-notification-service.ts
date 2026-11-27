@@ -43,7 +43,9 @@ async function sync(force: boolean): Promise<void> {
     const handed = await handOverAlarms(
       'item',
       split.alarms.map(item =>
-        alarmOf(item, soundOf(item), item.itemType === 'TASK' ? `/tasks/${item.itemId}` : `/events/${item.itemId}`, language)
+        item.itemType === 'TASK'
+          ? alarmOf(item, soundOf(item), `/tasks/${item.itemId}`, language, 'task')
+          : alarmOf(item, soundOf(item), `/events/${item.itemId}`, language, 'moment')
       )
     );
     const planned = handed ? split.notifications : allPlanned;

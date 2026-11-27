@@ -2,6 +2,9 @@ package expo.modules.junixalarm
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -37,6 +40,30 @@ class JunixAlarmModule : Module() {
     /** The id of the alarm ringing now, or null. */
     Function("ringingId") {
       AlarmService.current?.id
+    }
+
+    /** Whether the page of the alarm may light the locked screen (sheet 035). */
+    Function("canUseFullScreen") {
+      AlarmService.canUseFullScreen(context)
+    }
+
+    /**
+     * Opens the page of Android where the person allows it (Android 14 and later); before, the
+     * permission is given at install, and the settings of the notifications of the app open.
+     */
+    Function("openFullScreenSettings") {
+      val intent = if (Build.VERSION.SDK_INT >= 34) {
+        Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:" + context.packageName))
+      } else {
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+      }
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      try {
+        context.startActivity(intent)
+        true
+      } catch (error: Exception) {
+        false
+      }
     }
 
     /** Stops the alarm ringing now (the app opened it, for instance). */
