@@ -356,6 +356,13 @@ class AlarmService : Service() {
   private fun ringingNotification(alarm: AlarmItem): Notification {
     val stop = Notification.Action.Builder(null, alarm.stopLabel, actionIntent(ACTION_STOP, alarm)).build()
     val later = Notification.Action.Builder(null, alarm.snoozeLabel, actionIntent(ACTION_SNOOZE, alarm)).build()
+    // "Terminer" (sheet 039): Junix opens on the link that ends the thing, and stops the alarm
+    val done = if (alarm.doneLabel.isNotEmpty() && alarm.doneUrl.isNotEmpty()) {
+      val open = Intent(Intent.ACTION_VIEW, Uri.parse(alarm.doneUrl)).setPackage(packageName)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+      val pending = PendingIntent.getActivity(this, ("done" + alarm.id).hashCode(), open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+      Notification.Action.Builder(null, alarm.doneLabel, pending).build()
+    } else null
     // Locked screen: the page lights it when Android allows it; otherwise, Android shows the
     // notification itself, at the top, still ringing (the fallback of the study, 10.6)
     return builder(RINGING_CHANNEL)
@@ -369,6 +376,7 @@ class AlarmService : Service() {
       .setVisibility(Notification.VISIBILITY_PUBLIC)
       .setContentIntent(openIntent(alarm))
       .addAction(stop)
+      .apply { if (done != null) addAction(done) }
       .addAction(later)
       .build()
   }

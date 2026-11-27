@@ -85,6 +85,20 @@ export interface ScheduleReminderParams {
   sound?: SoundChoice;
   /** Haute: it insists, with a longer vibration (sheet 032). */
   insists?: boolean;
+  /** A music of the phone (sheet 039): its channel, its mark in the data, its address. */
+  phone?: PhoneSound;
+}
+
+/** A music of the phone for an ordinary notification (sheet 039). */
+export interface PhoneSound {
+  channel: string;
+  key: string;
+  uri: string;
+}
+
+/** Its data: the mark of the music (a new music plans it again) and its address (heard in the app). */
+function phoneData(phone: PhoneSound | undefined): Record<string, string> {
+  return phone ? { sound: phone.key, soundUri: phone.uri } : {};
 }
 
 export interface ScheduleItemParams {
@@ -100,6 +114,8 @@ export interface ScheduleItemParams {
   sound?: SoundChoice;
   /** Haute: it insists, with a longer vibration (sheet 032). */
   insists?: boolean;
+  /** A music of the phone (sheet 039): its channel, its mark in the data, its address. */
+  phone?: PhoneSound;
 }
 
 export interface ScheduleHabitParams {
@@ -112,6 +128,8 @@ export interface ScheduleHabitParams {
   soundOn: boolean;
   /** The sound it rings with (sheet 031). */
   sound?: SoundChoice;
+  /** A music of the phone (sheet 039): its channel, its mark in the data, its address. */
+  phone?: PhoneSound;
 }
 
 /** The file a sound plays, for iOS (Android takes the sound of the channel); false: silence. */
@@ -120,7 +138,8 @@ function soundFileOf(sound: SoundChoice): string | false {
 }
 
 /** The channel of a task, a moment or a habit: the one of its sound, or of its level as before. */
-function itemChannelOf(params: { level: NotificationLevel; soundOn: boolean; sound?: SoundChoice; insists?: boolean }): string {
+function itemChannelOf(params: { level: NotificationLevel; soundOn: boolean; sound?: SoundChoice; insists?: boolean; phone?: PhoneSound }): string {
+  if (params.phone) return params.phone.channel;
   return params.sound ? soundChannelId(params.level, params.sound, params.insists) : channelIdFor(params.level, params.soundOn);
 }
 
@@ -318,6 +337,7 @@ export const NotificationService = {
             level: params.level ?? "normal",
             ...(params.sound ? { sound: params.sound } : {}),
             ...(params.insists ? { insists: true } : {}),
+            ...phoneData(params.phone),
             ...params.data,
           },
           // iOS uses the filename; Android uses the channel's configured sound.
@@ -332,7 +352,9 @@ export const NotificationService = {
           date: triggerDate,
           channelId:
             Platform.OS === "android"
-              ? params.sound
+              ? params.phone
+                ? params.phone.channel
+                : params.sound
                 ? soundChannelId(params.level ?? "normal", params.sound, params.insists)
                 : channelIdFor(params.level ?? "normal", !params.silent)
               : undefined,
@@ -367,6 +389,7 @@ export const NotificationService = {
             level: params.level,
             ...(params.sound ? { sound: params.sound } : {}),
             ...(params.insists ? { insists: true } : {}),
+            ...phoneData(params.phone),
           },
           sound: params.sound
             ? soundFileOf(params.sound)
@@ -397,7 +420,7 @@ export const NotificationService = {
         content: {
           title: params.title,
           body: params.body,
-          data: { type: "HABIT", habitId: params.habitId, level: params.level, ...(params.sound ? { sound: params.sound } : {}) },
+          data: { type: "HABIT", habitId: params.habitId, level: params.level, ...(params.sound ? { sound: params.sound } : {}), ...phoneData(params.phone) },
           sound: params.sound
             ? soundFileOf(params.sound)
             : params.soundOn && params.level !== "discreet" ? NOTIFICATION_SOUND_WAV_FILENAME : false,

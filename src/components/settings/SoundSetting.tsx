@@ -3,6 +3,10 @@
  * like the ringtones of the phone. One row for each priority (Faible, Normale et haute, Urgente)
  * with the sound chosen; a touch opens a glass window with the sounds of that row, a round to tick
  * and ▶ to hear each one. "Choisir" keeps the ticked one; touching outside changes nothing.
+ *
+ * Sheet 039, after your test on the phone: a music of the phone for each priority (not only the
+ * urgent ones), "Retirer" to go back to the sound of Junix, no more ringtones of Android (not the
+ * sounds you meant), and a row that never squeezes its name, however long the music's.
  */
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -41,7 +45,7 @@ export function SoundSetting({
   value: SoundPrefs;
   onChange: (prefs: SoundPrefs) => void;
   onPreview: (sound: SoundChoice) => void;
-  /** A sound of the phone for the urgent ones (sheet 037); absent where the alarm of Junix is not. */
+  /** A music of the phone (sheets 037 and 039); absent where the alarm of Junix is not. */
   onPickPhone?: (kind: DeviceSound['kind'], current: string | null) => Promise<DeviceSound | null>;
   onPreviewPhone?: (uri: string) => void;
 }) {
@@ -49,31 +53,46 @@ export function SoundSetting({
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [picking, setPicking] = useState<NotificationLevel | null>(null);
-  // A sound of Junix, or "device": the sound of the phone below (sheet 037)
+  // A sound of Junix, or "device": the music of the phone below (sheets 037 and 039)
   const [ticked, setTicked] = useState<SoundChoice | 'device'>('pulse');
   const [draftDevice, setDraftDevice] = useState<DeviceSound | undefined>(undefined);
   const nameOf = (sound: SoundChoice) => t(sound === 'none' ? 'sound.none' : SOUNDS[sound].labelKey);
   const phoneName = (device: DeviceSound) =>
     t(device.kind === 'ringtone' ? 'soundSettings.ringtoneName' : 'soundSettings.musicName', { name: device.name || '…' });
-  /** What the row of a level says: the sound of the phone for the urgent ones, when chosen. */
-  const rowValue = (level: NotificationLevel) =>
-    level === 'alarm' && value.alarmDevice ? t('soundSettings.phoneValue', { name: value.alarmDevice.name || '…' }) : nameOf(value[level]);
+  /** What the row of a level says: its music of the phone, when chosen, or its sound of Junix. */
+  const rowValue = (level: NotificationLevel) => {
+    const phone = value.devices?.[level];
+    return phone ? phoneName(phone) : nameOf(value[level]);
+  };
+  /** The musics of the phone, with the one of this level changed (or taken away: undefined). */
+  const devicesWith = (level: NotificationLevel, device: DeviceSound | undefined) => {
+    const next = { ...value.devices };
+    if (device) next[level] = device;
+    else delete next[level];
+    return Object.keys(next).length > 0 ? next : undefined;
+  };
 
   const open = (level: NotificationLevel) => {
-    const phone = level === 'alarm' ? value.alarmDevice : undefined;
+    const phone = value.devices?.[level];
     setDraftDevice(phone);
     setTicked(phone ? 'device' : value[level]);
     setPicking(level);
   };
   const choose = () => {
-    if (picking === 'alarm' && ticked === 'device' && draftDevice) {
-      if (draftDevice.uri !== value.alarmDevice?.uri) onChange({ ...value, alarmDevice: draftDevice });
+    if (picking && ticked === 'device' && draftDevice) {
+      if (draftDevice.uri !== value.devices?.[picking]?.uri) onChange({ ...value, devices: devicesWith(picking, draftDevice) });
     } else if (picking && ticked !== 'device') {
-      // A sound of Junix: the sound of the phone is let go
-      const leavesPhone = picking === 'alarm' && value.alarmDevice !== undefined;
-      if (ticked !== value[picking] || leavesPhone) onChange({ ...value, [picking]: ticked, ...(picking === 'alarm' ? { alarmDevice: undefined } : {}) });
+      // A sound of Junix: the music of the phone is let go
+      const leavesPhone = value.devices?.[picking] !== undefined;
+      if (ticked !== value[picking] || leavesPhone) onChange({ ...value, [picking]: ticked, devices: devicesWith(picking, undefined) });
     }
     setPicking(null);
+  };
+  /** "Retirer": the music leaves the window; the sound of Junix of the level is ticked again. */
+  const removePhone = () => {
+    if (!picking) return;
+    setDraftDevice(undefined);
+    setTicked(value[picking]);
   };
   const pickPhone = async (kind: DeviceSound['kind']) => {
     if (!onPickPhone) return;
@@ -102,7 +121,7 @@ export function SoundSetting({
               size={18}
               color={urgent ? palette.error.default : palette.onSurface.variant}
             />
-            <Text style={[styles.rowLabel, urgent && { color: palette.error.default }]}>{t(ROW_LABELS[level])}</Text>
+            <Text style={[styles.rowLabel, urgent && { color: palette.error.default }]} numberOfLines={1}>{t(ROW_LABELS[level])}</Text>
             <Text style={styles.rowValue} numberOfLines={1}>{rowValue(level)}</Text>
             <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
           </TouchableOpacity>
@@ -149,8 +168,8 @@ export function SoundSetting({
                 );
               })}
             </View>
-            {/* The sounds of the phone, for the urgent ones (sheet 037) */}
-            {picking === 'alarm' && onPickPhone ? (
+            {/* A music of the phone, for every priority (sheets 037 and 039) */}
+            {onPickPhone ? (
               <>
                 <Text style={styles.section}>{t('soundSettings.fromPhone')}</Text>
                 <View style={styles.list}>
@@ -183,23 +202,29 @@ export function SoundSetting({
                       >
                         <Ionicons name="play-circle-outline" size={26} color={palette.primary.default} />
                       </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={removePhone}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('soundSettings.removePhone', { sound: phoneName(draftDevice) })}
+                        testID="sound-remove-phone"
+                      >
+                        <Ionicons name="trash-outline" size={22} color={palette.error.default} />
+                      </TouchableOpacity>
                     </View>
                   ) : null}
-                  {(['ringtone', 'music'] as const).map((kind, index) => (
-                    <TouchableOpacity
-                      key={kind}
-                      style={[styles.choice, (index > 0 || draftDevice) && styles.rowLine]}
-                      onPress={() => void pickPhone(kind)}
-                      accessibilityRole="button"
-                      testID={`sound-pick-${kind}`}
-                    >
-                      <Ionicons name={kind === 'ringtone' ? 'notifications-circle-outline' : 'musical-notes-outline'} size={22} color={palette.onSurface.variant} />
-                      <Text style={[styles.choiceLabel, { flex: 1 }]}>
-                        {t(kind === 'ringtone' ? 'soundSettings.pickRingtone' : 'soundSettings.pickMusic')}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
-                    </TouchableOpacity>
-                  ))}
+                  <TouchableOpacity
+                    style={[styles.choice, draftDevice && styles.rowLine]}
+                    onPress={() => void pickPhone('music')}
+                    accessibilityRole="button"
+                    testID="sound-pick-music"
+                  >
+                    <Ionicons name="musical-notes-outline" size={22} color={palette.onSurface.variant} />
+                    <Text style={[styles.choiceLabel, { flex: 1 }]}>
+                      {t(draftDevice ? 'soundSettings.pickOtherMusic' : 'soundSettings.pickMusic')}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
+                  </TouchableOpacity>
                 </View>
               </>
             ) : null}
@@ -218,8 +243,9 @@ function makeStyles(theme: ThemePalette) {
   return StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 52, paddingVertical: Spacing.sm },
     rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.outline.variant },
-    rowLabel: { ...Typography.bodyLarge, flex: 1, color: theme.onSurface.primary },
-    rowValue: { ...Typography.bodyMedium, color: theme.onSurface.variant },
+    // The name of the priority keeps its width; a long music is cut, never the name (sheet 039)
+    rowLabel: { ...Typography.bodyLarge, flexShrink: 0, color: theme.onSurface.primary },
+    rowValue: { ...Typography.bodyMedium, flex: 1, textAlign: 'right', color: theme.onSurface.variant },
     title: { ...Typography.titleMedium, color: theme.onSurface.primary, marginBottom: Spacing.sm },
     list: { marginBottom: Spacing.md },
     section: { ...Typography.bodyMedium, color: theme.onSurface.variant, marginBottom: Spacing.xs },

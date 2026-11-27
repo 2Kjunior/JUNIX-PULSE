@@ -12,7 +12,7 @@ import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 import { deviceSoundFor, soundFor } from '@/domain/rules/sound-rules';
 import { alarmOf, splitAlarms } from '@/domain/rules/alarm-handover-rules';
-import { handOverAlarms, nativeAlarmsOn } from '@/services/alarm-bridge';
+import { handOverAlarms, nativeAlarmsOn, phoneSoundOf, syncPhoneChannels } from '@/services/alarm-bridge';
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -44,10 +44,14 @@ async function sync(force: boolean): Promise<void> {
     const language = useAppStore.getState().language;
     // A sound of the phone for the alarms (sheet 037); the sound of Junix stays its safety net
     const deviceUri = deviceSoundFor({ level: 'alarm', prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled })?.uri ?? '';
+    // The musics of the phone of the ordinary notifications, their channels first (sheet 039)
+    syncPhoneChannels(settings.soundPrefs, language);
+    const phoneOf = (level: (typeof allPlanned)[number]['level']) =>
+      phoneSoundOf(level, deviceSoundFor({ level, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled }));
     const split = splitAlarms(allPlanned, nativeAlarmsOn());
     const handed = await handOverAlarms(
       'habit',
-      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/habits/${item.habitId}`, language, 'habit', deviceUri))
+      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/habits/${item.habitId}`, language, 'habit', deviceUri, item.habitId))
     );
     const planned = handed ? split.notifications : allPlanned;
 
@@ -65,7 +69,7 @@ async function sync(force: boolean): Promise<void> {
         item.body === request.content.body &&
         levelOf(request.content.data?.level) === item.level &&
         // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
-        request.content.data?.sound === soundOf(item.level)
+        request.content.data?.sound === (phoneOf(item.level)?.key ?? soundOf(item.level))
       ) {
         upToDate.add(request.identifier);
       } else {
@@ -76,7 +80,7 @@ async function sync(force: boolean): Promise<void> {
     const missing = planned.filter(item => !upToDate.has(item.identifier));
     if (missing.length === 0 || !(await NotificationService.checkPermissions())) return;
     for (const item of missing) {
-      await NotificationService.scheduleHabit({ ...item, soundOn: settings.notificationSoundEnabled, sound: soundOf(item.level) });
+      await NotificationService.scheduleHabit({ ...item, soundOn: settings.notificationSoundEnabled, sound: soundOf(item.level), phone: phoneOf(item.level) });
     }
   } catch {
     logger.error('[HabitNotificationService] Erreur lors de la synchronisation');

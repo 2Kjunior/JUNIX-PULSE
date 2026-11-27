@@ -69,7 +69,7 @@ export function PriorityField({
     : null;
   const alarm = level === 'alarm';
   // An alarm with a sound of the phone (sheet 037): its name, and it is heard from the phone
-  const phone = level ? deviceSoundFor({ level, prefs: settings?.soundPrefs, soundOn: settings ? settings.notificationSoundEnabled : true }) : undefined;
+  const phone = level ? deviceSoundFor({ level, tone, prefs: settings?.soundPrefs, soundOn: settings ? settings.notificationSoundEnabled : true }) : undefined;
   const soundName = phone ? phone.name || '…' : sound && sound !== 'none' ? t(SOUNDS[sound].labelKey) : '';
   const lineColor = alarm ? palette.error.default : palette.onSurface.variant;
 

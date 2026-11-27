@@ -48,7 +48,7 @@ export const SOUND_CHOICES: Readonly<Record<NotificationLevel, readonly SoundCho
   alarm: ['alarm', 'wake', 'dawn', 'march'],
 };
 
-/** A sound of the phone for the alarms (study 16.10; sheet 037): a ringtone of Android, or a music. */
+/** A sound of the phone (study 16.10; sheets 037 and 039): a music of the phone (a ringtone, before 039). */
 export interface DeviceSound {
   kind: 'ringtone' | 'music';
   /** Its address on the phone (content://…). */
@@ -64,9 +64,19 @@ export interface SoundPrefs {
   alarm: SoundChoice;
   /** A festive or sober moment keeps the sound of its tone. */
   momentTones: boolean;
-  /** The sound of the phone the alarms ring with, rather than `alarm` (sheet 037). */
-  alarmDevice?: DeviceSound;
+  /**
+   * The sound of the phone of each priority, rather than the sound of Junix (sheets 037 and 039);
+   * the sound of Junix of the level stays its safety net.
+   */
+  devices?: Partial<Record<NotificationLevel, DeviceSound>>;
 }
+
+/** The key of each level in the text of the settings: "device" stays the one of the alarms (sheet 037). */
+const DEVICE_KEYS: Readonly<Record<NotificationLevel, string>> = {
+  alarm: 'device',
+  normal: 'device.normal',
+  discreet: 'device.discreet',
+};
 
 export const DEFAULT_SOUND_PREFS: Readonly<SoundPrefs> = { discreet: 'soft', normal: 'pulse', alarm: 'alarm', momentTones: true };
 
@@ -79,9 +89,10 @@ export function soundPrefsOf(text: string | null | undefined): SoundPrefs {
   for (const pair of (text ?? '').split(';')) {
     const [key, value] = pair.split('=').map(part => part.trim());
     if (key === 'tones') prefs.momentTones = value !== '0';
-    else if (key === 'device') {
+    else if (key.startsWith('device')) {
+      const level = (Object.keys(DEVICE_KEYS) as NotificationLevel[]).find(each => DEVICE_KEYS[each] === key);
       const device = deviceSoundOf(value);
-      if (device) prefs.alarmDevice = device;
+      if (level && device) prefs.devices = { ...prefs.devices, [level]: device };
     }
     else if (key === 'discreet' || key === 'normal' || key === 'alarm') {
       if ((SOUND_CHOICES[key] as readonly string[]).includes(value)) prefs[key] = value as SoundChoice;
@@ -91,10 +102,13 @@ export function soundPrefsOf(text: string | null | undefined): SoundPrefs {
 }
 
 export function soundPrefsText(prefs: SoundPrefs): string {
-  const device = prefs.alarmDevice
-    ? `;device=${prefs.alarmDevice.kind}|${encodeURIComponent(prefs.alarmDevice.uri)}|${encodeURIComponent(prefs.alarmDevice.name)}`
-    : '';
-  return `discreet=${prefs.discreet};normal=${prefs.normal};alarm=${prefs.alarm};tones=${prefs.momentTones ? 1 : 0}${device}`;
+  const devices = (['alarm', 'normal', 'discreet'] as const)
+    .map(level => {
+      const device = prefs.devices?.[level];
+      return device ? `;${DEVICE_KEYS[level]}=${device.kind}|${encodeURIComponent(device.uri)}|${encodeURIComponent(device.name)}` : '';
+    })
+    .join('');
+  return `discreet=${prefs.discreet};normal=${prefs.normal};alarm=${prefs.alarm};tones=${prefs.momentTones ? 1 : 0}${devices}`;
 }
 
 /** "ringtone|content%3A…|Argon": a sound of the phone kept in the settings; anything else, none. */
@@ -111,19 +125,44 @@ function deviceSoundOf(text: string | undefined): DeviceSound | undefined {
 }
 
 /**
- * The sound of the phone a notification rings with (sheet 037): only an alarm, with the sound on;
- * otherwise none, and the sound of Junix rings.
+ * The sound of the phone a notification rings with (sheets 037 and 039): the one of its level, with
+ * the sound on. A moment that keeps the sound of its tone (Festif, Sobre) keeps it; an alarm always
+ * takes its own. Otherwise none, and the sound of Junix rings.
  */
 export function deviceSoundFor({
   level,
+  tone,
   prefs = DEFAULT_SOUND_PREFS,
   soundOn = true,
 }: {
   level: NotificationLevel;
+  tone?: MomentTone;
   prefs?: SoundPrefs;
   soundOn?: boolean;
 }): DeviceSound | undefined {
-  return level === 'alarm' && soundOn ? prefs.alarmDevice : undefined;
+  if (!soundOn) return undefined;
+  if (level !== 'alarm' && prefs.momentTones && (tone === 'sober' || (level === 'normal' && tone === 'festive'))) return undefined;
+  return prefs.devices?.[level];
+}
+
+/** A short fixed mark of an address, for the names of the channels and the data of a notification. */
+function markOf(uri: string): string {
+  let hash = 5381;
+  for (let i = 0; i < uri.length; i++) hash = ((hash << 5) + hash + uri.charCodeAt(i)) >>> 0;
+  return hash.toString(36);
+}
+
+/** What a notification keeps of its sound of the phone: a new music plans it again (sheet 039). */
+export function phoneSoundKey(device: DeviceSound): string {
+  return `phone-${markOf(device.uri)}`;
+}
+
+/**
+ * The channel of Android that rings a sound of the phone at a level (sheet 039): its sound is fixed
+ * when it is made, so each music has its own; Haute insists on its own one, as the sounds of Junix.
+ */
+export function phoneChannelId(level: NotificationLevel, device: DeviceSound, insists = false): string {
+  return `junix-pulse-phone-${level}${insists && level === 'normal' ? '-insist' : ''}-${markOf(device.uri)}-v1`;
 }
 
 /** The sound of one notification: its level, the tone of its moment if any, the settings. */

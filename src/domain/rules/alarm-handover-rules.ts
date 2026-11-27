@@ -25,6 +25,15 @@ export interface AlarmHandover {
   openLabel: string;
   /** A sound of the phone, rung first; `sound` is the safety net (sheet 037). */
   soundUri: string;
+  /** "Terminer", and the link that ends the thing; '' for a moment, which has nothing to end (sheet 039). */
+  doneLabel: string;
+  doneUrl: string;
+}
+
+/** The link that ends a thing from its alarm: junixpulse://alarm-done?type=reminder&id=… (sheet 039). */
+export function alarmDoneUrl(kind: AlarmKind, itemId: string | undefined): string {
+  if (!itemId || kind === 'moment') return '';
+  return `junixpulse://alarm-done?type=${kind}&id=${encodeURIComponent(itemId)}`;
 }
 
 /** What rings, for the page of the alarm. */
@@ -54,8 +63,10 @@ export function alarmOf(
   route: string | null,
   language: AppLanguage,
   kind: AlarmKind = 'reminder',
-  soundUri = ''
+  soundUri = '',
+  itemId?: string
 ): AlarmHandover {
+  const doneUrl = alarmDoneUrl(kind, itemId);
   return {
     id: item.identifier,
     at: item.scheduledAt.getTime(),
@@ -70,5 +81,7 @@ export function alarmOf(
     kindLabel: translate(language, `alarm.kind.${kind}`),
     openLabel: translate(language, 'alarm.open'),
     soundUri,
+    doneLabel: doneUrl ? translate(language, 'alarm.done') : '',
+    doneUrl,
   };
 }

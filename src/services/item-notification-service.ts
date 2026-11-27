@@ -14,7 +14,7 @@ import { NotificationService } from '@/services/notification-service';
 import { useAppStore } from '@/store/app-store';
 import { logger } from '@/utils/logger';
 import { alarmOf, splitAlarms } from '@/domain/rules/alarm-handover-rules';
-import { handOverAlarms, nativeAlarmsOn } from '@/services/alarm-bridge';
+import { handOverAlarms, nativeAlarmsOn, phoneSoundOf, syncPhoneChannels } from '@/services/alarm-bridge';
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -41,12 +41,20 @@ async function sync(force: boolean): Promise<void> {
     const language = useAppStore.getState().language;
     // A sound of the phone for the alarms (sheet 037); the sound of Junix stays its safety net
     const deviceUri = deviceSoundFor({ level: 'alarm', prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled })?.uri ?? '';
+    // The musics of the phone of the ordinary notifications, their channels first (sheet 039)
+    syncPhoneChannels(settings.soundPrefs, language);
+    const phoneOf = (item: { level: PlannedItemNotification['level']; tone?: PlannedItemNotification['tone']; insists?: boolean }) =>
+      phoneSoundOf(
+        item.level,
+        deviceSoundFor({ level: item.level, tone: item.tone, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled }),
+        item.insists
+      );
     const split = splitAlarms(allPlanned, nativeAlarmsOn());
     const handed = await handOverAlarms(
       'item',
       split.alarms.map(item =>
         item.itemType === 'TASK'
-          ? alarmOf(item, soundOf(item), `/tasks/${item.itemId}`, language, 'task', deviceUri)
+          ? alarmOf(item, soundOf(item), `/tasks/${item.itemId}`, language, 'task', deviceUri, item.itemId)
           : alarmOf(item, soundOf(item), `/events/${item.itemId}`, language, 'moment', deviceUri)
       )
     );
@@ -67,7 +75,7 @@ async function sync(force: boolean): Promise<void> {
         item.body === request.content.body &&
         levelOf(request.content.data?.level) === item.level &&
         // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
-        request.content.data?.sound === soundOf(item) &&
+        request.content.data?.sound === (phoneOf(item)?.key ?? soundOf(item)) &&
         // Haute moves it to the insisting channel, and back (sheet 032)
         Boolean(request.content.data?.insists) === Boolean(item.insists)
       ) {
@@ -93,6 +101,7 @@ async function sync(force: boolean): Promise<void> {
         soundOn: settings.notificationSoundEnabled,
         sound: soundOf(item),
         insists: item.insists,
+        phone: phoneOf(item),
       });
     }
   } catch {

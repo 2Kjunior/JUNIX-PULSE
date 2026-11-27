@@ -769,21 +769,20 @@ export default function SettingsScreen() {
             onPickPhone={fullScreenAlarms !== null ? pickPhoneSound : undefined}
             onPreviewPhone={fullScreenAlarms !== null ? previewPhoneSound : undefined}
           />
-        </View>
-      )}
-      {settings.notificationsEnabled && settings.notificationSoundEnabled && (
-        <View style={styles.row}>
-          <View style={styles.rowTextFill}>
-            <Text style={styles.rowLabel}>{t('soundSettings.tones')}</Text>
-            <Text style={styles.rowSub}>{t('soundSettings.tonesHint')}</Text>
+          {/* The sounds of the moments belong to the sounds: in the same block (sheet 039) */}
+          <View style={[styles.glassRow, styles.groupRowApart]}>
+            <View style={styles.rowTextFill}>
+              <Text style={styles.rowLabel}>{t('soundSettings.tones')}</Text>
+              <Text style={styles.rowSub}>{t('soundSettings.tonesHint')}</Text>
+            </View>
+            <Switch
+              value={(settings.soundPrefs ?? DEFAULT_SOUND_PREFS).momentTones}
+              onValueChange={momentTones => handleUpdateSounds({ ...(settings.soundPrefs ?? DEFAULT_SOUND_PREFS), momentTones })}
+              {...switchColors((settings.soundPrefs ?? DEFAULT_SOUND_PREFS).momentTones)}
+              accessibilityLabel={t('soundSettings.tones')}
+              testID="sound-tones"
+            />
           </View>
-          <Switch
-            value={(settings.soundPrefs ?? DEFAULT_SOUND_PREFS).momentTones}
-            onValueChange={momentTones => handleUpdateSounds({ ...(settings.soundPrefs ?? DEFAULT_SOUND_PREFS), momentTones })}
-            {...switchColors((settings.soundPrefs ?? DEFAULT_SOUND_PREFS).momentTones)}
-            accessibilityLabel={t('soundSettings.tones')}
-            testID="sound-tones"
-          />
         </View>
       )}
 

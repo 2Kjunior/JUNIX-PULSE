@@ -65,6 +65,7 @@ import { runAutoBackup, syncAutoBackupTask } from "@/services/auto-backup-servic
 import { NotificationService } from "@/services/notification-service";
 import { onReminderSyncProblem, syncReminderNotifications } from "@/services/reminder-notification-service";
 import { NotificationSoundService } from "@/services/sound/NotificationSoundService";
+import { previewPhoneSound } from "@/services/alarm-bridge";
 import { SessionManager } from "@/services/session/SessionManager";
 import { useAppStore } from "@/store/app-store";
 import { reconcileOverdueRecurringReminders } from "@/use-cases/reminder-use-cases";
@@ -418,7 +419,9 @@ export default function RootLayout() {
       // Jouer le son Junix Pulse en foreground (le système ne joue pas de son car shouldPlaySound: false)
       // The sound it was planned with (sheet 031); without one, as before: discreet stays silent
       const sound = typeof data?.sound === "string" ? data.sound : undefined;
-      if (sound || data?.level !== "discreet") NotificationSoundService.play(!splashFinishedRef.current, sound);
+      // A music of the phone (sheet 039) is heard from the phone itself
+      if (typeof data?.soundUri === "string" && data.soundUri) previewPhoneSound(data.soundUri);
+      else if (sound || data?.level !== "discreet") NotificationSoundService.play(!splashFinishedRef.current, sound);
 
       if (reminderId) {
         void announceReminderArrived(reminderId);

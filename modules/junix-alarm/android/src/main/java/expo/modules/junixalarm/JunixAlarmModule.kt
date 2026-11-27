@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.app.Activity
-import android.media.RingtoneManager
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -22,7 +21,6 @@ class JunixAlarmModule : Module() {
 
   // ─── A sound of the phone (sheet 037): a page of Android answers later ─────────
   private companion object {
-    const val PICK_RINGTONE = 4_211
     const val PICK_MUSIC = 4_212
   }
 
@@ -45,7 +43,7 @@ class JunixAlarmModule : Module() {
 
   /** The choice made: its address, its name, and whether it is a ringtone or a music. */
   private fun picked(uri: Uri, kind: String): Map<String, String> {
-    val name = if (kind == "ringtone") DeviceSounds.ringtoneTitle(context, uri) else DeviceSounds.fileTitle(context, uri)
+    val name = DeviceSounds.fileTitle(context, uri)
     return mapOf("uri" to uri.toString(), "name" to name, "kind" to kind)
   }
 
@@ -98,14 +96,9 @@ class JunixAlarmModule : Module() {
       }
     }
 
-    /** The list of the ringtones of Android (alarms and ringtones); null when nothing is chosen. */
-    AsyncFunction("pickRingtone") { current: String?, promise: Promise ->
-      val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
-        .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
-        .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-        .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, false)
-      if (!current.isNullOrEmpty()) intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(current))
-      open(intent, PICK_RINGTONE, promise)
+    /** The channels of the musics of the phone for the ordinary notifications (sheet 039). */
+    Function("syncPhoneChannels") { channels: List<Map<String, Any?>> ->
+      DeviceSounds.syncChannels(context, channels)
     }
 
     /**
@@ -131,29 +124,22 @@ class JunixAlarmModule : Module() {
 
     OnActivityResult { _, payload ->
       val promise = pending ?: return@OnActivityResult
-      if (payload.requestCode != PICK_RINGTONE && payload.requestCode != PICK_MUSIC) return@OnActivityResult
+      if (payload.requestCode != PICK_MUSIC) return@OnActivityResult
       pending = null
       if (payload.resultCode != Activity.RESULT_OK || payload.data == null) {
         promise.resolve(null)
         return@OnActivityResult
       }
-      val data = payload.data!!
-      if (payload.requestCode == PICK_RINGTONE) {
-        @Suppress("DEPRECATION")
-        val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-        promise.resolve(uri?.let { picked(it, "ringtone") })
+      val uri = payload.data!!.data
+      if (uri == null) {
+        promise.resolve(null)
       } else {
-        val uri = data.data
-        if (uri == null) {
-          promise.resolve(null)
-        } else {
-          try {
-            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-          } catch (error: Exception) {
-            // Some pickers give no lasting right: the alarm will fall back on the sound of Junix
-          }
-          promise.resolve(picked(uri, "music"))
+        try {
+          context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (error: Exception) {
+          // Some pickers give no lasting right: the alarm will fall back on the sound of Junix
         }
+        promise.resolve(picked(uri, "music"))
       }
     }
 

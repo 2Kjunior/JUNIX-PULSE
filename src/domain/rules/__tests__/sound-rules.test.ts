@@ -1,6 +1,8 @@
 import {
   DEFAULT_SOUND_PREFS,
   deviceSoundFor,
+  phoneChannelId,
+  phoneSoundKey,
   SOUNDS,
   SOUND_CHOICES,
   soundChannelId,
@@ -73,18 +75,38 @@ describe('sound-rules (sheet 031)', () => {
     const prefs = {
       ...DEFAULT_SOUND_PREFS,
       alarm: 'wake' as const,
-      alarmDevice: { kind: 'music' as const, uri: 'content://media/audio/42', name: 'Mon titre; 2|bis' },
+      devices: { alarm: { kind: 'music' as const, uri: 'content://media/audio/42', name: 'Mon titre; 2|bis' } },
     };
     // Written and read back, even with ";" and "|" in the name
     expect(soundPrefsOf(soundPrefsText(prefs))).toEqual(prefs);
     // An address that is not a content of the phone, or an unknown kind: ignored
-    expect(soundPrefsOf('device=music|file%3A%2F%2Fx|a').alarmDevice).toBeUndefined();
-    expect(soundPrefsOf('device=video|content%3A%2F%2Fx|a').alarmDevice).toBeUndefined();
+    expect(soundPrefsOf('device=music|file%3A%2F%2Fx|a').devices?.alarm).toBeUndefined();
+    expect(soundPrefsOf('device=video|content%3A%2F%2Fx|a').devices?.alarm).toBeUndefined();
     // Only an alarm rings with it, and only with the sound on
     expect(deviceSoundFor({ level: 'alarm', prefs })?.name).toBe('Mon titre; 2|bis');
-    expect(deviceSoundFor({ level: 'normal', prefs })).toBeUndefined();
+    expect(deviceSoundFor({ level: 'normal', prefs })).toBeUndefined(); // no music for Normale here
     expect(deviceSoundFor({ level: 'alarm', prefs, soundOn: false })).toBeUndefined();
     // The sound of Junix stays the one of the ordinary notification of an alarm
     expect(soundFor({ level: 'alarm', prefs })).toBe('wake');
+  });
+
+  it('gives a music of the phone to each priority, the tones of the moments first (sheet 039)', () => {
+    const song = { kind: 'music' as const, uri: 'content://media/audio/7', name: 'Chanson' };
+    const prefs = { ...DEFAULT_SOUND_PREFS, devices: { normal: song, discreet: song } };
+    // The alarm text of sheet 037 still reads ("device" is the alarm)
+    expect(soundPrefsOf('device=music|content%3A%2F%2Fa|A').devices?.alarm?.name).toBe('A');
+    expect(soundPrefsOf(soundPrefsText(prefs))).toEqual(prefs);
+    expect(deviceSoundFor({ level: 'normal', prefs })).toEqual(song);
+    expect(deviceSoundFor({ level: 'discreet', prefs })).toEqual(song);
+    // A birthday keeps Festif, a mourning keeps Sobre
+    expect(deviceSoundFor({ level: 'normal', tone: 'festive', prefs })).toBeUndefined();
+    expect(deviceSoundFor({ level: 'discreet', tone: 'sober', prefs })).toBeUndefined();
+    expect(deviceSoundFor({ level: 'normal', tone: 'festive', prefs: { ...prefs, momentTones: false } })).toEqual(song);
+    // One channel for each music and level, Haute on its own; a fixed key in the notification
+    expect(phoneChannelId('normal', song)).toMatch(/^junix-pulse-phone-normal-[a-z0-9]+-v1$/);
+    expect(phoneChannelId('normal', song, true)).toMatch(/^junix-pulse-phone-normal-insist-/);
+    expect(phoneChannelId('discreet', song, true)).not.toContain('insist');
+    expect(phoneChannelId('normal', song)).not.toBe(phoneChannelId('normal', { ...song, uri: 'content://media/audio/8' }));
+    expect(phoneSoundKey(song)).toBe(phoneSoundKey({ ...song, name: 'autre nom' }));
   });
 });

@@ -24,9 +24,13 @@ jest.mock('../services/notification-service', () => ({
 // The alarm of Junix (sheet 034): off at first, as on the web and in old builds
 const mockHandOver = jest.fn().mockResolvedValue(true);
 let mockNativeOn = false;
+let mockPhone: { channel: string; key: string; uri: string } | undefined;
 jest.mock('../services/alarm-bridge', () => ({
   nativeAlarmsOn: () => mockNativeOn,
   handOverAlarms: (...args: unknown[]) => (mockNativeOn ? mockHandOver(...args) : Promise.resolve(false)),
+  // The musics of the phone (sheet 039): none in these tests
+  syncPhoneChannels: () => undefined,
+  phoneSoundOf: () => mockPhone,
 }));
 
 const AT = '2030-01-15T18:00:00.000Z';
@@ -57,7 +61,24 @@ describe('syncReminderNotifications', () => {
     (NotificationService.requestPermissions as jest.Mock).mockResolvedValue(true);
     scheduled.mockResolvedValue('id');
     mockNativeOn = false;
+    mockPhone = undefined;
     mockHandOver.mockResolvedValue(true);
+  });
+
+  it('rings an ordinary reminder with its music of the phone, and plans it again when the music changes (sheet 039)', async () => {
+    mockPhone = { channel: 'junix-pulse-phone-normal-abc-v1', key: 'phone-abc', uri: 'content://media/audio/7' };
+    (NotificationService.getAllScheduled as jest.Mock).mockResolvedValue([held(IDENTIFIER)]);
+
+    await syncReminderNotifications();
+
+    // Held with the Pulse of before: replaced, on the channel of the music
+    expect(cancelled).toHaveBeenCalledWith(IDENTIFIER);
+    expect(scheduled).toHaveBeenCalledWith(expect.objectContaining({ phone: mockPhone }));
+
+    jest.clearAllMocks();
+    (NotificationService.getAllScheduled as jest.Mock).mockResolvedValue([held(IDENTIFIER, 'Appeler', 'Rappel Junix Pulse', 'phone-abc')]);
+    await syncReminderNotifications();
+    expect(scheduled).not.toHaveBeenCalled();
   });
 
   it('hands an urgent reminder to the alarm of Junix, not to a notification (sheet 034)', async () => {

@@ -36,6 +36,12 @@ describe('alarm-handover-rules (sheet 034)', () => {
       openLabel: 'Ouvrir dans Junix',
     });
     expect(alarmOf({ identifier: 'y', title: 't', body: 'b', scheduledAt: at }, 'alarm', '/events/e1', 'fr', 'moment').kindLabel).toBe('Moment');
+    // "Terminer" (sheet 039): a reminder, a task or a habit can be ended; a moment cannot
+    expect(alarmOf({ identifier: 'z', title: 't', body: 'b', scheduledAt: at }, 'alarm', '/reminders/r1', 'fr', 'reminder', '', 'r1')).toMatchObject({
+      doneLabel: 'Terminer',
+      doneUrl: 'junixpulse://alarm-done?type=reminder&id=r1',
+    });
+    expect(alarmOf({ identifier: 'z', title: 't', body: 'b', scheduledAt: at }, 'alarm', '/events/e1', 'fr', 'moment', '', 'e1')).toMatchObject({ doneLabel: '', doneUrl: '' });
     // The sound off: the vibration alone
     expect(alarmOf({ identifier: 'x', title: 't', body: 'b', scheduledAt: at }, 'none', null, 'en')).toMatchObject({ sound: '', url: '', stopLabel: 'Stop' });
   });

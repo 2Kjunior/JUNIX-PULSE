@@ -26,6 +26,19 @@ export interface NativeAlarm {
   openLabel: string;
   /** A sound of the phone (content://…), rung first; `sound` is the safety net (sheet 037). */
   soundUri: string;
+  /** "Terminer", and the link that ends the thing in the app; '' for none (sheet 039). */
+  doneLabel: string;
+  doneUrl: string;
+}
+
+/** A channel of Android that rings a music of the phone (sheet 039). */
+export interface PhoneChannel {
+  id: string;
+  name: string;
+  description: string;
+  level: 'discreet' | 'normal';
+  uri: string;
+  insists: boolean;
 }
 
 /** A sound of the phone chosen for the alarms (sheet 037). */
@@ -43,8 +56,8 @@ interface JunixAlarmNative {
   stopRinging(): void;
   canUseFullScreen(): boolean;
   openFullScreenSettings(): boolean;
-  pickRingtone(current: string | null): Promise<PickedSound | null>;
   pickMusic(): Promise<PickedSound | null>;
+  syncPhoneChannels(channels: PhoneChannel[]): void;
   previewUri(uri: string, durationMs: number): boolean;
   stopPreview(): void;
 }
@@ -78,9 +91,9 @@ export const JunixAlarm = {
     return native ? native.canUseFullScreen() : null;
   },
 
-  /** The list of the ringtones of Android; null when nothing is chosen or without the module (sheet 037). */
-  async pickRingtone(current: string | null): Promise<PickedSound | null> {
-    return native ? native.pickRingtone(current) : null;
+  /** The channels of the musics of the phone: exactly these, the others removed (sheet 039). */
+  syncPhoneChannels(channels: PhoneChannel[]): void {
+    native?.syncPhoneChannels(channels);
   },
 
   /** A file of music, kept readable for the alarms; null when nothing is chosen. */

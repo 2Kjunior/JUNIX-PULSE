@@ -21,7 +21,7 @@ import { logger } from '@/utils/logger';
 import { deviceSoundFor, soundFor } from '@/domain/rules/sound-rules';
 import type { NotificationLevel } from '@/domain/rules/notification-level-rules';
 import { alarmOf, splitAlarms } from '@/domain/rules/alarm-handover-rules';
-import { handOverAlarms, nativeAlarmsOn } from '@/services/alarm-bridge';
+import { handOverAlarms, nativeAlarmsOn, phoneSoundOf, syncPhoneChannels } from '@/services/alarm-bridge';
 
 export interface ReminderSyncOptions {
   /** After a user action: may ask for the permission, and reports problems to the user. */
@@ -80,10 +80,14 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
     const language = useAppStore.getState().language;
     // A sound of the phone for the alarms (sheet 037); the sound of Junix stays its safety net
     const deviceUri = deviceSoundFor({ level: 'alarm', prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled })?.uri ?? '';
+    // The musics of the phone of the ordinary notifications, their channels first (sheet 039)
+    syncPhoneChannels(settings.soundPrefs, language);
+    const phoneOf = (item: { level: NotificationLevel; insists?: boolean }) =>
+      phoneSoundOf(item.level, deviceSoundFor({ level: item.level, prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled }), item.insists);
     const split = splitAlarms(allPlanned, nativeAlarmsOn());
     const handed = await handOverAlarms(
       'reminder',
-      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/reminders/${item.reminderId}`, language, 'reminder', deviceUri))
+      split.alarms.map(item => alarmOf(item, soundOf(item.level), `/reminders/${item.reminderId}`, language, 'reminder', deviceUri, item.reminderId))
     );
     const planned = handed ? split.notifications : allPlanned;
 
@@ -103,7 +107,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         // A reminder whose level changed (night, urgency) moves to the channel of its new level
         levelOf(request.content.data?.level) === item.level &&
         // A sound changed in the settings moves it to the channel of its new sound (sheet 031)
-        request.content.data?.sound === soundOf(item.level) &&
+        request.content.data?.sound === (phoneOf(item)?.key ?? soundOf(item.level)) &&
         // Haute moves it to the insisting channel, and back (sheet 032)
         Boolean(request.content.data?.insists) === Boolean(item.insists) &&
         // Notifications planned before the buttons existed are planned again with them
@@ -137,6 +141,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         level: item.level,
         sound: soundOf(item.level),
         insists: item.insists,
+        phone: phoneOf(item),
       });
       if (scheduled) report.scheduled += 1;
       else report.failed += 1;

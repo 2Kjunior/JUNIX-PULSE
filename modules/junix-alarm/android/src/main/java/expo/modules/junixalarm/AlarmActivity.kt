@@ -164,6 +164,11 @@ class AlarmActivity : Activity() {
     root.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
     val stop = button(alarm.stopLabel, ALARM_RED_DEEP, ALARM_RED, Color.WHITE) { send(AlarmService.ACTION_STOP) }
     root.addView(stop, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+    // "Terminer" (sheet 039): the alarm stops and the thing is ended in Junix (a moment has none)
+    if (alarm.doneLabel.isNotEmpty() && alarm.doneUrl.isNotEmpty()) {
+      val done = button(alarm.doneLabel, VIOLET, VIOLET, NIGHT) { openInJunix(alarm, alarm.doneUrl) }
+      root.addView(done, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
+    }
     val later = button(alarm.snoozeLabel, Color.TRANSPARENT, TEXT_SOFT, TEXT) { send(AlarmService.ACTION_SNOOZE) }
     root.addView(later, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
     if (alarm.openLabel.isNotEmpty()) {
@@ -172,7 +177,7 @@ class AlarmActivity : Activity() {
         setPadding(0, dp(18), 0, dp(4))
         isClickable = true
         contentDescription = alarm.openLabel
-        setOnClickListener { openInJunix(alarm) }
+        setOnClickListener { openInJunix(alarm, alarm.url) }
       }
       root.addView(open)
     }
@@ -187,11 +192,11 @@ class AlarmActivity : Activity() {
     finish()
   }
 
-  /** "Ouvrir dans Junix": the alarm stops, and the thing opens in the app. */
-  private fun openInJunix(alarm: AlarmItem) {
+  /** "Ouvrir dans Junix" and "Terminer": the alarm stops, and the link opens in the app. */
+  private fun openInJunix(alarm: AlarmItem, link: String) {
     startService(Intent(this, AlarmService::class.java).setAction(AlarmService.ACTION_STOP))
-    val open = if (alarm.url.isNotEmpty()) {
-      Intent(Intent.ACTION_VIEW, Uri.parse(alarm.url)).setPackage(packageName)
+    val open = if (link.isNotEmpty()) {
+      Intent(Intent.ACTION_VIEW, Uri.parse(link)).setPackage(packageName)
     } else {
       packageManager.getLaunchIntentForPackage(packageName)
     }
