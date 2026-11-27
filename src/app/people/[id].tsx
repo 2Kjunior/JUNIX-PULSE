@@ -210,6 +210,16 @@ export default function PersonDetailScreen() {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {person.displayName}
         </Text>
+        {/* Modifier (sheet 040): the same form as for a new person, already filled */}
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => router.push({ pathname: '/people/new', params: { id: person.id } })}
+          accessibilityRole="button"
+          accessibilityLabel={t('personEdit.a11y')}
+          testID="person-edit"
+        >
+          <Ionicons name="create-outline" size={22} color={theme.primary.default} />
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={handleDeletePerson}

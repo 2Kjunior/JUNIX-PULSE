@@ -3,7 +3,7 @@
  * Thématisé dynamiquement : mode sombre Midnight Glow et mode clair crème chaleureuse.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -23,6 +23,9 @@ import { format } from 'date-fns';
 import { Contact, requestPermissionsAsync } from 'expo-contacts';
 
 import { PersonUseCases } from '@/use-cases/person-use-cases';
+import { PersonRepository } from '@/repositories/person-repository';
+import { relationKeyOf } from '@/features/people/relation-label';
+import { leavePickedPerson } from '@/features/people/picked-person';
 import { useAppStore } from '@/store/app-store';
 import { Spacing, Radius, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
@@ -59,6 +62,12 @@ export default function NewPersonScreen() {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeNewPersonStyles);
 
+  // With an id, the same form edits a person (sheet 040); with pick, it was opened from "Avec qui ?"
+  const params = useLocalSearchParams<{ id?: string; pick?: string }>();
+  const editingId = typeof params.id === 'string' && params.id ? params.id : null;
+  // A relation written in one's own words (« Maman ») is kept as it is, unless another one is ticked
+  const [ownRelation, setOwnRelation] = useState<string | null>(null);
+
   const [displayName, setDisplayName] = useState('');
   const [relationship, setRelationship] = useState<MessageKey>('rel.friend');
   const [phone, setPhone] = useState('');
@@ -73,6 +82,31 @@ export default function NewPersonScreen() {
   const [importing, setImporting] = useState(false);
   const [importedFromContacts, setImportedFromContacts] = useState(false);
   const [nameError, setNameError] = useState('');
+
+  // Editing: the form starts with what the person has
+  useEffect(() => {
+    if (!editingId) return;
+    let alive = true;
+    PersonRepository.findById(editingId)
+      .then(person => {
+        if (!alive || !person) return;
+        setDisplayName(person.displayName);
+        const known = relationKeyOf(person.relationship);
+        setRelationship(known ?? 'rel.other');
+        setOwnRelation(!known && person.relationship ? person.relationship : null);
+        setPhone(person.phone ?? '');
+        setEmail(person.email ?? '');
+        setBirthDate(person.birthDate);
+        setNotes(person.notes ?? '');
+        setForgottenThresholdDays(person.forgottenThresholdDays ?? 30);
+        setTimeInfo({ timezone: person.timezone, availability: person.availability });
+        setImportedFromContacts(Boolean(person.importedFromContacts));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [editingId]);
 
   async function handleImportFromContacts() {
     setImporting(true);
@@ -154,9 +188,28 @@ export default function NewPersonScreen() {
     setSaving(true);
 
     try {
-      await PersonUseCases.createPerson({
+      // A relation in one's own words stays, unless another relation was ticked
+      const relationText = ownRelation && relationship === 'rel.other' ? ownRelation : t(relationship);
+      if (editingId) {
+        await PersonUseCases.updatePerson({
+          id: editingId,
+          displayName: displayName.trim(),
+          relationship: relationText,
+          phone: phone.trim() || null,
+          email: email.trim() || null,
+          birthDate: birthDate ?? null,
+          notes: notes.trim() || null,
+          forgottenThresholdDays,
+          timezone: timeInfo.timezone,
+          availability: timeInfo.availability,
+        });
+        showSnackbar(t('personEdit.saved'));
+        router.back();
+        return;
+      }
+      const createdId = await PersonUseCases.createPerson({
         displayName: displayName.trim(),
-        relationship: t(relationship),
+        relationship: relationText,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
         birthDate,
@@ -166,6 +219,8 @@ export default function NewPersonScreen() {
         timezone: timeInfo.timezone,
         availability: timeInfo.availability,
       });
+      // Created from "Avec qui ?" of a form: it comes back ticked there (sheet 040)
+      if (params.pick) leavePickedPerson(createdId);
 
       showSnackbar(t('personNew.created'));
       router.back();
@@ -191,7 +246,7 @@ export default function NewPersonScreen() {
         >
           <Ionicons name="close" size={24} color={palette.onSurface.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('personNew.title')}</Text>
+        <Text style={styles.headerTitle}>{t(editingId ? 'personEdit.title' : 'personNew.title')}</Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={saving}

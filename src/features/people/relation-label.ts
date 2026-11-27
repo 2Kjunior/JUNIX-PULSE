@@ -14,6 +14,11 @@ const RELATION_LABELS = Object.fromEntries(
   RELATION_KEYS.map(key => [key, Object.values(MESSAGES).map(catalog => catalog[key])])
 ) as Record<(typeof RELATION_KEYS)[number], string[]>;
 
+/** The known relation of a stored text, to tick it again when the person is edited (sheet 040). */
+export function relationKeyOf(stored: string | null | undefined): (typeof RELATION_KEYS)[number] | null {
+  return knownRelationKey(stored, RELATION_LABELS);
+}
+
 export function relationLabel(stored: string, t: TFunction): string {
   const key = knownRelationKey(stored, RELATION_LABELS);
   return key ? t(key) : stored;

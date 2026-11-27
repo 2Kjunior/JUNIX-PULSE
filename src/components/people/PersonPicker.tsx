@@ -18,6 +18,7 @@ import { pickerPersons } from '@/domain/rules/person-picker-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT } from '@/i18n';
+import { relationLabel } from '@/features/people/relation-label';
 
 import { PersonAvatar } from './PersonAvatar';
 
@@ -77,7 +78,7 @@ export function PersonPicker({ visible, persons, selectedIds, multiple = false, 
                 size="md"
                 onPress={() => {
                   close();
-                  router.push('/people/new');
+                  router.push({ pathname: '/people/new', params: { pick: '1' } });
                 }}
               />
             </View>
@@ -98,6 +99,27 @@ export function PersonPicker({ visible, persons, selectedIds, multiple = false, 
               </View>
 
               <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+                {/* Always the first row (sheet 040): a new person, who comes back ticked in the form */}
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => {
+                    close();
+                    router.push({ pathname: '/people/new', params: { pick: '1' } });
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('personPicker.newPerson')}
+                  testID="person-picker-new"
+                >
+                  <View style={styles.newIcon}>
+                    <Ionicons name="person-add-outline" size={18} color={palette.primary.default} />
+                  </View>
+                  <View style={styles.rowText}>
+                    <Text style={[styles.name, { color: palette.primary.default }]} numberOfLines={1}>
+                      {t('personPicker.newPerson')}
+                    </Text>
+                  </View>
+                  <Ionicons name="add" size={22} color={palette.primary.default} />
+                </TouchableOpacity>
                 {shown.length === 0 && <Text style={styles.noMatch}>{t('personPicker.noMatch')}</Text>}
                 {shown.map(person => {
                   const selected = selectedIds.includes(person.id);
@@ -118,7 +140,8 @@ export function PersonPicker({ visible, persons, selectedIds, multiple = false, 
                         </Text>
                         {!!person.relationship && (
                           <Text style={styles.relation} numberOfLines={1}>
-                            {person.relationship}
+                            {/* In today's language, as on the page of the person (sheets 028 and 040) */}
+                            {relationLabel(person.relationship, t)}
                           </Text>
                         )}
                       </View>
@@ -200,6 +223,16 @@ const makePersonPickerStyles = (theme: ThemePalette) =>
       minHeight: 56,
       paddingHorizontal: Spacing.sm,
       borderRadius: Radius.md,
+    },
+    newIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: theme.primary.default,
     },
     rowSelected: {
       backgroundColor: theme.glass.controlActive,

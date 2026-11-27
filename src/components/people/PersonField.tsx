@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { takePickedPerson } from '@/features/people/picked-person';
 
 import type { Person } from '@/domain/entities';
 import { useTheme } from '@/hooks/use-theme';
@@ -39,18 +40,25 @@ export function PersonField({ selectedIds, onChange, multiple = false, look = 'f
   const [persons, setPersons] = useState<Person[]>([]);
   const [picking, setPicking] = useState(false);
 
-  // Read again when the form comes back into view: a person may just have been created
+  // Read again when the form comes back into view: a person may just have been created, from
+  // "+ Nouvelle personne" (sheet 040): she comes back ticked
   useFocusEffect(
     useCallback(() => {
       let active = true;
       PersonRepository.findAll()
         .then(list => {
-          if (active) setPersons(list);
+          if (!active) return;
+          setPersons(list);
+          const created = takePickedPerson();
+          if (created && list.some(person => person.id === created) && !selectedIds.includes(created)) {
+            onChange(multiple ? [...selectedIds, created] : [created]);
+          }
         })
         .catch(() => {});
       return () => {
         active = false;
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- read on focus; the ticked ones are read at that moment
     }, [])
   );
 

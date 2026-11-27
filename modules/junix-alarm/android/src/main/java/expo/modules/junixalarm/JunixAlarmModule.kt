@@ -143,6 +143,37 @@ class JunixAlarmModule : Module() {
       }
     }
 
+    /**
+     * Whether Android leaves Junix out of its battery saver (sheet 040): on phones that save the
+     * battery hard, an app left in it may lose its reminders once closed.
+     */
+    Function("isIgnoringBatteryOptimizations") {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return@Function true
+      val power = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+      power.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    /**
+     * Opens the page of Android to take Junix out of the battery saver: the list of the battery
+     * optimizations (no special permission needed), or else the page of the app.
+     */
+    Function("openBatterySettings") {
+      val list = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      val app = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + context.packageName))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      try {
+        context.startActivity(list)
+        true
+      } catch (error: Exception) {
+        try {
+          context.startActivity(app)
+          true
+        } catch (other: Exception) {
+          false
+        }
+      }
+    }
+
     /** Stops the alarm ringing now (the app opened it, for instance). */
     Function("stopRinging") {
       if (AlarmService.current != null) {

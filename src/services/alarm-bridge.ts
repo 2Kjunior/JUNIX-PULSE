@@ -32,6 +32,24 @@ export function fullScreenAlarmsAllowed(): boolean | null {
   }
 }
 
+/**
+ * Whether Junix works with the app closed on this phone (sheet 040): out of the battery saver of
+ * Android. null where the alarm of Junix does not exist (web).
+ */
+export function closedAppAllowed(): boolean | null {
+  if (!nativeAlarmsOn()) return null;
+  try {
+    return JunixAlarm.isIgnoringBatteryOptimizations();
+  } catch {
+    return null;
+  }
+}
+
+/** Opens the page of Android to take Junix out of the battery saver. */
+export function openClosedAppSettings(): boolean {
+  return nativeAlarmsOn() ? JunixAlarm.openBatterySettings() : false;
+}
+
 /** Opens the page of Android where the person allows it. */
 export function openFullScreenAlarmSettings(): boolean {
   return nativeAlarmsOn() ? JunixAlarm.openFullScreenSettings() : false;

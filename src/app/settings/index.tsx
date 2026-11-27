@@ -68,7 +68,14 @@ import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
 import { SoundSetting } from '@/components/settings/SoundSetting';
-import { fullScreenAlarmsAllowed, openFullScreenAlarmSettings, pickPhoneSound, previewPhoneSound } from '@/services/alarm-bridge';
+import {
+  closedAppAllowed,
+  fullScreenAlarmsAllowed,
+  openClosedAppSettings,
+  openFullScreenAlarmSettings,
+  pickPhoneSound,
+  previewPhoneSound,
+} from '@/services/alarm-bridge';
 import { offerExactAlarmsForAlarmLevel } from '@/features/reminders/offer-exact-alarms';
 import { DEFAULT_SOUND_PREFS, type SoundChoice, type SoundPrefs } from '@/domain/rules/sound-rules';
 import { NotificationSoundService } from '@/services/sound/NotificationSoundService';
@@ -150,6 +157,8 @@ export default function SettingsScreen() {
   const [canEnableExactAlarms, setCanEnableExactAlarms] = useState(false);
   // Whether the page of the alarm may light the locked screen (sheet 035); null: no alarm of Junix here
   const [fullScreenAlarms, setFullScreenAlarms] = useState<boolean | null>(null);
+  // Whether Junix rings with the app closed: out of the battery saver (sheet 040); null on the web
+  const [closedApp, setClosedApp] = useState<boolean | null>(null);
 
   const loadSettings = useCallback(async () => {
     setAutoBackup(await getAutoBackupConfig());
@@ -160,6 +169,7 @@ export default function SettingsScreen() {
     const exactAlarms = await NotificationService.getExactAlarmStatus();
     setCanEnableExactAlarms(!exactAlarms.granted && exactAlarms.canAsk);
     setFullScreenAlarms(fullScreenAlarmsAllowed());
+    setClosedApp(closedAppAllowed());
     try {
       const pinConfigured = await SanctumAuthService.isPinConfigured();
       setIsSanctumPinConfigured(pinConfigured);
@@ -175,7 +185,10 @@ export default function SettingsScreen() {
   // Back from the settings of Android: the row says at once whether it is allowed now (sheet 035)
   useEffect(() => {
     const subscription = AppState.addEventListener('change', state => {
-      if (state === 'active') setFullScreenAlarms(fullScreenAlarmsAllowed());
+      if (state === 'active') {
+        setFullScreenAlarms(fullScreenAlarmsAllowed());
+        setClosedApp(closedAppAllowed());
+      }
     });
     return () => subscription.remove();
   }, []);
@@ -724,6 +737,28 @@ export default function SettingsScreen() {
           </View>
           <Text style={[styles.rowSub, { color: fullScreenAlarms ? palette.success.default : palette.primary.default }]}>
             {t(fullScreenAlarms ? 'alarm.fullScreenOn' : 'alarm.fullScreenOff')}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
+        </TouchableOpacity>
+      )}
+
+      {/* With the app closed (sheet 040): phones that save the battery hard may stop its reminders */}
+      {settings.notificationsEnabled && closedApp !== null && (
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => {
+            if (!openClosedAppSettings()) GlassAlert.alert(t('closedApp.label'), t('closedApp.hint'));
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('closedApp.label')}, ${t(closedApp ? 'alarm.fullScreenOn' : 'alarm.fullScreenOff')}`}
+          testID="settings-closed-app"
+        >
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('closedApp.label')}</Text>
+            <Text style={styles.rowSub}>{t('closedApp.hint')}</Text>
+          </View>
+          <Text style={[styles.rowSub, { color: closedApp ? palette.success.default : palette.primary.default }]}>
+            {t(closedApp ? 'alarm.fullScreenOn' : 'alarm.fullScreenOff')}
           </Text>
           <Ionicons name="chevron-forward" size={18} color={palette.onSurface.variant} />
         </TouchableOpacity>

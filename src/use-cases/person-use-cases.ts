@@ -26,10 +26,11 @@ export interface UpdatePersonInput {
   id: string;
   displayName?: string;
   relationship?: string;
-  phone?: string;
-  email?: string;
-  birthDate?: string;
-  notes?: string;
+  /** Null clears it (the person was edited and the field emptied, sheet 040). */
+  phone?: string | null;
+  email?: string | null;
+  birthDate?: string | null;
+  notes?: string | null;
   forgottenThresholdDays?: number;
   /** Null clears it. */
   timezone?: string | null;
@@ -124,9 +125,10 @@ export const PersonUseCases = {
       availability: timeInfo.availability,
       displayName: input.displayName?.trim(),
       relationship: input.relationship?.trim(),
-      phone: input.phone?.trim(),
-      email: input.email?.trim(),
-      notes: input.notes?.trim(),
+      // Null clears the field; a text is kept trimmed (sheet 040)
+      phone: input.phone === null ? null : input.phone?.trim(),
+      email: input.email === null ? null : input.email?.trim(),
+      notes: input.notes === null ? null : input.notes?.trim(),
       updatedAt: now,
     });
   },

@@ -58,6 +58,8 @@ interface JunixAlarmNative {
   openFullScreenSettings(): boolean;
   pickMusic(): Promise<PickedSound | null>;
   syncPhoneChannels(channels: PhoneChannel[]): void;
+  isIgnoringBatteryOptimizations(): boolean;
+  openBatterySettings(): boolean;
   previewUri(uri: string, durationMs: number): boolean;
   stopPreview(): void;
 }
@@ -108,6 +110,16 @@ export const JunixAlarm = {
 
   stopPreview(): void {
     native?.stopPreview();
+  },
+
+  /** Whether Android leaves Junix out of its battery saver; null without the module (sheet 040). */
+  isIgnoringBatteryOptimizations(): boolean | null {
+    return native ? native.isIgnoringBatteryOptimizations() : null;
+  },
+
+  /** Opens the page of Android to take Junix out of the battery saver. */
+  openBatterySettings(): boolean {
+    return native ? native.openBatterySettings() : false;
   },
 
   /** Opens the page of Android to allow it; false when it could not be opened. */
