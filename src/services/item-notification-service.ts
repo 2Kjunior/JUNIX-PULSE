@@ -102,6 +102,7 @@ async function sync(force: boolean): Promise<void> {
         sound: soundOf(item),
         insists: item.insists,
         phone: phoneOf(item),
+        color: item.color,
       });
     }
   } catch {

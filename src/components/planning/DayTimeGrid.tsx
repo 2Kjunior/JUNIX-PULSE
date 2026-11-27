@@ -35,6 +35,7 @@ import { ringsAsAlarm } from '@/domain/rules/notification-level-rules';
 
 import { DraggableBlock } from './DraggableBlock';
 import { PlanningCard } from './PlanningCard';
+import { itemColorOf } from '@/constants/item-kinds';
 
 const HOURS_WIDTH = 52;
 /** Under this width a card shows its badge as an icon and its time under the title. */
@@ -185,16 +186,17 @@ export const DayTimeGrid = memo(function DayTimeGrid({
                 index={index}
                 tone="success"
                 intensity="soft"
+                accentColor={task.color ? itemColorOf(theme, task.color, 'todo') : undefined}
                 style={styles.taskMiniCard}
                 contentStyle={styles.taskMiniInner}
                 onPress={() => onOpenTask(task)}
                 accessibilityLabel={t('timetable.taskA11y', { title: task.title, done: task.status === 'COMPLETED' ? t('timetable.doneSuffix') : '' })}
               >
                 <View style={styles.taskMiniContent}>
-                  <Ionicons name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={taskColor} />
+                  <Ionicons name={task.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={task.color ? itemColorOf(theme, task.color, 'todo') : taskColor} />
                   <Text style={styles.taskMiniTitle} numberOfLines={1}>{task.title}</Text>
                   {task.estimatedMinutes ? (
-                    <Text style={[styles.taskMiniDuration, { color: taskColor }]}>{task.estimatedMinutes}m</Text>
+                    <Text style={[styles.taskMiniDuration, { color: task.color ? itemColorOf(theme, task.color, 'todo') : taskColor }]}>{task.estimatedMinutes}m</Text>
                   ) : null}
                 </View>
               </GlowCard>

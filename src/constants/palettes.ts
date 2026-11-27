@@ -14,6 +14,9 @@
  * - Les priorités ont des clés UPPERCASE qui correspondent aux enums métier.
  */
 
+import { SWATCHES, type ThemeColors } from './color-themes';
+import { mixHex, withAlpha } from '@/utils/color';
+
 // ─── Type structurel ─────────────────────────────────────────────────────────
 // On type d'abord le « shape » de la palette, puis on l'implémente deux fois.
 
@@ -58,6 +61,12 @@ export interface ThemePalette {
     readonly container: string;
     readonly on: string;
     readonly onContainer: string;
+  };
+
+  // ── Familles (sheet 042): the colour of « À faire » and of « Moment » ──
+  readonly family: {
+    readonly todo: string;
+    readonly moment: string;
   };
 
   // ── Erreur ──────────────────────────────────────────────────────────────
@@ -171,6 +180,11 @@ export const darkPalette: ThemePalette = {
     onContainer: '#C3E7FF',
   },
 
+  family: {
+    todo: '#7BD0FF',
+    moment: '#F5B942',
+  },
+
   error: {
     default: '#FFB4AB',
     container: '#93000A',
@@ -233,6 +247,124 @@ export const darkPalette: ThemePalette = {
 // Spec master prompt — crème chaleureuse, pas de blanc pur.
 // Toutes les couleurs d'accent sont assombries pour garantir ≥ 4.5:1 sur crème.
 
+/**
+ * A palette in the colours of a theme (sheet 042): the main colour (buttons, links, ticks, the
+ * active tab, the shadows' tint), the colour of « À faire » (the tertiary accent) and of « Moment ».
+ * The surfaces, the texts, the red of « urgent » and the green of « done » do not change.
+ * With the colours of Junix, it gives back the palette unchanged.
+ */
+export function colorize(palette: ThemePalette, colors: ThemeColors): ThemePalette {
+  const mode = palette.mode;
+  const main = SWATCHES[colors.primary];
+  const primary = main[mode];
+  const todo = SWATCHES[colors.todo][mode];
+  const moment = SWATCHES[colors.moment][mode];
+  const glassPrimary = main.glassPrimary ?? [withAlpha(main.dark.gradient[0], 0.9), withAlpha(main.dark.gradient[1], 0.84)];
+  return {
+    ...palette,
+    primary: { default: primary.default, container: primary.container, on: primary.on, onContainer: primary.onContainer },
+    tertiary: { default: todo.default, container: todo.container, on: todo.on, onContainer: todo.onContainer },
+    family: { todo: todo.default, moment: moment.default },
+    gradient: { primary: primary.gradient, glassPrimary },
+    glass: {
+      ...palette.glass,
+      control:
+        mode === 'light'
+          ? { ...palette.glass.control, borderColor: main.controlBorder ?? withAlpha(main.light.onContainer, 0.16) }
+          : palette.glass.control,
+      controlActive: withAlpha(primary.default, mode === 'light' ? 0.16 : 0.2),
+    },
+    shadow: mode === 'light' ? { ...palette.shadow, color: withAlpha(primary.default, 0.12) } : palette.shadow,
+    ...(mode === 'dark' && colors.primary !== 'violet' ? tintedDark(palette, main.halo.dark) : {}),
+  };
+}
+
+/**
+ * The dark grays with a light tint of the theme (sheet 042), like the Android apps of today: the
+ * page, the cards, the bars, the lines and the texts lean towards the main colour, a few percent.
+ * Junix (violet) keeps its own grays, which already lean towards violet.
+ */
+function tintedDark(palette: ThemePalette, hue: string): Partial<ThemePalette> {
+  const tint = (gray: string, amount: number) => mixHex(gray, hue, amount);
+  const glassOf = (gray: string, alpha: number) => withAlpha(tint(gray, 0.14), alpha);
+  return {
+    surface: {
+      base: tint('#141414', 0.06),
+      low: tint('#1C1C1C', 0.06),
+      container: tint('#212121', 0.06),
+      high: tint('#2B2B2B', 0.06),
+      highest: tint('#363636', 0.06),
+    },
+    onSurface: {
+      primary: tint('#E4E4E4', 0.04),
+      variant: tint('#C8C8C8', 0.06),
+      inactive: tint('#C8C8C8', 0.06),
+      disabled: tint('#6B6B6B', 0.08),
+    },
+    outline: {
+      default: tint('#939393', 0.08),
+      variant: tint('#474747', 0.1),
+    },
+    glowCard: { ...palette.glowCard, background: tint('#141414', 0.06) },
+    glass: {
+      ...palette.glass,
+      card: { ...palette.glass.card, backgroundColor: glassOf('#1E1E1E', 0.55) },
+      control: { ...palette.glass.control, backgroundColor: glassOf('#1E1E1E', 0.45) },
+      nav: { ...palette.glass.nav, backgroundColor: glassOf('#181818', 0.82) },
+    },
+  };
+}
+
+/**
+ * Neutre (study 001, 16.11; sheet 041): plain gentle colours, neither dark nor dull. A gray-blue
+ * page, white cards with a thin border, a plain bottom bar, no glow and no glass. The texts keep
+ * the contrasts of the light theme (checked on #EEF1F5 and on white).
+ */
+export function neutralOf(light: ThemePalette): ThemePalette {
+  return {
+    ...light,
+    surface: {
+      base: '#EEF1F5',
+      low: '#F4F6F9',
+      container: '#FFFFFF',
+      high: '#F7F8FA',
+      highest: '#E9EDF2',
+    },
+    onSurface: {
+      primary: '#26303B', // 12.0:1 on #EEF1F5
+      variant: '#5A6573', // 5.2:1 on #EEF1F5
+      inactive: '#5A6573',
+      disabled: '#636D7B', // 4.6:1 on #EEF1F5
+    },
+    outline: {
+      default: '#636D7B',
+      variant: '#D3D8E0',
+    },
+    gradient: {
+      primary: [light.primary.default, light.primary.default],
+      glassPrimary: [light.primary.default, light.primary.default],
+    },
+    glowCard: {
+      background: '#FFFFFF',
+      cornerGlowEnabled: false,
+      topHighlightEnabled: false,
+      haloEnabled: false,
+      borderOpacityNeutral: 0.16,
+    },
+    glass: {
+      card: { backgroundColor: '#FFFFFF', borderColor: '#D3D8E0' },
+      control: { backgroundColor: '#FFFFFF', borderColor: '#D3D8E0' },
+      controlActive: light.glass.controlActive,
+      nav: { backgroundColor: '#FFFFFF', borderColor: '#D3D8E0' },
+    },
+    shadow: {
+      color: 'rgba(38, 48, 59, 0.10)',
+      smOpacity: 0.05,
+      mdOpacity: 0.08,
+    },
+  };
+}
+
 export const lightPalette: ThemePalette = {
   mode: 'light',
 
@@ -268,6 +400,11 @@ export const lightPalette: ThemePalette = {
     container: '#C3E7FF',
     on: '#FFFFFF',
     onContainer: '#004C6D',
+  },
+
+  family: {
+    todo: '#0E7490',
+    moment: '#A8500A', // 4.7:1 on #F2EDE8 and on the gray-blue of Neutre (sheet 042)
   },
 
   error: {

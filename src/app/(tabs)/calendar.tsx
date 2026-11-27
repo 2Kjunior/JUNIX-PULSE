@@ -56,6 +56,7 @@ import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { WeeklyTimetableGrid } from '@/components/schedule/WeeklyTimetableGrid';
 import { makeCalendarStyles } from '@/styles/tabs/calendar-styles';
 import { momentKindColor } from '@/constants/moment-kinds';
+import { itemColorOf } from '@/constants/item-kinds';
 import { planningLook } from '@/constants/planning-look';
 import { useDateLocale, useT } from '@/i18n';
 
@@ -149,7 +150,8 @@ export default function CalendarScreen() {
             startTime: format(s, 'HH:mm'),
             endTime: format(end, 'HH:mm'),
             // The colour of its type (sheet 023); "Autre" keeps the amber of the moments
-            color: momentKindColor(theme, e.momentKind),
+            // The colour chosen for its card wins (sheet 043)
+            color: e.color ? itemColorOf(theme, e.color, 'moment') : momentKindColor(theme, e.momentKind),
             createdAt: e.createdAt,
             updatedAt: e.updatedAt,
           });
@@ -173,7 +175,7 @@ export default function CalendarScreen() {
             startTime: format(s, 'HH:mm'),
             endTime: format(end, 'HH:mm'),
             fillsTime: Boolean(r.estimatedMinutes),
-            color: r.priority === 'HIGH' || r.priority === 'URGENT' ? theme.priority.HIGH : theme.tertiary.default,
+            color: r.priority === 'URGENT' ? theme.priority.HIGH : r.color ? itemColorOf(theme, r.color, 'todo') : r.priority === 'HIGH' ? theme.priority.HIGH : theme.tertiary.default,
             createdAt: r.createdAt,
             updatedAt: r.updatedAt,
           });

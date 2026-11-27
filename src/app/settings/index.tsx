@@ -62,10 +62,10 @@ import { format } from 'date-fns';
 import { hexToRgba } from '@/utils/color';
 import { emitMascotEvent } from '@/services/mascot/mascot-event-bus';
 import { SanctumAuthService } from '@/services/sanctum-auth-service';
-import { detectDeviceTimezone } from '@/services/device-timezone';
-import { timezoneLabel } from '@/constants/timezones';
-import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
+import { useDateLocale, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
+import { ColorThemePicker } from '@/components/settings/ColorThemePicker';
+import type { ColorChoice } from '@/constants/color-themes';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
 import { SoundSetting } from '@/components/settings/SoundSetting';
 import {
@@ -94,6 +94,8 @@ const APPEARANCE_OPTIONS: {
   { value: 'light', labelKey: 'settingsScreen.light', icon: 'sunny-outline' },
   { value: 'dark', labelKey: 'settingsScreen.dark', icon: 'moon-outline' },
   { value: 'system', labelKey: 'settingsScreen.auto', icon: 'phone-portrait-outline' },
+  // Plain, without glow nor glass (sheet 041)
+  { value: 'neutral', labelKey: 'settingsScreen.neutral', icon: 'square-outline' },
 ];
 
 /** The pages of the settings: the summary lists them, each opens on its own. */
@@ -120,11 +122,9 @@ function pageOf(value: unknown): SettingsPage | null {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode, setReduceTransparency } = useAppStore();
+  const { setOnboardingComplete, showSnackbar, themeMode, setThemeMode, setReduceTransparency, setAmbientBackground, setColorChoice, colorChoice } = useAppStore();
   const { palette } = useTheme();
-  const deviceTimezone = detectDeviceTimezone();
   const t = useT();
-  const language = useLanguage();
   const styles = useThemedStyles(makeSettingsStyles);
   // The summary, or one of its pages: each page is the same screen opened with its name
   const section = pageOf(useLocalSearchParams<{ section?: string }>().section);
@@ -366,6 +366,33 @@ export default function SettingsScreen() {
 
 
   // The glass effect: on by default, off puts cards and bars on a plain background
+  // The halos behind the pages (sheet 041)
+  // The colour theme (sheet 042): the whole app changes at once, saved after
+  const handleColorChoice = async (choice: ColorChoice) => {
+    const before = useAppStore.getState().colorChoice;
+    setColorChoice(choice);
+    setSettings(s => (s ? { ...s, colorChoice: choice } : s));
+    try {
+      await SettingsRepository.update({ colorChoice: choice, updatedAt: new Date().toISOString() });
+    } catch {
+      setColorChoice(before);
+      setSettings(s => (s ? { ...s, colorChoice: before } : s));
+      showSnackbar(t('settingsScreen.appearanceFailed'));
+    }
+  };
+
+  const handleToggleAmbient = async (on: boolean) => {
+    setAmbientBackground(on);
+    setSettings(s => (s ? { ...s, ambientBackground: on } : s));
+    try {
+      await SettingsRepository.update({ ambientBackground: on, updatedAt: new Date().toISOString() });
+    } catch {
+      setAmbientBackground(!on);
+      setSettings(s => (s ? { ...s, ambientBackground: !on } : s));
+      showSnackbar(t('settingsScreen.appearanceFailed'));
+    }
+  };
+
   const handleToggleGlass = async (glass: boolean) => {
     setReduceTransparency(!glass);
     setSettings(s => (s ? { ...s, reduceTransparency: !glass } : s));
@@ -589,18 +616,14 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.rowTextFill}>
             <Text style={styles.profileName}>{settings.displayName?.trim() || t('settingsHub.profileEmpty')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.firstNameHint')}</Text>
           </View>
           <Ionicons name="create-outline" size={18} color={palette.primary.default} />
         </TouchableOpacity>
 
         <View style={styles.profileLanguage}>
           <Text style={styles.rowLabel}>{t('language.label')}</Text>
-          <LanguagePicker onError={showSnackbar} />
-          {/* Le fuseau suit le téléphone : une information, pas un réglage */}
-          <Text style={styles.footnote}>
-            {t('settingsHub.timezoneNote', { timezone: timezoneLabel(deviceTimezone, language) })}
-          </Text>
+          {/* No line under the choices: they speak for themselves (sheet 041) */}
+          <LanguagePicker onError={showSnackbar} showHint={false} />
         </View>
       </GlowCard>
 
@@ -672,9 +695,28 @@ export default function SettingsScreen() {
         })}
       </View>
 
-      <Text style={styles.appearanceHelp}>{t('settingsScreen.appearanceHelp')}</Text>
+      {/* The colour themes and the colours one by one (sheet 042); Neutre takes them too */}
+      <ColorThemePicker choice={settings.colorChoice ?? colorChoice} onChange={handleColorChoice} />
 
-      <View style={styles.glassRow}>
+      {/* The ambient background and the glass, with the theme (sheet 041); both are off in Neutre */}
+      {settings.appearanceMode !== 'neutral' ? (
+        <View style={[styles.glassRow, styles.groupRowApart]}>
+          <View style={styles.rowTextFill}>
+            <Text style={styles.rowLabel}>{t('settingsScreen.ambient')}</Text>
+            <Text style={styles.rowSub}>{t('settingsScreen.ambientHelp')}</Text>
+          </View>
+          <Switch
+            value={settings.ambientBackground !== false}
+            onValueChange={handleToggleAmbient}
+            {...switchColors(settings.ambientBackground !== false)}
+            accessibilityLabel={t('settingsScreen.ambient')}
+            testID="settings-ambient"
+          />
+        </View>
+      ) : null}
+
+      {settings.appearanceMode !== 'neutral' ? (
+      <View style={[styles.glassRow, styles.groupRowApart]}>
         <View style={styles.rowTextFill}>
           <Text style={styles.rowLabel}>{t('settingsScreen.glass')}</Text>
           <Text style={styles.rowSub}>{t('settingsScreen.glassHelp')}</Text>
@@ -687,6 +729,7 @@ export default function SettingsScreen() {
           testID="settings-glass"
         />
       </View>
+      ) : null}
     </View>
   );
 
@@ -695,7 +738,6 @@ export default function SettingsScreen() {
       <View style={styles.row}>
         <View style={styles.rowTextFill}>
           <Text style={styles.rowLabel}>{t('settingsScreen.remindersAlerts')}</Text>
-          <Text style={styles.rowSub}>{t('settingsScreen.offlineNotifs')}</Text>
         </View>
         <Switch
           value={settings.notificationsEnabled}
@@ -768,7 +810,6 @@ export default function SettingsScreen() {
         <View style={styles.row}>
           <View style={styles.rowTextFill}>
             <Text style={styles.rowLabel}>{t('settingsScreen.soundLabel')}</Text>
-            <Text style={styles.rowSub}>{t('settingsScreen.soundHint')}</Text>
           </View>
           <Switch
             value={settings.notificationSoundEnabled}
@@ -795,7 +836,6 @@ export default function SettingsScreen() {
       {settings.notificationsEnabled && settings.notificationSoundEnabled && (
         <View style={styles.rowCol}>
           <Text style={styles.rowLabel}>{t('soundSettings.title')}</Text>
-          <Text style={styles.rowSub}>{t('soundSettings.hint')}</Text>
           <SoundSetting
             value={settings.soundPrefs ?? DEFAULT_SOUND_PREFS}
             onChange={handleUpdateSounds}
@@ -833,7 +873,6 @@ export default function SettingsScreen() {
       <View style={styles.row}>
         <View style={styles.rowTextFill}>
           <Text style={styles.rowLabel}>{t('settingsHub.vibrationsLabel')}</Text>
-          <Text style={styles.rowSub}>{t('settingsHub.vibrationsHint')}</Text>
         </View>
         <Switch
           value={settings.hapticsEnabled}

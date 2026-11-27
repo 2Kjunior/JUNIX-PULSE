@@ -10,6 +10,8 @@
 import type { DailyRecapKind, DailyRecapNotification } from "@/domain/rules/daily-recap-rules";
 import { t } from "@/i18n";
 import { logger } from "@/utils/logger";
+import { resolveThemeColors, SWATCHES, type SwatchId } from "@/constants/color-themes";
+import { useAppStore } from "@/store/app-store";
 import { expectAppLockReturn } from "@/services/app-lock-service";
 import {
   REMINDER_ACTION_COMPLETE,
@@ -26,6 +28,17 @@ import {
   type NotificationChannelKind,
   type NotificationLevel,
 } from "@/domain/rules/notification-level-rules";
+
+/**
+ * The accent of a notification (its icon and title on Android) in the main colour of the theme
+ * (sheet 042). Violet keeps the colour declared in app.json, as before.
+ */
+function themeAccent(cardColor?: SwatchId): { color?: string } {
+  // The colour chosen for the card wins (sheet 043)
+  if (cardColor) return { color: SWATCHES[cardColor].halo.dark };
+  const main = resolveThemeColors(useAppStore.getState().colorChoice).primary;
+  return main === "violet" ? {} : { color: SWATCHES[main].halo.dark };
+}
 
 type NotificationsType = typeof import("expo-notifications");
 
@@ -71,6 +84,8 @@ const FOCUS_END_IDENTIFIER = "focus-end";
 
 export interface ScheduleReminderParams {
   id: string; // ID du rappel Junix Pulse
+  /** The colour chosen for its card (sheet 043). */
+  color?: SwatchId;
   /** Le son des notifications est coupé dans les réglages : canal silencieux. */
   silent?: boolean;
   /** Identifiant de la notification : un rappel récurrent en planifie plusieurs. */
@@ -103,6 +118,8 @@ function phoneData(phone: PhoneSound | undefined): Record<string, string> {
 
 export interface ScheduleItemParams {
   identifier: string;
+  /** The colour chosen for its card (sheet 043). */
+  color?: SwatchId;
   itemType: "TASK" | "EVENT";
   itemId: string;
   title: string;
@@ -329,6 +346,7 @@ export const NotificationService = {
       return await Notifications.scheduleNotificationAsync({
         identifier: params.identifier ?? `reminder-${params.id}`,
         content: {
+          ...themeAccent(params.color),
           title: params.title,
           body: params.body ?? t('reminderNotif.default'),
           data: {
@@ -381,6 +399,7 @@ export const NotificationService = {
       return await Notifications.scheduleNotificationAsync({
         identifier: params.identifier,
         content: {
+          ...themeAccent(params.color),
           title: params.title,
           body: params.body,
           data: {
@@ -418,6 +437,7 @@ export const NotificationService = {
       return await Notifications.scheduleNotificationAsync({
         identifier: params.identifier,
         content: {
+          ...themeAccent(),
           title: params.title,
           body: params.body,
           data: { type: "HABIT", habitId: params.habitId, level: params.level, ...(params.sound ? { sound: params.sound } : {}), ...phoneData(params.phone) },
@@ -452,6 +472,7 @@ export const NotificationService = {
       await Notifications.scheduleNotificationAsync({
         identifier: FOCUS_END_IDENTIFIER,
         content: {
+          ...themeAccent(),
           title: t('notifFocus.title'),
           body,
           data: { type: "FOCUS_END" },
@@ -532,6 +553,7 @@ export const NotificationService = {
       await Notifications.scheduleNotificationAsync({
         identifier: dailyRecapIdentifier(recap.kind),
         content: {
+          ...themeAccent(),
           title: recap.title,
           body: recap.body,
           data: { type: "DAILY_RECAP", kind: recap.kind },
@@ -558,7 +580,7 @@ export const NotificationService = {
     try {
       await Notifications.scheduleNotificationAsync({
         identifier: params.identifier,
-        content: { title: params.title, body: params.body, data: params.data, sound: true },
+        content: { ...themeAccent(), title: params.title, body: params.body, data: params.data, sound: true },
         trigger: Platform.OS === "android" ? { channelId: DAILY_RECAP_CHANNEL_ID } : null,
       });
     } catch {
@@ -614,6 +636,7 @@ export const NotificationService = {
       const id = await Notifications.scheduleNotificationAsync({
         identifier: `test-${Date.now()}`,
         content: {
+          ...themeAccent(),
           title,
           body,
           sound: NOTIFICATION_SOUND_WAV_FILENAME,

@@ -12,6 +12,7 @@ import {
   TitleFontFamily,
 } from '@/constants/theme';
 import { ThemePalette, darkPalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makeTasksStyles(theme: ThemePalette) {
   const isLight = theme.mode === 'light';
@@ -147,8 +148,8 @@ export function makeTasksStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 8px 24px -4px rgba(107, 70, 193, 0.35)'
-            : '0 8px 32px -4px rgba(124, 58, 237, 0.40)',
+            ? `0 8px 24px -4px ${withAlpha(theme.primary.default, 0.35)}`
+            : `0 8px 32px -4px ${withAlpha(theme.gradient.primary[0], 0.40)}`,
         },
       }),
     },

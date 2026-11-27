@@ -25,6 +25,7 @@ import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { ThemePalette } from '@/constants/palettes';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
+import { withAlpha } from '@/utils/color';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -138,8 +139,8 @@ export function makeButtonStyles(theme: ThemePalette) {
       borderWidth: 1,
       borderTopColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.80)',
       borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.50)',
-      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.35)',
-      borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.25)',
+      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : withAlpha(theme.primary.default, 0.35),
+      borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : withAlpha(theme.primary.default, 0.25),
       ...Platform.select({
         ios: {
           shadowColor: theme.shadow.color,
@@ -153,8 +154,8 @@ export function makeButtonStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isDark
-            ? '0 6px 24px -2px rgba(139, 92, 246, 0.40)'
-            : '0 6px 20px -2px rgba(107, 70, 193, 0.25)',
+            ? `0 6px 24px -2px ${withAlpha(theme.primary.default, 0.40)}`
+            : `0 6px 20px -2px ${withAlpha(theme.primary.default, 0.25)}`,
         },
       }),
     },

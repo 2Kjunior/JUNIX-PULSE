@@ -21,6 +21,7 @@ import {
   TitleFontFamily,
 } from '@/constants/theme';
 import { ThemePalette, darkPalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makePulseStyles(theme: ThemePalette) {
   const isLight = theme.mode === 'light';
@@ -86,18 +87,18 @@ export function makePulseStyles(theme: ThemePalette) {
       width: 120,
       height: 120,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? 'rgba(107, 70, 193, 0.08)' : 'rgba(160, 120, 255, 0.08)',
+      backgroundColor: isLight ? withAlpha(theme.primary.default, 0.08) : withAlpha(theme.primary.default, 0.08),
       borderWidth: 1,
-      borderColor: isLight ? 'rgba(107, 70, 193, 0.16)' : 'rgba(208, 188, 255, 0.12)',
+      borderColor: isLight ? withAlpha(theme.primary.default, 0.16) : withAlpha(theme.primary.default, 0.12),
     },
     orbRingOuter: {
       position: 'absolute',
       width: 150,
       height: 150,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? 'rgba(107, 70, 193, 0.04)' : 'rgba(160, 120, 255, 0.04)',
+      backgroundColor: isLight ? withAlpha(theme.primary.default, 0.04) : withAlpha(theme.primary.default, 0.04),
       borderWidth: 1,
-      borderColor: isLight ? 'rgba(107, 70, 193, 0.08)' : 'rgba(208, 188, 255, 0.06)',
+      borderColor: isLight ? withAlpha(theme.primary.default, 0.08) : withAlpha(theme.primary.default, 0.06),
     },
     heroTitle: {
       ...Typography.headlineMedium,
@@ -122,9 +123,9 @@ export function makePulseStyles(theme: ThemePalette) {
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.xs,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.primary.container : 'rgba(160, 120, 255, 0.12)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.12),
       borderWidth: 1,
-      borderColor: isLight ? theme.primary.default + '40' : 'rgba(208, 188, 255, 0.20)',
+      borderColor: isLight ? theme.primary.default + '40' : withAlpha(theme.primary.default, 0.20),
     },
     statusDot: {
       width: 6,
@@ -191,7 +192,7 @@ export function makePulseStyles(theme: ThemePalette) {
     suggCount: {
       ...Typography.labelSmall,
       color: isLight ? theme.primary.onContainer : theme.primary.default,
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.14)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.14),
       borderRadius: Radius.full,
       paddingHorizontal: Spacing.sm,
       paddingVertical: 2,
@@ -294,7 +295,7 @@ export function makePulseStyles(theme: ThemePalette) {
       width: 52,
       height: 52,
       borderRadius: Radius.full,
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.10)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.10),
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: Spacing.md,

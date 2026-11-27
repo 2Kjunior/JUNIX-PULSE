@@ -11,6 +11,8 @@ import { useAppStore } from '@/store/app-store';
 export function useReduceTransparency(): boolean {
   const [systemReduced, setSystemReduced] = useState(false);
   const appReduced = useAppStore(state => state.reduceTransparency);
+  // Neutre has no glass: plain backgrounds everywhere (sheet 041)
+  const neutral = useAppStore(state => state.themeMode === 'neutral');
 
   useEffect(() => {
     let mounted = true;
@@ -28,5 +30,5 @@ export function useReduceTransparency(): boolean {
     };
   }, []);
 
-  return systemReduced || appReduced;
+  return systemReduced || appReduced || neutral;
 }

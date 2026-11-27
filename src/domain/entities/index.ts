@@ -31,6 +31,7 @@ import type { AlertDefaults } from '../rules/notification-level-rules';
 import type { PlanningPrefs } from '../rules/planning-settings-rules';
 import type { SoundPrefs } from '../rules/sound-rules';
 import type { TagColor } from '../rules/tag-rules';
+import type { ColorChoice, SwatchId } from '../../constants/color-themes';
 
 export * from '../enums';
 
@@ -62,6 +63,8 @@ export interface Reminder {
   alertLevel?: AlertLevel;
   /** Its time to do it (sheet 033): it fills this time in the Planning. Absent is a point. */
   estimatedMinutes?: number;
+  /** The colour of its card (sheet 043); absent is the colour of its family. */
+  color?: SwatchId;
   recurrenceRuleId?: string;
   notificationId?: string;     // ID fourni par expo-notifications (pour annulation)
   snoozedUntil?: string;       // ISO 8601 si snooze actif
@@ -91,6 +94,8 @@ export interface Task {
   estimatedMinutes?: number;   // Estimation en minutes (15, 30, 60, etc.)
   /** The Focus minutes already done for it (sheet 033): "1 h 40 sur 5 h". */
   focusMinutes?: number;
+  /** The colour of its card (sheet 043); absent is the colour of its family. */
+  color?: SwatchId;
   priority: ReminderPriority;
   goalId?: string;
   personId?: string;
@@ -141,6 +146,8 @@ export interface Event {
   alertLevel?: AlertLevel;
   /** How much it matters (sheet 032): it chooses how it rings. Absent is Normale. */
   priority?: ReminderPriority;
+  /** The colour of its card (sheet 043); absent is the colour of its family. */
+  color?: SwatchId;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -293,7 +300,8 @@ export interface Suggestion {
   createdAt: string;
 }
 
-export type AppearanceMode = 'system' | 'light' | 'dark';
+/** Neutre (sheet 041): a plain light theme, without glow nor glass. */
+export type AppearanceMode = 'system' | 'light' | 'dark' | 'neutral';
 
 // ─── Paramètres utilisateur ──────────────────────────────────────────────────
 export interface Settings {
@@ -326,6 +334,10 @@ export interface Settings {
   quietHoursEnd?: number;
   /** The default level of reminders, deadlines, moments and habits (sheet 023); all normal at first. */
   alertLevels?: AlertDefaults;
+  /** The coloured halos behind the pages (sheet 041); on at first. */
+  ambientBackground?: boolean;
+  /** The colour theme, and the colours changed by hand (sheet 042); Junix at first. */
+  colorChoice?: ColorChoice;
   /** The view the Planning opens on, the first day of the week and the step of a move (sheet 028). */
   planningPrefs?: PlanningPrefs;
   /** The sound of each level, and whether moments keep the sound of their tone (sheet 031). */

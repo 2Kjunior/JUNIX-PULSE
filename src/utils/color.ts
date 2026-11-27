@@ -16,7 +16,8 @@
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type AppearanceMode = 'system' | 'light' | 'dark';
+/** Neutre (sheet 041): a plain light theme, without glow nor glass. */
+export type AppearanceMode = 'system' | 'light' | 'dark' | 'neutral';
 export type ColorScheme = 'light' | 'dark';
 
 // ─── hexToRgba ───────────────────────────────────────────────────────────────
@@ -58,6 +59,25 @@ export function hexToRgba(hex: string, alpha: number = 1): string {
  */
 export function withAlpha(hex: string, alpha: number): string {
   return hexToRgba(hex, alpha);
+}
+
+// ─── mixHex ──────────────────────────────────────────────────────────────────
+
+/**
+ * Mixes two hex colours: `amount` of the second into the first (0 = the first, 1 = the second).
+ * Gives a hex colour (#RRGGBB). Used to tint the dark grays with the theme (sheet 042).
+ *
+ * @example
+ * mixHex('#141414', '#3B82F6', 0.06) → '#161B22'
+ */
+export function mixHex(base: string, tint: string, amount: number): string {
+  const channels = (hex: string) => {
+    const cleaned = hex.replace('#', '');
+    return [0, 2, 4].map(i => parseInt(cleaned.substring(i, i + 2), 16));
+  };
+  const a = channels(base);
+  const b = channels(tint);
+  return '#' + a.map((value, i) => Math.round(value + (b[i] - value) * amount).toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
 // ─── Luminance relative (WCAG 2.1) ──────────────────────────────────────────
@@ -164,7 +184,8 @@ export function resolveScheme(
   userMode: AppearanceMode,
   systemScheme: ColorScheme | 'unspecified' | null | undefined,
 ): ColorScheme {
-  if (userMode === 'light') return 'light';
+  // Neutre is a light theme for everything that asks light or dark (sheet 041)
+  if (userMode === 'light' || userMode === 'neutral') return 'light';
   if (userMode === 'dark') return 'dark';
   // userMode === 'system' : suit le système, fallback sur 'dark' si indéterminé
   return systemScheme === 'light' ? 'light' : 'dark';

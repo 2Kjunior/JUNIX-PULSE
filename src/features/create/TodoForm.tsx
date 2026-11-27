@@ -41,7 +41,9 @@ import {
   type FormSectionId,
   type MoreFieldId,
 } from '@/constants/item-forms';
-import { itemFamilyColor } from '@/constants/item-kinds';
+import { itemColorOf } from '@/constants/item-kinds';
+import type { SwatchId } from '@/constants/color-themes';
+import { CardColorField } from '@/components/create/form/CardColorField';
 import { Radius, Spacing } from '@/constants/theme';
 import type { Person, Reminder, ReminderPriority, TaskStatus } from '@/domain/entities';
 import { todoFromSentence } from '@/domain/rules/form-dictation-rules';
@@ -103,7 +105,9 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   const { palette } = useTheme();
   const formStyles = useThemedStyles(makeFormStyles);
   const { showSnackbar } = useAppStore();
-  const accent = itemFamilyColor(palette, 'todo');
+  // The colour of the card (sheet 043): the form takes it too, as a preview
+  const [color, setColor] = useState<SwatchId | null>(null);
+  const accent = itemColorOf(palette, color, 'todo');
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
@@ -169,6 +173,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
         setConfirm(values.confirm);
         setDueDate(values.dueDate);
         setEstimatedMinutes(values.estimatedMinutes);
+        setColor(values.color);
         setPersonIds(values.personIds);
         setTagIds(values.tagIds);
         savedRef.current = { scheduledAt: values.scheduledAt, status: values.status };
@@ -305,6 +310,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           alertLevel: null,
           // Its time in the Planning (sheet 033)
           estimatedMinutes: estimatedMinutes ?? null,
+          color,
         });
         showSnackbar(t('remEdit.updated'));
       } else if (editing?.kind === 'task') {
@@ -316,6 +322,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           scheduledDate: day ?? null,
           dueDate: dueDate ?? null,
           estimatedMinutes: estimatedMinutes ?? null,
+          color,
           personIds,
           tagIds,
           status: savedRef.current.status ? taskStatusAfterEdit(savedRef.current.status, day) : undefined,
@@ -336,6 +343,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           recurrenceRule: recurrenceToSave(scheduledAt) ?? undefined,
           // Its time in the Planning (sheet 033)
           estimatedMinutes,
+          color: color ?? undefined,
         });
         showSnackbar(t('remNew.created'));
       } else {
@@ -346,6 +354,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
           scheduledDate: day,
           dueDate,
           estimatedMinutes,
+          color: color ?? undefined,
           subtasks,
           personIds,
           tagIds,
@@ -425,6 +434,8 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
         );
       case 'tags':
         return <TagField key={field} selectedIds={tagIds} onChange={setTagIds} />;
+      case 'color':
+        return <CardColorField key={field} family="todo" value={color} onChange={setColor} />;
       default:
         return null;
     }
@@ -569,6 +580,7 @@ export function TodoForm({ initialAlert = false, defaultDate, defaultHour, perso
   return (
     <FormShell
       family="todo"
+      accentColor={accent}
       // The header says whether it will ring (sheet 014)
       icon={alert ? 'notifications' : undefined}
       // Changing keeps the short name of the kind; the subtitle says it is a change (sheet 022)

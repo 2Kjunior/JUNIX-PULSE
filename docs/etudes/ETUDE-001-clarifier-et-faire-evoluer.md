@@ -668,3 +668,19 @@ Proposition et maquette validées (« Oui, on valide »).
 - **Même comportement** : boucle, volume qui monte, 5 minutes, Plus tard.
 - **Construction** : dans notre module, avec les pages d'Android (liste des sonneries, sélecteur de fichiers qui garde l'accès au fichier) ; aucune bibliothèque ajoutée. Fiche 037.
 
+### 16.11 Le n° 11, personnaliser le design : décisions du 27 novembre 2026
+
+Proposition et maquette validées (« Oui, on valide »). Rien ne change pour qui n'y touche pas ; tout est au choix dans **Paramètres → Apparence**.
+
+- **Fiche 041** : un thème **Neutre** à côté de Clair, Sombre et Auto (gris-bleu clair uni, cartes blanches, pas de lueur) ; un interrupteur « **Fond d'ambiance** » (les halos violet et cyan) ; « Effet verre » (déjà là) rejoint le même bloc ; et la correction du bug « Unexpected text node » (page d'un rappel).
+- **Fiche 042** : « **Couleur principale** » et la couleur de chaque famille (À faire, Moment), parmi 8 couleurs au contraste vérifié (4,5:1), appliquées partout, aux **notifications** et aux **widgets** ; « Revenir aux couleurs de Junix ». Le rouge « urgent » et le vert « fait » restent fixes (leur sens).
+- **Fiche 043** : une **couleur par élément** dans les formulaires (la couleur de la famille d'abord) ; la carte, le Planning et la notification la prennent (colonne ajoutée).
+
+Ordre décidé le même jour : finir les fonctionnalités (n° 10, 11, 12), puis le code en français par fiches, puis le tutoriel de A à Z.
+
+**Fiche 041 faite (27 novembre 2026)** : Neutre, « Fond d'ambiance » (migration 43, allumé par défaut), « Effet verre » dans le même bloc, cachés en Neutre ; les 4 choix d'apparence 2 par ligne (ils se chevauchaient à 360 px). Le bug « Unexpected text node » n'a **pas été reproduit** : à revoir avec une capture s'il revient. Après la maquette des fiches 042 et 043 (27 novembre 2026), l'utilisateur a demandé d'enlever des paramètres les petits textes qui répètent ce qu'on voit (langue, fuseau, apparence…) : fait dans la fiche 041.
+
+**Fiche 042 faite (27 novembre 2026)** : 6 thèmes complets (Junix, Océan, Forêt, Aurore, Pétale, Ardoise) qui règlent la couleur principale, À faire et Moment ; « Personnaliser » une couleur parmi 8 ; tout suit (halos, glowcards, boutons, liens, cases, onglet, ombres, notifications, widget) ; le Neutre aussi ; rouge urgent, vert fait et alarmes fixes. Migration 44. Junix reste identique, sauf l'ambre clair légèrement foncé (`#A8500A`) pour le contraste. Après relecture, proposition validée : Pulse, les gris sombres (page, cartes simples, textes) et la lueur du lancement prennent aussi le thème ; l'icône, le logo et le nom restent fixes (l'identité ; Android 13+ teinte déjà l'icône).
+
+**Fiche 043 faite (27 novembre 2026)** : « Couleur de la carte » dans « Plus d'options » des tâches, rappels et moments, à la création et en modification (migration 45, colonne `color` dans trois tables). La glowcard de l'accueil, la liste « À faire », le Planning et la notification la prennent ; une carte Urgente garde son rouge. Le chantier n° 11 est terminé.
+

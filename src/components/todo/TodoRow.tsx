@@ -14,7 +14,7 @@ import { CardMenuButton, useCardMenu } from '@/components/ui/CardMenu';
 import { useDurationLabel } from '@/components/create/form/DurationField';
 import { openFocusForTask } from '@/features/focus/open-focus';
 import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility';
-import { itemFamilyColor } from '@/constants/item-kinds';
+import { itemColorOf } from '@/constants/item-kinds';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import type { Tag } from '@/domain/entities';
 import type { TodoEntry } from '@/domain/rules/todo-list-rules';
@@ -35,7 +35,8 @@ export function TodoRow({
   const t = useT();
   const locale = useDateLocale();
   const { palette } = useTheme();
-  const accent = itemFamilyColor(palette, 'todo');
+  // The colour chosen for its card, or the colour of « À faire » (sheet 043)
+  const accent = itemColorOf(palette, entry.color, 'todo');
   // The actions of the swipe, also by a long press, "⋯" and the screen reader (sheet 024)
   const openMenu = useCardMenu(entry.title);
   const swipeAccessibility = useSwipeAccessibilityProps();

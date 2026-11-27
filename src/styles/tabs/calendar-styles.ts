@@ -12,6 +12,7 @@ import {
   TitleFontFamily,
 } from '@/constants/theme';
 import { ThemePalette, darkPalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makeCalendarStyles(theme: ThemePalette) {
   const isLight = theme.mode === 'light';
@@ -116,7 +117,7 @@ export function makeCalendarStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 4px 14px -2px rgba(107, 70, 193, 0.08)'
+            ? `0 4px 14px -2px ${withAlpha(theme.primary.default, 0.08)}`
             : '0 4px 14px -2px rgba(0, 0, 0, 0.3)',
         },
       }),
@@ -145,15 +146,15 @@ export function makeCalendarStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 4px 14px 0 rgba(107, 70, 193, 0.35)'
-            : '0 4px 14px 0 rgba(139, 92, 246, 0.45)',
+            ? `0 4px 14px 0 ${withAlpha(theme.primary.default, 0.35)}`
+            : `0 4px 14px 0 ${withAlpha(theme.primary.default, 0.45)}`,
         },
       }),
     },
     dayCellToday: {
       backgroundColor: theme.glass.controlActive,
       borderWidth: 1,
-      borderColor: isLight ? theme.primary.default + '60' : 'rgba(139, 92, 246, 0.50)',
+      borderColor: isLight ? theme.primary.default + '60' : withAlpha(theme.primary.default, 0.50),
     },
     dayName: {
       ...Typography.labelSmall,
@@ -247,8 +248,8 @@ export function makeCalendarStyles(theme: ThemePalette) {
       borderWidth: 1,
     },
     typeBadgeBusy: {
-      backgroundColor: isLight ? theme.primary.container : 'rgba(139, 92, 246, 0.20)',
-      borderColor: isLight ? theme.primary.default + '40' : 'rgba(139, 92, 246, 0.35)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.20),
+      borderColor: isLight ? theme.primary.default + '40' : withAlpha(theme.primary.default, 0.35),
     },
     typeBadgeFree: {
       backgroundColor: isLight ? theme.surface.high : 'rgba(255, 255, 255, 0.06)',
@@ -308,7 +309,7 @@ export function makeCalendarStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 6px 20px -4px rgba(107, 70, 193, 0.10)'
+            ? `0 6px 20px -4px ${withAlpha(theme.primary.default, 0.10)}`
             : '0 6px 20px -4px rgba(0, 0, 0, 0.35)',
         },
       }),
@@ -348,8 +349,8 @@ export function makeCalendarStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 8px 32px -4px rgba(107, 70, 193, 0.35)'
-            : '0 8px 32px -4px rgba(124, 58, 237, 0.40)',
+            ? `0 8px 32px -4px ${withAlpha(theme.primary.default, 0.35)}`
+            : `0 8px 32px -4px ${withAlpha(theme.gradient.primary[0], 0.40)}`,
         },
       }),
     },

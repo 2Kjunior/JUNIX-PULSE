@@ -14,6 +14,7 @@ import type { Ionicons } from '@expo/vector-icons';
 
 import type { ThemePalette } from '@/constants/palettes';
 import type { MessageKey } from '@/i18n';
+import { SWATCHES, type SwatchId } from './color-themes';
 
 export const ITEM_FAMILIES = ['todo', 'moment'] as const;
 export type ItemFamily = (typeof ITEM_FAMILIES)[number];
@@ -45,7 +46,7 @@ export const ITEM_FAMILY_DEFINITIONS: Readonly<Record<ItemFamily, ItemFamilyDefi
 /** The colour of each family in each theme: cyan and amber, readable on every surface. */
 export const ITEM_FAMILY_COLORS: Readonly<Record<'dark' | 'light', Readonly<Record<ItemFamily, string>>>> = {
   dark: { todo: '#7BD0FF', moment: '#F5B942' },
-  light: { todo: '#0E7490', moment: '#B45309' },
+  light: { todo: '#0E7490', moment: '#A8500A' },
 };
 
 export const ITEM_KINDS = ['reminder', 'task', 'event'] as const;
@@ -102,12 +103,25 @@ export const ITEM_KIND_DEFINITIONS: Readonly<Record<ItemKind, ItemKindDefinition
   },
 };
 
-export function itemFamilyColor(palette: Pick<ThemePalette, 'mode'>, family: ItemFamily): string {
-  return ITEM_FAMILY_COLORS[palette.mode === 'light' ? 'light' : 'dark'][family];
+/** The colour of a family: the theme's when the palette carries it (sheet 042), else Junix's. */
+export function itemFamilyColor(palette: Pick<ThemePalette, 'mode'> & { family?: ThemePalette['family'] }, family: ItemFamily): string {
+  return palette.family?.[family] ?? ITEM_FAMILY_COLORS[palette.mode === 'light' ? 'light' : 'dark'][family];
+}
+
+/**
+ * The colour of one card (sheet 043): the one chosen for it, in the tone of the light or dark mode,
+ * or else the colour of its family.
+ */
+export function itemColorOf(
+  palette: Pick<ThemePalette, 'mode'> & { family?: ThemePalette['family'] },
+  color: SwatchId | null | undefined,
+  family: ItemFamily
+): string {
+  return color ? SWATCHES[color][palette.mode === 'light' ? 'light' : 'dark'].default : itemFamilyColor(palette, family);
 }
 
 /** The colour of a kind is the colour of its family. */
-export function itemKindColor(palette: Pick<ThemePalette, 'mode'>, kind: ItemKind): string {
+export function itemKindColor(palette: Pick<ThemePalette, 'mode'> & { family?: ThemePalette['family'] }, kind: ItemKind): string {
   return itemFamilyColor(palette, ITEM_KIND_DEFINITIONS[kind].family);
 }
 

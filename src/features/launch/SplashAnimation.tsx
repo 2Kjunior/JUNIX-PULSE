@@ -35,6 +35,8 @@ import { MASCOT_BASE_SIZE, MASCOT_ORB, MASCOT_VIEWBOX } from '@/features/mascot/
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
 
 import { SPLASH_COLORS, SPLASH_EASINGS, SPLASH_HEARTBEAT, SPLASH_LAYOUT, SPLASH_TIMINGS } from './splash-constants';
+import { haloColorsOf } from '@/constants/color-themes';
+import { useAppStore } from '@/store/app-store';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -58,6 +60,12 @@ interface SplashAnimationProps {
 
 export function SplashAnimation({ onFinish, greet = false }: SplashAnimationProps) {
   const reduceMotion = useSafeReducedMotion();
+  // The Junix logo stays; the glow and the ripple around it take the theme (sheet 042)
+  const colorChoice = useAppStore(state => state.colorChoice);
+  const [launchGlow, launchRipple] = useMemo(() => {
+    const halos = haloColorsOf(colorChoice);
+    return [halos[0].dark, halos[1].dark] as const;
+  }, [colorChoice]);
   const onFinishRef = useRef(onFinish);
   const greetRef = useRef(greet);
   const finishedRef = useRef(false);
@@ -200,12 +208,12 @@ export function SplashAnimation({ onFinish, greet = false }: SplashAnimationProp
             >
               <Defs>
                 <RadialGradient id="launchGlow" cx="50%" cy="50%" r="50%">
-                  <Stop offset="0" stopColor={SPLASH_COLORS.glow} stopOpacity={0.45} />
-                  <Stop offset="1" stopColor={SPLASH_COLORS.glow} stopOpacity={0} />
+                  <Stop offset="0" stopColor={launchGlow} stopOpacity={0.45} />
+                  <Stop offset="1" stopColor={launchGlow} stopOpacity={0} />
                 </RadialGradient>
               </Defs>
               <AnimatedCircle r={GLOW_PX / 2} fill="url(#launchGlow)" animatedProps={glowProps} />
-              <AnimatedCircle fill="none" stroke={SPLASH_COLORS.ripple} strokeWidth={3} animatedProps={rippleProps} />
+              <AnimatedCircle fill="none" stroke={launchRipple} strokeWidth={3} animatedProps={rippleProps} />
             </Svg>
             <Animated.View style={orbStyle}>
               <OrbMark size={ORB_PX} variant="dark" progress={progress} />

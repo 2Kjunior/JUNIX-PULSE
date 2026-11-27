@@ -6,6 +6,7 @@
 
 import type { Reminder, ReminderPriority, Task } from '../entities';
 import { ringsAsAlarm } from './notification-level-rules';
+import type { SwatchId } from '../../constants/color-themes';
 
 export type TodoFilter = 'all' | 'alert' | 'noAlert';
 export const TODO_FILTERS: readonly TodoFilter[] = ['all', 'alert', 'noAlert'];
@@ -35,6 +36,8 @@ export interface TodoEntry {
   /** A task: its time to do it and its Focus time so far (sheet 033). */
   estimatedMinutes?: number;
   focusMinutes?: number;
+  /** The colour chosen for its card (sheet 043). */
+  color?: SwatchId;
 }
 
 export interface TodoSection {
@@ -66,6 +69,7 @@ export function entryFromTask(task: Task, tagIds: readonly string[] = []): TodoE
     priority: task.priority,
     estimatedMinutes: task.estimatedMinutes,
     focusMinutes: task.focusMinutes,
+    color: task.color,
     tagIds,
   };
 }
@@ -82,6 +86,7 @@ export function entryFromReminder(reminder: Reminder, tagIds: readonly string[] 
     doneAt: reminder.completedAt,
     priority: reminder.priority,
     alarm: ringsAsAlarm(reminder),
+    color: reminder.color,
     tagIds,
   };
 }

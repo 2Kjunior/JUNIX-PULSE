@@ -5,11 +5,16 @@
  */
 
 import { useMemo } from 'react';
-import { darkPalette, lightPalette, ThemePalette } from '@/constants/palettes';
+import { isDefaultColorChoice, resolveThemeColors } from '@/constants/color-themes';
+import { colorize, darkPalette, lightPalette, neutralOf, ThemePalette } from '@/constants/palettes';
 import { AppearanceMode } from '@/domain/entities';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppStore } from '@/store/app-store';
 import { resolveScheme } from '@/utils/color';
+
+
+/** Neutre in the colours of Junix (sheet 041). */
+const NEUTRAL_PALETTE = neutralOf(lightPalette);
 
 export interface UseThemeResult {
   /** Palette sémantique active complète */
@@ -20,6 +25,8 @@ export interface UseThemeResult {
   mode: 'light' | 'dark';
   /** Indique si le mode sombre est actif */
   isDark: boolean;
+  /** Neutre: plain, without glow, glass nor ambient background (sheet 041) */
+  isNeutral: boolean;
   /** Réglage utilisateur courant ('system' | 'light' | 'dark') */
   themeMode: AppearanceMode;
   /** Méthode pour changer le mode */
@@ -50,7 +57,18 @@ export function useTheme(): UseThemeResult {
     [themeMode, systemScheme]
   );
 
-  const theme = mode === 'light' ? lightPalette : darkPalette;
+  const colorChoice = useAppStore((s) => s.colorChoice);
+
+  // The palette in the colours of the theme (sheet 042); Neutre is the light one made plain (sheet 041)
+  const theme = useMemo(() => {
+    // Junix: the palettes as they are, the same objects as before
+    if (isDefaultColorChoice(colorChoice)) {
+      return themeMode === 'neutral' ? NEUTRAL_PALETTE : mode === 'light' ? lightPalette : darkPalette;
+    }
+    const colors = resolveThemeColors(colorChoice);
+    if (themeMode === 'neutral') return neutralOf(colorize(lightPalette, colors));
+    return colorize(mode === 'light' ? lightPalette : darkPalette, colors);
+  }, [colorChoice, themeMode, mode]);
 
   return useMemo(
     () => ({
@@ -58,6 +76,7 @@ export function useTheme(): UseThemeResult {
       palette: theme,
       mode,
       isDark: mode === 'dark',
+      isNeutral: themeMode === 'neutral',
       themeMode,
       setThemeMode,
       surface: theme.surface,

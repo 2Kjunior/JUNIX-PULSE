@@ -41,6 +41,7 @@ import {
 import type { ThemePalette } from '@/constants/palettes';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
+import { withAlpha } from '@/utils/color';
 
 export interface GlassFloatingActionButtonProps {
   label: string;
@@ -194,8 +195,8 @@ export function makeGlassFabStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isDark
-            ? '0 8px 24px -2px rgba(124, 58, 237, 0.45)'
-            : '0 8px 20px -2px rgba(107, 70, 193, 0.25)',
+            ? `0 8px 24px -2px ${withAlpha(theme.gradient.primary[0], 0.45)}`
+            : `0 8px 20px -2px ${withAlpha(theme.primary.default, 0.25)}`,
         },
       }),
     },
@@ -206,8 +207,8 @@ export function makeGlassFabStyles(theme: ThemePalette) {
       borderWidth: 1,
       borderTopColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.80)',
       borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.50)',
-      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.35)',
-      borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 70, 193, 0.25)',
+      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : withAlpha(theme.primary.default, 0.35),
+      borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : withAlpha(theme.primary.default, 0.25),
     },
     gradient: {
       width: '100%',

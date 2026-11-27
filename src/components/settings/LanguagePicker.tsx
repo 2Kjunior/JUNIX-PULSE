@@ -26,9 +26,11 @@ interface LanguagePickerProps {
   /** Shown when the choice could not be kept. */
   onError?: (message: string) => void;
   testIDPrefix?: string;
+  /** False: no line under the choices (the settings, where the choice speaks for itself: sheet 041). */
+  showHint?: boolean;
 }
 
-export function LanguagePicker({ onError, testIDPrefix = 'language' }: LanguagePickerProps) {
+export function LanguagePicker({ onError, testIDPrefix = 'language', showHint = true }: LanguagePickerProps) {
   const t = useT();
   const styles = useThemedStyles(makeLanguagePickerStyles);
   const setting = useAppStore(state => state.languageSetting);
@@ -59,7 +61,7 @@ export function LanguagePicker({ onError, testIDPrefix = 'language' }: LanguageP
           );
         })}
       </View>
-      <Text style={styles.hint}>{t(current.hintKey)}</Text>
+      {showHint ? <Text style={styles.hint}>{t(current.hintKey)}</Text> : null}
     </View>
   );
 }

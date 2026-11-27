@@ -11,6 +11,8 @@
 import { FlexWidget, SvgWidget, TextWidget } from 'react-native-android-widget';
 
 import type { MascotMood } from '@/domain/rules/mascot-mood-rules';
+import { DEFAULT_COLOR_CHOICE, resolveThemeColors, SWATCHES, type ColorChoice } from '@/constants/color-themes';
+import { mixHex, withAlpha } from '@/utils/color';
 
 import { widgetMascotSvg } from './widget-mascot-svg';
 
@@ -82,10 +84,32 @@ interface TodayWidgetProps {
   mood: MascotMood;
   /** Share of today's tasks done, 0 to 1. */
   progress: number;
+  /** The colour theme of the app (sheet 042); Junix when absent. */
+  colorChoice?: ColorChoice;
 }
 
-export function TodayWidget({ texts, theme, mood, progress }: TodayWidgetProps) {
-  const c = THEMES[theme];
+/** The widget in the colours of the theme (sheet 042): the same values as before with Junix. */
+export function widgetColorsOf(theme: WidgetTheme, choice: ColorChoice = DEFAULT_COLOR_CHOICE) {
+  const base = THEMES[theme];
+  const colors = resolveThemeColors(choice);
+  const main = SWATCHES[colors.primary];
+  const tone = main[theme].default;
+  const violet = colors.primary === 'violet';
+  return {
+    ...base,
+    to: violet ? base.to : ((theme === 'dark' ? mixHex('#1E1E1E', main.halo.dark, 0.14) : main.light.container) as Hex),
+    border: withAlpha(tone, theme === 'dark' ? 0.28 : 0.22) as Rgba,
+    glassBorder: theme === 'dark' ? base.glassBorder : (withAlpha(tone, 0.16) as Rgba),
+    brand: tone as Hex,
+    accent: SWATCHES[colors.todo][theme].default as Hex,
+    track: theme === 'dark' ? base.track : (withAlpha(tone, 0.14) as Rgba),
+    chip: withAlpha(tone, theme === 'dark' ? 0.16 : 0.1) as Rgba,
+    button: (violet ? ['#7C3AED', '#4F46E5'] : main.dark.gradient) as readonly [string, string],
+  };
+}
+
+export function TodayWidget({ texts, theme, mood, progress, colorChoice }: TodayWidgetProps) {
+  const c = widgetColorsOf(theme, colorChoice);
   // Weights of the two parts of the bar: a sliver stays visible at 0 and at 100 %
   const done = Math.round(Math.min(1, Math.max(0, progress)) * 100);
 
@@ -106,7 +130,7 @@ export function TodayWidget({ texts, theme, mood, progress }: TodayWidgetProps) 
     >
       {/* Pulse, la marque et ce qu'elle dit de la journée */}
       <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent' }}>
-        <SvgWidget svg={widgetMascotSvg(mood)} style={{ width: 54, height: 49 }} />
+        <SvgWidget svg={widgetMascotSvg(mood, colorChoice)} style={{ width: 54, height: 49 }} />
         <FlexWidget style={{ flex: 1, flexDirection: 'column', marginLeft: 8 }}>
           <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent' }}>
             <FlexWidget style={{ flex: 1 }}>
@@ -169,7 +193,7 @@ export function TodayWidget({ texts, theme, mood, progress }: TodayWidgetProps) 
                 flex: Math.max(done, 1),
                 height: 6,
                 borderRadius: 3,
-                backgroundGradient: { from: '#7C3AED', to: '#4F46E5', orientation: 'LEFT_RIGHT' },
+                backgroundGradient: { from: c.button[0] as Hex, to: c.button[1] as Hex, orientation: 'LEFT_RIGHT' },
               }}
             />
             <FlexWidget style={{ flex: Math.max(100 - done, 1), height: 6 }} />
@@ -184,7 +208,7 @@ export function TodayWidget({ texts, theme, mood, progress }: TodayWidgetProps) 
             paddingHorizontal: 14,
             paddingVertical: 8,
             borderRadius: 18,
-            backgroundGradient: { from: '#7C3AED', to: '#4F46E5', orientation: 'LEFT_RIGHT' },
+            backgroundGradient: { from: c.button[0] as Hex, to: c.button[1] as Hex, orientation: 'LEFT_RIGHT' },
           }}
         >
           <TextWidget text={texts.capture} style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }} />

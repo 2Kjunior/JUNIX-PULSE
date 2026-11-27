@@ -353,8 +353,11 @@ export const makeSettingsStyles = (t: ThemePalette) => {
     modalAction: {
       flex: 1,
     },
+    // Four choices since Neutre (sheet 041): two per line, readable on a small phone
     segmentedControl: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 4,
       backgroundColor: segmentBg,
       borderRadius: Radius.md,
       padding: 4,
@@ -363,7 +366,8 @@ export const makeSettingsStyles = (t: ThemePalette) => {
       marginBottom: Spacing.xs,
     },
     segmentBtn: {
-      flex: 1,
+      flexGrow: 1,
+      flexBasis: '45%',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/Button';
 import { DictatedInput } from '@/components/create/form/FormBricks';
 import { PersonTimeFields, PersonTimeValue } from '@/components/people/PersonTimeFields';
 import { MessageKey, useDateLocale, useLanguage, useT } from '@/i18n';
+import { withAlpha } from '@/utils/color';
 
 const RELATIONSHIP_OPTIONS: readonly MessageKey[] = [
   'rel.friend',
@@ -599,7 +600,7 @@ function makeNewPersonStyles(theme: ThemePalette) {
       width: 36,
       height: 36,
       borderRadius: Radius.full,
-      backgroundColor: isDark ? 'rgba(160, 120, 255, 0.12)' : 'rgba(107, 70, 193, 0.12)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.12) : withAlpha(theme.primary.default, 0.12),
       alignItems: 'center',
       justifyContent: 'center',
     },

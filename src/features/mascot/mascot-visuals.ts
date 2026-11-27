@@ -5,6 +5,7 @@
  * Everything here is pure, so the pose logic is unit tested without a renderer.
  */
 
+import { isDefaultColorChoice, resolveThemeColors, SWATCHES, type ColorChoice } from '@/constants/color-themes';
 import type { GuidePointAt, GuidePose } from '@/domain/rules/mascot-guide-rules';
 import type { MascotMood } from '@/domain/rules/mascot-mood-rules';
 import type { MascotReactionLevel } from '@/domain/rules/mascot-reaction-rules';
@@ -52,6 +53,33 @@ export const MOOD_VISUALS: Record<MascotMood, MoodVisual> = {
 };
 
 /** Arms of the "greet" pose: raised in a V, waving a little faster than the mood. */
+/**
+ * Pulse in the colours of the theme (sheet 042): its violet becomes the main colour and its cyan the
+ * colour of « À faire ». The colours that carry a mood (the green of happy, the orange and pink of
+ * alert, the pink of party, the amber of worried) stay. With Junix, Pulse is exactly as before.
+ */
+export function moodVisualOf(mood: MascotMood, choice: ColorChoice): MoodVisual {
+  const visual = MOOD_VISUALS[mood];
+  if (isDefaultColorChoice(choice)) return visual;
+  const colors = resolveThemeColors(choice);
+  const main = SWATCHES[colors.primary];
+  const todo = SWATCHES[colors.todo];
+  const swap: Record<string, string> = {
+    '#8B3DF0': main.halo.dark,
+    '#4a1fa8': main.light.onContainer,
+    '#b58bff': main.halo.light,
+    '#c4a0ff': main.softHalo.light,
+    '#8f6bdc': main.halo.light,
+    '#b9a7ff': main.softHalo.light,
+    '#d6cbff': main.softHalo.light,
+    '#0AE8F0': todo.halo.dark,
+    '#7fe9f2': todo.halo.light,
+    '#58d4e6': todo.halo.light,
+  };
+  const recolor = ([a, b]: readonly [string, string]): readonly [string, string] => [swap[a] ?? a, swap[b] ?? b];
+  return { ...visual, ring: recolor(visual.ring), liquid: recolor(visual.liquid) };
+}
+
 export const GREET_ARMS = { angles: [150, -150], swingDeg: 6, swingPeriodMs: 600 } as const;
 
 export interface ArmPose {

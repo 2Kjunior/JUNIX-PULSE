@@ -4,7 +4,8 @@
  */
 
 import type { MascotMood } from '@/domain/rules/mascot-mood-rules';
-import { MASCOT_LIQUID, MASCOT_ORB, MASCOT_VIEWBOX, MOOD_VISUALS } from '@/features/mascot/mascot-visuals';
+import { MASCOT_LIQUID, MASCOT_ORB, MASCOT_VIEWBOX, moodVisualOf } from '@/features/mascot/mascot-visuals';
+import { DEFAULT_COLOR_CHOICE, type ColorChoice } from '@/constants/color-themes';
 
 const INK = '#1A1040';
 const EYES = [66, 94] as const;
@@ -51,8 +52,8 @@ function mouth(mood: MascotMood): string {
 }
 
 /** The SVG text of Pulse in this mood, ready for SvgWidget. */
-export function widgetMascotSvg(mood: MascotMood): string {
-  const visual = MOOD_VISUALS[mood];
+export function widgetMascotSvg(mood: MascotMood, colorChoice: ColorChoice = DEFAULT_COLOR_CHOICE): string {
+  const visual = moodVisualOf(mood, colorChoice);
   const { cx, cy, radius, haloRadius, clipRadius } = MASCOT_ORB;
   const wave = `M${MASCOT_LIQUID.pathStartX} ${MASCOT_LIQUID.surfaceY} q15 -9 30 0${' t30 0'.repeat(8)} V130 H${MASCOT_LIQUID.pathStartX}Z`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MASCOT_VIEWBOX.minX} ${MASCOT_VIEWBOX.minY} ${MASCOT_VIEWBOX.width} ${MASCOT_VIEWBOX.height}">

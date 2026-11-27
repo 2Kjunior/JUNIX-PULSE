@@ -29,6 +29,7 @@ import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { Button } from '@/components/ui/Button';
 import { makeFormStyles } from '@/styles/common/form-styles';
 import { useT } from '@/i18n';
+import { withAlpha } from '@/utils/color';
 
 export default function NewHabitScreen() {
   const t = useT();
@@ -308,7 +309,7 @@ function makeNewHabitStyles(theme: ThemePalette) {
       alignItems: 'center',
     },
     dayPillActive: {
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.20)' : 'rgba(107, 70, 193, 0.15)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.20) : withAlpha(theme.primary.default, 0.15),
       borderColor: theme.primary.default,
     },
     dayPillText: {

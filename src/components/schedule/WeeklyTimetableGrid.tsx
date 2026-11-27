@@ -33,6 +33,7 @@ import { DraggableBlock } from '@/components/planning/DraggableBlock';
 import { PlanningCard } from '@/components/planning/PlanningCard';
 import { eventAccent, planningLook, taskAccent, type PlanningLook } from '@/constants/planning-look';
 import { columnsForOffset, MIN_CARD_HEIGHT, minutesForOffset, SNAP_MINUTES } from '@/domain/rules/planning-move-rules';
+import { withAlpha } from '@/utils/color';
 
 export interface WeeklyTimetableGridProps {
   blocks: PlanningBlock[];
@@ -317,9 +318,9 @@ export function WeeklyTimetableGrid({
     switch (type) {
       case 'WORK':
         return {
-          bg: isDark ? 'rgba(208, 188, 255, 0.20)' : 'rgba(107, 70, 193, 0.15)',
+          bg: isDark ? withAlpha(palette.primary.default, 0.20) : withAlpha(palette.primary.default, 0.15),
           border: palette.primary.default, // #D0BCFF ou #6B46C1
-          text: isDark ? '#E9DDFF' : '#4A3780',
+          text: palette.primary.onContainer,
           accent: palette.primary.default,
           badgeBg: isDark ? 'rgba(15, 14, 17, 0.7)' : 'rgba(255, 255, 255, 0.85)',
           icon: 'briefcase',
@@ -328,9 +329,9 @@ export function WeeklyTimetableGrid({
         };
       case 'STUDY':
         return {
-          bg: isDark ? 'rgba(123, 208, 255, 0.18)' : 'rgba(14, 116, 144, 0.12)',
+          bg: withAlpha(palette.tertiary.default, isDark ? 0.18 : 0.12),
           border: palette.tertiary.default, // #7BD0FF ou #0E7490
-          text: isDark ? '#C3E7FF' : '#004C6D',
+          text: palette.tertiary.onContainer,
           accent: palette.tertiary.default,
           badgeBg: isDark ? 'rgba(15, 14, 17, 0.7)' : 'rgba(255, 255, 255, 0.85)',
           icon: 'book',

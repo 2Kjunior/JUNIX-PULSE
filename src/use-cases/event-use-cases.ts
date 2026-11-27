@@ -11,6 +11,7 @@ import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import { syncItemNotifications } from '../services/item-notification-service';
 import { meetingWindow } from '../domain/rules/person-link-rules';
 import { recordLinkedInteraction } from './person-use-cases';
+import type { SwatchId } from '@/constants/color-themes';
 
 export interface CreateEventInput {
   title: string;
@@ -27,6 +28,8 @@ export interface CreateEventInput {
   alertLevel?: AlertLevel | null;
   /** It chooses how it rings (sheet 032). */
   priority?: ReminderPriority;
+  /** The colour of its card (sheet 043); absent is the colour of its family. */
+  color?: SwatchId;
   personIds?: string[];
   /** Its coloured tags. */
   tagIds?: string[];
@@ -46,6 +49,8 @@ export interface UpdateEventInput {
   alertLevel?: AlertLevel | null;
   /** It chooses how it rings (sheet 032). */
   priority?: ReminderPriority;
+  /** The colour of its card (sheet 043): null is its family's, undefined keeps it. */
+  color?: SwatchId | null;
   personIds?: string[];
   /** Its coloured tags: replaces the ones it had. */
   tagIds?: string[];
@@ -78,6 +83,7 @@ export const EventUseCases = {
         momentKind: input.momentKind && input.momentKind !== 'other' ? input.momentKind : undefined,
         alertLevel: input.alertLevel ?? undefined,
         priority: input.priority,
+        color: input.color,
         createdAt: now,
         updatedAt: now,
       },
@@ -112,6 +118,7 @@ export const EventUseCases = {
         momentKind: input.momentKind === undefined ? undefined : input.momentKind === 'other' ? null : input.momentKind,
         alertLevel: input.alertLevel,
         priority: input.priority,
+        color: input.color,
         updatedAt: now,
       },
       input.personIds

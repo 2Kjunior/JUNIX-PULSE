@@ -31,6 +31,7 @@ import { logger } from '@/utils/logger';
 import { MessageKey, useT } from '@/i18n';
 import { getDatabase } from '@/database/sqlite';
 import { useTheme } from '@/hooks/use-theme';
+import { withAlpha } from '@/utils/color';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { makeSearchStyles } from '@/styles/search-styles';
@@ -288,9 +289,8 @@ export default function SearchScreen() {
         {/* L'unique gradient discret de l'écran en contour subtil de la barre de recherche */}
         <LinearGradient
           colors={
-            isLight
-              ? ['rgba(107, 70, 193, 0.35)', 'rgba(14, 116, 144, 0.2)']
-              : ['rgba(208, 188, 255, 0.35)', 'rgba(123, 208, 255, 0.2)']
+            // The main colour and the colour of « À faire » of the theme (sheet 042)
+            [withAlpha(theme.primary.default, 0.35), withAlpha(theme.tertiary.default, 0.2)]
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}

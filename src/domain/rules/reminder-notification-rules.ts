@@ -18,6 +18,7 @@ import {
   notificationLevelFor,
   QuietHours,
 } from './notification-level-rules';
+import type { SwatchId } from '../../constants/color-themes';
 
 export const MAX_RECURRING_OCCURRENCES = 14;
 /** A reminder to confirm rings again this many times, this many minutes apart. */
@@ -38,6 +39,8 @@ export interface PlannedReminderNotification {
   level: NotificationLevel;
   /** Haute: it insists, with a longer vibration (sheet 032). */
   insists?: boolean;
+  /** The colour chosen for its card (sheet 043): the notification takes it. */
+  color?: SwatchId;
 }
 
 export interface ReminderToPlan {
@@ -109,6 +112,7 @@ function confirmationRepeats(
         identifier: `${REMINDER_IDENTIFIER_PREFIX}${item.reminder.id}-${anchor}-r${turn}`,
         reminderId: item.reminder.id,
         title: item.reminder.title,
+        ...(item.reminder.color ? { color: item.reminder.color } : {}),
         body: translate(language, 'reminderNotif.confirmAgain'),
         scheduledAt,
         ...levelAndInsistOf(item.reminder, scheduledAt, quietHours, defaults),
@@ -134,6 +138,7 @@ export function planReminderNotifications(
           identifier: `${REMINDER_IDENTIFIER_PREFIX}${item.reminder.id}-${scheduledAt.getTime()}`,
           reminderId: item.reminder.id,
           title: item.reminder.title,
+          ...(item.reminder.color ? { color: item.reminder.color } : {}),
           body: bodyOf(item.reminder, language),
           scheduledAt,
           ...levelAndInsistOf(item.reminder, scheduledAt, quietHours, defaults),

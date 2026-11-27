@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { ThemePalette, darkPalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makeSanctumStyles(theme: ThemePalette) {
   const isLight = theme.mode === 'light';
@@ -34,7 +35,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       borderRadius: Radius.xl,
       padding: Spacing.xl,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.18)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.18),
       gap: Spacing.md,
       ...Platform.select({
         ios: {
@@ -48,7 +49,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 8px 24px -4px rgba(107, 70, 193, 0.14)'
+            ? `0 8px 24px -4px ${withAlpha(theme.primary.default, 0.14)}`
             : '0 8px 32px -4px rgba(0, 0, 0, 0.40)',
         },
       }),
@@ -57,7 +58,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.12)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.12),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -65,7 +66,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       width: 32,
       height: 32,
       borderRadius: Radius.md,
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.12)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.12),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -132,7 +133,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       textAlign: 'center',
       letterSpacing: 12,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.22)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.22),
       marginTop: Spacing.xs,
     },
     pinFormGroup: {
@@ -156,7 +157,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       letterSpacing: 8,
       fontSize: 18,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.22)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.22),
     },
 
     // ─── Security badge ────────────────────────────────────────────────────
@@ -192,7 +193,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       paddingVertical: Spacing.sm,
       gap: Spacing.sm,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.14)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.14),
     },
     searchInput: {
       flex: 1,
@@ -221,7 +222,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       borderRadius: Radius.lg,
       padding: Spacing.lg,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.16)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.16),
       gap: Spacing.xs,
       ...Platform.select({
         ios: {
@@ -235,7 +236,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isLight
-            ? '0 4px 14px -2px rgba(107, 70, 193, 0.08)'
+            ? `0 4px 14px -2px ${withAlpha(theme.primary.default, 0.08)}`
             : '0 4px 14px -2px rgba(0, 0, 0, 0.3)',
         },
       }),
@@ -322,14 +323,14 @@ export function makeSanctumStyles(theme: ThemePalette) {
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.sm + 2,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.18)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.18),
       marginTop: Spacing.xs,
     },
     folderBadgeSmall: {
       width: 28,
       height: 28,
       borderRadius: Radius.sm,
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.12)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.12),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -348,7 +349,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       backgroundColor: isLight ? theme.surface.container : 'rgba(18, 22, 34, 0.95)',
       borderRadius: Radius.md,
       borderWidth: 1,
-      borderColor: isLight ? theme.outline.variant : 'rgba(208, 188, 255, 0.18)',
+      borderColor: isLight ? theme.outline.variant : withAlpha(theme.primary.default, 0.18),
       overflow: 'hidden',
       marginTop: 4,
     },
@@ -362,7 +363,7 @@ export function makeSanctumStyles(theme: ThemePalette) {
       borderBottomColor: isLight ? theme.outline.variant : 'rgba(255, 255, 255, 0.06)',
     },
     folderPickerItemActive: {
-      backgroundColor: isLight ? theme.primary.container : 'rgba(208, 188, 255, 0.16)',
+      backgroundColor: isLight ? theme.primary.container : withAlpha(theme.primary.default, 0.16),
     },
     folderPickerItemText: {
       ...Typography.bodyMedium,

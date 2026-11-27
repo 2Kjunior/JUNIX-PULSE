@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { darkPalette, type ThemePalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makeNewReminderStyles(theme: ThemePalette) {
   const isDark = theme.mode === 'dark';
@@ -79,7 +80,7 @@ export function makeNewReminderStyles(theme: ThemePalette) {
       borderRadius: Radius.lg,
       padding: Spacing.md,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(208, 188, 255, 0.16)' : theme.glass.card.borderColor,
+      borderColor: isDark ? withAlpha(theme.primary.default, 0.16) : theme.glass.card.borderColor,
       gap: Spacing.sm,
       shadowColor: theme.shadow.color,
       shadowOffset: { width: 0, height: 4 },
@@ -157,7 +158,7 @@ export function makeNewReminderStyles(theme: ThemePalette) {
       borderRadius: Radius.md,
       padding: Spacing.md,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(208, 188, 255, 0.22)' : theme.outline.variant,
+      borderColor: isDark ? withAlpha(theme.primary.default, 0.22) : theme.outline.variant,
     },
     dateSelectorLeft: {
       flexDirection: 'row',
@@ -188,7 +189,7 @@ export function makeNewReminderStyles(theme: ThemePalette) {
       gap: 4,
     },
     actionTileSelected: {
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.16)' : 'rgba(107, 70, 193, 0.15)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.16) : withAlpha(theme.primary.default, 0.15),
       borderColor: theme.primary.default,
     },
     actionTileLabel: {

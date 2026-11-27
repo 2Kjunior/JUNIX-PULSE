@@ -12,6 +12,7 @@ import {
   TitleFontFamily,
 } from '@/constants/theme';
 import { darkPalette, type ThemePalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makeTodayStyles(theme: ThemePalette) {
   const isDark = theme.mode === 'dark';
@@ -79,7 +80,7 @@ export function makeTodayStyles(theme: ThemePalette) {
         default: {
           boxShadow: isDark
             ? '0 2px 10px -2px rgba(0, 0, 0, 0.35)'
-            : '0 2px 10px -2px rgba(107, 70, 193, 0.08)',
+            : `0 2px 10px -2px ${withAlpha(theme.primary.default, 0.08)}`,
         },
       }),
     },
@@ -110,7 +111,7 @@ export function makeTodayStyles(theme: ThemePalette) {
         default: {
           boxShadow: isDark
             ? '0 2px 8px -2px rgba(0, 0, 0, 0.30)'
-            : '0 2px 8px -2px rgba(107, 70, 193, 0.06)',
+            : `0 2px 8px -2px ${withAlpha(theme.primary.default, 0.06)}`,
         },
       }),
     },
@@ -227,7 +228,7 @@ export function makeTodayStyles(theme: ThemePalette) {
       borderRadius: Radius.lg,
       padding: Spacing.lg,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(139, 92, 246, 0.35)' : 'rgba(107, 70, 193, 0.35)',
+      borderColor: isDark ? withAlpha(theme.primary.default, 0.35) : withAlpha(theme.primary.default, 0.35),
       gap: Spacing.sm,
       // Pas d'elevation Android : son ombre se verrait à travers le verre translucide
       ...Platform.select({
@@ -239,8 +240,8 @@ export function makeTodayStyles(theme: ThemePalette) {
         },
         default: {
           boxShadow: isDark
-            ? '0 8px 24px -4px rgba(139, 92, 246, 0.22)'
-            : '0 8px 24px -4px rgba(107, 70, 193, 0.12)',
+            ? `0 8px 24px -4px ${withAlpha(theme.primary.default, 0.22)}`
+            : `0 8px 24px -4px ${withAlpha(theme.primary.default, 0.12)}`,
         },
       }),
     },
@@ -328,7 +329,7 @@ export function makeTodayStyles(theme: ThemePalette) {
         default: {
           boxShadow: isDark
             ? '0 6px 18px -4px rgba(0, 0, 0, 0.35)'
-            : '0 6px 18px -4px rgba(107, 70, 193, 0.08)',
+            : `0 6px 18px -4px ${withAlpha(theme.primary.default, 0.08)}`,
         },
       }),
     },
@@ -453,7 +454,7 @@ export function makeTodayStyles(theme: ThemePalette) {
       borderRadius: Radius.lg,
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(208, 188, 255, 0.3)' : 'rgba(107, 70, 193, 0.3)',
+      borderColor: isDark ? withAlpha(theme.primary.default, 0.3) : withAlpha(theme.primary.default, 0.3),
       marginBottom: Spacing.sm,
     },
     demoCard: {
@@ -468,7 +469,7 @@ export function makeTodayStyles(theme: ThemePalette) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.15)' : 'rgba(107, 70, 193, 0.15)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.15) : withAlpha(theme.primary.default, 0.15),
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: Radius.full,
@@ -587,7 +588,7 @@ export function makeTodayStyles(theme: ThemePalette) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.08)' : theme.primary.container,
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.08) : theme.primary.container,
       borderRadius: Radius.lg,
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.sm + 2,

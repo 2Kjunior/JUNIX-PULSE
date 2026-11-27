@@ -35,7 +35,9 @@ import {
   type FormSectionId,
   type MoreFieldId,
 } from '@/constants/item-forms';
-import { itemFamilyColor } from '@/constants/item-kinds';
+import { itemColorOf } from '@/constants/item-kinds';
+import type { SwatchId } from '@/constants/color-themes';
+import { CardColorField } from '@/components/create/form/CardColorField';
 import { MOMENT_KIND_LOOKS } from '@/constants/moment-kinds';
 import { Spacing } from '@/constants/theme';
 import type { EventType, MomentKind, Person, ReminderPriority } from '@/domain/entities';
@@ -75,7 +77,9 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
   const { palette } = useTheme();
   const formStyles = useThemedStyles(makeFormStyles);
   const { showSnackbar, userTimezone } = useAppStore();
-  const accent = itemFamilyColor(palette, 'moment');
+  // The colour of the card (sheet 043): the form takes it too, as a preview
+  const [color, setColor] = useState<SwatchId | null>(null);
+  const accent = itemColorOf(palette, color, 'moment');
 
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
@@ -125,6 +129,7 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
         setEventType(values.type);
         setMomentKind(values.momentKind);
         setPriority(values.priority);
+        setColor(values.color);
         setPersonIds(values.personIds);
         setTagIds(values.tagIds);
         setReady(true);
@@ -195,6 +200,7 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
           travelBufferMinutes: place ? travelBufferMinutes : 0,
           momentKind,
           priority,
+          color,
           // The priority chooses how it rings now (sheet 032): a level chosen before is let go
           alertLevel: null,
           personIds,
@@ -214,6 +220,7 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
           travelBufferMinutes: place ? travelBufferMinutes : 0,
           momentKind,
           priority,
+          color: color ?? undefined,
           personIds,
           tagIds,
         });
@@ -274,6 +281,8 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
         );
       case 'tags':
         return <TagField key={field} selectedIds={tagIds} onChange={setTagIds} />;
+      case 'color':
+        return <CardColorField key={field} family="moment" value={color} onChange={setColor} />;
       default:
         return null;
     }
@@ -384,6 +393,7 @@ export function MomentForm({ defaultDate, defaultHour, personId, editingId }: Mo
   return (
     <FormShell
       family="moment"
+      accentColor={accent}
       title={t('itemForm.moment.title')}
       subtitle={t(editingId ? 'itemForm.editSubtitle' : 'itemForm.moment.subtitle')}
       saveLabel={t(editingId ? 'itemForm.editSubmit' : 'itemForm.moment.submit')}

@@ -5,6 +5,7 @@
 import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Task, Subtask } from '../domain/entities';
+import { swatchOf } from '../constants/color-themes';
 
 type NullableFields<T> = {
   [K in keyof T]?: T[K] | null;
@@ -22,6 +23,7 @@ function rowToTask(row: Record<string, unknown>): Task {
     dueDate: (row.due_date as string | null) ?? undefined,
     estimatedMinutes: (row.estimated_minutes as number | null) ?? undefined,
     focusMinutes: (row.focus_minutes as number | null) ?? undefined,
+    color: swatchOf(row.color),
     priority: row.priority as Task['priority'],
     goalId: (row.goal_id as string | null) ?? undefined,
     personId: (row.person_id as string | null) ?? undefined,
@@ -57,12 +59,13 @@ export const TaskRepository = {
     const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO tasks (id, title, description, status, scheduled_date, due_date, estimated_minutes,
-        priority, goal_id, person_id, tags, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        priority, goal_id, person_id, tags, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       task.id, task.title, task.description ?? null, task.status,
       task.scheduledDate ?? null, task.dueDate ?? null, task.estimatedMinutes ?? null, task.priority,
       task.goalId ?? null, task.personId ?? null,
       task.tags ? JSON.stringify(task.tags) : null,
+      task.color ?? null,
       task.createdAt, task.updatedAt
     );
   },
@@ -94,6 +97,10 @@ export const TaskRepository = {
     if (params.estimatedMinutes !== undefined) {
       setClauses.push('estimated_minutes = ?');
       values.push(params.estimatedMinutes);
+    }
+    if (params.color !== undefined) {
+      setClauses.push('color = ?');
+      values.push(params.color);
     }
     if (params.focusMinutes !== undefined) {
       setClauses.push('focus_minutes = ?');

@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { AppearanceMode } from '@/domain/entities';
+import { DEFAULT_COLOR_CHOICE, type ColorChoice } from '@/constants/color-themes';
 import type { AppLanguage, LanguageSetting } from '@/domain/rules/language-rules';
 
 // ─── Snackbar (undo de suppression, confirmations) ────────────────────────────
@@ -37,6 +38,12 @@ interface AppStore {
   /** Glass turned off in the settings: cards and bars on a plain background. */
   reduceTransparency: boolean;
   setReduceTransparency: (reduce: boolean) => void;
+  /** The coloured halos behind the pages (sheet 041). */
+  ambientBackground: boolean;
+  setAmbientBackground: (on: boolean) => void;
+  /** The colour theme and the colours changed by hand (sheet 042). */
+  colorChoice: ColorChoice;
+  setColorChoice: (choice: ColorChoice) => void;
 
   // Langue : le choix de la personne, et la langue qui en résulte (celle du téléphone sur « auto »)
   languageSetting: LanguageSetting;
@@ -73,6 +80,10 @@ export const useAppStore = create<AppStore>((set) => ({
   setThemeMode: (mode) => set({ themeMode: mode }),
   reduceTransparency: false,
   setReduceTransparency: (reduce) => set({ reduceTransparency: reduce }),
+  ambientBackground: true,
+  setAmbientBackground: (on) => set({ ambientBackground: on }),
+  colorChoice: DEFAULT_COLOR_CHOICE,
+  setColorChoice: (choice) => set({ colorChoice: choice }),
 
   // Langue
   languageSetting: 'auto',

@@ -714,5 +714,31 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE tasks ADD COLUMN focus_minutes INTEGER;
     `,
   },
+  {
+    version: 43,
+    name: 'add_ambient_background',
+    sql: `
+      -- Le fond d ambiance, halos violet et cyan (fiche 041, etude 16.11). Vide : allume, comme avant.
+      ALTER TABLE settings ADD COLUMN ambient_background INTEGER;
+    `,
+  },
+  {
+    version: 44,
+    name: 'add_color_theme',
+    sql: `
+      -- Le theme de couleurs et les couleurs changees a la main (fiche 042). Vide : Junix, comme avant.
+      ALTER TABLE settings ADD COLUMN color_theme TEXT;
+    `,
+  },
+  {
+    version: 45,
+    name: 'add_item_colors',
+    sql: `
+      -- La couleur d une carte (fiche 043). Vide : la couleur de sa famille, comme avant.
+      ALTER TABLE reminders ADD COLUMN color TEXT;
+      ALTER TABLE tasks ADD COLUMN color TEXT;
+      ALTER TABLE events ADD COLUMN color TEXT;
+    `,
+  },
 ];
 

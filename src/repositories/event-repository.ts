@@ -6,6 +6,7 @@ import type { SQLiteBindValue } from 'expo-sqlite';
 import { getDatabase } from '../database/sqlite';
 import { Event, Person, ReminderPriority } from '../domain/entities';
 import { chosenLevelOf } from '../domain/rules/notification-level-rules';
+import { swatchOf } from '../constants/color-themes';
 
 const PRIORITIES: readonly ReminderPriority[] = ['LOW', 'NORMAL', 'HIGH', 'URGENT'];
 
@@ -30,6 +31,7 @@ function rowToEvent(row: Record<string, unknown>): Event {
     alertLevel: chosenLevelOf(row.alert_level) ?? undefined,
     // Its priority (sheet 032); an unknown or empty one is Normale
     priority: PRIORITIES.includes(row.priority as ReminderPriority) ? (row.priority as ReminderPriority) : undefined,
+    color: swatchOf(row.color),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     deletedAt: (row.deleted_at as string | null) ?? undefined,
@@ -58,8 +60,8 @@ export const EventRepository = {
   async create(event: Omit<Event, 'deletedAt'>, personIds?: string[]): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(
-      `INSERT INTO events (id, title, notes, start_at, end_at, timezone, location, type, travel_buffer_minutes, moment_kind, alert_level, priority, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO events (id, title, notes, start_at, end_at, timezone, location, type, travel_buffer_minutes, moment_kind, alert_level, priority, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       event.id,
       event.title,
       event.notes ?? null,
@@ -72,6 +74,7 @@ export const EventRepository = {
       event.momentKind ?? null,
       event.alertLevel ?? null,
       event.priority ?? null,
+      event.color ?? null,
       event.createdAt,
       event.updatedAt
     );
@@ -133,6 +136,10 @@ export const EventRepository = {
     if (params.priority !== undefined) {
       setClauses.push('priority = ?');
       values.push(params.priority);
+    }
+    if (params.color !== undefined) {
+      setClauses.push('color = ?');
+      values.push(params.color);
     }
     if (params.deletedAt !== undefined) {
       setClauses.push('deleted_at = ?');

@@ -18,8 +18,9 @@ import { isAppLockDelay } from '../domain/rules/app-lock-rules';
 import { alertDefaultsOf, alertDefaultsText } from '../domain/rules/notification-level-rules';
 import { planningPrefsOf, planningPrefsText } from '../domain/rules/planning-settings-rules';
 import { soundPrefsOf, soundPrefsText } from '../domain/rules/sound-rules';
+import { parseColorChoice } from '../constants/color-themes';
 
-const VALID_APPEARANCE_MODES: ReadonlySet<AppearanceMode> = new Set(['system', 'light', 'dark']);
+const VALID_APPEARANCE_MODES: ReadonlySet<AppearanceMode> = new Set(['system', 'light', 'dark', 'neutral']);
 const VALID_MASCOT_PRESENCE: ReadonlySet<string> = new Set<MascotPresence>(['full', 'discreet', 'off']);
 const VALID_MASCOT_ADDRESS: ReadonlySet<string> = new Set<MascotAddress>(['tu', 'vous']);
 const VALID_MASCOT_PROPOSALS: ReadonlySet<string> = new Set<MascotProposalsLevel>(['normal', 'rare', 'off']);
@@ -57,6 +58,10 @@ function rowToSettings(row: Record<string, unknown>): Settings {
     soundPrefs: soundPrefsOf(row.sound_prefs as string | null | undefined),
     appearanceMode,
     reduceTransparency: (row.reduce_transparency as number) === 1,
+    // On unless switched off (sheet 041): empty for the settings made before
+    ambientBackground: (row.ambient_background as number | null | undefined) !== 0,
+    // Junix unless chosen (sheet 042): empty for the settings made before
+    colorChoice: parseColorChoice(row.color_theme as string | null | undefined),
     appearanceDark: row.appearance_dark !== undefined ? (row.appearance_dark as number) === 1 : true,
     mascotPresence: validOr(row.mascot_presence, VALID_MASCOT_PRESENCE, DEFAULT_MASCOT_SETTINGS.presence),
     mascotAddress: validOr(row.mascot_address, VALID_MASCOT_ADDRESS, DEFAULT_MASCOT_SETTINGS.address),
@@ -130,6 +135,14 @@ export const SettingsRepository = {
     if (params.reduceTransparency !== undefined) {
       setClauses.push('reduce_transparency = ?');
       values.push(params.reduceTransparency ? 1 : 0);
+    }
+    if (params.ambientBackground !== undefined) {
+      setClauses.push('ambient_background = ?');
+      values.push(params.ambientBackground ? 1 : 0);
+    }
+    if (params.colorChoice !== undefined) {
+      setClauses.push('color_theme = ?');
+      values.push(JSON.stringify(params.colorChoice));
     }
     if (params.hapticsEnabled !== undefined) {
       setClauses.push('haptics_enabled = ?');

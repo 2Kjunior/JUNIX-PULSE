@@ -17,6 +17,7 @@ import { AlertLevel, Reminder, RecurrenceRule } from '../domain/entities';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import { interactionTypeForAction } from '../domain/rules/person-link-rules';
 import { recordLinkedInteraction } from './person-use-cases';
+import type { SwatchId } from '@/constants/color-themes';
 
 // ─── Création ────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,8 @@ export interface CreateReminderInput {
   alertLevel?: AlertLevel | null;
   /** Its time to do it, in minutes (sheet 033). */
   estimatedMinutes?: number;
+  /** The colour of its card (sheet 043); absent is the colour of its family. */
+  color?: SwatchId;
   recurrenceRule?: Omit<RecurrenceRule, 'id'>;
   checklistItems?: { title: string; position: number }[];
 }
@@ -70,6 +73,7 @@ export async function createReminder(input: CreateReminderInput): Promise<string
     requiresConfirmation: input.requiresConfirmation,
     alertLevel: input.alertLevel ?? null,
     estimatedMinutes: input.estimatedMinutes ?? null,
+    color: input.color ?? null,
     recurrenceRuleId,
     createdAt: now,
     updatedAt: now,
@@ -119,6 +123,8 @@ export interface UpdateReminderInput {
   alertLevel?: AlertLevel | null;
   /** Its time to do it (sheet 033): null takes it off, undefined keeps it. */
   estimatedMinutes?: number | null;
+  /** The colour of its card (sheet 043): null is its family's, undefined keeps it. */
+  color?: SwatchId | null;
   /** A new repeat (a new rule; the old one stays in the data), null to stop it, undefined to keep it. */
   recurrenceRule?: Omit<RecurrenceRule, 'id'> | null;
 }
@@ -148,6 +154,7 @@ export async function updateReminder(input: UpdateReminderInput): Promise<void> 
     recurrenceRuleId,
     alertLevel: input.alertLevel,
     estimatedMinutes: input.estimatedMinutes,
+    color: input.color,
     updatedAt: now,
   });
 

@@ -23,10 +23,11 @@ describe('the forms registry', () => {
   });
 
   it('hides what a reminder does not have once the alert is on', () => {
-    expect(visibleMoreFields('todo')).toEqual(['priority', 'deadline', 'duration', 'subtasks', 'tags']);
+    expect(visibleMoreFields('todo')).toEqual(['priority', 'deadline', 'duration', 'subtasks', 'tags', 'color']);
     // With an alert, the time to do it stays: it fills that time in the Planning (sheet 033)
-    expect(visibleMoreFields('todo', { alert: true })).toEqual(['duration', 'tags']);
-    expect(visibleMoreFields('moment', { alert: true })).toEqual(['priority', 'availability', 'tags']);
+    expect(visibleMoreFields('todo', { alert: true })).toEqual(['duration', 'tags', 'color']);
+    // The colour of the card stays in both cases (sheet 043)
+    expect(visibleMoreFields('moment', { alert: true })).toEqual(['priority', 'availability', 'tags', 'color']);
   });
 
   it('reads the day and the hour handed by the Planning', () => {

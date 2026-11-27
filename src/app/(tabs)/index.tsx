@@ -55,13 +55,19 @@ import { useVisibleProposal } from '@/features/mascot/use-mascot-visible-proposa
 import { suggestionDestination } from '@/domain/rules/mascot-suggestion-rules';
 import { useMascotDayMood } from '@/features/mascot/use-mascot-day-mood';
 import { NowCard } from '@/components/today/NowCard';
-import { itemKindColor, itemKindLook } from '@/constants/item-kinds';
+import { ITEM_KIND_DEFINITIONS, itemColorOf, itemKindLook } from '@/constants/item-kinds';
 import { NewItemChooser } from '@/components/create/NewItemChooser';
 import { isDayOverloaded, nowQueue, tasksToLighten } from '@/domain/rules/now-rules';
 import { useNowActions } from '@/features/now/use-now-actions';
 import { makeTodayStyles } from '@/styles/tabs/today-styles';
+import type { SwatchId } from '@/constants/color-themes';
 
 type ScreenState = 'loading' | 'content' | 'error';
+
+/** The colour chosen for the card of a feed item (sheet 043), if any. */
+function cardColorOf(item: TimelineItem): SwatchId | undefined {
+  return (item.raw as { color?: SwatchId } | undefined)?.color;
+}
 
 interface TimelineItem {
   id: string;
@@ -586,6 +592,8 @@ export default function TodayScreen() {
                     : 'neutral'
                 }
                 intensity="soft"
+                // The colour chosen for the card (sheet 043); an urgent one stays red
+                accentColor={item.priority !== 'URGENT' && cardColorOf(item) ? itemColorOf(palette, cardColorOf(item), ITEM_KIND_DEFINITIONS[item.type].family) : undefined}
                 onPress={() => {
                   if (item.type === 'reminder') {
                     router.push({ pathname: '/reminders/[id]', params: { id: (item.raw as Reminder).id } });
@@ -599,7 +607,7 @@ export default function TodayScreen() {
               >
                 <View style={styles.timelineCard}>
                   <View style={styles.timelineTimeCol}>
-                    <Text style={[styles.timelineTimeText, { color: itemKindColor(palette, item.type) }]}>
+                    <Text style={[styles.timelineTimeText, { color: itemColorOf(palette, cardColorOf(item), ITEM_KIND_DEFINITIONS[item.type].family) }]}>
                       {item.time || t('home.timeline.today')}
                     </Text>
                     {/* La famille, reconnaissable partout : son icône, sa couleur et son nom, et la cloche si ça sonne */}
@@ -607,13 +615,13 @@ export default function TodayScreen() {
                       <Ionicons
                         name={itemKindLook(item.type).icon}
                         size={10}
-                        color={itemKindColor(palette, item.type)}
+                        color={itemColorOf(palette, cardColorOf(item), ITEM_KIND_DEFINITIONS[item.type].family)}
                       />
-                      <Text style={[styles.timelineTypeTag, { color: itemKindColor(palette, item.type) }]}>
+                      <Text style={[styles.timelineTypeTag, { color: itemColorOf(palette, cardColorOf(item), ITEM_KIND_DEFINITIONS[item.type].family) }]}>
                         {t(itemKindLook(item.type).labelKey)}
                       </Text>
                       {itemKindLook(item.type).withAlert && (
-                        <Ionicons name="notifications" size={9} color={itemKindColor(palette, item.type)} />
+                        <Ionicons name="notifications" size={9} color={itemColorOf(palette, cardColorOf(item), ITEM_KIND_DEFINITIONS[item.type].family)} />
                       )}
                     </View>
                   </View>

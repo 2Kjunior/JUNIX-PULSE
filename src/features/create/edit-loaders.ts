@@ -11,6 +11,7 @@ import { EventRepository } from '@/repositories/event-repository';
 import { ReminderRepository } from '@/repositories/reminder-repository';
 import { TagRepository } from '@/repositories/tag-repository';
 import { TaskRepository } from '@/repositories/task-repository';
+import type { SwatchId } from '@/constants/color-themes';
 
 /** A "To do" opened to be changed: a reminder (it rings) or a task (it does not). */
 export interface TodoEditTarget {
@@ -33,6 +34,8 @@ export interface TodoEditValues {
   alertLevel: AlertLevel | null;
   dueDate: string | undefined;
   estimatedMinutes: number | undefined;
+  /** The colour of its card (sheet 043), null for its family's. */
+  color: SwatchId | null;
   personIds: string[];
   tagIds: string[];
   /** The saved alert time of a reminder, to tell whether the person moved it. */
@@ -65,6 +68,7 @@ export async function loadTodoForEdit(target: TodoEditTarget): Promise<TodoEditV
       alertLevel: chosenLevelOf(reminder.alertLevel),
       dueDate: undefined,
       estimatedMinutes: reminder.estimatedMinutes,
+      color: reminder.color ?? null,
       personIds,
       tagIds,
       scheduledAt,
@@ -91,6 +95,7 @@ export async function loadTodoForEdit(target: TodoEditTarget): Promise<TodoEditV
     alertLevel: null,
     dueDate: task.dueDate,
     estimatedMinutes: task.estimatedMinutes,
+    color: task.color ?? null,
     personIds,
     tagIds,
     scheduledAt: null,
@@ -110,6 +115,8 @@ export interface MomentEditValues {
   alertLevel: AlertLevel | null;
   /** Normale when none was chosen (sheet 032). */
   priority: ReminderPriority;
+  /** The colour of its card (sheet 043), null for its family's. */
+  color: SwatchId | null;
   personIds: string[];
   tagIds: string[];
 }
@@ -129,6 +136,7 @@ export async function loadMomentForEdit(id: string): Promise<MomentEditValues | 
     momentKind: momentKindOf(event.momentKind),
     alertLevel: chosenLevelOf(event.alertLevel),
     priority: event.priority ?? 'NORMAL',
+    color: event.color ?? null,
     personIds: persons.map(person => person.id),
     tagIds,
   };

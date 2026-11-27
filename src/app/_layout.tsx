@@ -170,7 +170,9 @@ export default function RootLayout() {
     setThemeMode,
   } = useAppStore();
 
-  const { isDark, mode, surface } = useTheme();
+  const { isDark, mode, surface, isNeutral } = useTheme();
+  // The halos behind the pages, unless switched off in the settings (sheet 041)
+  const ambientOn = useAppStore(state => state.ambientBackground);
   const styles = useThemedStyles(makeRootLayoutStyles);
   const segments = useSegments();
   // Followed live: the launch animation reads it when Pulse is about to wave
@@ -242,6 +244,8 @@ export default function RootLayout() {
         }
         setThemeMode(settings.appearanceMode);
         useAppStore.getState().setReduceTransparency(settings.reduceTransparency);
+        useAppStore.getState().setAmbientBackground(settings.ambientBackground !== false);
+        if (settings.colorChoice) useAppStore.getState().setColorChoice(settings.colorChoice);
 
         // 3. Initialiser les notifications (handler + canal Android)
         //    Isolé pour ne jamais bloquer le démarrage si expo-notifications est limité dans Expo Go
@@ -485,7 +489,8 @@ export default function RootLayout() {
   return (
     <>
       <GestureHandlerRootView style={styles.root}>
-        <AmbientBackground visible={segments[0] === "(tabs)"} revealed={splashFinished} />
+        {/* Off in Neutre or when switched off in the settings (sheet 041) */}
+        <AmbientBackground visible={segments[0] === "(tabs)"} revealed={splashFinished} showHalos={ambientOn && !isNeutral} />
         <SafeAreaProvider>
           <StatusBar style={!splashFinished ? "dark" : (isDark ? "light" : "dark")} />
           <ThemeProvider value={isDark ? TRANSPARENT_DARK_THEME : TRANSPARENT_LIGHT_THEME}>

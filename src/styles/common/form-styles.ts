@@ -22,6 +22,7 @@ import {
   TitleFontFamily,
 } from '@/constants/theme';
 import { darkPalette, type ThemePalette } from '@/constants/palettes';
+import { withAlpha } from '@/utils/color';
 
 export function makeFormStyles(theme: ThemePalette) {
   const isDark = theme.mode === 'dark';
@@ -109,7 +110,7 @@ export function makeFormStyles(theme: ThemePalette) {
       width: 24,
       height: 24,
       borderRadius: Radius.full,
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.12)' : 'rgba(107, 70, 193, 0.12)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.12) : withAlpha(theme.primary.default, 0.12),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -139,7 +140,7 @@ export function makeFormStyles(theme: ThemePalette) {
         default: {
           boxShadow: isDark
             ? '0 4px 14px -2px rgba(0, 0, 0, 0.35)'
-            : '0 4px 14px -2px rgba(107, 70, 193, 0.08)',
+            : `0 4px 14px -2px ${withAlpha(theme.primary.default, 0.08)}`,
         },
       }),
     },
@@ -195,7 +196,7 @@ export function makeFormStyles(theme: ThemePalette) {
       borderRadius: Radius.md,
       padding: Spacing.md,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(208, 188, 255, 0.18)' : theme.outline.variant,
+      borderColor: isDark ? withAlpha(theme.primary.default, 0.18) : theme.outline.variant,
     },
     selectorLeft: {
       flexDirection: 'row',
@@ -207,7 +208,7 @@ export function makeFormStyles(theme: ThemePalette) {
       width: 32,
       height: 32,
       borderRadius: Radius.md,
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.12)' : 'rgba(107, 70, 193, 0.12)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.12) : withAlpha(theme.primary.default, 0.12),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -239,7 +240,7 @@ export function makeFormStyles(theme: ThemePalette) {
       gap: 6,
     },
     chipActive: {
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.18)' : 'rgba(107, 70, 193, 0.15)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.18) : withAlpha(theme.primary.default, 0.15),
       borderColor: theme.primary.default,
     },
     chipDot: {
@@ -275,7 +276,7 @@ export function makeFormStyles(theme: ThemePalette) {
       gap: 4,
     },
     actionTileActive: {
-      backgroundColor: isDark ? 'rgba(208, 188, 255, 0.16)' : 'rgba(107, 70, 193, 0.15)',
+      backgroundColor: isDark ? withAlpha(theme.primary.default, 0.16) : withAlpha(theme.primary.default, 0.15),
       borderColor: theme.primary.default,
     },
     actionTileText: {

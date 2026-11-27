@@ -37,6 +37,8 @@ import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility'
 import { useCardMenu } from '@/components/ui/CardMenu';
 import { useReduceTransparency } from '@/hooks/use-reduce-transparency';
 import { useTheme } from '@/hooks/use-theme';
+import { resolveThemeColors, SWATCHES } from '@/constants/color-themes';
+import { useAppStore } from '@/store/app-store';
 import { hexToRgba } from '@/utils/color';
 
 export type GlowCardSize = 'list' | 'hero';
@@ -70,6 +72,8 @@ export interface GlowCardProps {
   delay?: number;
   /** Désactive l'animation d'entrée si nécessaire */
   disableEntranceAnimation?: boolean;
+  /** The colour chosen for the card (sheet 043): its glow and its rim take it, whatever the tone. */
+  accentColor?: string;
 }
 
 // Teintes Glow en mode clair (Section 10 du Master Prompt)
@@ -97,6 +101,7 @@ function GlowCardInner({
   index,
   delay,
   disableEntranceAnimation = false,
+  accentColor,
 }: GlowCardProps) {
   const { isDark } = useTheme();
   const reduceTransparency = useReduceTransparency();
@@ -147,8 +152,14 @@ function GlowCardInner({
     ],
   }));
 
-  const accentHex = isDark ? Glow[tone] : GlowLight[tone];
-  const hasGlow = tone !== 'neutral';
+  // The « primary » glow takes the main colour of the theme; violet keeps the glow of before (sheet 042)
+  const mainColor = useAppStore(state => resolveThemeColors(state.colorChoice).primary);
+  const accentHex = accentColor
+    ? accentColor
+    : tone === 'primary' && mainColor !== 'violet'
+      ? isDark ? SWATCHES[mainColor].halo.dark : SWATCHES[mainColor].light.default
+      : isDark ? Glow[tone] : GlowLight[tone];
+  const hasGlow = tone !== 'neutral' || Boolean(accentColor);
   const radius = size === 'hero' ? GlowCardTokens.radiusHero : GlowCardTokens.radiusList;
 
   // Opacités de coin selon le mode

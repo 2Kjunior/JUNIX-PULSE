@@ -26,10 +26,13 @@ import { deviceLanguageTags } from '@/services/language-service';
 import { logger } from '@/utils/logger';
 
 import { TodayWidget, TodayWidgetTexts, WidgetTheme } from './TodayWidget';
+import type { ColorChoice } from '@/constants/color-themes';
 import type { MascotMood } from '@/domain/rules/mascot-mood-rules';
 
 function themeOf(mode: AppearanceMode): WidgetTheme {
   if (mode === 'light' || mode === 'dark') return mode;
+  // Neutre is a light theme (sheet 041)
+  if (mode === 'neutral') return 'light';
   return Appearance.getColorScheme() === 'light' ? 'light' : 'dark';
 }
 
@@ -50,6 +53,7 @@ interface WidgetContent {
   theme: WidgetTheme;
   mood: MascotMood;
   progress: number;
+  colorChoice?: ColorChoice;
 }
 
 export async function loadTodayWidget(now = new Date()): Promise<WidgetContent> {
@@ -79,6 +83,7 @@ export async function loadTodayWidget(now = new Date()): Promise<WidgetContent> 
 
   return {
     theme: themeOf(settings.appearanceMode),
+    colorChoice: settings.colorChoice,
     mood,
     progress: todayWidgetProgress(data),
     texts: {
@@ -98,7 +103,15 @@ export async function loadTodayWidget(now = new Date()): Promise<WidgetContent> 
 }
 
 function render(content: WidgetContent) {
-  return <TodayWidget texts={content.texts} theme={content.theme} mood={content.mood} progress={content.progress} />;
+  return (
+    <TodayWidget
+      texts={content.texts}
+      theme={content.theme}
+      mood={content.mood}
+      progress={content.progress}
+      colorChoice={content.colorChoice}
+    />
+  );
 }
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {

@@ -13,6 +13,7 @@ import { resolveTaskReopenStatus } from '../domain/rules/task-rules';
 import { t } from '../i18n';
 import { emitMascotEvent } from '../services/mascot/mascot-event-bus';
 import { syncItemNotifications } from '../services/item-notification-service';
+import type { SwatchId } from '@/constants/color-themes';
 
 // ─── Interfaces d'entrée ──────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ export interface CreateTaskInput {
   scheduledDate?: string;      // YYYY-MM-DD
   dueDate?: string;            // YYYY-MM-DD, à rendre au plus tard ce jour-là
   estimatedMinutes?: number;   // 15, 30, 60...
+  /** The colour of its card (sheet 043); absent is the colour of its family. */
+  color?: SwatchId;
   priority?: ReminderPriority;
   goalId?: string;
   personId?: string;
@@ -45,6 +48,8 @@ export interface UpdateTaskInput {
   dueDate?: string | null;
   /** null takes its time off. */
   estimatedMinutes?: number | null;
+  /** The colour of its card (sheet 043): null is its family's, undefined keeps it. */
+  color?: SwatchId | null;
   priority?: ReminderPriority;
   goalId?: string;
   /** null takes the person off the task. */
@@ -101,6 +106,7 @@ export const TaskUseCases = {
       scheduledDate: input.scheduledDate,
       dueDate: input.dueDate,
       estimatedMinutes: input.estimatedMinutes,
+      color: input.color,
       priority: input.priority ?? 'NORMAL',
       goalId: input.goalId,
       personId: input.personIds?.[0] ?? input.personId,

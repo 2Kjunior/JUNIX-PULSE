@@ -6,7 +6,7 @@
  */
 
 import * as Device from 'expo-device';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -33,9 +33,11 @@ import {
   type AmbientHaloConfig,
   type AmbientThemeMode,
 } from '@/constants/ambient';
+import { haloColorsOf } from '@/constants/color-themes';
 import { darkPalette, lightPalette } from '@/constants/palettes';
 import { sampleAmbientPose } from '@/domain/rules/ambient-motion';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppStore } from '@/store/app-store';
 
 const BOTH_MODES: readonly AmbientThemeMode[] = ['light', 'dark'];
 
@@ -161,10 +163,17 @@ export interface AmbientBackgroundProps {
   visible: boolean;
   /** False while the launch animation plays: the halos fade in once it becomes true. */
   revealed: boolean;
+  /** False: no halos, only the plain background (Neutre, or switched off: sheet 041). */
+  showHalos?: boolean;
 }
 
-function AmbientBackgroundComponent({ visible, revealed }: AmbientBackgroundProps) {
-  const { mode } = useTheme();
+function AmbientBackgroundComponent({ visible, revealed, showHalos = true }: AmbientBackgroundProps) {
+  const { mode, theme, isNeutral } = useTheme();
+  // The halos take the colours of the theme (sheet 042)
+  const colorChoice = useAppStore((state) => state.colorChoice);
+  const haloColors = useMemo(() => haloColorsOf(colorChoice), [colorChoice]);
+  // The plain background of a light page: the gray-blue of Neutre, or the cream of Clair (sheet 041)
+  const lightBase = isNeutral ? theme.surface.base : lightPalette.surface.base;
   const { width: screenWidth } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const [halos] = useState(selectHalos);
@@ -185,7 +194,7 @@ function AmbientBackgroundComponent({ visible, revealed }: AmbientBackgroundProp
   );
   const frameCallback = useFrameCallback(advanceClock, false);
 
-  const isRunning = halos.length > 0 && !reducedMotion && visible && revealed && isAppActive;
+  const isRunning = halos.length > 0 && !reducedMotion && visible && revealed && isAppActive && showHalos;
 
   useEffect(() => {
     frameCallback.setActive(isRunning);
@@ -208,17 +217,18 @@ function AmbientBackgroundComponent({ visible, revealed }: AmbientBackgroundProp
     });
   }, [mode, darkness]);
 
+  // The halos fade in once revealed, and fade out when switched off (sheet 041)
   useEffect(() => {
     if (revealed) {
-      haloOpacity.value = withTiming(1, { duration: AMBIENT_REVEAL_FADE_MS });
+      haloOpacity.value = withTiming(showHalos ? 1 : 0, { duration: AMBIENT_REVEAL_FADE_MS });
     }
-  }, [revealed, haloOpacity]);
+  }, [revealed, showHalos, haloOpacity]);
 
   const baseStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       darkness.value,
       [0, 1],
-      [lightPalette.surface.base, darkPalette.surface.base]
+      [lightBase, darkPalette.surface.base]
     ),
   }));
 
@@ -235,10 +245,10 @@ function AmbientBackgroundComponent({ visible, revealed }: AmbientBackgroundProp
     >
       <Animated.View style={[StyleSheet.absoluteFill, baseStyle]} />
       <Animated.View style={[StyleSheet.absoluteFill, halosStyle]}>
-        {halos.map((halo) => (
+        {halos.map((halo, index) => (
           <AmbientHalo
             key={halo.id}
-            halo={halo}
+            halo={haloColors[index] ? { ...halo, color: haloColors[index] } : halo}
             screenWidth={screenWidth}
             clock={clock}
             darkness={darkness}

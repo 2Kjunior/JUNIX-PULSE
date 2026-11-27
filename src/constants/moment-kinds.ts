@@ -18,7 +18,7 @@ export interface MomentKindLook {
 }
 
 export const MOMENT_KIND_LOOKS: Readonly<Record<MomentKind, MomentKindLook>> = {
-  appointment: { icon: 'calendar-outline', labelKey: 'momentKind.appointment', color: { dark: '#F5B942', light: '#B45309' } },
+  appointment: { icon: 'calendar-outline', labelKey: 'momentKind.appointment', color: { dark: '#F5B942', light: '#A8500A' } },
   work: { icon: 'briefcase-outline', labelKey: 'momentKind.work', color: { dark: '#7AA2F7', light: '#1D4ED8' } },
   health: { icon: 'medkit-outline', labelKey: 'momentKind.health', color: { dark: '#5EEAD4', light: '#0F766E' } },
   birthday: { icon: 'gift-outline', labelKey: 'momentKind.birthday', color: { dark: '#F9A8D4', light: '#BE185D' } },
@@ -27,7 +27,7 @@ export const MOMENT_KIND_LOOKS: Readonly<Record<MomentKind, MomentKindLook>> = {
   mourning: { icon: 'leaf-outline', labelKey: 'momentKind.mourning', color: { dark: '#A8A29E', light: '#57534E' } },
   travel: { icon: 'airplane-outline', labelKey: 'momentKind.travel', color: { dark: '#93C5FD', light: '#0369A1' } },
   // "Autre" keeps the amber of the Moment family, as before the types
-  other: { icon: 'ellipse-outline', labelKey: 'momentKind.other', color: { dark: '#F5B942', light: '#B45309' } },
+  other: { icon: 'ellipse-outline', labelKey: 'momentKind.other', color: { dark: '#F5B942', light: '#A8500A' } },
 };
 
 /** The look of a saved type; an unknown one looks like "Autre". */

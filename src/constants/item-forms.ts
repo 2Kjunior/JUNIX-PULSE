@@ -7,7 +7,7 @@
 import type { ItemFamily } from './item-kinds';
 
 export type FormSectionId = 'what' | 'kind' | 'when' | 'alert' | 'slot' | 'where' | 'leave' | 'who' | 'more';
-export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability';
+export type MoreFieldId = 'priority' | 'deadline' | 'duration' | 'subtasks' | 'tags' | 'availability' | 'color';
 
 export interface ItemFormDefinition {
   sections: readonly FormSectionId[];
@@ -17,13 +17,14 @@ export interface ItemFormDefinition {
 export const ITEM_FORMS: Readonly<Record<ItemFamily, ItemFormDefinition>> = {
   todo: {
     sections: ['what', 'when', 'alert', 'who', 'more'],
-    more: ['priority', 'deadline', 'duration', 'subtasks', 'tags'],
+    // The colour of the card (sheet 043)
+    more: ['priority', 'deadline', 'duration', 'subtasks', 'tags', 'color'],
   },
   moment: {
     // The type right under the title (sheet 023): it is often guessed from it
     sections: ['what', 'kind', 'slot', 'where', 'leave', 'who', 'more'],
     // The priority chooses how it rings (sheet 032), in place of "How it warns you"
-    more: ['priority', 'availability', 'tags'],
+    more: ['priority', 'availability', 'tags', 'color'],
   },
 };
 

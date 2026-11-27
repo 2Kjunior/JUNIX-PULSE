@@ -22,6 +22,7 @@ import type { GuidePointAt, GuidePose } from '@/domain/rules/mascot-guide-rules'
 import type { MascotMood } from '@/domain/rules/mascot-mood-rules';
 import { MascotReactionLevel, REACTION_DURATIONS_MS } from '@/domain/rules/mascot-reaction-rules';
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
+import { useAppStore } from '@/store/app-store';
 
 import { MascotArms } from './MascotArms';
 import { MascotFace } from './MascotFace';
@@ -32,7 +33,7 @@ import {
   MASCOT_VIEWBOX,
   MascotSize,
   mascotDimensions,
-  MOOD_VISUALS,
+  moodVisualOf,
   REACTION_EFFECTS,
   resolveArmPose,
   toSvgId,
@@ -72,7 +73,9 @@ export function PulseMascot({
   const reduceMotion = useSafeReducedMotion();
   const moving = animated && !reduceMotion;
   const { width, height, scale } = mascotDimensions(size);
-  const visual = MOOD_VISUALS[mood];
+  // Pulse takes the colours of the theme (sheet 042)
+  const colorChoice = useAppStore(state => state.colorChoice);
+  const visual = moodVisualOf(mood, colorChoice);
   const svgId = toSvgId(useId());
 
   const bob = useSharedValue(0);

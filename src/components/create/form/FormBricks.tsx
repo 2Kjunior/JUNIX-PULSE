@@ -52,8 +52,11 @@ export function FormShell({
   onSave,
   testID,
   children,
+  accentColor,
 }: {
   family: ItemFamily;
+  /** The colour chosen for the card (sheet 043): the bar and the big button take it, as a preview. */
+  accentColor?: string;
   /** Another icon than the family's, for instance a bell for a todo with an alert. */
   icon?: IconName;
   title: string;
@@ -70,7 +73,7 @@ export function FormShell({
   const insets = useSafeAreaInsets();
   const { palette } = useTheme();
   const formStyles = useThemedStyles(makeFormStyles);
-  const accent = itemFamilyColor(palette, family);
+  const accent = accentColor ?? itemFamilyColor(palette, family);
   // Dark text on the light cyan and amber of the dark theme, white on the deep ones of the light theme
   const onAccent = palette.mode === 'light' ? '#FFFFFF' : '#141317';
 

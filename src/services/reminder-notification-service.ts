@@ -142,6 +142,7 @@ async function sync({ interactive = false, force = false }: ReminderSyncOptions)
         sound: soundOf(item.level),
         insists: item.insists,
         phone: phoneOf(item),
+        color: item.color,
       });
       if (scheduled) report.scheduled += 1;
       else report.failed += 1;

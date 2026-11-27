@@ -20,6 +20,7 @@ import {
   notificationLevelFor,
   QuietHours,
 } from './notification-level-rules';
+import type { SwatchId } from '../../constants/color-themes';
 
 export const ITEM_IDENTIFIER_PREFIX = 'item-';
 export const TASK_EVE_HOUR = 18;
@@ -45,6 +46,8 @@ export interface PlannedItemNotification {
   tone?: MomentTone;
   /** Haute: it insists, with a longer vibration (sheet 032). */
   insists?: boolean;
+  /** The colour chosen for its card (sheet 043): the notification takes it. */
+  color?: SwatchId;
 }
 
 export interface ItemPlanInput {
@@ -107,7 +110,7 @@ export function planItemNotifications({
 
   for (const task of tasks) {
     if (task.deletedAt || task.status === 'COMPLETED' || !task.dueDate) continue;
-    const base = { itemType: 'TASK' as const, itemId: task.id, title: task.title };
+    const base = { itemType: 'TASK' as const, itemId: task.id, title: task.title, ...(task.color ? { color: task.color } : {}) };
     const eve = dayAt(task.dueDate, TASK_EVE_HOUR, -1);
     const day = dayAt(task.dueDate, TASK_DAY_HOUR);
     if (eve) add({ ...base, moment: 'taskEve', scheduledAt: eve, body: translate(language, 'itemNotif.taskEve') }, task.priority);
@@ -118,7 +121,7 @@ export function planItemNotifications({
   for (const event of events) {
     const start = new Date(event.startAt);
     if (event.deletedAt || Number.isNaN(start.getTime()) || start.getTime() > horizon) continue;
-    const base = { itemType: 'EVENT' as const, itemId: event.id, title: event.title };
+    const base = { itemType: 'EVENT' as const, itemId: event.id, title: event.title, ...(event.color ? { color: event.color } : {}) };
     const place = event.location?.trim() ?? '';
     const travel = event.travelBufferMinutes ?? 0;
     const leaves = place !== '' && travel > 0;
