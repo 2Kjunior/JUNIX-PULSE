@@ -1,5 +1,6 @@
 import {
   DEFAULT_SOUND_PREFS,
+  deviceSoundFor,
   SOUNDS,
   SOUND_CHOICES,
   soundChannelId,
@@ -66,5 +67,24 @@ describe('sound-rules (sheet 031)', () => {
 
   it('names each file as Android wants it in res/raw', () => {
     for (const sound of Object.values(SOUNDS)) expect(sound.file).toMatch(/^[a-z][a-z0-9_]*$/);
+  });
+
+  it('keeps a sound of the phone for the alarms, with the sound of Junix as safety net (sheet 037)', () => {
+    const prefs = {
+      ...DEFAULT_SOUND_PREFS,
+      alarm: 'wake' as const,
+      alarmDevice: { kind: 'music' as const, uri: 'content://media/audio/42', name: 'Mon titre; 2|bis' },
+    };
+    // Written and read back, even with ";" and "|" in the name
+    expect(soundPrefsOf(soundPrefsText(prefs))).toEqual(prefs);
+    // An address that is not a content of the phone, or an unknown kind: ignored
+    expect(soundPrefsOf('device=music|file%3A%2F%2Fx|a').alarmDevice).toBeUndefined();
+    expect(soundPrefsOf('device=video|content%3A%2F%2Fx|a').alarmDevice).toBeUndefined();
+    // Only an alarm rings with it, and only with the sound on
+    expect(deviceSoundFor({ level: 'alarm', prefs })?.name).toBe('Mon titre; 2|bis');
+    expect(deviceSoundFor({ level: 'normal', prefs })).toBeUndefined();
+    expect(deviceSoundFor({ level: 'alarm', prefs, soundOn: false })).toBeUndefined();
+    // The sound of Junix stays the one of the ordinary notification of an alarm
+    expect(soundFor({ level: 'alarm', prefs })).toBe('wake');
   });
 });

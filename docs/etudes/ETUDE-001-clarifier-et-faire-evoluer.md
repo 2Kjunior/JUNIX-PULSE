@@ -658,3 +658,13 @@ Proposition et maquette validées (« Oui, on valide »), après vérification d
 - **Découpage** : fiche 034 (le module, la sonnerie continue en notification prioritaire, Plus tard, le redémarrage, branché à la synchronisation) ; fiche 035 (la page plein écran, la ligne des Paramètres). Un APK après chaque fiche ; le vrai test se fait sur le téléphone.
 - **Fait** : fiche 034 (27 novembre 2026 : essayée sur le téléphone, « ça fonctionne » ; le logo manquait dans le cercle de la notification) et fiche 035 (la page plein écran, la ligne des Paramètres, le logo corrigé), à essayer sur le téléphone.
 
+### 16.10 Le n° 9-C, sonneries et musiques du téléphone : décisions du 27 novembre 2026
+
+Proposition et maquette validées (« Oui, on valide »).
+
+- **Où** : Paramètres → Sons → Urgente, dans la fenêtre de choix : sous les sons de Junix, une partie « **Du téléphone** » : « Une sonnerie du téléphone… » (la liste des sonneries d'Android) et « Une musique… » (les fichiers de musique). Le son choisi s'affiche (« Sonnerie · Argon », « Musique · Mon titre ») avec ▶.
+- **Seulement pour Urgente** (les alarmes) : les autres notifications passent par les canaux d'Android, qui n'acceptent (par Expo) que des sons rangés dans l'appli ; l'alarme joue son son elle-même.
+- **Filet** : une musique supprimée ou illisible, ou un téléphone sans le module : le son « Alarme » de Junix (le dernier son de Junix choisi pour Urgente). Jamais le silence.
+- **Même comportement** : boucle, volume qui monte, 5 minutes, Plus tard.
+- **Construction** : dans notre module, avec les pages d'Android (liste des sonneries, sélecteur de fichiers qui garde l'accès au fichier) ; aucune bibliothèque ajoutée. Fiche 037.
+

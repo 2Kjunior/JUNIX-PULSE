@@ -13,7 +13,8 @@ import { Spacing } from '@/constants/theme';
 import type { MomentKind, ReminderPriority, Settings } from '@/domain/entities';
 import { MOMENT_KIND_TONES, momentKindOf } from '@/domain/rules/moment-kind-rules';
 import { notificationLevelFor, type NotificationMoment } from '@/domain/rules/notification-level-rules';
-import { SOUNDS, soundFor } from '@/domain/rules/sound-rules';
+import { SOUNDS, deviceSoundFor, soundFor } from '@/domain/rules/sound-rules';
+import { previewPhoneSound } from '@/services/alarm-bridge';
 import { offerExactAlarmsForAlarmLevel } from '@/features/reminders/offer-exact-alarms';
 import { useTheme } from '@/hooks/use-theme';
 import { useT, type MessageKey } from '@/i18n';
@@ -67,6 +68,9 @@ export function PriorityField({
     ? soundFor({ level, tone, prefs: settings?.soundPrefs, soundOn: settings ? settings.notificationSoundEnabled : true })
     : null;
   const alarm = level === 'alarm';
+  // An alarm with a sound of the phone (sheet 037): its name, and it is heard from the phone
+  const phone = level ? deviceSoundFor({ level, prefs: settings?.soundPrefs, soundOn: settings ? settings.notificationSoundEnabled : true }) : undefined;
+  const soundName = phone ? phone.name || '…' : sound && sound !== 'none' ? t(SOUNDS[sound].labelKey) : '';
   const lineColor = alarm ? palette.error.default : palette.onSurface.variant;
 
   return (
@@ -87,14 +91,14 @@ export function PriorityField({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32 }} testID={testIDPrefix ? `${testIDPrefix}-rings` : undefined}>
           <Ionicons name={sound === 'none' ? 'notifications-off-outline' : alarm ? 'alarm-outline' : 'notifications-outline'} size={16} color={lineColor} />
           <Text style={{ flex: 1, fontSize: 13, color: lineColor }}>
-            {sound === 'none' ? t('priorityField.silent') : t('priorityField.rings', { sound: t(SOUNDS[sound].labelKey) })}
+            {sound === 'none' ? t('priorityField.silent') : t('priorityField.rings', { sound: soundName })}
           </Text>
           {sound !== 'none' && (
             <TouchableOpacity
-              onPress={() => void NotificationSoundService.preview(sound, 6000)}
+              onPress={() => (phone ? previewPhoneSound(phone.uri) : void NotificationSoundService.preview(sound, 6000))}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel={t('soundSettings.play', { sound: t(SOUNDS[sound].labelKey) })}
+              accessibilityLabel={t('soundSettings.play', { sound: soundName })}
             >
               <Ionicons name="play-circle-outline" size={24} color={alarm ? palette.error.default : accent} />
             </TouchableOpacity>

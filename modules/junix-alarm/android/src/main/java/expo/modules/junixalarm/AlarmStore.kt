@@ -27,7 +27,9 @@ data class AlarmItem(
   /** What it is, for the page of the alarm: "Rappel · Urgente" (sheet 035). */
   val kindLabel: String = "",
   /** "Ouvrir dans Junix", on the page of the alarm (sheet 035). */
-  val openLabel: String = ""
+  val openLabel: String = "",
+  /** A sound of the phone (content://…), rung first; `sound` is the safety net (sheet 037). */
+  val soundUri: String = ""
 ) {
   fun toJson(): JSONObject = JSONObject()
     .put("id", id)
@@ -43,6 +45,7 @@ data class AlarmItem(
     .put("channelName", channelName)
     .put("kindLabel", kindLabel)
     .put("openLabel", openLabel)
+    .put("soundUri", soundUri)
 
   companion object {
     fun fromJson(json: JSONObject): AlarmItem = AlarmItem(
@@ -58,7 +61,8 @@ data class AlarmItem(
       missedTitle = json.optString("missedTitle", "Missed alarm"),
       channelName = json.optString("channelName", "Alarms"),
       kindLabel = json.optString("kindLabel", ""),
-      openLabel = json.optString("openLabel", "")
+      openLabel = json.optString("openLabel", ""),
+      soundUri = json.optString("soundUri", "")
     )
 
     /** From what the app sends (a map of the JS object); null when something essential is missing. */
@@ -78,7 +82,8 @@ data class AlarmItem(
         missedTitle = map["missedTitle"] as? String ?: "Missed alarm",
         channelName = map["channelName"] as? String ?: "Alarms",
         kindLabel = map["kindLabel"] as? String ?: "",
-        openLabel = map["openLabel"] as? String ?: ""
+        openLabel = map["openLabel"] as? String ?: "",
+        soundUri = map["soundUri"] as? String ?: ""
       )
     }
   }

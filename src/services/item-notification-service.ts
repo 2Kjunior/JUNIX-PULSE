@@ -5,7 +5,7 @@
  */
 
 import { ITEM_IDENTIFIER_PREFIX, planItemNotifications, type PlannedItemNotification } from '@/domain/rules/item-notification-rules';
-import { soundFor } from '@/domain/rules/sound-rules';
+import { deviceSoundFor, soundFor } from '@/domain/rules/sound-rules';
 import { levelOf, quietHoursOf } from '@/domain/rules/notification-level-rules';
 import { EventRepository } from '@/repositories/event-repository';
 import { SettingsRepository } from '@/repositories/settings-repository';
@@ -39,13 +39,15 @@ async function sync(force: boolean): Promise<void> {
     // The Alarm level rings until a gesture, through the alarm of Junix (sheet 034); if Android
     // does not take them, they stay notifications
     const language = useAppStore.getState().language;
+    // A sound of the phone for the alarms (sheet 037); the sound of Junix stays its safety net
+    const deviceUri = deviceSoundFor({ level: 'alarm', prefs: settings.soundPrefs, soundOn: settings.notificationSoundEnabled })?.uri ?? '';
     const split = splitAlarms(allPlanned, nativeAlarmsOn());
     const handed = await handOverAlarms(
       'item',
       split.alarms.map(item =>
         item.itemType === 'TASK'
-          ? alarmOf(item, soundOf(item), `/tasks/${item.itemId}`, language, 'task')
-          : alarmOf(item, soundOf(item), `/events/${item.itemId}`, language, 'moment')
+          ? alarmOf(item, soundOf(item), `/tasks/${item.itemId}`, language, 'task', deviceUri)
+          : alarmOf(item, soundOf(item), `/events/${item.itemId}`, language, 'moment', deviceUri)
       )
     );
     const planned = handed ? split.notifications : allPlanned;

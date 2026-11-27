@@ -23,6 +23,8 @@ export interface AlarmHandover {
   /** What it is, on the page of the alarm (sheet 035). */
   kindLabel: string;
   openLabel: string;
+  /** A sound of the phone, rung first; `sound` is the safety net (sheet 037). */
+  soundUri: string;
 }
 
 /** What rings, for the page of the alarm. */
@@ -51,7 +53,8 @@ export function alarmOf(
   sound: SoundChoice,
   route: string | null,
   language: AppLanguage,
-  kind: AlarmKind = 'reminder'
+  kind: AlarmKind = 'reminder',
+  soundUri = ''
 ): AlarmHandover {
   return {
     id: item.identifier,
@@ -66,5 +69,6 @@ export function alarmOf(
     channelName: translate(language, 'alarm.channel'),
     kindLabel: translate(language, `alarm.kind.${kind}`),
     openLabel: translate(language, 'alarm.open'),
+    soundUri,
   };
 }

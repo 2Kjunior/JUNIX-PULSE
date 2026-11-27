@@ -48,12 +48,24 @@ export const SOUND_CHOICES: Readonly<Record<NotificationLevel, readonly SoundCho
   alarm: ['alarm', 'wake', 'dawn', 'march'],
 };
 
+/** A sound of the phone for the alarms (study 16.10; sheet 037): a ringtone of Android, or a music. */
+export interface DeviceSound {
+  kind: 'ringtone' | 'music';
+  /** Its address on the phone (content://…). */
+  uri: string;
+  /** Its name, as the phone gives it ("Argon", "Mon titre"). */
+  name: string;
+}
+
 export interface SoundPrefs {
   discreet: SoundChoice;
   normal: SoundChoice;
+  /** The sound of Junix of the alarms; with a sound of the phone, its safety net. */
   alarm: SoundChoice;
   /** A festive or sober moment keeps the sound of its tone. */
   momentTones: boolean;
+  /** The sound of the phone the alarms ring with, rather than `alarm` (sheet 037). */
+  alarmDevice?: DeviceSound;
 }
 
 export const DEFAULT_SOUND_PREFS: Readonly<SoundPrefs> = { discreet: 'soft', normal: 'pulse', alarm: 'alarm', momentTones: true };
@@ -67,6 +79,10 @@ export function soundPrefsOf(text: string | null | undefined): SoundPrefs {
   for (const pair of (text ?? '').split(';')) {
     const [key, value] = pair.split('=').map(part => part.trim());
     if (key === 'tones') prefs.momentTones = value !== '0';
+    else if (key === 'device') {
+      const device = deviceSoundOf(value);
+      if (device) prefs.alarmDevice = device;
+    }
     else if (key === 'discreet' || key === 'normal' || key === 'alarm') {
       if ((SOUND_CHOICES[key] as readonly string[]).includes(value)) prefs[key] = value as SoundChoice;
     }
@@ -75,7 +91,39 @@ export function soundPrefsOf(text: string | null | undefined): SoundPrefs {
 }
 
 export function soundPrefsText(prefs: SoundPrefs): string {
-  return `discreet=${prefs.discreet};normal=${prefs.normal};alarm=${prefs.alarm};tones=${prefs.momentTones ? 1 : 0}`;
+  const device = prefs.alarmDevice
+    ? `;device=${prefs.alarmDevice.kind}|${encodeURIComponent(prefs.alarmDevice.uri)}|${encodeURIComponent(prefs.alarmDevice.name)}`
+    : '';
+  return `discreet=${prefs.discreet};normal=${prefs.normal};alarm=${prefs.alarm};tones=${prefs.momentTones ? 1 : 0}${device}`;
+}
+
+/** "ringtone|content%3A…|Argon": a sound of the phone kept in the settings; anything else, none. */
+function deviceSoundOf(text: string | undefined): DeviceSound | undefined {
+  const [kind, uri, name] = (text ?? '').split('|');
+  if ((kind !== 'ringtone' && kind !== 'music') || !uri) return undefined;
+  try {
+    const address = decodeURIComponent(uri);
+    if (!address.startsWith('content://')) return undefined;
+    return { kind, uri: address, name: decodeURIComponent(name ?? '') };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The sound of the phone a notification rings with (sheet 037): only an alarm, with the sound on;
+ * otherwise none, and the sound of Junix rings.
+ */
+export function deviceSoundFor({
+  level,
+  prefs = DEFAULT_SOUND_PREFS,
+  soundOn = true,
+}: {
+  level: NotificationLevel;
+  prefs?: SoundPrefs;
+  soundOn?: boolean;
+}): DeviceSound | undefined {
+  return level === 'alarm' && soundOn ? prefs.alarmDevice : undefined;
 }
 
 /** The sound of one notification: its level, the tone of its moment if any, the settings. */

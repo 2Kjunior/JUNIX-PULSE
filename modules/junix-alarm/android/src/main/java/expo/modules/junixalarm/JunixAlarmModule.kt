@@ -5,6 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.app.Activity
+import android.media.RingtoneManager
+import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -16,6 +19,35 @@ import expo.modules.kotlin.modules.ModuleDefinition
 class JunixAlarmModule : Module() {
   private val context: Context
     get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+
+  // ─── A sound of the phone (sheet 037): a page of Android answers later ─────────
+  private companion object {
+    const val PICK_RINGTONE = 4_211
+    const val PICK_MUSIC = 4_212
+  }
+
+  /** The promise of the page of Android open now, answered when it closes. */
+  private var pending: Promise? = null
+
+  private fun open(intent: Intent, requestCode: Int, promise: Promise) {
+    if (pending != null) {
+      promise.resolve(null)
+      return
+    }
+    pending = promise
+    try {
+      appContext.throwingActivity.startActivityForResult(intent, requestCode)
+    } catch (error: Exception) {
+      pending = null
+      promise.resolve(null)
+    }
+  }
+
+  /** The choice made: its address, its name, and whether it is a ringtone or a music. */
+  private fun picked(uri: Uri, kind: String): Map<String, String> {
+    val name = if (kind == "ringtone") DeviceSounds.ringtoneTitle(context, uri) else DeviceSounds.fileTitle(context, uri)
+    return mapOf("uri" to uri.toString(), "name" to name, "kind" to kind)
+  }
 
   override fun definition() = ModuleDefinition {
     Name("JunixAlarm")
@@ -63,6 +95,65 @@ class JunixAlarmModule : Module() {
         true
       } catch (error: Exception) {
         false
+      }
+    }
+
+    /** The list of the ringtones of Android (alarms and ringtones); null when nothing is chosen. */
+    AsyncFunction("pickRingtone") { current: String?, promise: Promise ->
+      val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+        .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
+        .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+        .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, false)
+      if (!current.isNullOrEmpty()) intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(current))
+      open(intent, PICK_RINGTONE, promise)
+    }
+
+    /**
+     * A file of music, from the picker of Android; the app keeps the right to read it (it rings
+     * long after, appli fermée). null when nothing is chosen.
+     */
+    AsyncFunction("pickMusic") { promise: Promise ->
+      val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        .addCategory(Intent.CATEGORY_OPENABLE)
+        .setType("audio/*")
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+      open(intent, PICK_MUSIC, promise)
+    }
+
+    /** Plays a sound of the phone a few seconds, to hear it before choosing it. */
+    Function("previewUri") { uri: String, durationMs: Int ->
+      DeviceSounds.preview(context, Uri.parse(uri), durationMs.toLong())
+    }
+
+    Function("stopPreview") {
+      DeviceSounds.stopPreview()
+    }
+
+    OnActivityResult { _, payload ->
+      val promise = pending ?: return@OnActivityResult
+      if (payload.requestCode != PICK_RINGTONE && payload.requestCode != PICK_MUSIC) return@OnActivityResult
+      pending = null
+      if (payload.resultCode != Activity.RESULT_OK || payload.data == null) {
+        promise.resolve(null)
+        return@OnActivityResult
+      }
+      val data = payload.data!!
+      if (payload.requestCode == PICK_RINGTONE) {
+        @Suppress("DEPRECATION")
+        val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        promise.resolve(uri?.let { picked(it, "ringtone") })
+      } else {
+        val uri = data.data
+        if (uri == null) {
+          promise.resolve(null)
+        } else {
+          try {
+            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+          } catch (error: Exception) {
+            // Some pickers give no lasting right: the alarm will fall back on the sound of Junix
+          }
+          promise.resolve(picked(uri, "music"))
+        }
       }
     }
 

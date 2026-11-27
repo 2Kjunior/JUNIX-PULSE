@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 
 import { JunixAlarm } from '../../modules/junix-alarm';
 import type { AlarmHandover } from '../domain/rules/alarm-handover-rules';
+import type { DeviceSound } from '../domain/rules/sound-rules';
 import { logger } from '../utils/logger';
 
 /** Whether this phone has the alarm of Junix. */
@@ -30,6 +31,23 @@ export function fullScreenAlarmsAllowed(): boolean | null {
 /** Opens the page of Android where the person allows it. */
 export function openFullScreenAlarmSettings(): boolean {
   return nativeAlarmsOn() ? JunixAlarm.openFullScreenSettings() : false;
+}
+
+/** A sound of the phone for the alarms (sheet 037): a ringtone of Android, or a music; null if none. */
+export async function pickPhoneSound(kind: 'ringtone' | 'music', current: string | null): Promise<DeviceSound | null> {
+  if (!nativeAlarmsOn()) return null;
+  try {
+    const picked = kind === 'ringtone' ? await JunixAlarm.pickRingtone(current) : await JunixAlarm.pickMusic();
+    return picked && picked.uri.startsWith('content://') ? { kind: picked.kind, uri: picked.uri, name: picked.name } : null;
+  } catch (error) {
+    logger.warn('[AlarmBridge] Choix du son du téléphone impossible', error);
+    return null;
+  }
+}
+
+/** Hears a sound of the phone a few seconds, on the alarm volume. */
+export function previewPhoneSound(uri: string): void {
+  if (nativeAlarmsOn()) JunixAlarm.previewUri(uri, 6000);
 }
 
 /** The alarms of one group become exactly these; true when Android took them. */

@@ -68,7 +68,7 @@ import { useDateLocale, useLanguage, useT, type MessageKey } from '@/i18n';
 import { LanguagePicker } from '@/components/settings/LanguagePicker';
 import { AlertDefaultsSetting } from '@/components/settings/AlertDefaultsSetting';
 import { SoundSetting } from '@/components/settings/SoundSetting';
-import { fullScreenAlarmsAllowed, openFullScreenAlarmSettings } from '@/services/alarm-bridge';
+import { fullScreenAlarmsAllowed, openFullScreenAlarmSettings, pickPhoneSound, previewPhoneSound } from '@/services/alarm-bridge';
 import { offerExactAlarmsForAlarmLevel } from '@/features/reminders/offer-exact-alarms';
 import { DEFAULT_SOUND_PREFS, type SoundChoice, type SoundPrefs } from '@/domain/rules/sound-rules';
 import { NotificationSoundService } from '@/services/sound/NotificationSoundService';
@@ -765,6 +765,9 @@ export default function SettingsScreen() {
             value={settings.soundPrefs ?? DEFAULT_SOUND_PREFS}
             onChange={handleUpdateSounds}
             onPreview={handlePreviewSound}
+            // The sounds of the phone, where the alarm of Junix exists (sheet 037)
+            onPickPhone={fullScreenAlarms !== null ? pickPhoneSound : undefined}
+            onPreviewPhone={fullScreenAlarms !== null ? previewPhoneSound : undefined}
           />
         </View>
       )}

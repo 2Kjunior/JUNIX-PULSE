@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 import type { ThemePalette } from '@/constants/palettes';
 import { Spacing, Typography } from '@/constants/theme';
 import type { NotificationLevel } from '@/domain/rules/notification-level-rules';
-import { SOUNDS, SOUND_CHOICES, type SoundChoice, type SoundPrefs } from '@/domain/rules/sound-rules';
+import { SOUNDS, SOUND_CHOICES, type DeviceSound, type SoundChoice, type SoundPrefs } from '@/domain/rules/sound-rules';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT, type MessageKey } from '@/i18n';
@@ -35,25 +35,53 @@ export function SoundSetting({
   value,
   onChange,
   onPreview,
+  onPickPhone,
+  onPreviewPhone,
 }: {
   value: SoundPrefs;
   onChange: (prefs: SoundPrefs) => void;
   onPreview: (sound: SoundChoice) => void;
+  /** A sound of the phone for the urgent ones (sheet 037); absent where the alarm of Junix is not. */
+  onPickPhone?: (kind: DeviceSound['kind'], current: string | null) => Promise<DeviceSound | null>;
+  onPreviewPhone?: (uri: string) => void;
 }) {
   const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [picking, setPicking] = useState<NotificationLevel | null>(null);
-  const [ticked, setTicked] = useState<SoundChoice>('pulse');
+  // A sound of Junix, or "device": the sound of the phone below (sheet 037)
+  const [ticked, setTicked] = useState<SoundChoice | 'device'>('pulse');
+  const [draftDevice, setDraftDevice] = useState<DeviceSound | undefined>(undefined);
   const nameOf = (sound: SoundChoice) => t(sound === 'none' ? 'sound.none' : SOUNDS[sound].labelKey);
+  const phoneName = (device: DeviceSound) =>
+    t(device.kind === 'ringtone' ? 'soundSettings.ringtoneName' : 'soundSettings.musicName', { name: device.name || '…' });
+  /** What the row of a level says: the sound of the phone for the urgent ones, when chosen. */
+  const rowValue = (level: NotificationLevel) =>
+    level === 'alarm' && value.alarmDevice ? t('soundSettings.phoneValue', { name: value.alarmDevice.name || '…' }) : nameOf(value[level]);
 
   const open = (level: NotificationLevel) => {
-    setTicked(value[level]);
+    const phone = level === 'alarm' ? value.alarmDevice : undefined;
+    setDraftDevice(phone);
+    setTicked(phone ? 'device' : value[level]);
     setPicking(level);
   };
   const choose = () => {
-    if (picking && ticked !== value[picking]) onChange({ ...value, [picking]: ticked });
+    if (picking === 'alarm' && ticked === 'device' && draftDevice) {
+      if (draftDevice.uri !== value.alarmDevice?.uri) onChange({ ...value, alarmDevice: draftDevice });
+    } else if (picking && ticked !== 'device') {
+      // A sound of Junix: the sound of the phone is let go
+      const leavesPhone = picking === 'alarm' && value.alarmDevice !== undefined;
+      if (ticked !== value[picking] || leavesPhone) onChange({ ...value, [picking]: ticked, ...(picking === 'alarm' ? { alarmDevice: undefined } : {}) });
+    }
     setPicking(null);
+  };
+  const pickPhone = async (kind: DeviceSound['kind']) => {
+    if (!onPickPhone) return;
+    const picked = await onPickPhone(kind, draftDevice?.kind === kind ? draftDevice.uri : null);
+    if (!picked) return;
+    setDraftDevice(picked);
+    setTicked('device');
+    onPreviewPhone?.(picked.uri);
   };
 
   return (
@@ -66,7 +94,7 @@ export function SoundSetting({
             style={[styles.row, index > 0 && styles.rowLine]}
             onPress={() => open(level)}
             accessibilityRole="button"
-            accessibilityLabel={`${t(ROW_LABELS[level])}, ${nameOf(value[level])}`}
+            accessibilityLabel={`${t(ROW_LABELS[level])}, ${rowValue(level)}`}
             testID={`sound-row-${level}`}
           >
             <Ionicons
@@ -75,7 +103,7 @@ export function SoundSetting({
               color={urgent ? palette.error.default : palette.onSurface.variant}
             />
             <Text style={[styles.rowLabel, urgent && { color: palette.error.default }]}>{t(ROW_LABELS[level])}</Text>
-            <Text style={styles.rowValue}>{nameOf(value[level])}</Text>
+            <Text style={styles.rowValue} numberOfLines={1}>{rowValue(level)}</Text>
             <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
           </TouchableOpacity>
         );
@@ -121,6 +149,60 @@ export function SoundSetting({
                 );
               })}
             </View>
+            {/* The sounds of the phone, for the urgent ones (sheet 037) */}
+            {picking === 'alarm' && onPickPhone ? (
+              <>
+                <Text style={styles.section}>{t('soundSettings.fromPhone')}</Text>
+                <View style={styles.list}>
+                  {draftDevice ? (
+                    <View style={styles.choice}>
+                      <TouchableOpacity
+                        style={styles.choiceMain}
+                        onPress={() => {
+                          setTicked('device');
+                          onPreviewPhone?.(draftDevice.uri);
+                        }}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: ticked === 'device' }}
+                        testID="sound-choice-device"
+                      >
+                        <Ionicons
+                          name={ticked === 'device' ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={22}
+                          color={ticked === 'device' ? palette.primary.default : palette.onSurface.disabled}
+                        />
+                        <Text style={[styles.choiceLabel, ticked === 'device' && { color: palette.primary.default }]} numberOfLines={1}>
+                          {phoneName(draftDevice)}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => onPreviewPhone?.(draftDevice.uri)}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('soundSettings.play', { sound: phoneName(draftDevice) })}
+                      >
+                        <Ionicons name="play-circle-outline" size={26} color={palette.primary.default} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                  {(['ringtone', 'music'] as const).map((kind, index) => (
+                    <TouchableOpacity
+                      key={kind}
+                      style={[styles.choice, (index > 0 || draftDevice) && styles.rowLine]}
+                      onPress={() => void pickPhone(kind)}
+                      accessibilityRole="button"
+                      testID={`sound-pick-${kind}`}
+                    >
+                      <Ionicons name={kind === 'ringtone' ? 'notifications-circle-outline' : 'musical-notes-outline'} size={22} color={palette.onSurface.variant} />
+                      <Text style={[styles.choiceLabel, { flex: 1 }]}>
+                        {t(kind === 'ringtone' ? 'soundSettings.pickRingtone' : 'soundSettings.pickMusic')}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={16} color={palette.onSurface.disabled} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            ) : null}
             <View style={styles.actions}>
               <Button label={t('common.cancel')} onPress={() => setPicking(null)} variant="secondary" style={styles.action} />
               <Button label={t('soundSettings.choose')} onPress={choose} style={styles.action} testID="sound-picker-choose" />
@@ -140,6 +222,7 @@ function makeStyles(theme: ThemePalette) {
     rowValue: { ...Typography.bodyMedium, color: theme.onSurface.variant },
     title: { ...Typography.titleMedium, color: theme.onSurface.primary, marginBottom: Spacing.sm },
     list: { marginBottom: Spacing.md },
+    section: { ...Typography.bodyMedium, color: theme.onSurface.variant, marginBottom: Spacing.xs },
     choice: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 52 },
     choiceMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, minHeight: 48 },
     choiceLabel: { ...Typography.bodyLarge, color: theme.onSurface.primary },

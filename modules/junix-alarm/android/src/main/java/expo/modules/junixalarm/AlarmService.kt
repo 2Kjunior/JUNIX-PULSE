@@ -110,7 +110,7 @@ class AlarmService : Service() {
     // The app open on the screen: the page of the alarm shows at once (sheet 035); otherwise the
     // full-screen intent of the notification lights the screen, when Android allows it
     if (appInForeground()) showPage(alarm)
-    playSound(alarm.sound)
+    playSound(alarm.sound, alarm.soundUri)
     vibrate()
     handler.removeCallbacksAndMessages(null)
     handler.postDelayed({ missed(alarm) }, RING_LIMIT_MS)
@@ -123,18 +123,32 @@ class AlarmService : Service() {
     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
     .build()
 
-  private fun playSound(sound: String) {
-    if (sound.isEmpty()) return
+  /**
+   * The sound of the phone first (a ringtone, a music: sheet 037), then the sound of Junix: a music
+   * deleted or no longer readable never leaves the alarm silent.
+   */
+  private fun playSound(sound: String, soundUri: String) {
+    val fromPhone = soundUri.isNotEmpty() && startPlayer(Uri.parse(soundUri))
+    if (fromPhone || sound.isEmpty()) return
     val resource = resources.getIdentifier(sound, "raw", packageName)
-    if (resource == 0) return
+    if (resource != 0) startPlayer(Uri.parse("android.resource://$packageName/$resource"))
+  }
+
+  /** Plays a sound in a loop on the alarm volume, rising; false when it cannot be read. */
+  private fun startPlayer(source: Uri): Boolean {
+    val media = MediaPlayer()
     try {
-      val media = MediaPlayer()
       media.setAudioAttributes(alarmAudio)
-      media.setDataSource(this, Uri.parse("android.resource://$packageName/$resource"))
+      media.setDataSource(this, source)
       media.isLooping = true
       media.setVolume(RAMP_START, RAMP_START)
       media.prepare()
       media.start()
+    } catch (error: Exception) {
+      media.release()
+      return false
+    }
+    run {
       player = media
       rampStartedAt = System.currentTimeMillis()
       handler.post(object : Runnable {
@@ -146,10 +160,8 @@ class AlarmService : Service() {
           if (progress < 1f) handler.postDelayed(this, 1_000L)
         }
       })
-    } catch (error: Exception) {
-      // A sound that cannot play: the vibration and the notification still warn
-      player = null
     }
+    return true
   }
 
   private fun vibrate() {
