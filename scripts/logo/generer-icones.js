@@ -20,7 +20,8 @@ const JOBS = [
   ['assets/logo/orbe-icone.svg', 'assets/images/icon.png', 1024],
   ['assets/logo/orbe-android-avant-plan.svg', 'assets/images/android-icon-foreground.png', 1024],
   ['assets/logo/orbe-une-couleur.svg', 'assets/images/android-icon-monochrome.png', 1024],
-  ['assets/logo/orbe-notification.svg', 'assets/images/notification-icon.png', 96],
+  // The notification icon is no longer made here (sheet 036): Edge does not open a 96-pixel window, and
+  // the icon came out empty. scripts/logo/icone-notification.js draws it, at every size of Android.
   ['assets/logo/orbe-demarrage.svg', 'assets/images/splash-icon.png', 1024],
   ['assets/logo/orbe-icone.svg', 'assets/images/favicon.png', 48],
 ];
