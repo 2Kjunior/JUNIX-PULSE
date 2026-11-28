@@ -11,15 +11,26 @@
  * - Carte IA "Junix Pulse IA" avec score de rythme et zones tampons.
  */
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  type LayoutChangeEvent,
+  type RefreshControlProps,
 } from 'react-native';
 // The ScrollView of the gestures: a scroll cancels the tap of a card under the finger (sheet 031)
-import { ScrollView } from 'react-native-gesture-handler';
+import { GestureDetector, ScrollView, usePinchGesture } from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  runOnUI,
+  scrollTo,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday } from 'date-fns';
 import { useDateLocale, useT } from '@/i18n';
@@ -34,6 +45,19 @@ import { PlanningCard } from '@/components/planning/PlanningCard';
 import { eventAccent, planningLook, taskAccent, type PlanningLook } from '@/constants/planning-look';
 import { columnsForOffset, MIN_CARD_HEIGHT, minutesForOffset, SNAP_MINUTES } from '@/domain/rules/planning-move-rules';
 import { withAlpha } from '@/utils/color';
+import {
+  DEFAULT_WEEK_ZOOM,
+  FIT_WEEK_ZOOM,
+  WEEK_ZOOM_LEVELS,
+  clampZoom,
+  scrollTargetFor,
+  weekBandItems,
+  weekSizes,
+  zoomAfterPinch,
+} from '@/domain/rules/week-view-rules';
+
+// The gestures' ScrollView, driven on the UI thread: the days and the hours follow it (sheet 047)
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
 export interface WeeklyTimetableGridProps {
   blocks: PlanningBlock[];
@@ -51,6 +75,8 @@ export interface WeeklyTimetableGridProps {
   step?: number;
   /** The look of each moment and reminder, by id: the GlowCard and the colours of the Day view (sheet 028). */
   looks?: Readonly<Record<string, PlanningLook>>;
+  /** Pull to refresh, on the grid's own vertical scroll (sheet 047: the page no longer scrolls). */
+  refreshControl?: ReactElement<RefreshControlProps>;
 }
 
 const DEFAULT_START_HOUR = 7;   // 07:00 par défaut
@@ -60,8 +86,7 @@ const HOUR_HEIGHT = 88;
 const TIME_COL_WIDTH = 54;
 /** Under this width (three cards in a day) a card keeps its icon and its title only. */
 const TINY_CARD_WIDTH = 72;
-// 128 points a day (sheet 028): two GlowCards side by side stay readable; the grid scrolls sideways
-const DAY_COL_WIDTH = 128;
+// The width of a day comes from the zoom (sheet 047): see WEEK_ZOOM_LEVELS
 
 const DAYS_DEFINITION = [
   { num: 1, label: 'LUN', full: 'Lundi', dateNum: '01' },
@@ -97,7 +122,8 @@ interface PositionedForegroundBlock {
 function layoutForegroundBlocks(
   blocks: PlanningBlock[],
   columnWidth: number,
-  startHour: number = DEFAULT_START_HOUR
+  startHour: number = DEFAULT_START_HOUR,
+  hourHeight: number = HOUR_HEIGHT
 ): PositionedForegroundBlock[] {
   if (blocks.length === 0) return [];
 
@@ -169,8 +195,8 @@ function layoutForegroundBlocks(
       const leftPx = 2 + colIndex * subColWidth;
       const widthPx = Math.max(20, subColWidth - 2);
 
-      const topPx = ((a.item.startMin - startHour * 60) / 60) * HOUR_HEIGHT;
-      const heightPx = (a.item.durationMin / 60) * HOUR_HEIGHT;
+      const topPx = ((a.item.startMin - startHour * 60) / 60) * hourHeight;
+      const heightPx = (a.item.durationMin / 60) * hourHeight;
       const clampedTop = Math.max(0, topPx);
       const clampedHeight = Math.max(MIN_CARD_HEIGHT, heightPx - 2);
 
@@ -202,6 +228,7 @@ export function WeeklyTimetableGrid({
   onLift,
   step = SNAP_MINUTES,
   looks,
+  refreshControl,
 }: WeeklyTimetableGridProps) {
   const { palette, isDark } = useTheme();
   const styles = useThemedStyles(makeTimetableStyles);
@@ -233,13 +260,19 @@ export function WeeklyTimetableGrid({
       if (sH < minH) minH = Math.max(0, sH);
       if (eH > maxH) maxH = Math.min(24, eH);
     });
+    // This week: the current hour is in the grid, so « Maintenant » shows it (sheet 047)
+    if (weekDays?.some(day => isToday(day))) {
+      const hour = new Date().getHours();
+      if (hour < minH) minH = hour;
+      if (hour + 1 > maxH) maxH = Math.min(24, hour + 1);
+    }
 
     return {
       startHour: minH,
       endHour: maxH,
       totalHours: Math.max(1, maxH - minH),
     };
-  }, [blocks]);
+  }, [blocks, weekDays]);
 
   // Définition dynamique des 7 jours de la semaine
   const displayedDays = useMemo(() => {
@@ -397,235 +430,439 @@ export function WeeklyTimetableGrid({
     }
   };
 
-  const gridContentWidth = TIME_COL_WIDTH + displayedDays.length * DAY_COL_WIDTH;
+  // ─── The frame (sheet 047): the days' row and the hours' column stay in view ─────────────
+  const [zoom, setZoom] = useState(DEFAULT_WEEK_ZOOM);
+  // The visible part of the days' area, measured
+  const [frame, setFrame] = useState({ width: 0, height: 0 });
+  const { dayWidth, hourHeight } = weekSizes(zoom, frame.width, displayedDays.length);
+  const daysWidth = displayedDays.length * dayWidth;
+  const gridHeight = totalHours * hourHeight;
+  const todayIndex = displayedDays.findIndex(d => d.isCurrentDay);
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const scrollX = useSharedValue(0);
+  const scrollY = useSharedValue(0);
+  const xRef = useAnimatedRef<Animated.ScrollView>();
+  const yRef = useAnimatedRef<Animated.ScrollView>();
+  const onScrollX = useAnimatedScrollHandler(event => {
+    scrollX.value = event.contentOffset.x;
+  });
+  const onScrollY = useAnimatedScrollHandler(event => {
+    scrollY.value = event.contentOffset.y;
+  });
+  const daysRowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: -scrollX.value }] }));
+  const hoursColumnStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -scrollY.value }] }));
+
+  const scrollToPoint = useCallback(
+    (x: number, y: number, animated = true) => {
+      runOnUI(() => {
+        'worklet';
+        scrollTo(xRef, x, 0, animated);
+        scrollTo(yRef, 0, y, animated);
+      })();
+    },
+    [xRef, yRef]
+  );
+
+  /** A day and a time brought into view. */
+  const goTo = useCallback(
+    (dayIndex: number, minutes: number, animated = true) => {
+      if (frame.width === 0) return;
+      const target = scrollTargetFor({
+        dayIndex,
+        minutes,
+        startHour,
+        dayWidth,
+        hourHeight,
+        dayCount: displayedDays.length,
+        totalHours,
+        viewport: frame,
+      });
+      scrollToPoint(target.x, target.y, animated);
+    },
+    [frame, startHour, dayWidth, hourHeight, displayedDays.length, totalHours, scrollToPoint]
+  );
+
+  // The week opens on now (today, at this hour), once the frame is measured
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (openedRef.current || frame.width === 0) return;
+    openedRef.current = true;
+    if (todayIndex >= 0) goTo(todayIndex, nowMinutes, false);
+    // Only when first measured: later, the person moves freely
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frame.width]);
+
+  // A zoom keeps the middle of what was in view
+  const zoomCentreRef = useRef<{ fx: number; fy: number } | null>(null);
+  const applyZoom = useCallback(
+    (next: number) => {
+      const level = clampZoom(next);
+      if (level === zoom || frame.width === 0) return;
+      zoomCentreRef.current = {
+        fx: (scrollX.value + frame.width / 2) / Math.max(1, daysWidth),
+        fy: (scrollY.value + frame.height / 2) / Math.max(1, gridHeight),
+      };
+      setZoom(level);
+    },
+    [zoom, frame, daysWidth, gridHeight, scrollX, scrollY]
+  );
+  useEffect(() => {
+    const centre = zoomCentreRef.current;
+    if (!centre) return;
+    zoomCentreRef.current = null;
+    const x = Math.max(0, Math.min(daysWidth - frame.width, centre.fx * daysWidth - frame.width / 2));
+    const y = Math.max(0, Math.min(gridHeight - frame.height, centre.fy * gridHeight - frame.height / 2));
+    scrollToPoint(x, y, false);
+  }, [zoom, daysWidth, gridHeight, frame, scrollToPoint]);
+
+  // Two fingers: spread to zoom in, pinch to zoom out
+  const pinchScale = useSharedValue(1);
+  const pinchEnded = useCallback((scale: number) => applyZoom(zoomAfterPinch(zoom, scale)), [applyZoom, zoom]);
+  const pinch = usePinchGesture({
+    onUpdate: event => {
+      'worklet';
+      pinchScale.value = event.scale;
+    },
+    onDeactivate: () => {
+      'worklet';
+      runOnJS(pinchEnded)(pinchScale.value);
+      pinchScale.value = 1;
+    },
+  });
+
+  // The « Cette semaine » band: what is coming, a touch away
+  const bandItems = useMemo(
+    () =>
+      weekBandItems(
+        blocks
+          .filter(b => b.scheduleId === 'event' || b.scheduleId === 'reminder')
+          .map(b => ({
+            id: b.id,
+            label: b.label,
+            dayIndex: displayedDays.findIndex(d => d.num === b.dayOfWeek),
+            minutes: timeToMinutes(b.startTime),
+            startTime: b.startTime,
+          }))
+          .filter(item => item.dayIndex >= 0),
+        { todayIndex: todayIndex >= 0 ? todayIndex : null, nowMinutes }
+      ),
+    // nowMinutes moves each minute; the band is made again with the blocks
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [blocks, displayedDays, todayIndex]
+  );
+  // The card reached from the band shines a moment
+  const [flashId, setFlashId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!flashId) return;
+    const timer = setTimeout(() => setFlashId(null), 1400);
+    return () => clearTimeout(timer);
+  }, [flashId]);
+
+  const onFrameLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setFrame(current => (Math.abs(current.width - width) < 1 && Math.abs(current.height - height) < 1 ? current : { width, height }));
+  };
 
   return (
     <View style={styles.wrapper}>
-      {/* ─── Conteneur principal de la Grille Matricielle 7J ────────────────────── */}
-      <View style={styles.gridCard}>
-        <ScrollView
-          horizontal
-          scrollEnabled={!lifted}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ minWidth: gridContentWidth }}
+      {/* ─── Zoom, « Semaine entière » and « Maintenant » (sheet 047) ─────────────────── */}
+      <View style={styles.toolbar}>
+        <TouchableOpacity
+          style={styles.toolButton}
+          onPress={() => applyZoom(zoom - 1)}
+          disabled={zoom === 0}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('weekGrid.zoomOut')}
+          testID="week-zoom-out"
         >
-          <View style={{ width: gridContentWidth }}>
-            {/* Ligne d'en-tête collante des 7 jours */}
-            <View style={styles.dayHeaderRow}>
-              {/* Coin haut-gauche icône horloge */}
-              <View style={[styles.cornerCell, { width: TIME_COL_WIDTH }]}>
-                <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
-              </View>
+          <Ionicons name="remove" size={18} color={zoom === 0 ? palette.onSurface.disabled : palette.onSurface.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolButton}
+          onPress={() => applyZoom(zoom + 1)}
+          disabled={zoom === WEEK_ZOOM_LEVELS.length - 1}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('weekGrid.zoomIn')}
+          testID="week-zoom-in"
+        >
+          <Ionicons name="add" size={18} color={zoom === WEEK_ZOOM_LEVELS.length - 1 ? palette.onSurface.disabled : palette.onSurface.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toolPill, zoom === FIT_WEEK_ZOOM && styles.toolPillActive]}
+          onPress={() => applyZoom(FIT_WEEK_ZOOM)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: zoom === FIT_WEEK_ZOOM }}
+          testID="week-fit"
+        >
+          <Text style={[styles.toolPillText, zoom === FIT_WEEK_ZOOM && styles.toolPillTextActive]}>{t('weekGrid.fitWeek')}</Text>
+        </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+        {todayIndex >= 0 ? (
+          <TouchableOpacity
+            style={styles.toolPill}
+            onPress={() => goTo(todayIndex, nowMinutes)}
+            accessibilityRole="button"
+            testID="week-now"
+          >
+            <View style={[styles.nowDot, { backgroundColor: palette.error.default }]} />
+            <Text style={styles.toolPillText}>{t('weekGrid.now')}</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
-              {/* Colonnes des jours (avec mise en avant du jour d'aujourd'hui) */}
-              {displayedDays.map(d => {
-                return (
-                  <View
+      {/* ─── « Cette semaine »: a touch goes to the card (sheet 047) ─────────────────── */}
+      {bandItems.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.band} accessibilityLabel={t('weekGrid.thisWeek')}>
+          {bandItems.map(item => {
+            const color = (looks?.[item.id] ?? planningLook(palette, 'event')).color;
+            const day = displayedDays[item.dayIndex];
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.bandChip}
+                onPress={() => {
+                  goTo(item.dayIndex, item.minutes);
+                  setFlashId(item.id);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('weekGrid.jumpA11y', { label: item.label, day: day.full, time: item.startTime })}
+              >
+                <View style={styles.bandChipTop}>
+                  <View style={[styles.bandDot, { backgroundColor: color }]} />
+                  <Text style={styles.bandWhen}>{`${day.label} ${item.startTime}`}</Text>
+                </View>
+                <Text style={styles.bandLabel} numberOfLines={1}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
+      {/* ─── The grid: a fixed corner, the days that follow sideways, the hours that follow down ─── */}
+      <View style={styles.gridCard}>
+        <View style={styles.headRow}>
+          <View style={[styles.cornerCell, { width: TIME_COL_WIDTH }]}>
+            <Ionicons name="time-outline" size={16} color={palette.onSurface.variant} />
+          </View>
+          <View style={styles.headClip}>
+            <Animated.View style={[{ width: daysWidth }, daysRowStyle]}>
+              <View style={styles.dayHeaderRow}>
+                {displayedDays.map((d, index) => (
+                  <TouchableOpacity
                     key={d.num}
-                    style={[
-                      styles.dayHeaderCell,
-                      { width: DAY_COL_WIDTH },
-                      d.isCurrentDay && styles.dayHeaderCellActive,
-                    ]}
+                    style={[styles.dayHeaderCell, { width: dayWidth }, d.isCurrentDay && styles.dayHeaderCellActive]}
+                    // A day touched: it comes into view, zoomed in if the whole week was shown
+                    onPress={() => {
+                      if (zoom === FIT_WEEK_ZOOM) applyZoom(DEFAULT_WEEK_ZOOM);
+                      goTo(index, d.isCurrentDay ? nowMinutes : startHour * 60 + 60);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={d.full}
                   >
-                    <Text
-                      style={[
-                        styles.dayHeaderName,
-                        d.isCurrentDay && { color: palette.primary.default, fontWeight: '800' },
-                      ]}
-                    >
-                      {d.label}
+                    <Text style={[styles.dayHeaderName, d.isCurrentDay && { color: palette.primary.default, fontWeight: '800' }]} numberOfLines={1}>
+                      {dayWidth < 48 ? d.label.slice(0, 1) : d.label}
                     </Text>
-                    <Text
-                      style={[
-                        styles.dayHeaderDate,
-                        d.isCurrentDay && { color: palette.primary.default, fontWeight: '800' },
-                      ]}
-                    >
+                    <Text style={[styles.dayHeaderDate, d.isCurrentDay && { color: palette.primary.default, fontWeight: '800' }]}>
                       {d.dateNum}
                     </Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* Ligne facultative "Tâches à faire dans la journée" (All-day) */}
-            {hasAnyTasks && (
-              <View style={styles.allDayRow}>
-                <View style={[styles.allDayGutter, { width: TIME_COL_WIDTH }]}>
-                  <Ionicons name="checkbox-outline" size={13} color={palette.tertiary.default} />
-                  <Text style={styles.allDayGutterText}>{t('tab.tasks')}</Text>
-                </View>
-                {displayedDays.map(d => {
-                  const count = tasksCountByDay?.[d.num] ?? 0;
-                  return (
-                    <View key={d.num} style={[styles.allDayCell, { width: DAY_COL_WIDTH }]}>
-                      {count > 0 ? (
-                        <TouchableOpacity
-                          style={styles.allDayTaskPill}
-                          onPress={() => onPressTasksDay ? onPressTasksDay(d.num) : onAddBlock(d.num)}
-                          activeOpacity={0.75}
-                          accessibilityLabel={t('weekGrid.tasksA11y', { count })}
-                        >
-                          <Text style={styles.allDayTaskPillText} numberOfLines={1}>
-                            {t(count > 1 ? 'weekGrid.taskMany' : 'weekGrid.taskOne', { count })}
-                          </Text>
-                        </TouchableOpacity>
-                      ) : null}
-                    </View>
-                  );
-                })}
+                  </TouchableOpacity>
+                ))}
               </View>
-            )}
-
-            {/* Corps de la Grille : Colonne Heures + Colonnes Journées */}
-            <View style={styles.gridBody}>
-              {/* Colonne latérale gauche : Marqueurs startHour à endHour */}
-              <View style={[styles.timeGutter, { width: TIME_COL_WIDTH }]}>
-                {Array.from({ length: totalHours }, (_, i) => {
-                  const hour = startHour + i;
-                  const isHighlight = hour === 9 || hour === 14 || hour === 17;
-                  return (
-                    <View key={hour} style={[styles.timeCell, { height: HOUR_HEIGHT }]}>
-                      <Text
-                        style={[
-                          styles.timeLabel,
-                          isHighlight && { color: palette.primary.default, fontWeight: '700' },
-                        ]}
-                      >
-                        {String(hour).padStart(2, '0')}:00
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-
-              {/* Zone des colonnes de jours avec les lignes horizontales de fond */}
-              <View style={[styles.daysContainer, { width: displayedDays.length * DAY_COL_WIDTH }]}>
-                {/* Lignes de repère horizontales (une par tranche horaire) */}
-                <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                  {Array.from({ length: totalHours }, (_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.hourHorizontalLine,
-                        { height: HOUR_HEIGHT },
-                        (i === 2 || i === 3) && { backgroundColor: isDark ? 'rgba(208,188,255,0.03)' : 'rgba(107,70,193,0.02)' },
-                      ]}
-                    />
-                  ))}
-                </View>
-
-                {/* Colonnes par jour */}
-                <View style={styles.columnsRow}>
+              {/* The tasks of each day, under its name */}
+              {hasAnyTasks && (
+                <View style={styles.allDayRow}>
                   {displayedDays.map(d => {
-                    const dayBlocks = blocks.filter(b => b.dayOfWeek === d.num);
-                    const backgroundBlocks = dayBlocks.filter(
-                      b => b.scheduleId !== 'event' && b.scheduleId !== 'reminder' && b.scheduleId !== 'task'
-                    );
-                    // Moments and reminders together, side by side when they meet (sheet 028)
-                    const foregroundBlocks = dayBlocks.filter(
-                      b => b.scheduleId === 'event' || b.scheduleId === 'task' || b.scheduleId === 'reminder'
-                    );
-                    const positionedForeground = layoutForegroundBlocks(foregroundBlocks, DAY_COL_WIDTH, startHour);
-
+                    const count = tasksCountByDay?.[d.num] ?? 0;
                     return (
-                      <View
-                        key={d.num}
-                        style={[
-                          styles.dayColumn,
-                          { width: DAY_COL_WIDTH, height: totalHours * HOUR_HEIGHT },
-                        ]}
-                      >
-                        {/* Clic rapide sur la colonne pour ajouter un bloc */}
-                        <TouchableOpacity
-                          style={StyleSheet.absoluteFill}
-                          activeOpacity={0.9}
-                          onPress={() => onAddBlock(d.num, '09:00')}
-                          accessibilityLabel={t('weekGrid.addBlock', { day: d.full })}
-                        />
-
-                        {/* 1. LAYER 0 : Blocs de vie récurrents (Fond contextuel en filigrane) */}
-                        {backgroundBlocks.map((block, bIdx) => {
-                          const startMin = timeToMinutes(block.startTime);
-                          const endMin = timeToMinutes(block.endTime);
-                          const durationMin = Math.max(15, endMin - startMin);
-                          const topPx = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT;
-                          const heightPx = (durationMin / 60) * HOUR_HEIGHT;
-                          const clampedTop = Math.max(0, topPx);
-                          const clampedHeight = Math.max(22, heightPx - 2);
-                          const config = getBlockStyleConfig(block.type);
-
-                          return (
-                            <TouchableOpacity
-                              key={`bg-${block.id}-${d.num}-${bIdx}`}
-                              style={[
-                                styles.backgroundBlockCard,
-                                {
-                                  top: clampedTop + 1,
-                                  height: clampedHeight,
-                                  backgroundColor: config.bg,
-                                  borderColor: config.border + '55',
-                                },
-                              ]}
-                              activeOpacity={0.85}
-                              onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
-                              onLongPress={() => onDeleteBlock(block.id, block.label)}
-                              accessibilityRole="button"
-                              accessibilityLabel={t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })}
-                            >
-                              <View style={styles.backgroundBlockHeader}>
-                                <Ionicons name={config.icon as any} size={9} color={config.accent} style={{ opacity: 0.8 }} />
-                                <Text style={[styles.backgroundBlockTitle, { color: config.text }]} numberOfLines={1}>
-                                  {block.label}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-
-                        {/* 2. LAYER 1 : moments and reminders as GlowCards, side by side (sheet 028) */}
-                        {positionedForeground.map((item, itemIdx) => {
-                          const { block } = item;
-                          const isReminder = block.scheduleId === 'reminder';
-                          const look = looks?.[block.id] ?? planningLook(palette, isReminder ? 'reminder' : 'event');
-                          return (
-                            <DraggableBlock
-                              key={`fg-${block.id}-${d.num}-${item.colIndex}-${itemIdx}`}
-                              style={[styles.blockBox, { top: item.topPx + 1, height: item.heightPx, left: item.leftPx, width: item.widthPx }]}
-                              onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
-                              movable={!!onMoveBlock && (block.scheduleId === 'event' || isReminder)}
-                              stepY={(HOUR_HEIGHT * step) / 60}
-                              stepX={DAY_COL_WIDTH}
-                              onLift={lift}
-                              onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, HOUR_HEIGHT, step), columnsForOffset(drop.dx, DAY_COL_WIDTH))}
-                              onMoveBy={(minutes, days) => onMoveBlock?.(block, Math.sign(minutes) * step, days)}
-                              accessibilityLabel={
-                                isReminder
-                                  ? t('weekGrid.reminderA11y', { label: block.label, time: block.startTime })
-                                  : t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })
-                              }
-                            >
-                              <PlanningCard
-                                look={look}
-                                title={block.label}
-                                time={isReminder && !block.fillsTime ? block.startTime : `${block.startTime} – ${block.endTime}`}
-                                height={item.heightPx}
-                                narrow
-                                tiny={item.widthPx < TINY_CARD_WIDTH}
-                                index={itemIdx}
-                              />
-                            </DraggableBlock>
-                          );
-                        })}
+                      <View key={d.num} style={[styles.allDayCell, { width: dayWidth }]}>
+                        {count > 0 ? (
+                          <TouchableOpacity
+                            style={styles.allDayTaskPill}
+                            onPress={() => onPressTasksDay ? onPressTasksDay(d.num) : onAddBlock(d.num)}
+                            activeOpacity={0.75}
+                            accessibilityLabel={t('weekGrid.tasksA11y', { count })}
+                          >
+                            <Text style={styles.allDayTaskPillText} numberOfLines={1}>
+                              {dayWidth < 64 ? String(count) : t(count > 1 ? 'weekGrid.taskMany' : 'weekGrid.taskOne', { count })}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : null}
                       </View>
                     );
                   })}
                 </View>
-              </View>
-            </View>
+              )}
+            </Animated.View>
           </View>
-        </ScrollView>
+        </View>
+
+        <View style={styles.bodyRow}>
+          {/* The hours, following the vertical scroll */}
+          <View style={[styles.timeGutter, styles.gutterClip, { width: TIME_COL_WIDTH }]}>
+            <Animated.View style={hoursColumnStyle}>
+              {Array.from({ length: totalHours }, (_, i) => {
+                const hour = startHour + i;
+                const isHighlight = hour === 9 || hour === 14 || hour === 17;
+                return (
+                  <View key={hour} style={[styles.timeCell, { height: hourHeight }]}>
+                    <Text style={[styles.timeLabel, isHighlight && { color: palette.primary.default, fontWeight: '700' }]}>
+                      {String(hour).padStart(2, '0')}:00
+                    </Text>
+                  </View>
+                );
+              })}
+            </Animated.View>
+          </View>
+
+          <GestureDetector gesture={pinch}>
+            <View style={styles.daysViewport} onLayout={onFrameLayout} collapsable={false}>
+              <AnimatedScrollView
+                ref={yRef}
+                onScroll={onScrollY}
+                scrollEventThrottle={16}
+                scrollEnabled={!lifted}
+                showsVerticalScrollIndicator={false}
+                refreshControl={refreshControl}
+                nestedScrollEnabled
+              >
+                <AnimatedScrollView
+                  ref={xRef}
+                  horizontal
+                  onScroll={onScrollX}
+                  scrollEventThrottle={16}
+                  scrollEnabled={!lifted}
+                  showsHorizontalScrollIndicator={false}
+                  nestedScrollEnabled
+                >
+                  <View style={[styles.daysContainer, { width: daysWidth, height: gridHeight }]}>
+                    {/* The hour lines */}
+                    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                      {Array.from({ length: totalHours }, (_, i) => (
+                        <View key={i} style={[styles.hourHorizontalLine, { height: hourHeight }]} />
+                      ))}
+                    </View>
+
+                    <View style={styles.columnsRow}>
+                      {displayedDays.map(d => {
+                        const dayBlocks = blocks.filter(b => b.dayOfWeek === d.num);
+                        const backgroundBlocks = dayBlocks.filter(
+                          b => b.scheduleId !== 'event' && b.scheduleId !== 'reminder' && b.scheduleId !== 'task'
+                        );
+                        // Moments and reminders together, side by side when they meet (sheet 028)
+                        const foregroundBlocks = dayBlocks.filter(
+                          b => b.scheduleId === 'event' || b.scheduleId === 'task' || b.scheduleId === 'reminder'
+                        );
+                        const positionedForeground = layoutForegroundBlocks(foregroundBlocks, dayWidth, startHour, hourHeight);
+
+                        return (
+                          <View key={d.num} style={[styles.dayColumn, { width: dayWidth, height: gridHeight }]}>
+                            {/* A touch on the column adds something */}
+                            <TouchableOpacity
+                              style={StyleSheet.absoluteFill}
+                              activeOpacity={0.9}
+                              onPress={() => onAddBlock(d.num, '09:00')}
+                              accessibilityLabel={t('weekGrid.addBlock', { day: d.full })}
+                            />
+
+                            {/* The life blocks behind (sheet 028) */}
+                            {backgroundBlocks.map((block, bIdx) => {
+                              const startMin = timeToMinutes(block.startTime);
+                              const endMin = timeToMinutes(block.endTime);
+                              const durationMin = Math.max(15, endMin - startMin);
+                              const topPx = ((startMin - startHour * 60) / 60) * hourHeight;
+                              const heightPx = (durationMin / 60) * hourHeight;
+                              const config = getBlockStyleConfig(block.type);
+                              return (
+                                <TouchableOpacity
+                                  key={`bg-${block.id}-${d.num}-${bIdx}`}
+                                  style={[
+                                    styles.backgroundBlockCard,
+                                    {
+                                      top: Math.max(0, topPx) + 1,
+                                      height: Math.max(22, heightPx - 2),
+                                      backgroundColor: config.bg,
+                                      borderColor: config.border + '55',
+                                    },
+                                  ]}
+                                  activeOpacity={0.85}
+                                  onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
+                                  onLongPress={() => onDeleteBlock(block.id, block.label)}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })}
+                                >
+                                  <View style={styles.backgroundBlockHeader}>
+                                    <Ionicons name={config.icon as any} size={9} color={config.accent} style={{ opacity: 0.8 }} />
+                                    <Text style={[styles.backgroundBlockTitle, { color: config.text }]} numberOfLines={1}>
+                                      {block.label}
+                                    </Text>
+                                  </View>
+                                </TouchableOpacity>
+                              );
+                            })}
+
+                            {/* Moments and reminders as GlowCards, side by side (sheet 028) */}
+                            {positionedForeground.map((item, itemIdx) => {
+                              const { block } = item;
+                              const isReminder = block.scheduleId === 'reminder';
+                              const look = looks?.[block.id] ?? planningLook(palette, isReminder ? 'reminder' : 'event');
+                              return (
+                                <DraggableBlock
+                                  key={`fg-${block.id}-${d.num}-${item.colIndex}-${itemIdx}`}
+                                  style={[
+                                    styles.blockBox,
+                                    { top: item.topPx + 1, height: item.heightPx, left: item.leftPx, width: item.widthPx },
+                                    // Reached from the band: it shines a moment
+                                    flashId === block.id && { borderWidth: 2, borderColor: palette.onSurface.primary, borderRadius: Radius.md },
+                                  ]}
+                                  onPress={() => onSelectBlock ? onSelectBlock(block) : onAddBlock(d.num)}
+                                  movable={!!onMoveBlock && (block.scheduleId === 'event' || isReminder)}
+                                  stepY={(hourHeight * step) / 60}
+                                  stepX={dayWidth}
+                                  onLift={lift}
+                                  onDrop={drop => onMoveBlock?.(block, minutesForOffset(drop.dy, hourHeight, step), columnsForOffset(drop.dx, dayWidth))}
+                                  onMoveBy={(minutes, days) => onMoveBlock?.(block, Math.sign(minutes) * step, days)}
+                                  accessibilityLabel={
+                                    isReminder
+                                      ? t('weekGrid.reminderA11y', { label: block.label, time: block.startTime })
+                                      : t('weekGrid.blockA11y', { label: block.label, start: block.startTime, end: block.endTime })
+                                  }
+                                >
+                                  <PlanningCard
+                                    look={look}
+                                    title={block.label}
+                                    time={isReminder && !block.fillsTime ? block.startTime : `${block.startTime} – ${block.endTime}`}
+                                    height={item.heightPx}
+                                    narrow
+                                    tiny={item.widthPx < TINY_CARD_WIDTH}
+                                    index={itemIdx}
+                                  />
+                                </DraggableBlock>
+                              );
+                            })}
+
+                            {/* Now: a red line across today */}
+                            {d.isCurrentDay && nowMinutes >= startHour * 60 && nowMinutes <= (startHour + totalHours) * 60 ? (
+                              <View
+                                pointerEvents="none"
+                                style={[styles.nowLine, { top: ((nowMinutes - startHour * 60) / 60) * hourHeight, backgroundColor: palette.error.default }]}
+                              />
+                            ) : null}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </AnimatedScrollView>
+              </AnimatedScrollView>
+            </View>
+          </GestureDetector>
+        </View>
       </View>
 
       {/* ─── Synthèse hebdomadaire compacte & sobre ─────────────────────────── */}
@@ -658,10 +895,119 @@ const makeTimetableStyles = (theme: ThemePalette) => {
   const faintLine = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(76, 52, 120, 0.07)';
 
   return StyleSheet.create({
+    // The view fills the page (sheet 047): the grid scrolls inside its frame, not the page
     wrapper: {
+      flex: 1,
       paddingHorizontal: Spacing.md,
       paddingTop: Spacing.sm,
-      paddingBottom: 40,
+    },
+    toolbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      marginBottom: Spacing.xs,
+    },
+    toolButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.glass.control.backgroundColor,
+      borderWidth: 1,
+      borderColor: theme.glass.control.borderColor,
+    },
+    toolPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 36,
+      paddingHorizontal: Spacing.sm,
+      borderRadius: 18,
+      backgroundColor: theme.glass.control.backgroundColor,
+      borderWidth: 1,
+      borderColor: theme.glass.control.borderColor,
+    },
+    toolPillActive: {
+      backgroundColor: theme.glass.controlActive,
+      borderColor: theme.primary.default,
+    },
+    toolPillText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.onSurface.primary,
+    },
+    toolPillTextActive: {
+      color: theme.primary.default,
+    },
+    nowDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    band: {
+      gap: Spacing.xs,
+      paddingBottom: Spacing.xs,
+    },
+    bandChip: {
+      maxWidth: 150,
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 4,
+      borderRadius: Radius.md,
+      backgroundColor: theme.glass.control.backgroundColor,
+      borderWidth: 1,
+      borderColor: theme.glass.control.borderColor,
+    },
+    bandChipTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    bandDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+    },
+    bandWhen: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.onSurface.variant,
+    },
+    bandLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: theme.onSurface.primary,
+    },
+    headRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.glass.nav.backgroundColor,
+      borderBottomWidth: 1,
+      borderBottomColor: line,
+      zIndex: 2,
+    },
+    headClip: {
+      flex: 1,
+      overflow: 'hidden',
+    },
+    bodyRow: {
+      flex: 1,
+      flexDirection: 'row',
+    },
+    gutterClip: {
+      overflow: 'hidden',
+      zIndex: 2,
+    },
+    daysViewport: {
+      flex: 1,
+    },
+    nowLine: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: 2,
+      zIndex: 4,
     },
     blockBox: {
       position: 'absolute',
@@ -694,6 +1040,7 @@ const makeTimetableStyles = (theme: ThemePalette) => {
       fontWeight: '700',
     },
     gridCard: {
+      flex: 1,
       borderRadius: Radius.lg,
       backgroundColor: theme.glass.card.backgroundColor,
       borderWidth: 1,
@@ -702,9 +1049,6 @@ const makeTimetableStyles = (theme: ThemePalette) => {
     },
     dayHeaderRow: {
       flexDirection: 'row',
-      backgroundColor: theme.glass.nav.backgroundColor,
-      borderBottomWidth: 1,
-      borderBottomColor: line,
     },
     cornerCell: {
       alignItems: 'center',

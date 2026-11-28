@@ -684,3 +684,40 @@ Ordre décidé le même jour : finir les fonctionnalités (n° 10, 11, 12), puis
 
 **Fiche 043 faite (27 novembre 2026)** : « Couleur de la carte » dans « Plus d'options » des tâches, rappels et moments, à la création et en modification (migration 45, colonne `color` dans trois tables). La glowcard de l'accueil, la liste « À faire », le Planning et la notification la prennent ; une carte Urgente garde son rouge. Le chantier n° 11 est terminé.
 
+### 16.12 Le n° 13, la vue Semaine du Planning : décisions du 27 novembre 2026
+
+Ressenti : l'affichage actuel plaît, mais en se déplaçant on perd les repères (les jours partent en haut, les heures à gauche), un élément du samedi à 20 h est long à atteindre, et on ne peut pas zoomer. Maquette validée (« Allons avec ce que tu as proposé ») :
+
+- la **ligne des jours** reste en haut et la **colonne des heures** reste à gauche, où qu'on aille dans la grille ;
+- **zoomer à deux doigts** (pincer), et des boutons − / + ; « **Semaine entière** » fait tenir les 7 jours dans l'écran ;
+- la semaine **s'ouvre sur maintenant** (ligne rouge), et « **Maintenant** » y ramène ;
+- un bandeau « **Cette semaine** » : les prochains éléments en pastilles ; en toucher une **saute à sa case**, qui s'allume un instant ;
+- les heures s'étendent toutes seules aux éléments tôt le matin ou tard le soir.
+
+Le sélecteur de jour de la semaine existant reste. Ordre : le **n° 12** (onboarding) d'abord, puis ce n° 13 ; le n° 10 (compte, synchronisation, partage par lien) après une décision sur l'hébergement.
+
+### 16.13 Le n° 12, l'onboarding : décisions du 27 novembre 2026
+
+Étudié avant de dessiner : peu d'écrans avec la progression visible, et les permissions demandées au moment où elles servent, en disant pourquoi (guides Android et Appcues). Deuxième maquette validée (« Oui, on valide ») :
+
+- **5 écrans au plus**, une barre de progression en haut, « Passer » en haut à droite, le bouton pour avancer **toujours en bas, au même endroit** :
+  1. **Bonjour** : Pulse se présente en une phrase ; « Commencer », et « J'ai une sauvegarde » ;
+  2. **Les points forts** : une phrase suffit, des alarmes qui réveillent, la semaine d'un coup d'œil, les proches ; tout reste sur le téléphone, chiffré ;
+  3. **Le prénom**, et tu ou vous (facultatif) ;
+  4. **Essayer plutôt que lire** : une vraie phrase (« Appeler maman demain à 18 h ») devient le premier rappel ;
+  5. **Une seule permission**, les notifications, avec la raison (« Pour que Appeler maman sonne demain »).
+- Sortent de l'onboarding : les heures du matin et du soir, la sauvegarde (Paramètres, valeurs par défaut), la langue (celle du téléphone), les alarmes exactes et les contacts (demandés au moment où ils servent).
+- **Une petite visite de chaque onglet** la première fois (Accueil, À faire, Planning, Proches), 2 ou 3 bulles, qu'on peut passer et revoir par ⓘ ; celle de « À faire » montre les deux sens du glissement (Fait ; Plus tard, Modifier, **Supprimer**) et ⋯.
+- **Des secrets** : tout n'est pas montré ; après quelques jours, Pulse en révèle un de temps en temps (« Tu savais ? »).
+- Règle de l'utilisateur pour tous ses projets : **jamais de carte à bord gauche coloré ou lumineux**.
+
+Fiches prévues : 044 (les 5 écrans), 045 (la visite des onglets), 046 (les secrets).
+
+**Fiche 044 faite (27 novembre 2026)** : les 5 écrans dans un cadre commun (bouton toujours en bas) ; l'essai crée vraiment le premier rappel ; l'écran des heures est retiré (réglages dans Paramètres) ; les alarmes exactes restent proposées juste après les notifications, puisqu'un rappel vient d'être créé.
+
+**Fiche 045 faite (27 novembre 2026)** : une visite par onglet (À faire : filtre, glissement dans les deux sens avec Supprimer, ⋯ ; Planning : vues, carte ; Proches : personne, +), relancée par un petit ⓘ placé à côté du sous-titre (dans l'en-tête, il coupait les titres à 360 px) ; « Revoir la présentation » rend toutes les visites.
+
+**Fiche 046 faite (27 novembre 2026)** : 6 secrets (dicter toute une phrase, Focus, thèmes, couleur d'une carte, Sanctuaire, widget), dits sur l'Accueil après 3 jours d'usage, au plus un tous les 3 jours, jamais le jour d'une autre astuce. Le chantier n° 12 est terminé.
+
+**Fiche 047 faite (28 novembre 2026)** : la vue Semaine remplit l'écran et défile dans son propre cadre ; la ligne des jours et la colonne des heures restent en vue ; zoom (pincer, − / +, Semaine entière), ouverture sur maintenant avec une ligne rouge, « Maintenant », et le bandeau « Cette semaine ». Le chantier n° 13 est terminé.
+

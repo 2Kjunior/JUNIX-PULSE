@@ -61,7 +61,7 @@ const STEPS: readonly { step: GuideStep; label: string }[] = [
   { step: 'welcome', label: 'Bienvenue' },
   { step: 'discover', label: 'Découverte' },
   { step: 'personalize', label: 'Personnaliser' },
-  { step: 'schedule', label: 'Rythme' },
+  { step: 'try', label: 'Essai' },
   { step: 'permissions', label: 'Notifications' },
   { step: 'home', label: 'Accueil' },
 ];

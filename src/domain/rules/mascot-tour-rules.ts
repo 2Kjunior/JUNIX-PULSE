@@ -42,14 +42,75 @@ export function isHomeSegments(segments: readonly string[]): boolean {
 
 // ─── Home tour ──────────────────────────────────────────────────────────────────────────────
 
-export type TourStopId = 'pillars' | 'quickAdd' | 'timeline' | 'mascot';
+export type TourStopId =
+  | 'pillars'
+  | 'quickAdd'
+  | 'timeline'
+  | 'mascot'
+  // The other tabs (sheet 045)
+  | 'todoFilter'
+  | 'todoCard'
+  | 'todoMore'
+  | 'planViews'
+  | 'planList'
+  | 'peopleCard'
+  | 'peopleAdd';
 
-export const TOUR_STOPS: readonly { id: TourStopId; message: MascotMessageId }[] = [
-  { id: 'pillars', message: 'TOUR_PILLARS' },
-  { id: 'quickAdd', message: 'TOUR_QUICK_ADD' },
-  { id: 'timeline', message: 'TOUR_TIMELINE' },
-  { id: 'mascot', message: 'TOUR_MASCOT' },
-];
+export interface TourStop {
+  id: TourStopId;
+  message: MascotMessageId;
+}
+
+/** The tabs that have a tour (sheet 045): the home screen, À faire, the Planning and Proches. */
+export type TourId = 'home' | 'todo' | 'planning' | 'people';
+
+export const SCREEN_TOURS: Readonly<Record<TourId, { tipId: string; stops: readonly TourStop[] }>> = {
+  home: {
+    tipId: 'tour:home',
+    stops: [
+      { id: 'pillars', message: 'TOUR_PILLARS' },
+      { id: 'quickAdd', message: 'TOUR_QUICK_ADD' },
+      { id: 'timeline', message: 'TOUR_TIMELINE' },
+      { id: 'mascot', message: 'TOUR_MASCOT' },
+    ],
+  },
+  // The two ways a card is swiped, and its ⋯: deleting is no longer hidden
+  todo: {
+    tipId: 'tour:todo',
+    stops: [
+      { id: 'todoFilter', message: 'TOUR_TODO_FILTER' },
+      { id: 'todoCard', message: 'TOUR_TODO_SWIPE' },
+      { id: 'todoMore', message: 'TOUR_TODO_MORE' },
+    ],
+  },
+  planning: {
+    tipId: 'tour:planning',
+    stops: [
+      { id: 'planViews', message: 'TOUR_PLAN_VIEWS' },
+      { id: 'planList', message: 'TOUR_PLAN_MOVE' },
+    ],
+  },
+  people: {
+    tipId: 'tour:people',
+    stops: [
+      { id: 'peopleCard', message: 'TOUR_PEOPLE_CARD' },
+      { id: 'peopleAdd', message: 'TOUR_PEOPLE_ADD' },
+    ],
+  },
+};
+
+/** The four stops of the home tour, as before. */
+export const TOUR_STOPS: readonly TourStop[] = SCREEN_TOURS.home.stops;
+
+/** The tour of the tab a route stands for, or null. */
+export function tourFromSegments(segments: readonly string[]): TourId | null {
+  if (isHomeSegments(segments)) return 'home';
+  if (segments[0] !== '(tabs)') return null;
+  if (segments[1] === 'tasks') return 'todo';
+  if (segments[1] === 'calendar') return 'planning';
+  if (segments[1] === 'people') return 'people';
+  return null;
+}
 
 export interface TourRect {
   x: number;
@@ -79,13 +140,16 @@ export const MIN_TOUR_STOPS = 2;
 
 /**
  * The stops that can be shown: those whose target was measured and sits fully on screen,
- * in tour order. A tour with fewer than two such stops is not worth giving.
+ * in tour order. A home tour with fewer than two such stops is not worth giving; the tour of
+ * another tab (sheet 045) may have one (the Planning in Month view has no card of the day).
  */
 export function planTour(
   measured: Readonly<Partial<Record<TourStopId, TourRect | null>>>,
-  screen: TourScreen
+  screen: TourScreen,
+  stops: readonly TourStop[] = TOUR_STOPS,
+  minStops: number = MIN_TOUR_STOPS
 ): TourStopId[] {
-  const visible = TOUR_STOPS.map(stop => stop.id).filter(id => {
+  const visible = stops.map(stop => stop.id).filter(id => {
     const rect = measured[id];
     if (!rect || rect.width <= 0 || rect.height <= 0) return false;
     return (
@@ -95,7 +159,7 @@ export function planTour(
       rect.x + rect.width <= screen.width + 1
     );
   });
-  return visible.length >= MIN_TOUR_STOPS ? visible : [];
+  return visible.length >= minStops ? visible : [];
 }
 
 export const TOUR_BUBBLE_HEIGHT = 150;

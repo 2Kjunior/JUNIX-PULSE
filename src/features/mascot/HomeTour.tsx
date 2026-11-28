@@ -13,12 +13,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { resolveMascotMessage } from '@/domain/rules/mascot-message-rules';
 import {
-  HOME_TOUR_TIP_ID,
+  MIN_TOUR_STOPS,
   placeTourBubble,
   planTour,
   relativeToLayer,
   TOUR_BUBBLE_MAX_WIDTH,
-  TOUR_STOPS,
+  SCREEN_TOURS,
+  TourId,
   TourRect,
   TourScreen,
   TourStopId,
@@ -47,13 +48,21 @@ export function isHomeTourRunning(): boolean {
   return tourRunning;
 }
 
+/** ⓘ in a tab's header (sheet 045): gives its tour again, now, even if it was seen. */
+const replayListeners = new Set<(tour: TourId) => void>();
+export function replayTour(tour: TourId): void {
+  replayListeners.forEach(listener => listener(tour));
+}
+
 interface ActiveTour {
   stops: TourStopId[];
   index: number;
   rect: TourRect;
 }
 
-export function HomeTour() {
+/** The tour of one tab (sheet 045); the home screen's by default. */
+export function HomeTour({ tour: tourId = 'home' }: { tour?: TourId }) {
+  const definition = SCREEN_TOURS[tourId];
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { palette } = useTheme();
@@ -64,6 +73,19 @@ export function HomeTour() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [bubbleHeight, setBubbleHeight] = useState<number | null>(null);
   const startedRef = useRef(false);
+  // ⓘ: the tour starts again at once, seen or not, Pulse on or off
+  const [replay, setReplay] = useState(0);
+  useEffect(() => {
+    const listener = (asked: TourId) => {
+      if (asked !== tourId) return;
+      startedRef.current = false;
+      setReplay(count => count + 1);
+    };
+    replayListeners.add(listener);
+    return () => {
+      replayListeners.delete(listener);
+    };
+  }, [tourId]);
   const layerRef = useRef<React.ComponentRef<typeof View>>(null);
 
   // A target is measured in window coordinates, the ring is drawn in the layer's own: on some
@@ -90,21 +112,22 @@ export function HomeTour() {
   const finish = useCallback(() => {
     tourRunning = false;
     setTour(null);
-    void markTipSeen(HOME_TOUR_TIP_ID);
-  }, []);
+    void markTipSeen(definition.tipId);
+  }, [definition.tipId]);
 
   // Start once, a moment after the home screen shows
   useEffect(() => {
-    if (settings.presence === 'off' || startedRef.current) return;
+    const forced = replay > 0;
+    if ((settings.presence === 'off' && !forced) || startedRef.current) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
 
     const attempt = async (remaining: number) => {
-      if (!active || (await hasSeenTip(HOME_TOUR_TIP_ID))) return;
+      if (!active || (!forced && (await hasSeenTip(definition.tipId)))) return;
 
       const measured: Partial<Record<TourStopId, TourRect | null>> = {};
-      for (const stop of TOUR_STOPS) measured[stop.id] = await measureStop(stop.id);
-      const stops = planTour(measured, screenRef.current);
+      for (const stop of definition.stops) measured[stop.id] = await measureStop(stop.id);
+      const stops = planTour(measured, screenRef.current, definition.stops, tourId === 'home' ? MIN_TOUR_STOPS : 1);
       if (!active) return;
       if (stops.length === 0) {
         // The screen is not laid out yet: look again shortly, a few times at most
@@ -123,13 +146,13 @@ export function HomeTour() {
       setTour({ stops, index: 0, rect: first });
     };
 
-    timer = setTimeout(() => void attempt(START_ATTEMPTS), START_DELAY_MS);
+    timer = setTimeout(() => void attempt(START_ATTEMPTS), forced ? 0 : START_DELAY_MS);
 
     return () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [settings.presence, measureStop]);
+  }, [settings.presence, measureStop, definition, replay, tourId]);
 
   // Leaving the screen ends the tour for good: it has been shown
   useEffect(() => {
@@ -177,9 +200,9 @@ export function HomeTour() {
     </View>
   );
 
-  if (!tour || settings.presence === 'off') return layer(null);
+  if (!tour || (settings.presence === 'off' && replay === 0)) return layer(null);
 
-  const stop = TOUR_STOPS.find(item => item.id === tour.stops[tour.index]);
+  const stop = definition.stops.find(item => item.id === tour.stops[tour.index]);
   if (!stop) return layer(null);
 
   const placement = placeTourBubble(tour.rect, screen, bubbleHeight ?? undefined);

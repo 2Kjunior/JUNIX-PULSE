@@ -11,6 +11,7 @@ import { Pressable, Text, TouchableOpacity, View, Platform } from 'react-native'
 
 import { TagSummary } from '@/components/tags/TagChip';
 import { CardMenuButton, useCardMenu } from '@/components/ui/CardMenu';
+import { tourTargetIf } from '@/features/mascot/TourTarget';
 import { useDurationLabel } from '@/components/create/form/DurationField';
 import { openFocusForTask } from '@/features/focus/open-focus';
 import { useSwipeAccessibilityProps } from '@/components/ui/swipe-accessibility';
@@ -26,11 +27,14 @@ export function TodoRow({
   tags,
   onPress,
   onToggle,
+  menuTour = false,
 }: {
   entry: TodoEntry;
   tags: readonly Tag[];
   onPress: () => void;
   onToggle: () => void;
+  /** The first card: the tour of À faire points at its ⋯ (sheet 045). */
+  menuTour?: boolean;
 }) {
   const t = useT();
   const locale = useDateLocale();
@@ -149,7 +153,7 @@ export function TodoRow({
           ) : null}
         </View>
       </View>
-      <CardMenuButton title={entry.title} testID={`todo-menu-${entry.id}`} />
+      {tourTargetIf(menuTour, 'todoMore', <CardMenuButton title={entry.title} testID={`todo-menu-${entry.id}`} />)}
     </Pressable>
   );
 }

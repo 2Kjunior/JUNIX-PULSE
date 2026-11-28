@@ -42,6 +42,8 @@ import type { ThemePalette } from '@/constants/palettes';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useSafeReducedMotion } from '@/hooks/use-safe-reduced-motion';
 import { withAlpha } from '@/utils/color';
+import type { TourStopId } from '@/domain/rules/mascot-tour-rules';
+import { TourTarget } from '@/features/mascot/TourTarget';
 
 export interface GlassFloatingActionButtonProps {
   label: string;
@@ -52,6 +54,8 @@ export interface GlassFloatingActionButtonProps {
   collapseDelayMs?: number;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
+  /** A stop of a tab's tour points at this button (sheet 045). */
+  tourId?: TourStopId;
 }
 
 export function GlassFloatingActionButton({
@@ -63,6 +67,7 @@ export function GlassFloatingActionButton({
   collapseDelayMs = 10000, // 10 secondes avant réduction
   accessibilityLabel,
   style,
+  tourId,
 }: GlassFloatingActionButtonProps) {
   const styles = useThemedStyles(makeGlassFabStyles);
   const reduceMotion = useSafeReducedMotion();
@@ -128,6 +133,8 @@ export function GlassFloatingActionButton({
     transform: [{ scale: interpolate(expandAnim.value, [0, 1], [0.85, 1]) }],
   }));
 
+  const wrapTour = (node: React.ReactElement) => (tourId ? <TourTarget id={tourId}>{node}</TourTarget> : node);
+
   return (
     <Animated.View
       style={[
@@ -137,6 +144,7 @@ export function GlassFloatingActionButton({
         style,
       ]}
     >
+      {wrapTour(
       <TouchableOpacity
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -171,6 +179,7 @@ export function GlassFloatingActionButton({
           </Animated.View>
         </Animated.View>
       </TouchableOpacity>
+      )}
     </Animated.View>
   );
 }

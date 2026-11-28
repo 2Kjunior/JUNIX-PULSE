@@ -30,6 +30,22 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["Here are the five things I keep for you.", "{name}, here are the five things I keep for you."],
     ["Here are the five items I follow for you.", "{name}, here are the five items I follow for you."],
   ),
+  DISCOVER_VOICE: entry(
+    ["Tell me one sentence, I fill in all the rest.", "{name}, tell me one sentence, I fill in all the rest."],
+    ["One sentence is enough: I fill in the rest.", "{name}, one sentence is enough: I fill in the rest."],
+  ),
+  DISCOVER_ALARM: entry(
+    ["When it matters, I ring even on a locked phone.", "{name}, when it matters, I ring even on a locked phone."],
+    ["Alarms ring even on a locked screen.", "{name}, alarms ring even on a locked screen."],
+  ),
+  DISCOVER_WEEK: entry(
+    ["Your week fits on one screen: drag a card to move it.", "{name}, your week fits on one screen: drag a card to move it."],
+    ["The week at a glance; a card moves by dragging it.", "{name}, the week at a glance; a card moves by dragging it."],
+  ),
+  DISCOVER_PEOPLE: entry(
+    ["And I tell you when to check in on your loved ones.", "And {name}, I tell you when to check in on your loved ones."],
+    ["I point out the people to check in on.", "{name}, I point out the people to check in on."],
+  ),
   DISCOVER_TASK: entry(
     ["A task is ticked once it's done.", "{name}, a task is ticked once it's done."],
     ["A task is ticked when done.", "{name}, a task is ticked when done."],
@@ -59,9 +75,9 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
     ["I'm checking that your reminders ring at the right time.", "{name}, I'm checking that your reminders ring at the right time."],
     ["I'm checking the time zone of your reminders.", "{name}, I'm checking the time zone of your reminders."],
   ),
-  SCHEDULE_INTRO: entry(
-    ["Lovely! In the morning I sum up your day, in the evening I review it.", "Lovely, {name}! In the morning I sum up your day, in the evening I review it."],
-    ["Nice to meet you. In the morning I sum up your day, in the evening I review it.", "Nice to meet you, {name}. In the morning I sum up your day, in the evening I review it."],
+  TRY_INTRO: entry(
+    ["Nice to meet you! Try it: write or say something not to forget.", "Nice to meet you, {name}! Try it: write or say something not to forget."],
+    ["Try it: write or say something not to forget.", "{name}, try it: write or say something not to forget."],
   ),
   PERMISSION_ASK: entry(
     ["I need to be able to alert you at the right time.", "{name}, I need to be able to alert you at the right time."],
@@ -77,6 +93,60 @@ export const MASCOT_MESSAGES_EN: Record<MascotMessageId, MessageVariants> = {
   ),
 
   // ─── Home tour (four stops) and first visit tips ───────────────────────────
+  // ─── Secrets, told now and then after a few days (sheet 046) ──────────────
+  SECRET_DICTATE_ALL: entry(
+    ["Did you know? In a form, dictate your whole sentence: I fill in the fields for you.", "{name}, did you know? In a form, dictate your whole sentence: I fill in the fields for you."],
+    ["Tip: in a form, one dictated sentence fills every field.", "{name}, tip: in a form, one dictated sentence fills every field."],
+  ),
+  SECRET_FOCUS: entry(
+    ["Did you know? Swipe a task left, then Focus: I time it and tell you when to take a break.", "{name}, did you know? Swipe a task left, then Focus: I time it and tell you when to take a break."],
+    ["Tip: Focus, in a task's swipe, times it and suggests breaks.", "{name}, tip: Focus, in a task's swipe, times it and suggests breaks."],
+  ),
+  SECRET_THEMES: entry(
+    ["Did you know? In Settings, Theme, I change colours: try Forest or Ocean.", "{name}, did you know? In Settings, Theme, I change colours: try Forest or Ocean."],
+    ["Tip: Settings, Theme, to change the app's colours.", "{name}, tip: Settings, Theme, to change the app's colours."],
+  ),
+  SECRET_CARD_COLOR: entry(
+    ["Did you know? A card can have its own colour: More options, Card colour.", "{name}, did you know? A card can have its own colour: More options, Card colour."],
+    ["Tip: More options, Card colour, to colour an item.", "{name}, tip: More options, Card colour, to colour an item."],
+  ),
+  SECRET_SANCTUM: entry(
+    ["Did you know? The padlock at the top opens the Sanctuary: notes kept under your fingerprint.", "{name}, did you know? The padlock at the top opens the Sanctuary: notes kept under your fingerprint."],
+    ["Tip: the padlock opens the Sanctuary, notes protected by fingerprint.", "{name}, tip: the padlock opens the Sanctuary, notes protected by fingerprint."],
+  ),
+  SECRET_WIDGET: entry(
+    ["Did you know? Put my widget on your phone's home screen: your day at a glance.", "{name}, did you know? Put my widget on your phone's home screen: your day at a glance."],
+    ["Tip: the Junix Pulse widget shows the day on the phone's home screen.", "{name}, tip: the Junix Pulse widget shows the day on the phone's home screen."],
+  ),
+  // ─── Tours of the other tabs (sheet 045) ─────────────────────────────────
+  TOUR_TODO_FILTER: entry(
+    ["At the top, pick: everything, what rings, or what doesn't.", "{name}, at the top, pick: everything, what rings, or what doesn't."],
+    ["The filter at the top sets apart what rings.", "{name}, the filter at the top sets apart what rings."],
+  ),
+  TOUR_TODO_SWIPE: entry(
+    ["Swipe a card right: it's done. Left: later, edit or delete.", "{name}, swipe a card right: it's done. Left: later, edit or delete."],
+    ["Right: done. Left: later, edit, delete.", "{name}, right: done. Left: later, edit, delete."],
+  ),
+  TOUR_TODO_MORE: entry(
+    ["A card's ⋯ button gives the same choices, without swiping.", "{name}, a card's ⋯ button gives the same choices, without swiping."],
+    ["The ⋯ button gives the same choices.", "{name}, the ⋯ button gives the same choices."],
+  ),
+  TOUR_PLAN_VIEWS: entry(
+    ["Your day, your week or your month: pick your view here.", "{name}, your day, your week or your month: pick your view here."],
+    ["Day, week or month: the view is picked here.", "{name}, day, week or month: the view is picked here."],
+  ),
+  TOUR_PLAN_MOVE: entry(
+    ["Tap a card to open it. In Day, Week or Month, hold it to move it.", "{name}, tap a card to open it. In Day, Week or Month, hold it to move it."],
+    ["A card opens with a tap; in Day, Week or Month, a long press moves it.", "{name}, a card opens with a tap; in Day, Week or Month, a long press moves it."],
+  ),
+  TOUR_PEOPLE_CARD: entry(
+    ["Tap someone to note a catch-up or see what you have planned.", "{name}, tap someone to note a catch-up or see what you have planned."],
+    ["A person opens with a tap: catch-ups and planned moments.", "{name}, a person opens with a tap: catch-ups and planned moments."],
+  ),
+  TOUR_PEOPLE_ADD: entry(
+    ["Here, you add someone, or import them from your contacts.", "{name}, here, you add someone, or import them from your contacts."],
+    ["Here, add someone or import them from contacts.", "{name}, here, add someone or import them from contacts."],
+  ),
   TOUR_PILLARS: entry(
     ["This is your home: what's left to do, your schedule and loved ones at a glance.", "{name}, this is your home: what's left to do, your schedule and loved ones at a glance."],
     ["Your home brings together your tasks, schedule and loved ones.", "{name}, your home brings together your tasks, schedule and loved ones."],

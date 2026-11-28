@@ -1,276 +1,119 @@
 /**
- * Onboarding — Étape 5 : Permissions
- * Demande les permissions utiles au bon moment (BR-019).
- * Les permissions sont demandées ici, après que l'utilisateur comprend leur utilité.
- * Si refusées, l'application continue de fonctionner.
+ * Onboarding, screen 5 of 5: one permission, the notifications, with its reason (study 001, 16.13;
+ * sheet 044). « Pour que "Appeler maman" sonne demain » when the person just added one.
+ *
+ * The other permissions are asked when they serve (the contacts when importing a person); the
+ * exact alarms are offered right after the notifications are allowed, since a reminder now waits.
+ * The backup, the hours of the morning and the evening and the language stay in the settings.
+ * Refused, the app still works: the reminders stay visible in it.
  */
-
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
-import { GlassAlert } from '@/components/feedback/GlassAlert';
+import { StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { NotificationService } from '@/services/notification-service';
-import { setGuidePermission } from '@/features/mascot/onboarding-guide-state';
-import {
-  Spacing,
-  Radius,
-  Typography,
-} from '@/constants/theme';
+import { GlassAlert } from '@/components/feedback/GlassAlert';
 import type { ThemePalette } from '@/constants/palettes';
+import { Spacing, Typography } from '@/constants/theme';
+import { setGuidePermission } from '@/features/mascot/onboarding-guide-state';
+import { OnboardingFrame } from '@/features/onboarding/OnboardingFrame';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
-import { Button } from '@/components/ui/Button';
-import { StepIndicator } from '@/components/ui/StepIndicator';
-import { SettingsRepository } from '@/repositories/settings-repository';
-import { useAppStore } from '@/store/app-store';
 import { useT } from '@/i18n';
-import { LanguagePicker } from '@/components/settings/LanguagePicker';
-import { useAutoBackupSetup } from '@/features/backup/use-auto-backup-setup';
-import { runAutoBackup } from '@/services/auto-backup-service';
+import { SettingsRepository } from '@/repositories/settings-repository';
+import { NotificationService } from '@/services/notification-service';
+import { useAppStore } from '@/store/app-store';
 
 export default function OnboardingPermissions() {
   const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingPermissionsStyles);
-  const { setOnboardingComplete } = useAppStore();
-  const [notifStatus, setNotifStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
-  const [finishing, setFinishing] = useState(false);
-  const [autoBackupOn, setAutoBackupOn] = useState(false);
-  // The automatic backup, offered once here: the first copy is made at once
-  const { startSetup: startAutoBackupSetup, setupModal: autoBackupSetupModal } = useAutoBackupSetup(async () => {
-    setAutoBackupOn(true);
-    await runAutoBackup({ force: true });
-  });
-
-  async function requestNotifications() {
-    try {
-      const granted = await NotificationService.requestPermissions();
-      setNotifStatus(granted ? 'granted' : 'denied');
-      // La mascotte guide réagit à la réponse : petite fête si acceptée, sans insistance sinon
-      setGuidePermission(granted ? 'granted' : 'denied');
-      await SettingsRepository.update({
-        notificationsEnabled: granted,
-        updatedAt: new Date().toISOString(),
-      });
-      if (granted) await offerExactAlarms();
-    } catch {
-      setNotifStatus('denied');
-      setGuidePermission('denied');
-    }
-  }
+  const setOnboardingComplete = useAppStore(state => state.setOnboardingComplete);
+  const { first } = useLocalSearchParams<{ first?: string }>();
+  const [answer, setAnswer] = useState<'idle' | 'granted' | 'denied'>('idle');
+  const [busy, setBusy] = useState(false);
 
   async function offerExactAlarms() {
     const { granted, canAsk } = await NotificationService.getExactAlarmStatus();
     if (granted || !canAsk) return;
-    GlassAlert.alert(
-      t('permissions.exactAlarms.title'),
-      t('permissions.exactAlarms.body'),
-      [
-        { text: t('permissions.exactAlarms.later'), style: 'cancel' },
-        { text: t('permissions.exactAlarms.allow'), onPress: () => void NotificationService.requestExactAlarms() },
-      ]
-    );
+    GlassAlert.alert(t('permissions.exactAlarms.title'), t('permissions.exactAlarms.body'), [
+      { text: t('permissions.exactAlarms.later'), style: 'cancel' },
+      { text: t('permissions.exactAlarms.allow'), onPress: () => void NotificationService.requestExactAlarms() },
+    ]);
   }
 
-  async function finish() {
-    setFinishing(true);
+  async function allow() {
+    setBusy(true);
     try {
-      await SettingsRepository.markOnboardingComplete(new Date().toISOString());
-      setOnboardingComplete(true);
-      // La navigation vers (tabs) est gérée par le redirect dans _layout.tsx
+      const granted = await NotificationService.requestPermissions();
+      setAnswer(granted ? 'granted' : 'denied');
+      // Pulse answers: a small party if allowed, no insisting otherwise
+      setGuidePermission(granted ? 'granted' : 'denied');
+      await SettingsRepository.update({ notificationsEnabled: granted, updatedAt: new Date().toISOString() });
+      if (granted) await offerExactAlarms();
+    } catch {
+      setAnswer('denied');
+      setGuidePermission('denied');
     } finally {
-      setFinishing(false);
+      setBusy(false);
     }
   }
 
+  async function finish() {
+    setBusy(true);
+    try {
+      await SettingsRepository.markOnboardingComplete(new Date().toISOString());
+      setOnboardingComplete(true);
+      // The move to the tabs is made by the redirect of the root layout
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const asked = answer !== 'idle';
+  const title = first ? t('onb.notif.titleFirst', { title: first }) : t('onb.notif.title');
+  const subtitle =
+    answer === 'granted' ? t('onb.notif.granted') : answer === 'denied' ? t('onb.notif.denied') : t('onb.notif.subtitle');
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Indicateur d'étape — toutes complètes */}
-      <StepIndicator total={5} current={5} />
-
-      <Text style={styles.title}>{t('permissions.title')}</Text>
-      <Text style={styles.subtitle}>{t('permissions.subtitle')}</Text>
-
-      {/* Langue : celle du téléphone, ou un choix */}
-      <View style={styles.permCard}>
-        <Text style={styles.permTitle}>{t('language.label')}</Text>
-        <LanguagePicker testIDPrefix="onboarding-language" />
+    <OnboardingFrame
+      step={5}
+      onSkip={asked ? undefined : () => void finish()}
+      skipLabel={t('permissions.exactAlarms.later')}
+      centered
+      cta={
+        asked
+          ? { label: t('onb.notif.start'), onPress: () => void finish(), loading: busy, testID: 'onboarding-finish-btn' }
+          : { label: t('onb.notif.allow'), onPress: () => void allow(), loading: busy, testID: 'onboarding-notif-btn' }
+      }
+    >
+      <View style={styles.icon}>
+        <Ionicons
+          name={answer === 'granted' ? 'checkmark-circle' : 'notifications-outline'}
+          size={56}
+          color={answer === 'granted' ? palette.success.default : palette.primary.default}
+        />
       </View>
-
-      {/* Notification */}
-      <View style={styles.permCard}>
-        <View style={styles.permHeader}>
-          <View style={[styles.permIcon, { backgroundColor: palette.primary.container + '33' }]}>
-            <Ionicons name="notifications-outline" size={22} color={palette.primary.default} />
-          </View>
-          <View style={styles.permInfo}>
-            <Text style={styles.permTitle}>{t('permissions.notifications.title')}</Text>
-            <Text style={styles.permDesc}>{t('permissions.notifications.desc')}</Text>
-          </View>
-        </View>
-
-        {notifStatus === 'idle' ? (
-          <Button
-            label={t('permissions.notifications.allow')}
-            onPress={requestNotifications}
-            variant="secondary"
-            size="md"
-            style={styles.permBtn}
-            testID="onboarding-notif-btn"
-          />
-        ) : notifStatus === 'granted' ? (
-          <View style={styles.permGranted}>
-            <Ionicons name="checkmark-circle" size={16} color={palette.success.default} style={{ marginRight: 6 }} />
-            <Text style={styles.permGrantedText}>{t('permissions.notifications.granted')}</Text>
-          </View>
-        ) : (
-          <View style={styles.permDenied}>
-            <Text style={styles.permDeniedText}>{t('permissions.notifications.denied')}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Sauvegarde automatique, proposée une fois ici (pas sur le web, sans dossier du système) */}
-      {Platform.OS !== 'web' && (
-        <View style={styles.permCard}>
-          <View style={styles.permHeader}>
-            <View style={[styles.permIcon, { backgroundColor: palette.primary.container + '33' }]}>
-              <Ionicons name="sync-outline" size={22} color={palette.primary.default} />
-            </View>
-            <View style={styles.permInfo}>
-              <Text style={styles.permTitle}>{t('permissions.autoBackup.title')}</Text>
-              <Text style={styles.permDesc}>{t('permissions.autoBackup.desc')}</Text>
-            </View>
-          </View>
-          {autoBackupOn ? (
-            <View style={styles.permGranted}>
-              <Ionicons name="checkmark-circle" size={16} color={palette.success.default} style={{ marginRight: 6 }} />
-              <Text style={styles.permGrantedText}>{t('permissions.autoBackup.enabled')}</Text>
-            </View>
-          ) : (
-            <Button
-              label={t('permissions.autoBackup.enable')}
-              onPress={startAutoBackupSetup}
-              variant="secondary"
-              size="md"
-              style={styles.permBtn}
-              testID="onboarding-auto-backup-btn"
-            />
-          )}
-        </View>
-      )}
-
-      {/* Note contacts (pour plus tard dans l'app) */}
-      <View style={styles.noteCard}>
-        <View style={styles.noteTitleRow}>
-          <Ionicons name="people-outline" size={18} color={palette.tertiary.default} style={{ marginRight: 6 }} />
-          <Text style={styles.noteTitle}>{t('permissions.contacts.title')}</Text>
-        </View>
-        <Text style={styles.noteDesc}>{t('permissions.contacts.desc')}</Text>
-      </View>
-
-      <View style={styles.ready}>
-        <Text style={styles.readyTitle}>{t('permissions.ready.title')}</Text>
-        <Text style={styles.readyDesc}>{t('permissions.ready.desc')}</Text>
-      </View>
-
-      <Button
-        label={t('permissions.start')}
-        onPress={finish}
-        variant="primary"
-        size="lg"
-        loading={finishing}
-        style={styles.btnFinish}
-        testID="onboarding-finish-btn"
-      />
-      {autoBackupSetupModal}
-    </ScrollView>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
+    </OnboardingFrame>
   );
 }
 
-const makeOnboardingPermissionsStyles = (theme: ThemePalette) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.surface.base },
-    content: {
-      paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.xxl,
-      paddingBottom: Spacing.xxxl,
+function makeOnboardingPermissionsStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    icon: {
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
     },
     title: {
-      fontSize: 26,
-      fontFamily: 'Outfit-Bold',
+      ...Typography.displayMedium,
       color: theme.onSurface.primary,
-      marginBottom: Spacing.sm,
-      lineHeight: 34,
+      textAlign: 'center',
     },
     subtitle: {
-      ...Typography.bodyMedium,
-      color: theme.onSurface.variant,
-      lineHeight: 22,
-      marginBottom: Spacing.xxl,
-    },
-    permCard: {
-      backgroundColor: theme.surface.container,
-      borderRadius: Radius.lg,
-      padding: Spacing.lg,
-      marginBottom: Spacing.lg,
-    },
-    permHeader: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
-    permIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: Radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    permInfo: { flex: 1 },
-    permTitle: { ...Typography.titleMedium, color: theme.onSurface.primary, marginBottom: Spacing.xs },
-    permDesc: { ...Typography.bodySmall, color: theme.onSurface.variant, lineHeight: 18 },
-    permBtn: { width: '100%' },
-    permGranted: {
-      backgroundColor: theme.success.container,
-      borderRadius: Radius.sm,
-      padding: Spacing.sm,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    permGrantedText: { ...Typography.labelMedium, color: theme.success.default },
-    permDenied: {
-      backgroundColor: theme.surface.high,
-      borderRadius: Radius.sm,
-      padding: Spacing.sm,
-    },
-    permDeniedText: { ...Typography.bodySmall, color: theme.onSurface.disabled, lineHeight: 18 },
-    noteCard: {
-      backgroundColor: theme.surface.high,
-      borderRadius: Radius.md,
-      padding: Spacing.lg,
-      marginBottom: Spacing.xl,
-    },
-    noteTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: Spacing.xs,
-    },
-    noteTitle: { ...Typography.titleMedium, color: theme.onSurface.primary, marginBottom: Spacing.xs },
-    noteDesc: { ...Typography.bodySmall, color: theme.onSurface.variant, lineHeight: 18 },
-    ready: {
-      alignItems: 'center',
-      marginBottom: Spacing.xl,
-      padding: Spacing.xl,
-    },
-    readyTitle: {
-      ...Typography.headlineMedium,
-      color: theme.primary.default,
-      marginBottom: Spacing.sm,
-      textAlign: 'center',
-    },
-    readyDesc: {
-      ...Typography.bodyMedium,
+      ...Typography.bodyLarge,
       color: theme.onSurface.variant,
       textAlign: 'center',
-      lineHeight: 22,
     },
-    btnFinish: { width: '100%' },
   });
-
+}

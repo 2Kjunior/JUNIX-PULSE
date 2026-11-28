@@ -8,18 +8,23 @@ import { useSegments } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { isHomeSegments, tipScreenFromSegments } from '@/domain/rules/mascot-tour-rules';
+import { tipScreenFromSegments, tourFromSegments } from '@/domain/rules/mascot-tour-rules';
 
 import { FirstVisitTip } from './FirstVisitTip';
 import { HomeTour } from './HomeTour';
+import { SecretTip } from './SecretTip';
 
 export function MascotTabsLayer() {
   const segments = useSegments();
-  const tipScreen = tipScreenFromSegments(segments);
+  // A tab with a tour (sheet 045) has no single first visit tip: the tour says more
+  const tour = tourFromSegments(segments);
+  const tipScreen = tour ? null : tipScreenFromSegments(segments);
 
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-      {isHomeSegments(segments) ? <HomeTour /> : null}
+      {tour ? <HomeTour key={tour} tour={tour} /> : null}
+      {/* Now and then, a secret of Pulse on the home screen (sheet 046) */}
+      {tour === 'home' ? <SecretTip /> : null}
       {tipScreen ? <FirstVisitTip key={tipScreen} screen={tipScreen} /> : null}
     </View>
   );

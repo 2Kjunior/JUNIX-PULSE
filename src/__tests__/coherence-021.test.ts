@@ -1,5 +1,6 @@
 import { PULSE_CONCEPTS, PULSE_CONCEPT_DEFINITIONS } from '../constants/pulse-concepts';
 import { DISCOVER_CARD_MESSAGES } from '../domain/rules/mascot-guide-rules';
+import { ONBOARDING_FEATURES } from '../constants/onboarding-features';
 import { MASCOT_MESSAGES } from '../domain/rules/mascot-message-catalog';
 import { MASCOT_MESSAGES_EN } from '../domain/rules/mascot-message-catalog-en';
 import { translate } from '../i18n/translate';
@@ -9,8 +10,9 @@ describe('the five things of Junix Pulse (study 001, 15.1; sheet 021)', () => {
     expect(PULSE_CONCEPTS).toEqual(['task', 'reminder', 'moment', 'habit', 'goal']);
   });
 
-  it('gives the mascot one sentence per card', () => {
-    expect(DISCOVER_CARD_MESSAGES).toHaveLength(PULSE_CONCEPTS.length);
+  // The 2nd onboarding screen shows the four flagship features now (sheet 044)
+  it('gives the mascot one sentence per card of the 2nd onboarding screen', () => {
+    expect(DISCOVER_CARD_MESSAGES).toHaveLength(ONBOARDING_FEATURES.length);
     for (const message of DISCOVER_CARD_MESSAGES) {
       expect(MASCOT_MESSAGES[message.id]).toBeDefined();
       expect(MASCOT_MESSAGES_EN[message.id]).toBeDefined();

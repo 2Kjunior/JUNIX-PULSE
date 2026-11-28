@@ -16,6 +16,8 @@ import { TagFilterRow } from '@/components/tags/TagFilterRow';
 import { TodoRow } from '@/components/todo/TodoRow';
 import { GlassFloatingActionButton } from '@/components/ui/GlassFloatingActionButton';
 import { HeaderIconButton, SettingsButton } from '@/components/ui/HeaderIconButton';
+import { TourInfoButton } from '@/features/mascot/TourInfoButton';
+import { TourTarget, tourTargetIf } from '@/features/mascot/TourTarget';
 import { PillTopBar } from '@/components/ui/PillTopBar';
 import { SwipeableItem, makeStandardRightActions, type SwipeAction } from '@/components/ui/SwipeableItem';
 import { openFocusForTask } from '@/features/focus/open-focus';
@@ -196,9 +198,13 @@ export function TodoTabScreen() {
           <Text style={{ ...Typography.headlineMedium, color: palette.onSurface.primary }} numberOfLines={1}>
             {t('tab.todo')}
           </Text>
-          <Text style={{ ...Typography.bodySmall, color: palette.onSurface.variant }} numberOfLines={1}>
-            {t('todoTab.subtitle', { count: counts.all })}
-          </Text>
+          {/* ⓘ next to the subtitle: the tour of this tab again (sheet 045) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ ...Typography.bodySmall, color: palette.onSurface.variant, flexShrink: 1 }} numberOfLines={1}>
+              {t('todoTab.subtitle', { count: counts.all })}
+            </Text>
+            <TourInfoButton tour="todo" />
+          </View>
         </View>
         <HeaderIconButton
           icon="timer-outline"
@@ -209,6 +215,7 @@ export function TodoTabScreen() {
         <SettingsButton />
       </View>
 
+      <TourTarget id="todoFilter">
       <PillTopBar<TodoFilter>
         tabs={[
           { key: 'all', label: t('todoTab.all'), count: counts.all },
@@ -219,6 +226,7 @@ export function TodoTabScreen() {
         activeTab={filter}
         onTabChange={setFilter}
       />
+      </TourTarget>
       <TagFilterRow tags={tags} selectedId={tagFilter} onSelect={setTagFilter} />
 
       <ScrollView
@@ -260,7 +268,7 @@ export function TodoTabScreen() {
                 <Text style={{ ...Typography.titleMedium, color: palette.onSurface.primary }}>{t(SECTION_LOOK[section.id].labelKey)}</Text>
                 <Text style={{ ...Typography.labelMedium, color: palette.onSurface.variant }}>{section.entries.length}</Text>
               </View>
-              {section.entries.map(entry => (
+              {section.entries.map(entry => tourTargetIf(`${entry.kind}-${entry.id}` === firstKey, 'todoCard', (
                 <SwipeableItem
                   key={`${entry.kind}-${entry.id}`}
                   peek={swipeTip.peeking && `${entry.kind}-${entry.id}` === firstKey}
@@ -276,9 +284,10 @@ export function TodoTabScreen() {
                     tags={tagsOf(entry.tagIds, tags)}
                     onPress={() => openEntry(entry)}
                     onToggle={() => void toggle(entry)}
+                    menuTour={`${entry.kind}-${entry.id}` === firstKey}
                   />
                 </SwipeableItem>
-              ))}
+              )))}
             </View>
           ))
         )}

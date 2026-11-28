@@ -61,6 +61,11 @@ jest.mock('react-native-reanimated', () => {
     useComposedEventHandler: () => undefined,
     useEvent: () => undefined,
     isSharedValue: () => false,
+    // The Week view scrolls its grid on the UI thread (sheet 047)
+    useAnimatedRef: () => ({ current: null }),
+    useAnimatedScrollHandler: () => undefined,
+    runOnUI: (fn) => fn,
+    scrollTo: () => {},
     // Animated components
     View,
   };

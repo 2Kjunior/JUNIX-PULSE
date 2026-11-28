@@ -50,3 +50,14 @@ export function TourTarget({ id, style, children }: TourTargetProps) {
     </View>
   );
 }
+
+/** The element wrapped as a target when the condition holds (the first card of a list; sheet 045). */
+export function tourTargetIf(condition: boolean, id: TourStopId, node: React.ReactElement): React.ReactElement {
+  return condition ? (
+    <TourTarget key={node.key ?? id} id={id}>
+      {node}
+    </TourTarget>
+  ) : (
+    node
+  );
+}

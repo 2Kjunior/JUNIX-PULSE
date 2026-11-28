@@ -1,49 +1,39 @@
 /**
- * Onboarding, step 2: how it works. The five things of Junix Pulse (task, reminder, moment,
- * habit, goal) as shared cards, and one line on how to add (sheet 021). The list and its
- * texts live in constants/pulse-concepts.ts, so this screen never lists them by hand.
+ * Onboarding, screen 2 of 5: what Junix Pulse does best (study 001, 16.13; sheet 044).
+ *
+ * Four flagship features, not everything (the rest is found while using the app). Pulse points
+ * at each card in turn: the screen tells the guide where the cards are, once it has slid in.
  */
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-import { Button } from '@/components/ui/Button';
-import { StepIndicator } from '@/components/ui/StepIndicator';
+import { ONBOARDING_FEATURE_DEFINITIONS, ONBOARDING_FEATURES } from '@/constants/onboarding-features';
 import type { ThemePalette } from '@/constants/palettes';
-import { PULSE_CONCEPTS } from '@/constants/pulse-concepts';
-import { Spacing, Radius, Typography } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
 import { setDiscoverCardsY } from '@/features/mascot/onboarding-guide-state';
-import { ConceptCard } from '@/features/onboarding/ConceptCard';
+import { GUIDE_ROOM, OnboardingFrame } from '@/features/onboarding/OnboardingFrame';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { useT } from '@/i18n';
-
-/** How far above the bottom of the list the mascot points for a card that is scrolled out of view. */
-const HIDDEN_CARD_MARGIN = 24;
+import { withAlpha } from '@/utils/color';
 
 export default function OnboardingDiscover() {
   const t = useT();
   const { palette } = useTheme();
   const styles = useThemedStyles(makeOnboardingDiscoverStyles);
 
-  // The mascot guide points at each card: the screen tells it where they are. They are measured
-  // once the screen has finished sliding in, otherwise the position would be the moving one.
-  // A card below the visible part of the list is pointed at the bottom of that part.
-  const listRef = useRef<React.ComponentRef<typeof View>>(null);
+  // Where each card is, for the guide that points at them
   const cardRefs = useRef<(React.ComponentRef<typeof View> | null)[]>([]);
   useEffect(() => {
     const timer = setTimeout(() => {
-      listRef.current?.measureInWindow((_lx, listY, _lw, listHeight) => {
-        const bottom = listY + listHeight - HIDDEN_CARD_MARGIN;
-        const centres: number[] = [];
-        let measured = 0;
-        cardRefs.current.forEach((card, index) => {
-          card?.measureInWindow((_x, y, _w, h) => {
-            centres[index] = Math.min(y + h / 2, bottom);
-            measured += 1;
-            if (measured === PULSE_CONCEPTS.length) setDiscoverCardsY(centres);
-          });
+      const centres: number[] = [];
+      let measured = 0;
+      cardRefs.current.forEach((card, index) => {
+        card?.measureInWindow((_x, y, _w, h) => {
+          centres[index] = y + h / 2;
+          measured += 1;
+          if (measured === ONBOARDING_FEATURES.length) setDiscoverCardsY(centres);
         });
       });
     }, 600);
@@ -54,126 +44,87 @@ export default function OnboardingDiscover() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <StepIndicator total={5} current={2} />
-          <TouchableOpacity
-            onPress={() => router.push('/(onboarding)/permissions')}
-            style={styles.skipBtn}
-            accessibilityLabel={t('discover.skipA11y')}
-            accessibilityRole="button"
+    <OnboardingFrame
+      step={2}
+      onSkip={() => router.push('/(onboarding)/permissions')}
+      // Pulse sits at the top right with its bubble: room for it above the title
+      guideRoom={GUIDE_ROOM}
+      title={t('onb.features.title')}
+      cta={{ label: t('common.continue'), onPress: () => router.push('/(onboarding)/personalize'), testID: 'onboarding-discover-next' }}
+    >
+      {ONBOARDING_FEATURES.map((feature, index) => {
+        const definition = ONBOARDING_FEATURE_DEFINITIONS[feature];
+        const color = definition.color(palette);
+        const title = t(definition.titleKey);
+        const desc = t(definition.descKey);
+        return (
+          <View
+            key={feature}
+            ref={node => {
+              cardRefs.current[index] = node;
+            }}
+            collapsable={false}
+            style={styles.card}
+            accessible
+            accessibilityLabel={`${title}. ${desc}`}
           >
-            <Text style={styles.skipText}>{t('common.skip')}</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.title}>{t('discover.title')}</Text>
-        <Text style={styles.subtitle}>{t('discover.subtitle')}</Text>
-      </View>
-
-      <View ref={listRef} collapsable={false} style={styles.scroll}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-          {PULSE_CONCEPTS.map((concept, index) => (
-            <View
-              key={concept}
-              ref={node => {
-                cardRefs.current[index] = node;
-              }}
-              collapsable={false}
-            >
-              <ConceptCard concept={concept} />
+            <View style={[styles.icon, { backgroundColor: withAlpha(color, 0.16) }]}>
+              <Ionicons name={definition.icon} size={22} color={color} />
             </View>
-          ))}
-
-          <View style={styles.hint}>
-            <Ionicons name="mic-outline" size={18} color={palette.primary.default} />
-            <Text style={styles.hintText}>{t('discover.hint')}</Text>
+            <View style={styles.body}>
+              <Text style={styles.cardTitle}>{title}</Text>
+              <Text style={styles.cardDesc}>{desc}</Text>
+            </View>
           </View>
-        </ScrollView>
+        );
+      })}
+      <View style={styles.private}>
+        <Ionicons name="lock-closed-outline" size={16} color={palette.onSurface.variant} />
+        <Text style={styles.privateText}>{t('onb.features.private')}</Text>
       </View>
-
-      <View style={styles.actions}>
-        <Button
-          label={t('common.next')}
-          onPress={() => router.push('/(onboarding)/personalize')}
-          variant="primary"
-          size="lg"
-          style={styles.btnPrimary}
-          testID="onboarding-discover-next"
-        />
-        <Button label={t('common.back')} onPress={() => router.back()} variant="ghost" size="md" />
-      </View>
-    </View>
+    </OnboardingFrame>
   );
 }
 
-const makeOnboardingDiscoverStyles = (theme: ThemePalette) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.surface.base,
-      paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.xxl,
-      paddingBottom: Spacing.xxl,
-    },
-    header: {
-      marginBottom: Spacing.lg,
-    },
-    headerRow: {
+function makeOnboardingDiscoverStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    card: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: Spacing.md,
+      padding: Spacing.md,
+      borderRadius: Radius.lg,
+      backgroundColor: theme.surface.container,
     },
-    skipBtn: {
-      paddingVertical: Spacing.xs,
-      paddingLeft: Spacing.md,
-      minHeight: 44,
+    icon: {
+      width: 44,
+      height: 44,
+      borderRadius: Radius.md,
+      alignItems: 'center',
       justifyContent: 'center',
     },
-    skipText: {
-      ...Typography.bodyMedium,
-      color: theme.onSurface.disabled,
+    body: {
+      flex: 1,
+      gap: 2,
     },
-    title: {
-      fontSize: 26,
-      fontFamily: 'Outfit-Bold',
+    cardTitle: {
+      ...Typography.titleLarge,
       color: theme.onSurface.primary,
-      marginBottom: Spacing.xs,
-      lineHeight: 34,
     },
-    subtitle: {
-      ...Typography.bodyLarge,
+    cardDesc: {
+      ...Typography.bodyMedium,
       color: theme.onSurface.variant,
     },
-    scroll: {
-      flex: 1,
-    },
-    list: {
-      gap: Spacing.sm,
-      paddingBottom: Spacing.lg,
-    },
-    hint: {
+    private: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: Spacing.sm,
-      backgroundColor: theme.surface.high,
-      borderRadius: Radius.md,
-      padding: Spacing.md,
-      marginTop: Spacing.xs,
-      borderWidth: 1,
-      borderColor: theme.primary.default + '26',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: Spacing.sm,
     },
-    hintText: {
-      ...Typography.bodySmall,
+    privateText: {
+      ...Typography.bodyMedium,
       color: theme.onSurface.variant,
-      flex: 1,
-    },
-    actions: {
-      gap: Spacing.sm,
-      alignItems: 'center',
-      paddingTop: Spacing.md,
-    },
-    btnPrimary: {
-      width: '100%',
     },
   });
+}

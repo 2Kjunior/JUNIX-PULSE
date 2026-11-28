@@ -32,7 +32,8 @@ export default function OnboardingLayout() {
         <Stack.Screen name="index" options={{ gestureEnabled: false }} />
         <Stack.Screen name="discover" />
         <Stack.Screen name="personalize" />
-        <Stack.Screen name="schedule" />
+        {/* A first reminder from a sentence (sheet 044), in place of the hours of the day */}
+        <Stack.Screen name="try" />
         <Stack.Screen name="permissions" />
       </Stack>
       <OnboardingGuide />

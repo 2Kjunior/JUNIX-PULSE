@@ -6,7 +6,8 @@
  */
 
 import { LAST_TIP_DAY_ID, tipDay } from '../../domain/rules/gesture-tip-rules';
-import { HOME_TOUR_TIP_ID, tipKey } from '../../domain/rules/mascot-tour-rules';
+import { LAST_SECRET_DAY_ID } from '../../domain/rules/secret-tips-rules';
+import { HOME_TOUR_TIP_ID, SCREEN_TOURS, tipKey } from '../../domain/rules/mascot-tour-rules';
 import { MascotStateRepository } from '../../repositories/mascot-state-repository';
 
 /** True when the tip was already given. A failed read counts as seen: better silent than repeated. */
@@ -39,4 +40,28 @@ export async function lastTipDay(): Promise<string | null> {
 /** "Revoir la présentation": the home tour will run again the next time the home screen shows. */
 export async function replayHomeTour(): Promise<void> {
   await MascotStateRepository.delete(tipKey(HOME_TOUR_TIP_ID));
+}
+
+/** The day (YYYY-MM-DD) the last secret was told, or null (sheet 046). A failed read counts as today. */
+export async function lastSecretDay(): Promise<string | null> {
+  try {
+    return await MascotStateRepository.get(tipKey(LAST_SECRET_DAY_ID));
+  } catch {
+    return tipDay(new Date());
+  }
+}
+
+/** A secret told (sheet 046): seen as a tip (the day of the last tip with it), and the day of the last secret. */
+export async function markSecretTold(id: string): Promise<void> {
+  await markTipSeen(id);
+  try {
+    await MascotStateRepository.set(tipKey(LAST_SECRET_DAY_ID), tipDay(new Date()));
+  } catch {
+    // A secret may come a little sooner: harmless
+  }
+}
+
+/** "Revoir la présentation" gives back the tours of the other tabs too (sheet 045). */
+export async function replayAllTours(): Promise<void> {
+  await Promise.all(Object.values(SCREEN_TOURS).map(tour => MascotStateRepository.delete(tipKey(tour.tipId))));
 }

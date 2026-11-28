@@ -17,6 +17,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsButton } from '@/components/ui/HeaderIconButton';
+import { TourInfoButton } from '@/features/mascot/TourInfoButton';
+import { TourTarget, tourTargetIf } from '@/features/mascot/TourTarget';
 import {
   format,
   addDays,
@@ -96,7 +98,6 @@ export default function CalendarScreen() {
   // The Month view: the things of the month shown, and that month, apart from the chosen day (sheet 027)
   const [monthItems, setMonthItems] = useState<MonthItem[]>([]);
   const [shownMonth, setShownMonth] = useState<Date>(() => new Date());
-  const [weekLifted, setWeekLifted] = useState(false);
 
   // Semaine courante basée sur la date sélectionnée
   const weekStart = startOfWeek(selectedDate, { weekStartsOn });
@@ -388,13 +389,17 @@ export default function CalendarScreen() {
       <View style={styles.header}>
         <View style={styles.headerTitleCol}>
           <Text style={styles.title}>{t('tab.calendar')}</Text>
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {viewMode === 'week'
-              ? weekLabel
-              : viewMode === 'month'
-                ? format(shownMonth, 'MMMM yyyy', { locale: dateLocale })
-                : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
-          </Text>
+          {/* ⓘ next to the subtitle: the tour of this tab again (sheet 045) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={[styles.subtitle, { flexShrink: 1 }]} numberOfLines={2}>
+              {viewMode === 'week'
+                ? weekLabel
+                : viewMode === 'month'
+                  ? format(shownMonth, 'MMMM yyyy', { locale: dateLocale })
+                  : format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
+            </Text>
+            <TourInfoButton tour="planning" />
+          </View>
         </View>
 
         <View style={styles.headerActions}>
@@ -441,6 +446,7 @@ export default function CalendarScreen() {
       </View>
 
       {/* ─── Segmented Control PillTopBar (Modèle Personnes) ─────────────────── */}
+      <TourTarget id="planViews">
       <PillTopBar
         tabs={[
           {
@@ -472,6 +478,7 @@ export default function CalendarScreen() {
           void SettingsRepository.update({ planningPrefs: next, updatedAt: new Date().toISOString() }).catch(() => undefined);
         }}
       />
+      </TourTarget>
 
       {/* Bandeau des 7 jours (affiché pour les vues quotidiennes) */}
       {viewMode !== 'week' && viewMode !== 'month' && (
@@ -517,15 +524,10 @@ export default function CalendarScreen() {
 
       {/* Rendu conditionnel selon le mode choisi */}
       {viewMode === 'week' ? (
-        <ScrollView
-          scrollEnabled={!weekLifted}
-          contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT + 104 }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />
-          }
-          showsVerticalScrollIndicator={false}
-        >
+        // The Week fills the page (sheet 047): its grid scrolls inside, the days and hours stay in view
+        <View style={{ flex: 1, paddingBottom: TAB_BAR_TOTAL_HEIGHT + 8 }}>
           <WeeklyTimetableGrid
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary.default} />}
             step={prefs.dragStep}
             looks={weekLooks}
             blocks={allWeeklyBlocks}
@@ -548,7 +550,6 @@ export default function CalendarScreen() {
               setShowActionModal(true);
             }}
             onDeleteBlock={(id, label) => handleDeleteWeeklyBlock(id, label)}
-            onLift={setWeekLifted}
             onMoveBlock={(block, minutes, days) => {
               const event = weekEventsById.get(block.id);
               const reminder = weekRemindersById.get(block.id);
@@ -567,7 +568,7 @@ export default function CalendarScreen() {
               }
             }}
           />
-        </ScrollView>
+        </View>
       ) : viewMode === 'month' ? (
         <MonthView
           weekStart={weekStartsOn}
@@ -632,7 +633,7 @@ export default function CalendarScreen() {
                   <Ionicons name="calendar-outline" size={16} color={theme.primary.default} />
                   <Text style={styles.sectionTitle}>{t('calendar.events', { count: events.length })}</Text>
                 </View>
-                {events.map((e, idx) => (
+                {events.map((e, idx) => tourTargetIf(idx === 0, 'planList', (
                   <GlowCard
                     key={`agenda-event-${e.id}-${idx}`}
                     index={idx}
@@ -683,7 +684,7 @@ export default function CalendarScreen() {
                     </View>
                   </View>
                   </GlowCard>
-                ))}
+                )))}
               </View>
             )}
 
@@ -733,7 +734,7 @@ export default function CalendarScreen() {
                   <Ionicons name="notifications-outline" size={16} color={theme.priority.HIGH} />
                   <Text style={styles.sectionTitle}>{t('calendar.reminders', { count: reminders.length })}</Text>
                 </View>
-                {reminders.map((r, idx) => (
+                {reminders.map((r, idx) => tourTargetIf(idx === 0 && events.length === 0, 'planList', (
                   <GlowCard
                     key={`agenda-reminder-${r.id}-${idx}`}
                     index={idx}
@@ -755,7 +756,7 @@ export default function CalendarScreen() {
                     <Ionicons name="chevron-forward" size={16} color={theme.onSurface.disabled} />
                   </View>
                   </GlowCard>
-                ))}
+                )))}
               </View>
             )}
 

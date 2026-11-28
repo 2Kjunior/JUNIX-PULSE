@@ -48,6 +48,7 @@ import { MascotBubble } from '@/features/mascot/MascotBubble';
 import { MascotProposalBubble } from '@/features/mascot/MascotProposalBubble';
 import { CompanionAnchor } from '@/features/mascot/CompanionAnchor';
 import { TourTarget } from '@/features/mascot/TourTarget';
+import { TourInfoButton } from '@/features/mascot/TourInfoButton';
 import { MessageKey, useDateLocale, useT } from '@/i18n';
 import { useMascotPreferences } from '@/features/mascot/use-mascot-preferences';
 import { useMascotTimeTrigger } from '@/features/mascot/use-mascot-time-trigger';
@@ -364,7 +365,11 @@ export default function TodayScreen() {
             <Text style={styles.greeting}>
               {greeting}{displayName ? `, ${displayName}` : ''}
             </Text>
-            <Text style={styles.date}>{dateLabel}</Text>
+            {/* ⓘ next to the subtitle: the tour of this tab again (sheet 045) */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.date}>{dateLabel}</Text>
+              <TourInfoButton tour="home" />
+            </View>
           </View>
           <View style={styles.headerActions}>
             <HeaderIconButton icon="lock-closed-outline" label={t('home.a11y.sanctum')} onPress={() => router.push('/sanctum')} />

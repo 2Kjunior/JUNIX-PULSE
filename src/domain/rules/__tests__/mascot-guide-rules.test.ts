@@ -61,7 +61,7 @@ describe('sizes', () => {
     ['welcome', 96],
     ['discover', 56],
     ['personalize', 56],
-    ['schedule', 48],
+    ['try', 48],
     ['permissions', 56],
     ['home', 56],
   ])('step %s uses %i px', (step, size) => {
@@ -77,7 +77,7 @@ describe('sizes', () => {
   });
 
   it('only ever uses the five allowed sizes', () => {
-    const steps: GuideStep[] = ['welcome', 'discover', 'personalize', 'schedule', 'permissions', 'home'];
+    const steps: GuideStep[] = ['welcome', 'discover', 'personalize', 'try', 'permissions', 'home'];
     for (const step of steps) {
       for (const keyboardOpen of [false, true]) {
         for (const phase of ['ask', 'done'] as const) {
@@ -105,8 +105,12 @@ describe('places', () => {
     }
   });
 
-  it('follows the active row on the schedule step', () => {
-    expect(place({ step: 'schedule', rowCenterY: 400 }).center).toMatchObject({ y: 400 });
+  it('sits at the top right on the try step, above the sentence (sheet 044)', () => {
+    // On the right, in the top band, like on the discovery screen (a smaller orb: a few dp apart)
+    const at = place({ step: 'try' }).center;
+    const discover = place({ step: 'discover' }).center;
+    expect(Math.abs(at.x - discover.x)).toBeLessThanOrEqual(8);
+    expect(Math.abs(at.y - discover.y)).toBeLessThanOrEqual(8);
   });
 
   it('moves to the centre once the permission is answered', () => {
@@ -124,7 +128,7 @@ describe('places', () => {
 });
 
 describe('forbidden zones', () => {
-  const steps: GuideStep[] = ['welcome', 'discover', 'personalize', 'schedule', 'permissions', 'home'];
+  const steps: GuideStep[] = ['welcome', 'discover', 'personalize', 'try', 'permissions', 'home'];
 
   it.each([
     ['normal', PHONE],
@@ -143,9 +147,9 @@ describe('forbidden zones', () => {
   });
 
   it('keeps clear of the top bar and the button on the reference phone', () => {
-    const { center, size } = place({ step: 'schedule', rowCenterY: 5000 });
+    const { center, size } = place({ step: 'try' });
     expect(center.y + size / 2).toBeLessThanOrEqual(forbidden.buttonZoneTop);
-    expect(place({ step: 'schedule', rowCenterY: 0 }).center.y - 24).toBeGreaterThanOrEqual(forbidden.topBarBottom);
+    expect(center.y - 24).toBeGreaterThanOrEqual(forbidden.topBarBottom);
   });
 });
 
@@ -269,7 +273,7 @@ describe('guideMessageFor', () => {
     ['welcome', 'ask', 'WELCOME', 'happy'],
     ['discover', 'ask', 'DISCOVER_INTRO', 'calm'],
     ['personalize', 'ask', 'PERSONALIZE_NAME', 'calm'],
-    ['schedule', 'ask', 'SCHEDULE_INTRO', 'calm'],
+    ['try', 'ask', 'TRY_INTRO', 'happy'],
     ['permissions', 'ask', 'PERMISSION_ASK', 'calm'],
     ['permissions', 'granted', 'PERMISSION_GRANTED', 'party'],
     ['permissions', 'denied', 'PERMISSION_DENIED', 'calm'],
@@ -279,7 +283,7 @@ describe('guideMessageFor', () => {
 
   it('only speaks about the permission on the last step', () => {
     expect(guideMessageFor('welcome', 'granted')?.id).toBe('WELCOME');
-    expect(guideMessageFor('schedule', 'denied')?.id).toBe('SCHEDULE_INTRO');
+    expect(guideMessageFor('try', 'denied')?.id).toBe('TRY_INTRO');
   });
 
   it('leaves the home screen to its own tour', () => {
@@ -292,11 +296,11 @@ describe('guideDirection', () => {
     [null, 'welcome', 'forward'],
     ['welcome', 'discover', 'forward'],
     ['discover', 'personalize', 'forward'],
-    ['permissions', 'schedule', 'back'],
+    ['permissions', 'try', 'back'],
     ['discover', 'welcome', 'back'],
     ['welcome', 'permissions', 'skip'],
     ['discover', 'permissions', 'skip'],
-    ['schedule', 'permissions', 'forward'],
+    ['try', 'permissions', 'forward'],
     ['personalize', 'personalize', 'forward'],
     ['home', 'welcome', 'forward'],
   ] as const)('from %s to %s is %s', (from, to, expected) => {
@@ -321,11 +325,10 @@ describe('the welcome anchor', () => {
 describe('the discovery cards', () => {
   it('has one message per card, in the order of the cards', () => {
     expect(DISCOVER_CARD_MESSAGES.map(item => item.id)).toEqual([
-      'DISCOVER_TASK',
-      'DISCOVER_REMINDER',
-      'DISCOVER_EVENT',
-      'DISCOVER_HABIT',
-      'DISCOVER_GOAL',
+      'DISCOVER_VOICE',
+      'DISCOVER_ALARM',
+      'DISCOVER_WEEK',
+      'DISCOVER_PEOPLE',
     ]);
   });
 

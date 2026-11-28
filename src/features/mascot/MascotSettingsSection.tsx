@@ -24,7 +24,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemedStyles } from '@/hooks/use-themed-styles';
 import { MascotStateRepository } from '@/repositories/mascot-state-repository';
 import { resetBudget } from '@/services/mascot/mascot-budget-service';
-import { replayHomeTour } from '@/services/mascot/mascot-tips-service';
+import { replayAllTours } from '@/services/mascot/mascot-tips-service';
 import { saveMascotSettings } from '@/services/mascot/mascot-settings-service';
 import { useAppStore } from '@/store/app-store';
 import { useLanguage, useT, type MessageKey } from '@/i18n';
@@ -116,7 +116,7 @@ export function MascotSettingsSection({ displayName, showTitle = true }: { displ
 
   const replayTour = async () => {
     try {
-      await replayHomeTour();
+      await replayAllTours();
       // The tour starts by itself a moment after the home screen shows
       router.push('/(tabs)' as never);
     } catch (e) {

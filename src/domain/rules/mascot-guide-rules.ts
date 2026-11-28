@@ -9,7 +9,8 @@
 import type { MascotMessageId } from './mascot-message-catalog';
 import type { MascotMood } from './mascot-mood-rules';
 
-export type GuideStep = 'welcome' | 'discover' | 'personalize' | 'schedule' | 'permissions' | 'home';
+// 'try' (sheet 044): a first reminder from a sentence, in place of the hours of the day
+export type GuideStep = 'welcome' | 'discover' | 'personalize' | 'try' | 'permissions' | 'home';
 export type GuideDirection = 'forward' | 'back' | 'skip';
 export type GuidePermissionPhase = 'ask' | 'done';
 export type GuidePose = 'greet' | 'rest' | 'pointAt' | 'attentive' | 'happy';
@@ -109,8 +110,8 @@ export function guideMessageFor(step: GuideStep, permission: GuidePermissionOutc
       return { id: 'DISCOVER_INTRO', mood: 'calm' };
     case 'personalize':
       return { id: 'PERSONALIZE_NAME', mood: 'calm' };
-    case 'schedule':
-      return { id: 'SCHEDULE_INTRO', mood: 'calm' };
+    case 'try':
+      return { id: 'TRY_INTRO', mood: 'happy' };
     case 'permissions':
       if (permission === 'granted') return { id: 'PERMISSION_GRANTED', mood: 'party' };
       if (permission === 'denied') return { id: 'PERMISSION_DENIED', mood: 'calm' };
@@ -121,19 +122,18 @@ export function guideMessageFor(step: GuideStep, permission: GuidePermissionOutc
 }
 
 /**
- * What the mascot says as it points at each discovery card, in order: the order of
- * PULSE_CONCEPTS (task, reminder, moment, habit, goal; sheet 021). A test keeps both the same length.
+ * What the mascot says as it points at each card of the 2nd screen, in order: the order of
+ * ONBOARDING_FEATURES (voice, alarm, week, people; sheet 044). A test keeps both the same length.
  */
 export const DISCOVER_CARD_MESSAGES: readonly GuideMessage[] = [
-  { id: 'DISCOVER_TASK', mood: 'calm' },
-  { id: 'DISCOVER_REMINDER', mood: 'calm' },
-  { id: 'DISCOVER_EVENT', mood: 'calm' },
-  { id: 'DISCOVER_HABIT', mood: 'calm' },
-  { id: 'DISCOVER_GOAL', mood: 'happy' },
+  { id: 'DISCOVER_VOICE', mood: 'calm' },
+  { id: 'DISCOVER_ALARM', mood: 'calm' },
+  { id: 'DISCOVER_WEEK', mood: 'calm' },
+  { id: 'DISCOVER_PEOPLE', mood: 'happy' },
 ];
 
 /** The onboarding screens, in order, as the router names them. */
-export const ONBOARDING_STEPS: readonly GuideStep[] = ['welcome', 'discover', 'personalize', 'schedule', 'permissions'];
+export const ONBOARDING_STEPS: readonly GuideStep[] = ['welcome', 'discover', 'personalize', 'try', 'permissions'];
 
 /**
  * Direction of a move between two steps. Jumping straight to the last one from an earlier one
@@ -170,7 +170,7 @@ function wantedSize(input: GuideInput): GuideSize {
   switch (input.step) {
     case 'welcome':
       return 96;
-    case 'schedule':
+    case 'try':
       return 48;
     case 'permissions':
       return input.phase === 'done' ? 80 : 56;
@@ -187,7 +187,7 @@ function wantedPose(input: GuideInput): GuidePose {
     case 'welcome':
       return input.reducedMotion ? 'rest' : 'greet';
     case 'discover':
-    case 'schedule':
+    case 'try':
       return input.target ? 'pointAt' : 'rest';
     case 'personalize':
       return input.target ? 'pointAt' : 'attentive';
@@ -214,8 +214,8 @@ function placeInBand(input: GuideInput, size: GuideSize, band: { top: number; bo
     case 'personalize':
     case 'home':
       return { x: left, y: topY };
-    case 'schedule':
-      return { x: right, y: input.rowCenterY ?? band.top + span / 2 };
+    case 'try':
+      return { x: right, y: topY };
     case 'permissions':
       return input.phase === 'done' ? { x: width / 2, y: band.top + span * 0.25 } : { x: right, y: topY };
   }

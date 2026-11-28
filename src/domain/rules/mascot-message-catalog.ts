@@ -48,6 +48,30 @@ export const MASCOT_MESSAGES = {
     ["Voici les cinq choses que je garde pour vous.", "{name}, voici les cinq choses que je garde pour vous."],
     ["Voici les cinq éléments que je suis pour vous.", "{name}, voici les cinq éléments que je suis pour vous."],
   ),
+  DISCOVER_VOICE: entry(
+    ["Dis-moi une phrase, je remplis tout le reste.", "{name}, dis-moi une phrase, je remplis tout le reste."],
+    ["Une phrase suffit : je remplis le reste.", "{name}, une phrase suffit : je remplis le reste."],
+    ["Dites-moi une phrase, je remplis tout le reste.", "{name}, dites-moi une phrase, je remplis tout le reste."],
+    ["Une phrase suffit : je remplis le reste.", "{name}, une phrase suffit : je remplis le reste."],
+  ),
+  DISCOVER_ALARM: entry(
+    ["Quand c'est important, je sonne même téléphone verrouillé.", "{name}, quand c'est important, je sonne même téléphone verrouillé."],
+    ["Les alarmes sonnent même écran verrouillé.", "{name}, les alarmes sonnent même écran verrouillé."],
+    ["Quand c'est important, je sonne même téléphone verrouillé.", "{name}, quand c'est important, je sonne même téléphone verrouillé."],
+    ["Les alarmes sonnent même écran verrouillé.", "{name}, les alarmes sonnent même écran verrouillé."],
+  ),
+  DISCOVER_WEEK: entry(
+    ["Ta semaine tient sur un écran : glisse une carte pour la déplacer.", "{name}, ta semaine tient sur un écran : glisse une carte pour la déplacer."],
+    ["La semaine se voit d'un coup d'œil ; une carte se déplace en la glissant.", "{name}, la semaine se voit d'un coup d'œil ; une carte se déplace en la glissant."],
+    ["Votre semaine tient sur un écran : glissez une carte pour la déplacer.", "{name}, votre semaine tient sur un écran : glissez une carte pour la déplacer."],
+    ["La semaine se voit d'un coup d'œil ; une carte se déplace en la glissant.", "{name}, la semaine se voit d'un coup d'œil ; une carte se déplace en la glissant."],
+  ),
+  DISCOVER_PEOPLE: entry(
+    ["Et je te dis quand prendre des nouvelles de tes proches.", "Et {name}, je te dis quand prendre des nouvelles de tes proches."],
+    ["Je signale les proches à qui donner des nouvelles.", "{name}, je signale les proches à qui donner des nouvelles."],
+    ["Et je vous dis quand prendre des nouvelles de vos proches.", "Et {name}, je vous dis quand prendre des nouvelles de vos proches."],
+    ["Je signale les proches à qui donner des nouvelles.", "{name}, je signale les proches à qui donner des nouvelles."],
+  ),
   DISCOVER_TASK: entry(
     ["Une tâche se coche quand c'est fait.", "{name}, une tâche se coche quand c'est fait."],
     ["Une tâche se coche une fois faite.", "{name}, une tâche se coche une fois faite."],
@@ -91,11 +115,12 @@ export const MASCOT_MESSAGES = {
     ["Je vérifie que vos rappels sonnent à la bonne heure.", "{name}, je vérifie que vos rappels sonnent à la bonne heure."],
     ["Je contrôle le fuseau horaire de vos rappels.", "{name}, je contrôle le fuseau horaire de vos rappels."],
   ),
-  SCHEDULE_INTRO: entry(
-    ["Enchantée ! Le matin je te résume ta journée, le soir je fais le bilan.", "Enchantée, {name} ! Le matin je te résume ta journée, le soir je fais le bilan."],
-    ["Enchantée. Le matin je résume ta journée, le soir je fais le bilan.", "Enchantée, {name}. Le matin je résume ta journée, le soir je fais le bilan."],
-    ["Enchantée ! Le matin je vous résume votre journée, le soir je fais le bilan.", "Enchantée, {name} ! Le matin je vous résume votre journée, le soir je fais le bilan."],
-    ["Enchantée. Le matin je résume votre journée, le soir je fais le bilan.", "Enchantée, {name}. Le matin je résume votre journée, le soir je fais le bilan."],
+  // The 4th onboarding screen (sheet 044): a first reminder from a sentence
+  TRY_INTRO: entry(
+    ["Enchantée ! Essaie : écris ou dis une chose à ne pas oublier.", "Enchantée, {name} ! Essaie : écris ou dis une chose à ne pas oublier."],
+    ["Essaie : écris ou dis une chose à ne pas oublier.", "{name}, essaie : écris ou dis une chose à ne pas oublier."],
+    ["Enchantée ! Essayez : écrivez ou dites une chose à ne pas oublier.", "Enchantée, {name} ! Essayez : écrivez ou dites une chose à ne pas oublier."],
+    ["Essayez : écrivez ou dites une chose à ne pas oublier.", "{name}, essayez : écrivez ou dites une chose à ne pas oublier."],
   ),
   PERMISSION_ASK: entry(
     ["J'ai besoin de pouvoir te prévenir au bon moment.", "{name}, j'ai besoin de pouvoir te prévenir au bon moment."],
@@ -116,6 +141,86 @@ export const MASCOT_MESSAGES = {
     ["Compris. Vos rappels resteront visibles dans l'app.", "Compris {name}. Vos rappels resteront visibles dans l'app."],
   ),
 
+  // ─── Secrets, told now and then after a few days (sheet 046) ──────────────
+  SECRET_DICTATE_ALL: entry(
+    ["Tu savais ? Dans un formulaire, dicte toute ta phrase : je remplis les champs pour toi.", "{name}, tu savais ? Dans un formulaire, dicte toute ta phrase : je remplis les champs pour toi."],
+    ["Astuce : dans un formulaire, une phrase dictée remplit tous les champs.", "{name}, astuce : dans un formulaire, une phrase dictée remplit tous les champs."],
+    ["Vous saviez ? Dans un formulaire, dictez toute votre phrase : je remplis les champs pour vous.", "{name}, vous saviez ? Dans un formulaire, dictez toute votre phrase : je remplis les champs pour vous."],
+    ["Astuce : dans un formulaire, une phrase dictée remplit tous les champs.", "{name}, astuce : dans un formulaire, une phrase dictée remplit tous les champs."],
+  ),
+  SECRET_FOCUS: entry(
+    ["Tu savais ? Glisse une tâche vers la gauche, puis Focus : je chronomètre et je te dis quand faire une pause.", "{name}, tu savais ? Glisse une tâche vers la gauche, puis Focus : je chronomètre et je te dis quand faire une pause."],
+    ["Astuce : Focus, dans le glissement d'une tâche, chronomètre et propose des pauses.", "{name}, astuce : Focus, dans le glissement d'une tâche, chronomètre et propose des pauses."],
+    ["Vous saviez ? Glissez une tâche vers la gauche, puis Focus : je chronomètre et je vous dis quand faire une pause.", "{name}, vous saviez ? Glissez une tâche vers la gauche, puis Focus : je chronomètre et je vous dis quand faire une pause."],
+    ["Astuce : Focus, dans le glissement d'une tâche, chronomètre et propose des pauses.", "{name}, astuce : Focus, dans le glissement d'une tâche, chronomètre et propose des pauses."],
+  ),
+  SECRET_THEMES: entry(
+    ["Tu savais ? Dans Paramètres, Thème, je change de couleurs : essaie Forêt ou Océan.", "{name}, tu savais ? Dans Paramètres, Thème, je change de couleurs : essaie Forêt ou Océan."],
+    ["Astuce : Paramètres, Thème, pour changer les couleurs de l'appli.", "{name}, astuce : Paramètres, Thème, pour changer les couleurs de l'appli."],
+    ["Vous saviez ? Dans Paramètres, Thème, je change de couleurs : essayez Forêt ou Océan.", "{name}, vous saviez ? Dans Paramètres, Thème, je change de couleurs : essayez Forêt ou Océan."],
+    ["Astuce : Paramètres, Thème, pour changer les couleurs de l'appli.", "{name}, astuce : Paramètres, Thème, pour changer les couleurs de l'appli."],
+  ),
+  SECRET_CARD_COLOR: entry(
+    ["Tu savais ? Une carte peut avoir sa propre couleur : Plus d'options, Couleur de la carte.", "{name}, tu savais ? Une carte peut avoir sa propre couleur : Plus d'options, Couleur de la carte."],
+    ["Astuce : Plus d'options, Couleur de la carte, pour colorer un élément.", "{name}, astuce : Plus d'options, Couleur de la carte, pour colorer un élément."],
+    ["Vous saviez ? Une carte peut avoir sa propre couleur : Plus d'options, Couleur de la carte.", "{name}, vous saviez ? Une carte peut avoir sa propre couleur : Plus d'options, Couleur de la carte."],
+    ["Astuce : Plus d'options, Couleur de la carte, pour colorer un élément.", "{name}, astuce : Plus d'options, Couleur de la carte, pour colorer un élément."],
+  ),
+  SECRET_SANCTUM: entry(
+    ["Tu savais ? Le cadenas en haut ouvre le Sanctuaire : des notes gardées sous ton empreinte.", "{name}, tu savais ? Le cadenas en haut ouvre le Sanctuaire : des notes gardées sous ton empreinte."],
+    ["Astuce : le cadenas ouvre le Sanctuaire, des notes protégées par l'empreinte.", "{name}, astuce : le cadenas ouvre le Sanctuaire, des notes protégées par l'empreinte."],
+    ["Vous saviez ? Le cadenas en haut ouvre le Sanctuaire : des notes gardées sous votre empreinte.", "{name}, vous saviez ? Le cadenas en haut ouvre le Sanctuaire : des notes gardées sous votre empreinte."],
+    ["Astuce : le cadenas ouvre le Sanctuaire, des notes protégées par l'empreinte.", "{name}, astuce : le cadenas ouvre le Sanctuaire, des notes protégées par l'empreinte."],
+  ),
+  SECRET_WIDGET: entry(
+    ["Tu savais ? Pose mon widget sur l'écran d'accueil du téléphone : ta journée d'un coup d'œil.", "{name}, tu savais ? Pose mon widget sur l'écran d'accueil du téléphone : ta journée d'un coup d'œil."],
+    ["Astuce : le widget Junix Pulse montre la journée sur l'écran d'accueil du téléphone.", "{name}, astuce : le widget Junix Pulse montre la journée sur l'écran d'accueil du téléphone."],
+    ["Vous saviez ? Posez mon widget sur l'écran d'accueil du téléphone : votre journée d'un coup d'œil.", "{name}, vous saviez ? Posez mon widget sur l'écran d'accueil du téléphone : votre journée d'un coup d'œil."],
+    ["Astuce : le widget Junix Pulse montre la journée sur l'écran d'accueil du téléphone.", "{name}, astuce : le widget Junix Pulse montre la journée sur l'écran d'accueil du téléphone."],
+  ),
+  // ─── Tours of the other tabs (sheet 045) ─────────────────────────────────
+  TOUR_TODO_FILTER: entry(
+    ["En haut, choisis : tout, ce qui sonne, ou ce qui ne sonne pas.", "{name}, en haut, choisis : tout, ce qui sonne, ou ce qui ne sonne pas."],
+    ["Le filtre en haut sépare ce qui sonne du reste.", "{name}, le filtre en haut sépare ce qui sonne du reste."],
+    ["En haut, choisissez : tout, ce qui sonne, ou ce qui ne sonne pas.", "{name}, en haut, choisissez : tout, ce qui sonne, ou ce qui ne sonne pas."],
+    ["Le filtre en haut sépare ce qui sonne du reste.", "{name}, le filtre en haut sépare ce qui sonne du reste."],
+  ),
+  TOUR_TODO_SWIPE: entry(
+    ["Glisse une carte vers la droite : c'est fait. Vers la gauche : plus tard, modifier ou supprimer.", "{name}, glisse une carte vers la droite : c'est fait. Vers la gauche : plus tard, modifier ou supprimer."],
+    ["Vers la droite : fait. Vers la gauche : plus tard, modifier, supprimer.", "{name}, vers la droite : fait. Vers la gauche : plus tard, modifier, supprimer."],
+    ["Glissez une carte vers la droite : c'est fait. Vers la gauche : plus tard, modifier ou supprimer.", "{name}, glissez une carte vers la droite : c'est fait. Vers la gauche : plus tard, modifier ou supprimer."],
+    ["Vers la droite : fait. Vers la gauche : plus tard, modifier, supprimer.", "{name}, vers la droite : fait. Vers la gauche : plus tard, modifier, supprimer."],
+  ),
+  TOUR_TODO_MORE: entry(
+    ["Le bouton ⋯ d'une carte donne les mêmes choix, sans glisser.", "{name}, le bouton ⋯ d'une carte donne les mêmes choix, sans glisser."],
+    ["Le bouton ⋯ donne les mêmes choix.", "{name}, le bouton ⋯ donne les mêmes choix."],
+    ["Le bouton ⋯ d'une carte donne les mêmes choix, sans glisser.", "{name}, le bouton ⋯ d'une carte donne les mêmes choix, sans glisser."],
+    ["Le bouton ⋯ donne les mêmes choix.", "{name}, le bouton ⋯ donne les mêmes choix."],
+  ),
+  TOUR_PLAN_VIEWS: entry(
+    ["Ta journée, ta semaine ou ton mois : choisis ta vue ici.", "{name}, ta journée, ta semaine ou ton mois : choisis ta vue ici."],
+    ["Jour, semaine ou mois : la vue se choisit ici.", "{name}, jour, semaine ou mois : la vue se choisit ici."],
+    ["Votre journée, votre semaine ou votre mois : choisissez votre vue ici.", "{name}, votre journée, votre semaine ou votre mois : choisissez votre vue ici."],
+    ["Jour, semaine ou mois : la vue se choisit ici.", "{name}, jour, semaine ou mois : la vue se choisit ici."],
+  ),
+  TOUR_PLAN_MOVE: entry(
+    ["Touche une carte pour l'ouvrir. En Jour, Semaine ou Mois, garde le doigt dessus pour la déplacer.", "{name}, touche une carte pour l'ouvrir. En Jour, Semaine ou Mois, garde le doigt dessus pour la déplacer."],
+    ["Une carte s'ouvre d'un toucher ; en Jour, Semaine ou Mois, un appui long la déplace.", "{name}, une carte s'ouvre d'un toucher ; en Jour, Semaine ou Mois, un appui long la déplace."],
+    ["Touchez une carte pour l'ouvrir. En Jour, Semaine ou Mois, gardez le doigt dessus pour la déplacer.", "{name}, touchez une carte pour l'ouvrir. En Jour, Semaine ou Mois, gardez le doigt dessus pour la déplacer."],
+    ["Une carte s'ouvre d'un toucher ; en Jour, Semaine ou Mois, un appui long la déplace.", "{name}, une carte s'ouvre d'un toucher ; en Jour, Semaine ou Mois, un appui long la déplace."],
+  ),
+  TOUR_PEOPLE_CARD: entry(
+    ["Touche une personne pour noter un échange ou voir ce qui est prévu avec elle.", "{name}, touche une personne pour noter un échange ou voir ce qui est prévu avec elle."],
+    ["Une personne s'ouvre d'un toucher : échanges et moments prévus.", "{name}, une personne s'ouvre d'un toucher : échanges et moments prévus."],
+    ["Touchez une personne pour noter un échange ou voir ce qui est prévu avec elle.", "{name}, touchez une personne pour noter un échange ou voir ce qui est prévu avec elle."],
+    ["Une personne s'ouvre d'un toucher : échanges et moments prévus.", "{name}, une personne s'ouvre d'un toucher : échanges et moments prévus."],
+  ),
+  TOUR_PEOPLE_ADD: entry(
+    ["Ici, tu ajoutes une personne, ou tu l'importes de tes contacts.", "{name}, ici, tu ajoutes une personne, ou tu l'importes de tes contacts."],
+    ["Ici, on ajoute une personne ou on l'importe des contacts.", "{name}, ici, on ajoute une personne ou on l'importe des contacts."],
+    ["Ici, vous ajoutez une personne, ou vous l'importez de vos contacts.", "{name}, ici, vous ajoutez une personne, ou vous l'importez de vos contacts."],
+    ["Ici, on ajoute une personne ou on l'importe des contacts.", "{name}, ici, on ajoute une personne ou on l'importe des contacts."],
+  ),
   // ─── Home tour (four stops) and first visit tips ───────────────────────────
   TOUR_PILLARS: entry(
     ["Voici ton accueil : ce qui reste à faire, ton planning et tes proches d'un coup d'œil.", "{name}, voici ton accueil : ce qui reste à faire, ton planning et tes proches d'un coup d'œil."],

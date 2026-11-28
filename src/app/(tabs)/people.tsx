@@ -22,6 +22,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsButton } from '@/components/ui/HeaderIconButton';
+import { TourInfoButton } from '@/features/mascot/TourInfoButton';
+import { tourTargetIf } from '@/features/mascot/TourTarget';
 
 import { PersonRepository } from '@/repositories/person-repository';
 import { Person } from '@/domain/entities';
@@ -93,7 +95,11 @@ export default function PeopleScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>{t('people.title')}</Text>
-          <Text style={styles.subtitle}>{t('people.subtitle')}</Text>
+          {/* ⓘ next to the subtitle: the tour of this tab again (sheet 045) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.subtitle}>{t('people.subtitle')}</Text>
+            <TourInfoButton tour="people" />
+          </View>
         </View>
 
         <SettingsButton />
@@ -130,14 +136,14 @@ export default function PeopleScreen() {
             onAction={() => router.push('/people/new')}
           />
         ) : (
-          persons.map(person => (
+          persons.map((person, index) => tourTargetIf(index === 0, 'peopleCard', (
             <PersonCardR09
               key={person.id}
               person={person}
               theme={theme}
               styles={styles}
             />
-          ))
+          )))
         )}
       </ScrollView>
 
@@ -146,6 +152,7 @@ export default function PeopleScreen() {
         label={t('people.new')}
         icon="person-add"
         onPress={() => router.push('/people/new')}
+        tourId="peopleAdd"
       />
     </View>
   );
